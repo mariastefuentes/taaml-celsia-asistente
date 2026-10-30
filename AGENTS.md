@@ -2,6 +2,8 @@
 
 Este archivo lo leen los agentes (OpenCode, Claude Code u otros) y los validadores de commit (GGA). Dice cómo trabajar en este repositorio.
 
+La **verdad central** del proyecto (propósito, alcance, stack, estructura, convenciones y decisiones) está en [`.specify/memory/constitution.md`](.specify/memory/constitution.md). Este archivo es el resumen operativo; si hay contradicción, manda la constitución y se actualiza con el mismo commit.
+
 ## Qué es este proyecto
 Base de conocimiento y asistente de preguntas y respuestas (Q&A) de **Celsia**, empresa de energía del Valle del Cauca y el Tolima. Es el Taller 1 del curso *Técnicas avanzadas de IA aplicadas en modelos de lenguaje* (UAO). La evaluación es **acumulativa**: el Taller 2 parte de este repositorio, así que debe quedar ordenado y reutilizable.
 
