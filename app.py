@@ -9,6 +9,7 @@ import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 from taaml.base import cargar_documentos  # noqa: E402
+from taaml.corpus import MOTIVOS, RAG, SCRAPING, metricas  # noqa: E402
 from taaml.respaldo import con_respaldo, es_falla_del_proveedor, preguntas_guardadas, respuesta_guardada  # noqa: E402
 from taaml.tareas import MODELO_POR_DEFECTO, generar_faq, responder_con_fuentes, resumir  # noqa: E402
 from taaml.validacion import datos_sin_respaldo  # noqa: E402
@@ -20,6 +21,11 @@ st.info("**Empresa.** Celsia es una empresa de energía del Valle del Cauca y el
         "**Problema de información.** Su información pública está repartida en más de mil páginas de celsia.com, "
         "y no hay un lugar donde preguntar y recibir la respuesta con su fuente.\n\n"
         "**Alcance del corpus.** Las páginas oficiales de celsia.com en español: servicios, atención, sedes, blog, noticias e inversionistas.")
+
+
+@st.cache_data
+def metricas_corpus() -> dict:
+    return metricas()
 
 
 @st.cache_data
@@ -82,7 +88,7 @@ with st.sidebar:
                          "«compacta»: solo el inicio de cada documento, sin buscar. "
                          "«completa»: toda la base en el prompt, como pide el enunciado (~340.000 tokens por pregunta, unas 80 veces más cara que rag; úsala solo para demostrar la diferencia).")
 
-tab_qa, tab_resumen, tab_faq = st.tabs(["Preguntas y respuestas", "Resumen", "Preguntas frecuentes"])
+tab_qa, tab_resumen, tab_faq, tab_corpus = st.tabs(["Preguntas y respuestas", "Resumen", "Preguntas frecuentes", "Corpus y scraping"])
 
 with tab_qa:
     pregunta = st.text_area("¿Qué quieres saber sobre Celsia?", placeholder="¿Cuál es el teléfono de atención al cliente?", max_chars=500)
@@ -125,3 +131,29 @@ with tab_faq:
                 with st.expander(q.pregunta):
                     st.markdown(q.respuesta)
             st.caption(f"Fuente: {documentos()[elegido_faq]['url']}")
+
+with tab_corpus:
+    c = metricas_corpus()
+    st.caption("De dónde sale la información: el proceso de scraping por etapas, de celsia.com a los fragmentos que consulta el asistente. Las cifras se leen de los archivos de `data/`.")
+    col0, col1, col2, col3, col4 = st.columns(5)
+    col0.metric("URLs descubiertas", f"{c['paginas_descubiertas']:,}".replace(",", "."))
+    col1.metric("URLs descargadas", f"{c['paginas_descargadas']:,}".replace(",", "."))
+    col2.metric("Páginas con texto útil", f"{c['paginas_en_silver']:,}".replace(",", "."))
+    col3.metric("Documentos curados", c["documentos"])
+    col4.metric("Fragmentos", f"{c['fragmentos']:,}".replace(",", "."))
+    st.metric("Tokens del corpus curado" + ("" if c["tokens_con_o200k"] else " (estimado como caracteres/4)"), f"{c['tokens']:,}".replace(",", "."))
+    for bloque in (SCRAPING, RAG):
+        st.subheader(bloque)
+        st.dataframe([{"Etapa": e["etapa"], "Qué hace": e["que_hace"], "Entra": e["entra"], "Sale": e["sale"],
+                       "Descartes": ", ".join(f"{MOTIVOS[k]}: {v}" for k, v in e["descartes"].items()) or "–"} for e in c["etapas"] if e["bloque"] == bloque],
+                     hide_index=True, use_container_width=True)
+    izquierda, derecha = st.columns(2)
+    with izquierda:
+        st.subheader("Descartes por motivo")
+        st.bar_chart(c["descartes"], horizontal=True)
+    with derecha:
+        st.subheader("Documentos por categoría")
+        st.bar_chart(c["por_categoria"], horizontal=True)
+    with st.expander(f"Documentos descartados en la curaduría (primeros {len(c['descartados_ejemplos'])})"):
+        st.dataframe([{"Regla": f["regla"], "Título": f["title"], "Motivo": f["motivo"], "Fuente": f["url"]} for f in c["descartados_ejemplos"]],
+                     hide_index=True, use_container_width=True)
