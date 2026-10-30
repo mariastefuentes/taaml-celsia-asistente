@@ -91,8 +91,10 @@ with st.sidebar:
 tab_qa, tab_resumen, tab_faq, tab_corpus = st.tabs(["Preguntas y respuestas", "Resumen", "Preguntas frecuentes", "Corpus y scraping"])
 
 with tab_qa:
-    pregunta = st.text_area("¿Qué quieres saber sobre Celsia?", placeholder="¿Cuál es el teléfono de atención al cliente?", max_chars=500)
-    if st.button("Preguntar", type="primary", disabled=not pregunta.strip()):
+    with st.form("form_pregunta", border=False):
+        pregunta = st.text_area("¿Qué quieres saber sobre Celsia?", placeholder="¿Cuál es el teléfono de atención al cliente?", max_chars=500)
+        enviar = st.form_submit_button("Preguntar", type="primary")
+    if enviar and pregunta.strip():
         with st.spinner("Buscando en la información oficial..."):
             resultado = responder_o_mostrar_guardada(pregunta, base, modelo)
         if resultado:
