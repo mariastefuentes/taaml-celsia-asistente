@@ -99,7 +99,8 @@ with tab_qa:
             if fragmentos:
                 fuentes = list(dict.fromkeys((f["documento"], f["fuente"]) for f in fragmentos))
                 with st.expander(f"Fuentes consultadas ({len(fuentes)})", expanded=True):
-                    st.markdown("\n".join(f"- [{titulo}]({url})" for titulo, url in fuentes))
+                    # los documentos escritos a mano no tienen enlace: se muestran como texto, no como un enlace roto
+                    st.markdown("\n".join(f"- [{titulo}]({url})" if url.startswith("http") else f"- {titulo} ({url})" for titulo, url in fuentes))
 
 with tab_resumen:
     elegido = st.selectbox("Página oficial", list(documentos()), key="doc_resumen")
