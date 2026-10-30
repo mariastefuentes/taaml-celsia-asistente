@@ -1,6 +1,6 @@
 # Atajos del proyecto. Uso: make <objetivo>   (make sin objetivo muestra la ayuda)
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: ayuda test lint datos scraping-demo indice recuperacion evaluar app
+.PHONY: ayuda test lint datos scraping-demo indice recuperacion evaluar app pdf
 
 ayuda:
 	@echo "make test         pruebas de componentes (gratis, sin Gemini ni Ollama)"
@@ -11,6 +11,7 @@ ayuda:
 	@echo "make recuperacion mide la recuperacion de fragmentos (gratis; necesita Ollama encendido)"
 	@echo "make evaluar      corre las 59 preguntas con Gemini (GASTA CUOTA O SALDO: confirmar antes)"
 	@echo "make app          abre la aplicacion Streamlit (necesita Ollama y GOOGLE_API_KEY en .env)"
+	@echo "make pdf          regenera el PDF del informe"
 
 test:
 	uv run python -m pytest
@@ -24,6 +25,8 @@ datos:
 	uv run python scripts/04_construir_gold.py
 	uv run python scripts/05_curar_base.py
 	uv run python scripts/06_construir_chunks.py
+	uv run python scripts/08_inventario_intenciones.py
+	uv run python scripts/09_conjunto_de_prueba.py
 
 scraping-demo:
 	uv run python scripts/01_scrape_celsia.py --sections page --limit 5 --salida data/_demo_scraping
@@ -39,3 +42,6 @@ evaluar:
 
 app:
 	uv run streamlit run app.py
+
+pdf:
+	uv run python scripts/utilidades/md_a_pdf.py
