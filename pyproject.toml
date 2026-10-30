@@ -1,0 +1,46 @@
+[project]
+name = "taaml"
+version = "0.1.0"
+description = "Base de conocimiento y asistente Q&A de Celsia (Taller 1, UAO)"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "María Stella Fuentes", email = "mariastella.1807@gmail.com" },
+    { name = "Juan José Mosquera" },
+    { name = "Nicolás Bolaños" },
+    { name = "Jensen Fabián Tamayo" },
+]
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4>=4.15.0",
+    "chromadb>=1.5.9",
+    "langchain>=1.4.7",
+    "langchain-core>=1.7.0",
+    "langchain-google-genai>=4.4.2",
+    "langchain-ollama>=1.1.0",
+    "langchain-openai>=1.0",
+    "langchain-text-splitters>=1.1.3",
+    "lxml>=6.1.3",
+    "markdown>=3.11.1",
+    "numpy>=2.5.4",
+    "ollama>=0.6.3",
+    "pydantic>=2.14.1",
+    "python-dotenv>=1.2.4",
+    "requests>=2.34.2",
+    "streamlit>=1.66.0",
+    "tiktoken>=0.14.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -p no:cacheprovider"  # sin carpeta de caché: el proyecto vive en OneDrive
