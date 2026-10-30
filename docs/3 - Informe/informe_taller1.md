@@ -29,7 +29,7 @@ Con 59 preguntas de prueba, la respuesta está entre los 12 fragmentos en el 89 
 
 **Idea.** RAG (generación aumentada por recuperación) significa que el modelo de lenguaje no responde de memoria: responde con textos oficiales que se le entregan junto con la pregunta. Así se reducen las alucinaciones y cada respuesta se puede rastrear hasta su fuente.
 
-**Cómo se arma en este taller (Módulo 1).**
+**Cómo se arma.**
 1. **Base de conocimiento curada** de Celsia (sección 3).
 2. **Recuperación de fragmentos:** la base completa (~316.800 tokens) cabe en el contexto de Gemini, pero cuesta unas 80 veces más por pregunta (sección 5). De sus 1.690 fragmentos, para cada pregunta se buscan los 12 más relevantes (embeddings con `nomic-embed-text-v2-moe` en Ollama, guardados en **Chroma**, una base de datos vectorial persistente, y similitud del coseno) y solo esos van al prompt del modelo, con su fuente. Si Ollama no responde, hay una búsqueda por palabras de respaldo; si falta la carpeta de Chroma, se busca en la matriz de vectores guardada (`indice_embeddings.npz`), con el mismo resultado.
 3. **Tres tareas con LangChain:** **Q&A** (responde la pregunta de un cliente), **Resumen** (sintetiza una página oficial) y **FAQ** (arma preguntas frecuentes de una página). Resumen y FAQ devuelven salida estructurada (Pydantic).
