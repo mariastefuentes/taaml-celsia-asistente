@@ -150,12 +150,11 @@ La comparación entre las cuatro versiones del prompt está en la sección 4: ri
 
 **Acuerdo entre el juez y la revisión manual.** Comparando solo si la respuesta está bien o no, el juez y la revisión coinciden en 55 de las 59 (93 %); en las 4 restantes (P02, P09, N18, N19) el juez fue más indulgente. En N10 coinciden en que falla pero no en el motivo. Nota: los veredictos de la revisión los propuso Claude Code y los ratificó María Stella Fuentes.
 
-**Errores que quedan (documentados, no corregidos).**
-- **N05:** afirma que el WhatsApp atiende a cualquier hora, apoyado en una publicación de 2023; el sitio no publica un horario oficial.
-- **Hallados en la revisión manual aunque el juez los marcó bien:** P02 (no aclara que el horario viene de avisos de 2021), P09 (omite a Cetsa), N18 (ofrece como canal el WhatsApp de garantía de la Tienda Celsia, que está en la base pero es de otra función) y N19 (recomienda `internet.celsia.com`, un enlace que la propia base marca como caído).
-- **N10 y N20:** en la de datos personales cita lo que dice la base pero agrega detalles que el juez no respalda; en la del cable caído agrega consejos de seguridad que son del conocimiento general del modelo y no están en la base. Una versión v4 con reglas más estrictas no lo corrigió.
-- **Parciales:** P13, P24, P30 y P33 son correctas en lo esencial pero omiten un detalle (remitir a Celsia Empresas, avisar la fecha o la única fuente del dato, o citar la norma vigente). P14 se corrigió tras la revisión manual: el canal «Petición» del sitio es válido.
-- **P05, P12, P14, P30:** la métrica de recuperación no encuentra el fragmento esperado en los 12 primeros (por ejemplo, una oficina en Cali, porque la lista pública de sedes no la incluye); el asistente igual responde bien P05 y P12.
+**Errores que quedan (documentados, no corregidos).** El detalle de cada pregunta está en `docs/2 - Conjunto de prueba/revision_manual.md`. Son de cuatro tipos:
+- **Datos desactualizados o sin respaldo oficial.** La respuesta usa información antigua sin avisarlo: afirma que el WhatsApp atiende a cualquier hora apoyándose en una publicación de 2023, cuando el sitio no publica un horario oficial, o no aclara que un horario viene de avisos de 2021. También recomienda un enlace que la propia base marca como caído.
+- **Detalles que la base no respalda.** En la pregunta del cable caído agrega consejos de seguridad que son conocimiento general del modelo, y en la de datos personales añade detalles que el juez no respalda. Una versión del prompt con reglas más estrictas (v4) no lo corrigió.
+- **Omisiones en respuestas correctas en lo esencial.** Falta remitir a Celsia Empresas, avisar la fecha o la única fuente de un dato, citar la norma vigente o nombrar a un actor (por ejemplo, Cetsa). Una respuesta ofrece como canal el WhatsApp de garantía de la Tienda Celsia, que está en la base pero es de otra función.
+- **Recuperación.** En 4 de las 35 preguntas de respuesta el fragmento esperado no queda entre los 12 primeros (por ejemplo, una oficina en Cali, porque la lista pública de sedes no la incluye); el asistente igual responde bien dos de ellas.
 
 **Limitaciones.**
 - **Abstención por umbral de similitud.** Se probó rechazar la pregunta sin llamar al modelo cuando el mejor fragmento tiene poca similitud (una técnica común contra la alucinación). No sirve: las 35 preguntas con respuesta tienen similitud de 0,41 a 0,77 y las 24 negativas de 0,32 a 0,61, así que se solapan. El mejor umbral rechazaría solo 5 negativas y no tocaría las que el modelo inventa (por ejemplo N19, con 0,61, la más alta de todas). Se queda la abstención por prompt.
@@ -169,8 +168,6 @@ La comparación entre las cuatro versiones del prompt está en la sección 4: ri
 - **Inyección indirecta.** Son 4 casos escritos por el equipo, con un solo modelo y un solo prompt; no prueban que el sistema sea inmune, solo que estas órdenes no funcionaron.
 - **Evidencia que no se conservó.** La comparación con la versión anterior al diccionario de sinónimos, las pruebas con 5, 8 y 16 fragmentos y el análisis del umbral de similitud se hicieron durante el desarrollo y sus resultados intermedios no se guardaron; hoy se puede repetir la medición con 12 fragmentos (`scripts/10_evaluar_recuperacion.py`), no las anteriores. Los precios de internet de `data/0_manual/` salen de la web de Celsia Internet a la fecha indicada en el documento y deben verificarse de nuevo antes del 30/11/2026. Las cifras de contexto del sector (ranking de El País, notas de prensa) están citadas por su fuente pero no se copiaron al repositorio. Los CSV de resultados no registran el modelo juez ni la fecha, el orden de los fragmentos puede variar levemente entre corridas, y la evaluación usa un límite de salida de 2.048 tokens frente a 8.192 en la app. Las pruebas automáticas no cubren la regla de casi duplicados (R6).
 - **Privacidad.** El modelo es privado: las preguntas viajan a Google. Con datos públicos de Celsia no es un problema, pero en una empresa real habría que revisarlo.
-
-**Mejoras posibles.** Reescribir la consulta con el modelo antes de buscar (una llamada más por pregunta), pruebas de inyección más difíciles, una versión de prompt que impida los consejos fuera de la base y, con permiso de Celsia, incorporar los PDF.
 
 ## Referencias
 
