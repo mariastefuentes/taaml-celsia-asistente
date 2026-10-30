@@ -16,3 +16,7 @@ data/4_curaduria/chroma/
 # Matriz de vectores (caché del índice): se regenera con `make indice`
 data/4_curaduria/indice_embeddings.npz
 data/4_curaduria/indice_parcial.npz
+
+# Engram: se versiona la configuración del proyecto, no los chunks de sincronización
+.engram/*
+!.engram/config.json
