@@ -73,3 +73,27 @@ def test_un_numero_o_una_palabra_suelta_no_se_confunde_con_una_falla_del_proveed
     assert not es_falla_del_proveedor(ValueError("falta un campo"))
     assert es_falla_del_proveedor(RuntimeError("503 Service Unavailable"))
     assert es_falla_del_proveedor(TimeoutError("timed out"))
+
+
+def test_una_clave_invalida_o_sin_permisos_es_falla_del_proveedor():
+    # el error real de Gemini con una clave mala: debe probar DeepSeek o el modelo local, no quedarse ahí
+    assert es_falla_del_proveedor(RuntimeError(
+        "Error calling model 'gemini-3.5-flash' (UNAUTHENTICATED): 401 UNAUTHENTICATED. "
+        "'error': {'code': 401, 'message': 'API key not valid. Please pass a valid API key.', 'status': 'UNAUTHENTICATED'}"))
+    assert es_falla_del_proveedor(RuntimeError("403 PERMISSION_DENIED: The caller does not have permission"))
+    assert es_falla_del_proveedor(RuntimeError("API_KEY_INVALID"))
+    assert es_falla_del_proveedor(RuntimeError("invalid api key"))
+
+
+def test_con_una_clave_invalida_pasa_al_modelo_local(monkeypatch):
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+
+    def tarea(modelo):
+        if modelo.startswith("gemini"):
+            raise RuntimeError("401 UNAUTHENTICATED: API key not valid")
+        return "respuesta local"
+
+    resultado, usado, avisos = con_respaldo(tarea, "gemini-3.5-flash")
+    assert (resultado, usado) == ("respuesta local", "ollama:llama3.2")
+    assert "no respondió" in avisos[0]
+    assert es_falla_del_proveedor(TimeoutError("timed out"))
