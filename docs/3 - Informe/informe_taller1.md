@@ -30,8 +30,8 @@ Con 59 preguntas de prueba, la respuesta está entre los 12 fragmentos en el 89 
 **Idea.** RAG (generación aumentada por recuperación) significa que el modelo de lenguaje no responde de memoria: responde con textos oficiales que se le entregan junto con la pregunta. Así se reducen las alucinaciones y cada respuesta se puede rastrear hasta su fuente.
 
 **Cómo se arma.**
-1. **Base de conocimiento curada** de Celsia (sección 3).
-2. **Recuperación de fragmentos:** la base completa (~316.800 tokens) cabe en el contexto de Gemini, pero cuesta unas 80 veces más por pregunta (sección 5). De sus 1.690 fragmentos, para cada pregunta se buscan los 12 más relevantes (embeddings con `nomic-embed-text-v2-moe` en Ollama, guardados en **Chroma**, una base de datos vectorial persistente, y similitud del coseno) y solo esos van al prompt del modelo, con su fuente. Si Ollama no responde, hay una búsqueda por palabras de respaldo; si falta la carpeta de Chroma, se busca en la matriz de vectores guardada (`indice_embeddings.npz`), con el mismo resultado.
+1. **Base de conocimiento curada** de Celsia.
+2. **Recuperación de fragmentos:** la base completa (~316.800 tokens) cabe en el contexto de Gemini, pero cuesta unas 80 veces más por pregunta. De sus 1.690 fragmentos, para cada pregunta se buscan los 12 más relevantes (embeddings con `nomic-embed-text-v2-moe` en Ollama, guardados en **Chroma**, una base de datos vectorial persistente, y similitud del coseno) y solo esos van al prompt del modelo, con su fuente. Si Ollama no responde, hay una búsqueda por palabras de respaldo; si falta la carpeta de Chroma, se busca en la matriz de vectores guardada (`indice_embeddings.npz`), con el mismo resultado.
 3. **Tres tareas con LangChain:** **Q&A** (responde la pregunta de un cliente), **Resumen** (sintetiza una página oficial) y **FAQ** (arma preguntas frecuentes de una página). Resumen y FAQ devuelven salida estructurada (Pydantic).
 4. **Aplicación en Streamlit** con una pestaña por tarea (Q&A, Resumen, FAQ) y una cuarta, «Corpus y scraping», que muestra las etapas del pipeline con sus cifras.
 
@@ -64,7 +64,7 @@ Con 59 preguntas de prueba, la respuesta está entre los 12 fragmentos en el 89 
 
 **Resultado:** **393 documentos y 1,27 millones de caracteres** (~316.800 tokens con el tokenizador o200k de OpenAI; con el de Gemini la misma base suma ~341.000). Los blogs y las noticias llevan su **fecha de publicación** en el encabezado, para que el asistente avise cuando un dato viene de un texto antiguo.
 
-**Fragmentado (chunking) e índice.** Los 393 documentos se dividen en 1.690 fragmentos con `RecursiveCharacterTextSplitter` de LangChain: 1.000 caracteres (~250 tokens) y solape de 150, cortando por párrafo, línea o frase antes que por palabra. Cada sede es un fragmento propio, porque dirección y horario forman una unidad de respuesta. Cada fragmento lleva el título de su documento. Se verificó que todos los documentos tienen fragmentos y que los datos clave (teléfonos, direcciones, requisitos) sobreviven. A cada fragmento se le calcula su embedding para la recuperación (sección 2).
+**Fragmentado (chunking) e índice.** Los 393 documentos se dividen en 1.690 fragmentos con `RecursiveCharacterTextSplitter` de LangChain: 1.000 caracteres (~250 tokens) y solape de 150, cortando por párrafo, línea o frase antes que por palabra. Cada sede es un fragmento propio, porque dirección y horario forman una unidad de respuesta. Cada fragmento lleva el título de su documento. Se verificó que todos los documentos tienen fragmentos y que los datos clave (teléfonos, direcciones, requisitos) sobreviven. A cada fragmento se le calcula su embedding para la recuperación.
 
 **Limitaciones de los datos.**
 - Los blogs conservan el texto de relleno «Te puede interesar…» al final de cada página (130 veces en la base, unos 152 de los 1.690 fragmentos): es ruido que el limpiador no quitó, no cambia los datos, y corregirlo obliga a rehacer Silver, Gold, curaduría, índice y mediciones; queda como mejora.
@@ -140,7 +140,7 @@ La versión v3 nació de un error real: el resumen de una noticia de 2020 («tar
 | Pruebas automáticas de componentes (`make test`) | 78 de 78 pasan |
 | Tiempo por respuesta | mediana de 7,5 segundos (8 en la tabla de comparación, que la redondea) |
 
-La comparación entre las cuatro versiones del prompt está en la sección 4: rindieron de forma parecida y no se demostró que v3 sea mejor que v1.
+Las cuatro versiones del prompt rindieron de forma parecida y no se demostró que v3 sea mejor que v1.
 
 **Qué cambió al medir.** La primera medición mostraba tres fallas de recuperación (historia de la empresa, atraso en el pago, valores de Celsia) porque el cliente usa palabras distintas a las del sitio. Se atendieron con un diccionario de sinónimos hecho a mano y la recuperación subió de 80 % a 89 %. Esa mejora se midió con las mismas preguntas que la motivaron, así que puede sobrestimar lo que se ganaría con preguntas nuevas. También se corrigieron respuestas esperadas mal planteadas (P01, P13, P14, P19, P26, N10), por ejemplo una que exigía remitir a un asesor comercial que el sitio no publica.
 
@@ -172,7 +172,7 @@ La comparación entre las cuatro versiones del prompt está en la sección 4: ri
 ## Referencias
 
 - Zaharia, M. et al. (2024). *The Shift from Models to Compound AI Systems*. Berkeley AI Research (BAIR) Blog.
-- Leviathan, Y., Kalman, M. y Matias, Y. (2025). *Prompt Repetition Improves Non-Reasoning LLMs*. arXiv:2512.14982. https://arxiv.org/abs/2512.14982 (la prueba de repetición de la sección 4 sigue su idea).
+- Leviathan, Y., Kalman, M. y Matias, Y. (2025). *Prompt Repetition Improves Non-Reasoning LLMs*. arXiv:2512.14982. https://arxiv.org/abs/2512.14982 (la prueba de repetición sigue su idea).
 - LangChain: documentación de `create_agent`, salida estructurada y `RecursiveCharacterTextSplitter` (docs.langchain.com).
 - Chroma: repositorio y documentación (github.com/chroma-core/chroma).
 - Nomic AI: ficha del modelo `nomic-embed-text-v2-moe` en Hugging Face (consultada el 28/10/2026).
