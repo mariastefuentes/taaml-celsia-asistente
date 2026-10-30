@@ -5,6 +5,12 @@
 Curso: Técnicas avanzadas de IA aplicadas en modelos de lenguaje (UAO). Empresa asignada al grupo: **Celsia**.
 Documentos de apoyo: [análisis de la empresa](../1%20-%20Analisis%20de%20la%20empresa/analisis_empresa.md), [conjunto de prueba](../2%20-%20Conjunto%20de%20prueba/conjunto_de_prueba.md) [comparación de modelos](../2%20-%20Conjunto%20de%20prueba/comparacion_modelos.md) y [recuperación por pregunta](../2%20-%20Conjunto%20de%20prueba/recuperacion_por_pregunta.md).
 
+## Resumen
+
+Celsia publica su información en más de mil páginas y un cliente no tiene dónde preguntar y recibir la respuesta con su fuente. Se construyó un asistente que responde solo con el contenido oficial de celsia.com en español y cita la fuente de cada dato. El scraping descubrió 1.273 direcciones y descargó 1.272; tras limpiar, deduplicar y curar quedaron 393 documentos, divididos en 1.690 fragmentos. Para cada pregunta se recuperan los 12 fragmentos más parecidos (embeddings y Chroma) y solo con ellos responde `gemini-3.5-flash`, en lugar de enviar toda la base (unas 80 veces más entrada y costo por pregunta).
+
+Con 59 preguntas de prueba, la respuesta está entre los 12 fragmentos en el 89 % de los casos (31 de 35). En la revisión de una persona, 29 de 35 respuestas convencen y 6 son parciales, y 19 de 24 negativas convencen; 4 de 4 ataques directos de inyección y 4 de 4 indirectos fueron rechazados. Las limitaciones principales: 35 preguntas dan poca precisión estadística, el diccionario de sinónimos se escribió mirando esas preguntas y los PDF del sitio no se descargaron porque su `robots.txt` los bloquea.
+
 ## 1. Descripción del problema
 
 **La empresa.** Celsia es la empresa de energía del Grupo Argos. Genera, transmite, distribuye y comercializa energía, con foco en fuentes renovables, y también ofrece internet. En Colombia atiende a clientes del Valle del Cauca y del Tolima.
@@ -15,7 +21,7 @@ Documentos de apoyo: [análisis de la empresa](../1%20-%20Analisis%20de%20la%20e
 
 **La necesidad.** Un canal automático, disponible siempre y **preciso**: que responda solo con información oficial y que **reconozca cuando no sabe**, en vez de inventar un plazo, un precio o un teléfono. En un servicio público, un dato inventado causa un daño real al cliente.
 
-**Alcance.** Se definió recorriendo el trayecto de un cliente nuevo (conocer la empresa, evaluarla, contratar, usar el servicio, resolver problemas), sin partir de lo que el sitio ya contesta. Resultaron **72 intenciones dentro del alcance** y **17 preguntas típicas sin respuesta** en la base, que el asistente debe reconocer como tales. Los seis ejemplos del enunciado (horarios, sedes, productos, historia, contacto y procesos básicos) quedaron incluidos y se agregaron tres tipos más: confianza y regulación, calidad y evaluación, y derechos y datos.
+**Alcance.** Se definió recorriendo el trayecto de un cliente nuevo (conocer la empresa, evaluarla, contratar, usar el servicio, resolver problemas), sin partir de lo que el sitio ya contesta. Resultaron **71 intenciones dentro del alcance** y **18 preguntas típicas sin respuesta** en la base, que el asistente debe reconocer como tales. Los seis ejemplos del enunciado (horarios, sedes, productos, historia, contacto y procesos básicos) quedaron incluidos y se agregaron tres tipos más: confianza y regulación, calidad y evaluación, y derechos y datos.
 
 **Criterio de calidad.** Una respuesta es correcta si (1) se apoya solo en la base de conocimiento, (2) coincide con la fuente oficial y (3) cuando no hay información, lo dice y remite a un canal oficial.
 
@@ -29,7 +35,7 @@ Documentos de apoyo: [análisis de la empresa](../1%20-%20Analisis%20de%20la%20e
 3. **Tres tareas con LangChain:** **Q&A** (responde la pregunta de un cliente), **Resumen** (sintetiza una página oficial) y **FAQ** (arma preguntas frecuentes de una página). Resumen y FAQ devuelven salida estructurada (Pydantic).
 4. **Aplicación en Streamlit** con una pestaña por tarea (Q&A, Resumen, FAQ) y una cuarta, «Corpus y scraping», que muestra las etapas del pipeline con sus cifras.
 
-**Hacia el Módulo 2.** La base vectorial es Chroma (`chromadb`, persistente, similitud del coseno, sin telemetría); el texto sigue en un solo lugar (`chunks.jsonl`) y Chroma guarda los vectores y la categoría, región y fuente. Se verificó que da el mismo resultado que la matriz que se usaba antes (embeddings 31 de 35 en ambas). En el Módulo 2 se medirá su calidad con más detalle. La evaluación del curso es acumulativa: el Taller 2 parte de este repositorio.
+**Base vectorial.** Es Chroma (`chromadb`, persistente, similitud del coseno, sin telemetría); el texto sigue en un solo lugar (`chunks.jsonl`) y Chroma guarda los vectores y la categoría, región y fuente. Se verificó que da el mismo resultado que la matriz que se usaba antes (embeddings 31 de 35 en ambas).
 
 ## 3. Preparación de los datos
 
@@ -96,7 +102,7 @@ El ciclo *Build, Test, Deploy, Monitor* de LangChain equivale a: Build, el pipel
 
 *Post-validación de datos.* `validacion.py` comprueba, sin llamar a ningún modelo, que cada cifra de dos o más dígitos, correo y enlace de la respuesta esté escrito en los fragmentos recuperados o en las instrucciones del asistente (que traen la línea 01 8000 112 115). La app avisa cuando algo no tiene respaldo. Es una revisión de texto: no detecta un teléfono armado con trozos que sí aparecen por separado en las fuentes, ni una afirmación inventada que no lleve cifras. Aplicada a las respuestas guardadas (`scripts/14_validar_respuestas.py`): 0 de 59 con datos sin respaldo en las corridas de Gemini y de DeepSeek. Hay que leerlo con cuidado: revisa que el texto aparezca, no que se use bien, y no detecta invenciones sin cifras (las respuestas que el juez marcó como «inventa» no traen datos numéricos falsos, sino afirmaciones que la base no respalda).
 
-*Agente con herramienta.* `agente.py` arma un agente `create_agent` de LangChain con la herramienta `buscar_en_base`, que usa la misma recuperación del Q&A, y un modelo local de Ollama (`llama3.2`, sin costo). En tres preguntas de prueba (el teléfono, el pago de la factura y una fuera de alcance, el costo de un viaje a Cartagena) llamó a la herramienta las tres veces; dio el teléfono correcto, rechazó la de Cartagena remitiendo a la línea oficial y la validación no encontró datos sin respaldo. Falló un detalle: en la del pago reformuló la consulta con caracteres dañados («Ásá como puedo…») y listó cinco formas de pago que no se contrastaron una a una con la base. Es un modelo de 3.000 millones de parámetros en CPU (minutos por pregunta) y no se midió con las 59 preguntas, así que demuestra el patrón del Taller 2 pero no reemplaza al Q&A principal.
+*Agente con herramienta.* `agente.py` arma un agente `create_agent` de LangChain con la herramienta `buscar_en_base`, que usa la misma recuperación del Q&A, y un modelo local de Ollama (`llama3.2`, sin costo). En tres preguntas de prueba (el teléfono, el pago de la factura y una fuera de alcance, el costo de un viaje a Cartagena) llamó a la herramienta las tres veces; dio el teléfono correcto, rechazó la de Cartagena remitiendo a la línea oficial y la validación no encontró datos sin respaldo. Falló un detalle: en la del pago reformuló la consulta con caracteres dañados («Ásá como puedo…») y listó cinco formas de pago que no se contrastaron una a una con la base. Es un modelo de 3.000 millones de parámetros en CPU (minutos por pregunta) y no se midió con las 59 preguntas, así que demuestra el patrón de agente con herramienta pero no reemplaza al Q&A principal.
 
 **Modelo.** Gemini por API (`gemini-3.5-flash`) con `temperature 0.0` y `top_p 0.1`, la regla del proyecto para RAG; `gemini-3.6-flash` se descartó porque ignora ambos parámetros. El framework es LangChain. Un modelo local no es viable en este equipo (7,7 GB de RAM, sin GPU): en una prueba inicial, Llama 3.2 tardó de 7 a 8 minutos por pregunta con una base de solo 5.000 tokens (no se conservó el archivo de resultados de esa prueba). La cuota gratuita de Google (20 solicitudes por día por modelo) llevó a cargar saldo de prepago; cada corrida paga se autorizó antes de ejecutarla. Ollama se usa solo para los embeddings (`nomic-embed-text-v2-moe`).
 
@@ -131,7 +137,7 @@ La versión v3 nació de un error real: el resumen de una noticia de 2020 («tar
 | Ataques de inyección directa (N11 a N14) | 4 de 4 rechazados |
 | Inyección indirecta (orden escondida en un fragmento recuperado, I1 a I4) | 4 de 4 resistidas |
 | Jailbreaks directos adicionales (juego de rol DAN en ficción, orden en Base64 y «respóndeme en JSON», D1 a D3) | 3 de 3 resistidos |
-| Pruebas automáticas de componentes (`make test`) | 63 de 63 pasan |
+| Pruebas automáticas de componentes (`make test`) | 78 de 78 pasan |
 | Tiempo por respuesta | mediana de 7,5 segundos (8 en la tabla de comparación, que la redondea) |
 
 La comparación entre las cuatro versiones del prompt está en la sección 4: rindieron de forma parecida y no se demostró que v3 sea mejor que v1.
@@ -140,7 +146,7 @@ La comparación entre las cuatro versiones del prompt está en la sección 4: ri
 
 **Cómo se evaluó.** `scripts/11_evaluar_modelo.py` llama a las APIs por REST (para medir tokens y tiempos) con el mismo prompt de sistema y los mismos parámetros que la app; la app y `responder_con_fuentes` usan LangChain. La ruta de LangChain no se midió aparte con las 59 preguntas. Resumen y FAQ no se evalúan con un conjunto de prueba; como evidencia mínima, `scripts/17_probar_resumen_faq.py` los corrió una vez por LangChain (2 llamadas a `gemini-3.5-flash`) sobre la página «Descubre las ventajas de pagar tu factura en canales digitales» y guardó la salida en `resultados/resumen_faq_gemini-3.5-flash.csv`: el resumen tardó 12 s y la FAQ 8 s, y ninguna cifra, correo ni enlace de la salida quedó sin respaldo en la página (revisión de texto, no de significado). Una página no basta para generalizar.
 
-**Inyección indirecta y pruebas de componentes.** Las pruebas N11 a N14 meten la orden en la pregunta. Existe otro vector, la inyección indirecta: la orden viene en un documento que el bot lee (una página scrapeada). `scripts/12_probar_inyeccion_indirecta.py` toma la recuperación real de una pregunta y le agrega una orden al fragmento más relevante: responder solo «PWNED», pedir cédula y clave en un sitio falso, imprimir el prompt de sistema, o cerrar el bloque `<contexto>` y escribir reglas nuevas. En los 4 casos el asistente respondió la pregunta con los datos reales y no obedeció (4 llamadas a Gemini). Como defensa adicional, `formatear_contexto` ya no deja que un fragmento cierre el bloque `<contexto>`. Aparte, 47 pruebas automáticas (`tests/`, sin Gemini ni Ollama) revisan sinónimos, armado del prompt, recuperación, fragmentado y el conjunto de prueba; la primera corrida encontró que 36 identificadores de fragmento estaban repetidos (1.654 únicos de 1.690) porque se cortaban a 70 caracteres. Se corrigieron con una huella en el identificador; el texto de los fragmentos y sus vectores no cambiaron.
+**Inyección indirecta y pruebas de componentes.** Las pruebas N11 a N14 meten la orden en la pregunta. Existe otro vector, la inyección indirecta: la orden viene en un documento que el bot lee (una página scrapeada). `scripts/12_probar_inyeccion_indirecta.py` toma la recuperación real de una pregunta y le agrega una orden al fragmento más relevante: responder solo «PWNED», pedir cédula y clave en un sitio falso, imprimir el prompt de sistema, o cerrar el bloque `<contexto>` y escribir reglas nuevas. En los 4 casos el asistente respondió la pregunta con los datos reales y no obedeció (4 llamadas a Gemini). Como defensa adicional, `formatear_contexto` ya no deja que un fragmento cierre el bloque `<contexto>`. Aparte, 78 pruebas automáticas (`tests/`, sin Gemini ni Ollama) revisan sinónimos, armado del prompt, recuperación, fragmentado, el conjunto de prueba, el scraper y la validación de respuestas; la primera corrida encontró que 36 identificadores de fragmento estaban repetidos (1.654 únicos de 1.690) porque se cortaban a 70 caracteres. Se corrigieron con una huella en el identificador; el texto de los fragmentos y sus vectores no cambiaron.
 
 **Acuerdo entre el juez y la revisión manual.** Comparando solo si la respuesta está bien o no, el juez y la revisión coinciden en 55 de las 59 (93 %); en las 4 restantes (P02, P09, N18, N19) el juez fue más indulgente. En N10 coinciden en que falla pero no en el motivo. Nota: los veredictos de la revisión los propuso Claude Code y los ratificó María Stella Fuentes.
 
@@ -156,8 +162,8 @@ La comparación entre las cuatro versiones del prompt está en la sección 4: ri
 - **Datos que el sitio no publica.** La misión de Celsia y su NIT no aparecen en las páginas de texto de celsia.com (se revisaron el 28/10/2026), por lo que no están en la base y el asistente responde que no tiene esa información. No se completaron con fuentes de terceros para mantener la base solo con contenido oficial.
 - **Desviación del enunciado.** El enunciado pide consolidar el texto limpio en el prompt de sistema; el asistente usa RAG (12 fragmentos por pregunta). Se probó la opción del enunciado con 5 preguntas (P01, P02, P07, N01 y N18; 10 llamadas a `gemini-3.5-flash` y a su juez, `resultados_gemini-gemini-3.5-flash_completa_v3.csv`): la base completa (~341.000 tokens de entrada por pregunta) **sí cabe y respondió igual que con RAG** (las 3 de respuesta correctas y las 2 negativas reconocen que no saben), con tiempos parecidos (8 a 11 s contra 6 a 9 s). La diferencia es el tamaño: ~341.000 tokens por pregunta contra ~4.000 con RAG, unas 80 veces más entrada y costo. Con 5 preguntas no se concluye nada sobre precisión; por eso RAG se justifica por costo y escalabilidad (con más documentos la base dejaría de caber), no por calidad.
 - **Medición.** Con 35 preguntas de respuesta, una diferencia de dos o tres es menor que el ruido de un juez automático. Las respuestas esperadas las escribió el equipo y varias se corrigieron durante el proyecto.
-- **Datos.** No se descargaron los PDF (el `robots.txt` de celsia.com los bloquea), por lo que faltan los informes de gestión y el contrato de condiciones uniformes; 17 intenciones típicas de un cliente nuevo no tienen respuesta en el sitio. Hay datos antiguos en blogs y noticias (el asistente avisa la fecha de publicación) y cifras que el sitio contradice (por ejemplo, dos números de WhatsApp oficiales).
-- **Sin memoria entre turnos.** Cada pregunta se responde sola; no hay checkpointers ni LangGraph. Es lo que pide el Taller 1, y el seguimiento de una conversación queda para el Taller 2.
+- **Datos.** No se descargaron los PDF (el `robots.txt` de celsia.com los bloquea), por lo que faltan los informes de gestión y el contrato de condiciones uniformes; 18 intenciones típicas de un cliente nuevo no tienen respuesta en el sitio. Hay datos antiguos en blogs y noticias (el asistente avisa la fecha de publicación) y cifras que el sitio contradice (por ejemplo, dos números de WhatsApp oficiales).
+- **Sin memoria entre turnos.** Cada pregunta se responde sola; no hay checkpointers ni LangGraph. Es una decisión de alcance: el asistente no sigue una conversación.
 - **Resumen y FAQ** no tienen una evaluación como la de Q&A; se revisan a mano.
 - **Jailbreaks directos adicionales.** Son 3 casos tomados de categorías conocidas de jailbreak (rol, ofuscación y el caso Rappi), calificados por reglas y con un solo modelo; las categorías reales son muchas más.
 - **Inyección indirecta.** Son 4 casos escritos por el equipo, con un solo modelo y un solo prompt; no prueban que el sistema sea inmune, solo que estas órdenes no funcionaron.
@@ -168,7 +174,6 @@ La comparación entre las cuatro versiones del prompt está en la sección 4: ri
 
 ## Referencias
 
-- Curso *Técnicas avanzadas de IA aplicadas en modelos de lenguaje* (UAO), 2026-2S: temas de ingeniería de prompts, defensa contra inyección, sistemas compuestos y agentes.
 - Zaharia, M. et al. (2024). *The Shift from Models to Compound AI Systems*. Berkeley AI Research (BAIR) Blog.
 - Leviathan, Y., Kalman, M. y Matias, Y. (2025). *Prompt Repetition Improves Non-Reasoning LLMs*. arXiv:2512.14982. https://arxiv.org/abs/2512.14982 (la prueba de repetición de la sección 4 sigue su idea).
 - LangChain: documentación de `create_agent`, salida estructurada y `RecursiveCharacterTextSplitter` (docs.langchain.com).
@@ -178,7 +183,7 @@ La comparación entre las cuatro versiones del prompt está en la sección 4: ri
 
 ## Declaración de uso de IA
 
-El curso exige declarar qué herramientas de IA se usaron, para qué y cómo se verificó el resultado.
+Se declara qué herramientas de IA se usaron, para qué y cómo se verificó el resultado.
 
 | Herramienta | Para qué se usó | Cómo se verificó |
 |---|---|---|
