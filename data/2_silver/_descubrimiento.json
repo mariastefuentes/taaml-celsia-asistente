@@ -1,0 +1,20 @@
+{
+  "descubiertas": 1273,
+  "descargadas": 1272,
+  "bloqueadas": 0,
+  "con_error": 1,
+  "por_seccion": {
+    "page": {
+      "descubiertas": 326,
+      "descargadas": 325
+    },
+    "blog-celsia": {
+      "descubiertas": 126,
+      "descargadas": 126
+    },
+    "noticias": {
+      "descubiertas": 821,
+      "descargadas": 821
+    }
+  }
+}

@@ -1,0 +1,33 @@
+---
+url: https://www.celsia.com/es/noticias/reverdec-programa-de-celsia-para-combatir-la-deforestacion-gana-oscar-de-los-bosques-los-boscares-2021/
+title: ReverdeC, programa de Celsia para combatir la deforestación, gana “Óscar” de los bosques:  Los Bóscares 2021
+section: noticias
+fecha_publicacion: 2021-11-11
+hash: f2935ff0bb72f454708ca126528db6699a95c39a
+---
+
+# ReverdeC, programa de Celsia para combatir la deforestación, gana “Óscar” de los bosques:  Los Bóscares 2021
+
+Regresar a Noticias
+11 · 11 · 2021
+Compartir
+ReverdeC, programa de Celsia para combatir la deforestación, gana “Óscar” de los bosques: Los Bóscares 2021
+Tiempo de lectura: 4 minutos
+ReverdeC de Celsia fue reconocido en la categoría Reforestación y restauración de bosques al alcanzar 7,6 millones de árboles nativos sembrados en más de 4 . 000 hectáreas de bosques en el Valle, Antioquia y Tolima.
+Este premio reconoce las mejores prácticas e iniciativas empresariales en el cuidado de bosques en el país. ReverdeC fue ganador entre 150 empresas de Colombia.
+Los Bóscares fueron creados por Reforestamos México desde 2018 y se realiza este año por primera vez en Colombia en alianza con WWF Colombia y Acción Climática, con el apoyo de la Agencia Francesa del Desarrollo, AFD.
+Medellín, 11 de noviembre de 2021. El programa ReverdeC , iniciativa voluntaria de restauración ecológica liderada por Celsia, empresa de energía del Grupo Argos, fue reconocida hoy en la primera edición de los premios Bóscares 2021 Colombia , en la categoría Reforestación y Restauración de bosques. En sus primeros 5 años el programa ha restaurado más de 4.300 hectáreas con 7,6 millones de árboles nativos en Antioquia, Valle y Tolima, con una metodología participativa, guiada por expertos en restauración y de la mano de entidades como la CVC, el Sena, los comités de cafeteros y cañicultores, y las comunidades vecinas que cuidan los bosques sembrados.
+10 millones de árboles nativos para Colombia
+ReverdeC es el programa voluntario de restauración ecológica participativa de Celsia. Nace en el 2016 luego de la crisis del Fenómeno del Niño que trajo sequía y mucha preocupación por la escasez de agua en el Valle del Cauca.
+La meta es sembrar 10 millones de árboles nativos para restaurar las cuencas hidrográficas de Colombia de la mano de aliados y de las comunidades.
+“ Estamos muy contentos con los resultados de este programa que nació en el Valle y hoy ya está en dos departamentos más. Seguiremos trabajando para llegar a más bosques y cuencas y tenemos la meta de seguir sembrando más y más árboles. No es una tarea fácil, pero de la mano de las comunidades y aliados seguro lo vamos a lograr. Hemos llegado a lugares impensados a lomo de mulas, con el entusiasmo de los campesinos y son ellos los que hoy nos ayudan a cuidar todos esos árboles que están creciendo y protegiendo el agua ”, afirmó Ricardo Sierra, líder de Celsia.
+Los «Óscares» de los bosques
+Los Bóscares son una iniciativa creada en 2018 por la organización Reforestamos México para identificar y reconocer públicamente las mejores prácticas e iniciativas empresariales en el cuidado de bosques, además de motivar e inspirar a otras empresas a tomar acción para la sostenibilidad de los bosques y ser más proactivas en la comunicación de sus resultados y experiencias para fomentar la transparencia y colaboración con otros actores.
+Esta iniciativa ya ha reconocido empresas en México, Costa Rica y Perú y este año se está realizando por primera vez en Colombia en alianza entre WWF Colombia, Acción Climática, con el apoyo de la Agencia Francesa del Desarrollo, AFD.
+Según los organizadores, en esta primera edición se investigó información pública disponible de 150 empresas del país, de las cuales se seleccionaron y nominaron proyectos de 14 empresas a través de 5 categorías: Conservación de bosques, Bosques y cambio climático, Reforestación y restauración de bosques, Manejo forestal sostenible y Cero deforestaciones en cadenas de suministro. Las iniciativas de las empresas finalistas fueron evaluadas por un jurado independiente conformado por la Organización de las Naciones Unidas para la Alimentación y Agricultura (FAO por sus siglas en inglés), South Pole, Asocarbono, Casostenible y la Cámara Verde de Comercio.
+Asimismo, a través de los Bóscares se ha investigado información de más de 900 empresas en México, Costa Rica, Perú y ahora Colombia.
+Ernesto Herrera, director general de Reforestamos, resaltó la importancia de la vinculación empresarial con organizaciones de otros sectores para desarrollar alianzas que faciliten el entendimiento y atención a los problemas que amenazan a los bosques y comentó, que “ hoy celebramos la labor de todas aquellas empresas que realizan acciones a favor de los bosques de Colombia y celebramos aún más a aquellas que difunden y comparten su información y experiencias con diferentes audiencias ”.
+Guillaume Meyssonier, de la Agencia de Desarrollo, afirmó que “ necesitamos unir esfuerzos entre sector privado, público, y sociedad civil para resolver todos los problemas de hoy, la sociedad puede cambiar sus aspiraciones de consumo, el gobierno puede desarrollar estrategias, pero son las empresas las que desarrollan soluciones concretas para cambiar sus planes de negocio y prestar bienes y servicios con proyectos que cuiden los recursos naturales ”.
+Ximena Tovar, directora Ejecutiva Regional de Acción Climática dijo en el evento que “ con todas estas acciones la empresa privada hace un gran aporte para mitigar el cambio climático. Esta es una buena oportunidad para invitar a la sociedad civil y las comunidades para que apoyemos todos estos proyectos porque somos actores decisivos en este trabajo conjunto. La deforestación es un gran reto para el país y es urgente hacer acuerdos y proyectos para reforestar y cuidar los bosques y en ese sentido resalto mucho el apoyo de la empresa privada. Ha sido muy inspirador conocer el trabajo que están haciendo”.
+Al recibir el premio en el evento virtual realizado hoy, Ricardo Sierra, líder de Celsia manifestó que “ estamos muy emocionados con todo el equipo y este premio nos anima y nos compromete a seguir sembrando, empezamos con 1 millón de árboles nativos con un aliado muy importante como lo es CVC, al finalizar este año vamos a llegar a 8 millones y vamos a alcanzar la meta de sembrar 3 millones de árboles por año. Seguiremos metiéndole toda la innovación de Celsia y agradecemos a los aliados, porque estamos generando más de mil empleos y queremos seguir creciendo y llamando más aliados para multiplicar su alcance e impacto ”, afirmó.
+Para conocer más del programa haz clic aquí
