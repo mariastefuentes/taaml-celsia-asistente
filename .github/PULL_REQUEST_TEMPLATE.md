@@ -18,6 +18,7 @@ Marca las áreas que toca esta PR:
 
 - [ ] **Pipeline de datos** (`scripts/01`–`06`: Bronze → Silver → Gold → curaduría → chunks)
 - [ ] **Recuperación e índice** (`src/taaml/recuperacion.py`, `sinonimos.py`, `reordenar.py`, `scripts/07`–`10`)
+- [ ] **Respaldo y continuidad** (`src/taaml/respaldo.py`, `scripts/16_ensayo_demo.py`)
 - [ ] **Prompts y tareas** (`prompts/`, `src/taaml/prompts.py`, `tareas.py`)
 - [ ] **Evaluación y conjunto de prueba** (`scripts/09`–`14`, `docs/2 - Conjunto de prueba/`)
 - [ ] **Aplicación** (`app.py`, `app_modulo1.py`)

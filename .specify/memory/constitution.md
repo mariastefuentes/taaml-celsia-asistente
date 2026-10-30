@@ -210,6 +210,7 @@ git push -u origin feat/mi-cambio
 | 2026-10-29 | Prompt v3 con cinco bloques y etiquetas XML | Defensa del rol y contra inyección |
 | 2026-10-30 | `gemini-3.5-flash` como modelo vigente | Respeta `temperature` y `top_p`; el 3.6 no |
 | 2026-10-30 | Cadena de respaldo y respuestas guardadas | La demo no se cae por cuota o conexión |
+| 2026-10-30 | El respaldo reconoce 401/403 como falla del proveedor | Una clave inválida o sin permisos no debe impedir DeepSeek ni el modelo local |
 | 2026-10-30 | `app_modulo1.py` para la sustentación | Muestra solo lo que evalúa la rúbrica; el resto queda en `app.py` |
 
 ## 10. Notas y tareas pendientes
