@@ -23,7 +23,7 @@ Generado automáticamente desde `inventario_intenciones.csv` (que se puede edita
 | inversionistas y gobierno corporativo | 2 | 2 | 0 | 0 |
 | regulación y autogeneración | 1 | 1 | 0 | 0 |
 
-**Total:** 72 intenciones en el alcance (72 con respaldo, 16 con una sola fuente) y 17 preguntas típicas de un cliente nuevo que hoy la base no responde. **Momento del cliente** (dentro del alcance): ambos: 20; cliente actual: 17; primer contacto: 34. «Primer contacto» es lo que pregunta quien interactúa por primera vez; «cliente actual» quien ya tiene el servicio; «ambos» sirve a los dos.
+**Total:** 71 intenciones en el alcance (71 con respaldo, 16 con una sola fuente) y 18 preguntas típicas de un cliente nuevo que hoy la base no responde. **Momento del cliente** (dentro del alcance): ambos: 20; cliente actual: 17; primer contacto: 34. «Primer contacto» es lo que pregunta quien interactúa por primera vez; «cliente actual» quien ya tiene el servicio; «ambos» sirve a los dos.
 
 ## Fallas y daños (3)
 
