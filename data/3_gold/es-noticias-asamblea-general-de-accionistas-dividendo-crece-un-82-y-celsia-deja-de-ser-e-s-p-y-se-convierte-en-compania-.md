@@ -1,0 +1,51 @@
+---
+url: https://www.celsia.com/es/noticias/asamblea-general-de-accionistas-dividendo-crece-un-82-y-celsia-deja-de-ser-e-s-p-y-se-convierte-en-compania-de-inversion-en-energia/
+title: Asamblea general de accionistas: dividendo crece un 8,2% y Celsia deja de ser E.S.P. y se convierte en compañía de inversión en energía
+fuente: celsia.com (sitio oficial)
+fecha_extraccion: 2026-10-27T15:34:44.132370+00:00
+fecha_publicacion: 2019-03-27
+section: noticias
+categoria: noticias
+region: Valle y Tolima
+idioma: es
+caracteres: 9012
+tokens: 2015
+hash: f9cf485d23d8927425503eef452e19207423f85d
+relevancia_propuesta: media
+motivo: noticia: depende del tema y de la vigencia (se decide en la curaduría, regla R7)
+---
+
+# Asamblea general de accionistas: dividendo crece un 8,2% y Celsia deja de ser E.S.P. y se convierte en compañía de inversión en energía
+
+Regresar a Noticias
+27 · 03 · 2019
+Compartir
+Asamblea general de accionistas: dividendo crece un 8,2% y Celsia deja de ser E.S.P. y se convierte en compañía de inversión en energía
+Tiempo de lectura: 5 minutos
+La transformación, su historia y lo que viene : En un ambiente que combinó un recorrido por la rápida transformación de Celsia en los últimos 10 años con la visión del futuro de la energía en el que la compañía quiere ser actor relevante, los accionistas de Celsia aprobaron la reforma a sus estatutos para que la empresa deje de ser una Empresa de Servicios Públicos y se consolide como una sociedad inversionista en infraestructura eléctrica. Concentró en Epsa su operación en Colombia.
+Grandes movidas: Igualmente se discutieron las recientes movidas entre las cuales se cuentan la entrada al mercado del Tolima que le permite a la compañía llegar a 1.100.000 clientes y el haber terminado puntualmente la primera etapa del Plan5Caribe con un estimado de 480.000 millones de inversiones.
+Resultados: en 2018 obtuvo ingresos consolidados por $3,4 billones, ebitda de $1,13 billones, ganancia neta de $351 mil millones y realizó inversiones por $618 mil millones.
+Además, para los accionistas: arte, movilidad e iluminación sostenible : Un stand de movilidad eléctrica dio la bienvenida a los accionistas, y algunos de ellos se fueron a casa con bicicletas eléctricas y kits de iluminación eficiente, como señal de la apuesta que hace la compañía por la transformación en el sector. Un libro-obra de lujo en homenaje al artista vallecaucano José Horacio Martínez, fue el regalo que la compañía preparó para sus accionistas.
+Med ellín, 27 de marzo de 2019. 2018 fue un año de importantes logros para Celsia, empresa de energía del Grupo Argos. Su estrategia organizacional fue respaldada por la Asamblea General de Accionistas, que contó con la participación de 409 de los accionistas representando el 84,8% de las acciones y que estuvo marcada por importantes decisiones: La aprobación de un aumento del 8,2% en el dividendo, que genera una rentabilidad del 4,2% sobre el precio de la acción; la elección de la Junta Directiva y de un nuevo Revisor Fiscal, además de una reforma estatutaria, que incluye el cambio de denominación social para dejar de ser ESP (Empresa de Servicios Públicos) y modificaciones al objeto social para seguir creciendo en el mundo de la infraestructura eléctrica, entre otros.
+La Asamblea inició con las palabras de Jorge Mario Velásquez, presidente de la Junta Directiva quien destacó “la velocidad que ha adquirido Celsia para evolucionar cuidadosa y ágilmente, sumada a su vibrante cultura interna de innovación y servicio a los clientes, son claves para posicionarla como un actor cada vez más relevante en este renglón de la economía ” y añadió “seguimos avanzando con pasos decididos en la estrategia trazada: consolidarnos como un competidor diferente que está listo para aprovechar las tendencias mundiales de la industria, a favor de la generación de valor compartido y la promoción del desarrollo y la competitividad en todas las regiones donde tenemos presencia”.
+Luego Ricardo Sierra, líder de Celsia , dio lectura al informe de gestión de 2018 y finalizó diciendo: “seguiremos impulsando la incorporación de energías renovables y optimizando la gestión de nuestros activos. Y como empresarios y como ciudadanos, entregando nuestra mejor energía para un país que se merece el mejor de los escenarios futuros”. Su intervención terminó destacando el reciente anuncio sobre la adquisición que se hará a través Epsa de los activos de distribución y el negocio de comercialización de energía eléctrica en el Tolima. Señaló que esta transacción además de permitirle lograr una de las grandes metas de la organización de manera anticipada de llegar al millón de clientes atendidos; también le representará a un incremento del 14% en el Ebitda consolidado de la compañía y un 50% del Ebitda del negocio de transmisión y distribución.
+Principales aprobaciones de la Asamblea de accionistas
+Dividendos. Se aprobó un dividendo de $184 anuales por acción, lo que significa un crecimiento del 8,2% frente al 2018, y que será pagado en cuatro cuotas. La rentabilidad del dividendo de la compañía fue de 4,2%, mientras que el promedio de todas las acciones que integran el Colcap está alrededor del 3,75%. Esto significa que la rentabilidad que les está entregando la acción está un 12% por encima del promedio del mercado.
+Reforma de estatutos. Como parte del proceso de reorganización empresarial consistente en la venta de algunos activos de generación eléctrica y la representación comercial de Meriléctrica a favor de Epsa, Celsia pidió autorización a los accionistas para reformar sus estatutos y así, entre otros aspectos, dejar de ser una E.S.P. (Empresa de Servicios Públicos) y consolidarse como una sociedad inversionista en el sector de la infraestructura eléctrica.
+Consolidación de Epsa: su vehículo de crecimiento en Colombia. Esta iniciativa permitirá grandes sinergias operativas que se estima permitirá ahorros consolidados de $26.000 millones.
+Elección de la Junta Directiva para el periodo 2019 – 2020. Se ratificaron los miembros actuales: Jorge Mario Velásquez, Alejandro Piedrahita y Gonzalo Alberto Pérez; y como miembros independientes David Yanovich, María Fernanda Mejía, María Luisa Mesa y Eduardo Pizano.
+Apoyo a actividades sociales. La Asamblea de accionistas aprobó destinar a actividades que tengan un impacto positivo en la sociedad $4.400.000.000, lo que representa un incremento de 4,76% frente a la donación realizada en 2018.
+Elección de revisor fiscal. Designación de KPMG S.A.S. como Revisor Fiscal de la compañía para el siguiente período estatutario que inicia en abril de 2019.
+Movilidad sostenible. La apuesta por la movilidad sostenible de la organización no solo estuvo presente en la portada del informe de gestión, sino en el stand explicativo que los accionistas encontraron a la entrada del recinto, y en los avances reportados con la instalación de estaciones de carga en las principales ciudades del país y la participación en el sistema masivo de transporte Mío en Cali, en el que Celsia será aliado para incluir 26 buses eléctricos.
+Apoyo al arte: Cada año, Celsia publica un libro-obra que hace homenaje a un artista cuya trayectoria merezca ser reconocida. Esta colección ya ha tenido a artistas de la talla de Mario Vélez, Ricardo Cárdenas y Ana Patricia Palacio, entre otros. Este año el turno fue para José Horacio Martínez , quien lleva 30 años de impecable trabajo en el que el color, sus raíces vallecuacanas, la reflexión sobre la naturaleza, el Pacífico y su gente son protagonistas. El libro “Pintura Inagotable” tiene características únicas como una portada que se convierte en cuadro, una lupa para ver los detalles que el artista dibuja en sus obras, y una entrevista en la cual el artista respondió con pinturas. El artista estuvo presente en la asamblea autografiando los libros.
+Año de grandes transformaciones
+Dentro de los hitos más importantes de los cuales se hizo recuento en la Asamblea también sobresalen:
+La entrega oportuna de los 7 proyectos asignados a la organización en el marco del Plan5Caribe, que cumple así en cronograma los compromisos asumidos con el Gobierno Nacional y la Costa Norte, con inversiones estimadas en $480 mil millones.
+La puesta en operación de Celsia Solar Bolívar, el primer proyecto a gran escala de generación fotovoltaica en el Caribe, con una capacidad de 8,1 MW, que equivale a darle energía a unas 7.400 viviendas. Está conectada al Sistema Interconectado Nacional (SIN).
+La estructuración del programa de bonos verdes, a través de Epsa, por valor de COP 420.000 millones para financiar el desarrollo de proyectos de energía renovable no convencional.
+La instalación de 27 techos solares en Colombia, entre ellos Racafé, en el Huila y las universidades ICESI en Cali, y EIA en Medellín, entre otros lugares. Además del inicio de la construcción del techo solar del aeropuerto El Dorado, en Bogotá.
+Los primeros proyectos de generación solar en Centroamérica: se entregaron los techos solares de las primeras 60 viviendas del conjunto residencial La Hacienda, del Grupo Provivienda, y en Costa Rica se instaló otro proyecto en la Compañía de Galletas Pozuelo.
+La compañía completó 17 estaciones de recarga para vehículos eléctricos en Bogotá, Cali, Cartagena y el Valle de Aburrá, Colombia. Iniciando 2019 instaló la primera en Ciudad de Panamá.
+El programa ReverdeC llegó a los 2,6 millones de árboles sembrados en el Valle del Cauca. Cada dos minutos se sembró un árbol en 30 municipios del departamento. Hoy la región tiene más árboles que capturarán 13 mil toneladas de CO 2 .
+Esto se suma a los resultados económicos obtenidos al cierre de 2018 donde se destaca los ingresos consolidados por $3,4 billones, el ebitda de $1,13 billones, la ganancia neta de $351 mil millones y las inversiones por $618 mil millones.
+Lea nuestro Informe accionistas Celsia 2018

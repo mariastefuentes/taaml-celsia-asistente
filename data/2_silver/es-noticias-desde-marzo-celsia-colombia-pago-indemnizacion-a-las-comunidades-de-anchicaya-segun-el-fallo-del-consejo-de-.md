@@ -1,0 +1,30 @@
+---
+url: https://www.celsia.com/es/noticias/desde-marzo-celsia-colombia-pago-indemnizacion-a-las-comunidades-de-anchicaya-segun-el-fallo-del-consejo-de-estado/
+title: Desde marzo, Celsia Colombia pagó indemnización a las comunidades de Anchicayá según el fallo del Consejo de Estado.
+section: noticias
+fecha_publicacion: 2022-12-06
+hash: 4267a8e94a980fea98597db32491eb6f195b4594
+---
+
+# Desde marzo, Celsia Colombia pagó indemnización a las comunidades de Anchicayá según el fallo del Consejo de Estado.
+
+Regresar a Noticias
+06 · 12 · 2022
+Compartir
+Desde marzo, Celsia Colombia pagó indemnización a las comunidades de Anchicayá según el fallo del Consejo de Estado.
+Tiempo de lectura: 3 minutos
+Pide celeridad a la Defensoría a la defensoría del Pueblo para
+desembolsar los recursos a los beneficiarios.
+6 de diciembre de 2022. Celsia Colombia, antes Epsa, desde el 22 de marzo de 2022 les cumplió a las comunidades de Anchicayá y pagó la parte de la indemnización que le correspondió según el fallo del Consejo de Estado en la Acción de Grupo de las comunidades del río Anchicayá contra Epsa, la Corporación Autónoma Regional del Valle del Cauca – CVC, y el Ministerio de Ambiente y Desarrollo Sostenible.
+Dichos recursos fueron consignados, según lo indicó el Consejo de Estado y dispone la Ley 472 de 1998, al Fondo para la Defensa de los Derechos e Intereses Colectivos que es administrado por la Defensoría del Pueblo, la entidad encargada de identificar los beneficiarios y entregarles los dineros.
+Celsia Colombia (antes Epsa), al igual que las comunidades, está interesada en que el proceso finiquite y que las comunidades reciban las indemnizaciones correspondientes, y por tanto solicita respetuosamente a la Defensoría iniciar las gestiones para entregar los recursos a los beneficiarios.
+La compañía continuará en diálogo permanente con las comunidades vecinas a la central hidroeléctrica Bajo Anchicayá y sus representantes para mantener una relación armoniosa y seguir trabajando por su bienestar.
+Sobre la sentencia de unificación del 10 de junio de 2021: se paga indemnización a las comunidades, pero el Consejo de Estado dejó sin efecto las pruebas de supuestos daños por ser fraudulentas
+El Consejo de Estado determinó una indemnización para compensar las afectaciones derivadas de la operación de mantenimiento realizadas en 2001, sin encontrar que las mismas se hubieran producido a consecuencia de impericia, negligencia o culpa, sino por la materialización de un «riesgo excepcional» dada la naturaleza de la actividad de generación. Para efectos de tasar la indemnización se debió apoyar en criterios de equidad, ya que las pruebas que se aportaron por el abogado Germán Ospina Muñoz en representación de algunas de las comunidades para fundamentar la estimación de perjuicios consideradas en las sentencias de primera y segunda instancia del Juzgado Administrativo de Buenaventura y del Tribunal Administrativo del Valle del Cauca, fueron dejadas sin efectos legales (nulas) por el Consejo de Estado tal como lo había solicitado Celsia (antes Epsa) por la flagrante violación al debido proceso de las partes del expediente y sus evidentes yerros técnicos.
+No es cierto que el río esté «muerto» ni que la represa esté en malas condiciones
+El Ministerio del Medio Ambiente declaró que desde 2004 las condiciones biológicas del río Anchicayá están restablecidas.
+Río Anchicayá se encuentra vital y biodiverso: Contrario a lo indicado por algunos integrantes de la protesta, el hábitat del Bajo Anchicayá goza de una gran biodiversidad. La hidroeléctrica opera cumpliendo la normatividad aplicable y bajo la supervisión de las autoridades competentes en un entorno protegido y respetuoso de la naturaleza; suministra energía limpia para el país, y desarrolla los planes sociales y ambientales con la participación de las comunidades.
+Muro de presa en óptimas condiciones: Tampoco es cierto que el muro de presa de la Central Hidroeléctrica «se encuentra en mal estado» y que en consecuencia debe desmantelarse por haber cumplido su vida útil. Por el contrario, Celsia Colombia entregó a la Corte Constitucional un dictamen pericial elaborado por el experto Jaime Iván Ordoñez Ordoñez, doctor en Ingeniería de la Universidad de California, Berkely-USA y una de las principales autoridades en seguridad de presas en el mundo, quien concluyó que «la vida útil del proyecto se puede prolongar por mucho más tiempo, posiblemente más de 100 años, dado que las condiciones de seguridad estructural son tan buenas como las que tendría una presa recién construida».
+Considerando lo anterior, Celsia Colombia espera que en la acción de tutela promovida por un sector de la comunidad de Anchicayá que está generando una falsa incertidumbre sobre las condiciones de seguridad del muro de presa de la Central y en consecuencia, se ordene desmantelamiento, la Corte Constitucional confirme las decisiones previas emitidas por los jueces de tutela de instancia, quienes señalaron que el entorno de Anchicayá goza de un buen estado de conservación ambiental que amerita una medida especial de protección. Igualmente, espera que se aclare de manera nítida -y para ello ha aportado las pruebas y estudios técnicos- que este proyecto de hidroelectricidad no genera ningún riesgo para las comunidades asentadas agua abajo del muro de presa.
+Apoyo y relacionamiento con las comunidades sigue activo
+Desde hace más de nueve años, Celsia Colombia inició un camino de relacionamiento que ha permitido un acercamiento y tender puentes de comunicación entre la empresa y las comunidades, identificando sus necesidades y llegando a realizar una inversión en la zona por más de $8.000 millones. Los proyectos más representativos han sido en obras de infraestructura comunitaria, educativa, mejoramiento vial y de puentes. Así mismo, desarrollo de programas de salud auditiva y visual, mejoramiento de las condiciones de viviendas de la zona y construcción y mejoramiento de la red eléctrica para las comunidades del Bajo.

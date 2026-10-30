@@ -1,0 +1,39 @@
+---
+url: https://www.celsia.com/es/noticias/en-lancha-y-a-caballo-celsia-entrega-mobiliario-escolar-a-instituciones-de-prado-villarrica-villahermosa-y-planadas-bajo-mecanismo-de-obras-por-impuestos/
+title: En lancha y a caballo, Celsia entrega mobiliario escolar a instituciones de Prado, Villarrica, Villahermosa y Planadas, bajo mecanismo de Obras por Impuestos
+fuente: celsia.com (sitio oficial)
+fecha_extraccion: 2026-10-27T15:32:05.394072+00:00
+fecha_publicacion: 2020-10-16
+section: noticias
+categoria: noticias
+region: Tolima
+idioma: es
+caracteres: 5477
+tokens: 1237
+hash: cbe507d5d34b000b3b9e5916f0e8c099e51fd736
+relevancia_propuesta: media
+motivo: noticia: depende del tema y de la vigencia (se decide en la curaduría, regla R7)
+---
+
+# En lancha y a caballo, Celsia entrega mobiliario escolar a instituciones de Prado, Villarrica, Villahermosa y Planadas, bajo mecanismo de Obras por Impuestos
+
+Regresar a Noticias
+16 · 10 · 2020
+Compartir
+En lancha y a caballo, Celsia entrega mobiliario escolar a instituciones de Prado, Villarrica, Villahermosa y Planadas, bajo mecanismo de Obras por Impuestos
+Tiempo de lectura: 3 minutos
+Ibagué, 16 de octubre de 2020. Un impulso visible a la calidad de la educación en zonas vulnerables está llevando a cabo Celsia, de manera coordinada con las alcaldías, la gobernación y la ART por el mecanismo Obras por Impuestos.
+Y es que la buena energía es capaz de llegar a cualquier lugar y en cualquier forma. Y esta vez llegó en varias lanchas cargadas de dotación escolar para la sede principal de la Institución Educativa Isla del Sol, ubicada en una pequeña isla en la mitad del embalse de Prado, en Tolima.
+Allí llegaron los funcionarios de Celsia con pupitres, mesas, sillas, tableros, muebles para almacenamiento y puntos ecológicos que beneficiarán a más de 300 estudiantes cuando regresen a sus clases presenciales a esta sede y las otras ubicadas a orillas del embalse: Aco, Corinto, El Caimán y Tomogó.
+Ricardo Sierra, líder de Celsia, expresó : “esto es una prueba de que Celsia es un actor comprometido con el departamento del Tolima. Estamos aquí para prestar nuestro servicio de energía, pero también para ir más allá y ser socios del desarrollo de sus habitantes, en este caso bajo un mecanismo efectivo como el de Obras por Impuestos, que materializa los beneficios de la actividad empresarial en la zona donde opera. Gracias a la gobernación, a las alcaldías y a la ART por ayudarnos a coordinar de manera efectiva estas ayudas, muchos estudiantes de estas zonas vulnerables estudiarán en mejores condiciones”.
+Sobre estas obras, el gobernador del Tolima, Ricardo Orozco, dijo que: “ estamos seguros de que de la mano de Celsia y otras entidades podremos no solo hacer mejoras importantes en la calidad de vida de los tolimenses como las que plantean estos proyectos, sino además dinamizar el empleo. Celsia ha sido la empresa privada líder en manifestar el inicio del trabajo en obras por impuestos”.
+A su turno, Carolina Vásquez, coordinadora regional de la ART para el Tolima destacó que este ha sido un gran año en el mecanismo de Obras por Impuestos y es un esfuerzo que se ha venido liderando conjuntamente con gobernador, alcaldes, la Consejería Presidencial para la Estabilización, la ART y los empresarios: “en el Tolima específicamente en el 2018 se desarrollaron dos obras por impuestos, en el 2019 fueron cuatro y en 2020 son ocho proyectos, de los cuales Celsia está desarrollando seis, y serán un gran aporte para la región.”
+Nancy Moncaleano, gestora social de Prado, agradeció por invertir parte de los impuestos en programas sociales para el municipio: “es muy importante contar con Celsia para beneficiar al estudiantado de Prado, todas nuestras instituciones educativas con sus sedes quedaron totalmente dotadas y amobladas ”.
+Este programa de impacto social fruto de la coordinación público-privada también llegó a la sede principal de la Institución Educativa Luis Felipe Pinto de Prado y a sus otras sedes Juan Ortiz, Efigenia Leyva, Chenchito, La Virginia, Malta, Catalán, Ojo de Agua, Peñón Alto y Tortugas, donde más de 600 estudiantes también estrenarán mobiliario escolar.
+Consuelo Urrea, docente de la IE Luis Felipe Pinto, aseguró que esta dotación “realmente va a servir mucho a la institución porque hacían mucha falta dentro de las aulas, solo agradecer por tener en cuenta las sedes rurales de la región”.
+Para lograr llevar más dotación a las sedes Bello Horizonte y Vagones de la Institución Educativa José Celestino Mutis, del mismo municipio, fue necesario obtener la ayuda de la comunidad, que dispuso caballos para internarse en las zonas montañosas.
+En total son tres instituciones educativas con 25 sedes beneficiadas en Prado y se entregaron 1.700 elementos de mobiliario escolar.
+Luis Ernesto Castañeada, alcalde de Prado, dijo “que solo queda agradecer por el apoyo que nos brindan en la entrega a todas las instituciones de este mobiliario que es una obra de gran impacto en materia de calidad educativa. Esto no se hacía hace mucho tiempo, quizá nunca, cuando se les daba a uno y otros no y lo hacía la Alcaldía, no una empresa. Agradecemos nuevamente lo que puedan hacer por la región y por este municipio que desde hace muchas décadas no sentía ese fortalecimiento por parte de la empresa de energía”, afirmó.
+En los próximos días se continuará llevando “buena energía” a los municipios de Villarrica y Villahermosa, donde se entregará más mobiliario escolar, y en Planadas, a donde llegarán computadores a las instituciones educativas.
+Estos proyectos de mejoramiento para la educación se desarrollan a través de la modalidad de Obras por Impuestos (Ley 1819 de 2016 y Decreto 1915 de 2017), que permite a las empresas destinar hasta el 50% del impuesto de renta para la ejecución de proyectos de trascendencia social en los municipios que hacen parte de las Zonas Más Afectadas por el Conflicto (Zomac). La focalización de las ayudas, la identificación de necesidades y el tipo de aporte se determina con las autoridades locales, la gobernación, y bajo la coordinación de la Agencia para la Renovación del Territorio.
+Asimismo, próximamente se llevará a cabo el mejoramiento de vías terciarias en siete veredas del municipio de Ataco, proyecto que avanza en su etapa de estructuración y que beneficiará a más de 4.000 personas. El valor invertido será de $8.000 millones.

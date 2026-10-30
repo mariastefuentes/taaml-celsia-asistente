@@ -1,0 +1,43 @@
+---
+url: https://www.celsia.com/es/noticias/celsia-inicia-2018-con-un-primer-trimestre-sobresaliente-tanto-en-ebitda-como-en-utilidad-neta/
+title: Celsia inicia 2018 con un primer trimestre sobresaliente tanto en Ebitda como en utilidad neta
+fuente: celsia.com (sitio oficial)
+fecha_extraccion: 2026-10-27T15:36:46.876904+00:00
+fecha_publicacion: 2018-05-04
+section: noticias
+categoria: noticias
+region: Valle del Cauca
+idioma: es
+caracteres: 7027
+tokens: 1575
+hash: b9fa234cb4fb2323baefb33bc02891e1acf55468
+relevancia_propuesta: media
+motivo: noticia: depende del tema y de la vigencia (se decide en la curaduría, regla R7)
+---
+
+# Celsia inicia 2018 con un primer trimestre sobresaliente tanto en Ebitda como en utilidad neta
+
+Regresar a Noticias
+04 · 05 · 2018
+Compartir
+Celsia inicia 2018 con un primer trimestre sobresaliente tanto en Ebitda como en utilidad neta
+Tiempo de lectura: 4 minutos
+Medellín, 4 de mayo de 2018. Celsia, empresa de energía del Grupo Argos, inició el año con unos resultados operacionales sobresalientes enmarcados en la materialización de la emisión de acciones que permitió a la organización incrementar su participación en Epsa hasta el 61% y reducir el nivel de apalancamiento en $719 mil millones. “Los resultados de todas nuestras operaciones nos permitieron obtener el mejor Ebitda para un primer trimestre y refuerzan nuestro compromiso con todos los accionistas que nos acompañaron en la emisión de acciones. Igualmente, la disciplina en la aplicación de los recursos permite que la utilidad de la controladora se incremente en más de $50.000 millones gracias a los menores intereses y a una mayor participación en los resultados de Epsa”, indicó Ricardo Sierra Fernández, líder de Celsia .
+Los resultados financieros del primer trimestre produjeron el Ebitda más alto en la historia de la compañía para este periodo, debido a unas operaciones cada vez más rentables sumadas a unas condiciones positivas del mercado. Además, se anunciaron noticias relevantes para el crecimiento de la organización, especialmente en los negocios de generación y distribución con el inicio de obras de la Pequeña Central Hidroeléctrica San Andrés en Antioquia, la granja solar en Bolívar y el sexto proyecto del Plan5Caribe, esta vez en el Atlántico.
+Los nuevos negocios y la transformación en la experiencia del cliente se siguen consolidando con resultados importantes: en energía fotovoltaica ya se tienen 4 MW de techos solares instalados y en proceso de instalación se encuentran 14 MW; en lo corrido del año más de 5.000 clientes se han conectado a la nueva era de la energía con productos como energía convencional, iluminación eficiente, energía de respaldo, distritos térmicos y el portafolio de hogares. Adicionalmente, en Palmira, se abrió el primer punto de venta y asesoría energética para el segmento residencial. En este centro de servicio los clientes pueden renovar su hogar siempre buscando la eficiencia energética, y tienen la oportunidad de interactuar y conocer todos los productos y sus beneficios.
+Principales resultados:
+El Ebitda fue cercano a los $290 mil millones creciendo al 20% frente al mismo período del año anterior. La operación en Colombia contribuyó con un Ebitda de $210 mil millones debido al comportamiento positivo del precio de energía en bolsa, la mayor generación y el menor gasto administrativo. El Ebitda de Centroamérica sumó USD 28 millones.
+La utilidad neta consolidada fue de $79 mil millones, un incremento de 262% respecto al año anterior y el segundo valor trimestral más alto registrado desde mediados de 2014. En este indicador el resultado atribuible a la controladora registró una ganancia de $51 mil millones cifra muy superior respecto a los $608 millones obtenidos el año pasado.
+Los ingresos consolidados alcanzaron $847 mil millones, un aumento de 14% frente al registro del año anterior. La operación en Colombia aportó $660 mil millones, 18% superior al mismo trimestre de 2017, y Centroamérica sumó USD 65 millones con un incremento de 5%. Un dato para destacar en la región es el aumento en la generación eólica en Costa Rica que durante el trimestre subió un 38% debido a una mayor velocidad del viento, propia de la estación.
+En cuanto a los negocios, el aporte de Generación en Colombia fue $324 mil millones subiendo 22%; los ingresos de Transmisión y Distribución sumaron $67 mil millones y tuvieron en cuenta el ingreso de los proyectos del Plan5Caribe que entraron en operación en 2017: La Guajira y Valledupar. Por su parte, en el negocio de Comercialización se obtuvieron ingresos por $231 mil millones, lo que representa un incremento de 9%. En otros ingresos operacionales se registraron cerca de $13 mil millones debido al aporte de Nuevos Negocios como el fotovoltaico, la comercialización de plantas de respaldo, el distrito térmico Nuestro Montería y la comercialización del portafolio de hogares.
+El costo de ventas consolidado registró $592 mil millones, un 13% superior frente al observado el año anterior, debido principalmente al mayor uso de gas en Zona Franca Celsia para atender la demanda en la Costa Caribe durante el mes de febrero. En Centroamérica por el contrario el costo de ventas fue 19% inferior.
+Respecto a las inversiones, en Colombia fueron por $89 mil millones, de las cuales: $41 mil millones correspondieron a inversiones en el Plan5Caribe; $34 mil millones a expansión del Sistema de Transmisión Regional -STR- y al Sistema de Distribución Local -SDL- , obras civiles y al inicio de la construcción de la central San Andrés (Antioquia); $14 mil millones se invirtieron en la continuidad y mantenimiento de los negocios. En Centroamérica las inversiones realizadas en lo corrido del año suman $868 millones.
+La deuda al cierre del primer trimestre ascendió a $3,01 billones un 20% menos que a diciembre de 2017 gracias a la cancelación de pasivos en Celsia y sus operaciones en Centroamérica asociadas a la emisión de acciones. Producto de esto, el gasto por intereses se redujo en $7.414 millones para este trimestre.
+Hechos relevantes del trimestre
+Inició la construcción de la Pequeña Central Hidroeléctrica San Andrés (Antioquia) que aportará 19,9 MW de capacidad, proveerá energía a 25.000 hogares y creará aproximadamente 150 empleos directos e indirectos en la etapa de construcción.
+Comenzaron las obras de Celsia Solar Bolívar, la segunda granja solar de la compañía que estará ubicada en el municipio de Santa Rosa de Lima (Bolívar). Tendrá una capacidad instalada de generación de 8,06 MW y se estima generará 15,5 GWh–año, con lo que se le brindaría energía a unas 7.400 viviendas.
+Se inició en el Atlántico el sexto de los siete proyectos adjudicados a la compañía en el Plan5Caribe: la construcción de la subestación Norte de 110 kV, la ampliación de la capacidad de la subestación Nueva Barranquilla y la construcción de 5 km de red subterránea de distribución en doble circuito.
+Se desarrolló la Asamblea General de Accionistas en las que se aprobó un dividendo de $170 por acción, un crecimiento de 31% respecto al dividendo del año anterior.
+Celsia ocupó el noveno lugar en índice de inversión social privada, ISSP, en Colombia, que mide la inversión social voluntaria que hacen las empresas frente a sus ingresos, la información asociada al gobierno corporativo, la gestión de proveedores, inclusión, equidad de género y las inversiones ambientales.
+Las Fundaciones entregaron 12 escuelas renovadas en temas de energía y agua en Antioquia, Atlántico y Valle del Cauca, con las que se benefician 3.600 estudiantes.
+Se instalaron las dos primeras estaciones de carga para vehículos eléctricos en Cali en las universidades ICESI y Javeriana, y dos más en Medellín en la Escuela de Ingeniería de Antioquia y el CES.
