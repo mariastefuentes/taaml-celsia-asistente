@@ -1,23 +1,60 @@
-# Atajos del proyecto. Uso: make <objetivo>   (make sin objetivo muestra la ayuda)
+# Atajos del proyecto. Uso: make          (muestra este menú)
+#                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: ayuda test lint datos scraping-demo indice recuperacion evaluar app pdf
+.PHONY: help ayuda setup modulo1 app test lint datos scraping-demo indice recuperacion ensayo evaluar pdf
 
+# El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
+help: ayuda
+
+# $(info) imprime desde make, no desde el shell: el menú se ve igual en cmd, PowerShell o sh.
 ayuda:
-	@echo "make test         pruebas de componentes (gratis, sin Gemini ni Ollama)"
-	@echo "make lint         revision de errores del codigo con ruff"
-	@echo "make datos        reconstruye silver, gold, curaduria y fragmentos (no vuelve a descargar el sitio ni necesita Ollama)"
-	@echo "make scraping-demo descarga 5 paginas de celsia.com para ver el scraper en vivo (no toca data/1_bronze)"
-	@echo "make indice       construye el indice de vectores (Chroma) a partir de los fragmentos; necesita Ollama"
-	@echo "make recuperacion mide la recuperacion de fragmentos (gratis; necesita Ollama encendido)"
-	@echo "make evaluar      corre las 59 preguntas con Gemini (GASTA CUOTA O SALDO: confirmar antes)"
-	@echo "make app          abre la aplicacion Streamlit (necesita Ollama y GOOGLE_API_KEY en .env)"
-	@echo "make pdf          regenera el PDF del informe"
+	$(info )
+	$(info   Asistente Celsia - Taller 1 (UAO))
+	$(info   =================================)
+	$(info )
+	$(info   PREPARAR EL EQUIPO)
+	$(info     make setup           uv sync + crea .env (si falta) + descarga el modelo de embeddings)
+	$(info )
+	$(info   EJECUTAR LA APLICACION)
+	$(info     make modulo1         App del Modulo 1: solo el corpus y las etapas del scraping  [la de la sustentacion])
+	$(info     make app             App completa: Q&A, Resumen, FAQ y Corpus)
+	$(info )
+	$(info   DATOS Y SCRAPING)
+	$(info     make scraping-demo   descarga 5 paginas de celsia.com (no toca data/1_bronze ni gasta cuota))
+	$(info     make datos           reconstruye silver, gold, curaduria y fragmentos (necesita el HTML de Bronze))
+	$(info     make indice          construye el indice de vectores con Ollama (sube la busqueda del 54 % al 89 %))
+	$(info )
+	$(info   VERIFICAR ANTES DE LA DEMO)
+	$(info     make ensayo          revisa que la demo este lista, sin gastar cuota)
+	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
+	$(info     make lint            errores de codigo con ruff y lock vigente)
+	$(info     make recuperacion    mide la recuperacion de fragmentos (gratis; necesita Ollama))
+	$(info )
+	$(info   OTROS)
+	$(info     make evaluar         corre las 59 preguntas con Gemini (GASTA CUOTA: confirmar antes))
+	$(info     make pdf             regenera el PDF del informe)
+	$(info )
+	@:
+
+setup:
+	uv sync
+	uv run python -c "import pathlib, shutil; p = pathlib.Path('.env'); p.exists() or shutil.copy('.env.example', p); print('Listo: .env disponible (completa GOOGLE_API_KEY si esta vacio)')"
+	$(info Descargando el modelo de embeddings (si ya esta, no hace nada):)
+	-ollama pull nomic-embed-text-v2-moe
+	$(info )
+	$(info Siguiente paso: edita .env, pon tu GOOGLE_API_KEY y ejecuta 'make modulo1'.)
+
+modulo1:
+	uv run streamlit run app_modulo1.py
+
+app:
+	uv run streamlit run app.py
 
 test:
 	uv run python -m pytest
 
 lint:
-	uvx ruff@0.17.3 check --select F,E9 src tests scripts app.py
+	uvx ruff@0.17.3 check --select F,E9 src tests scripts app.py app_modulo1.py
 	uv lock --check
 
 datos:
@@ -37,11 +74,11 @@ indice:
 recuperacion:
 	uv run python scripts/10_evaluar_recuperacion.py --k 12
 
+ensayo:
+	uv run python scripts/16_ensayo_demo.py
+
 evaluar:
 	uv run python scripts/11_evaluar_modelo.py --modelo gemini:gemini-3.5-flash
-
-app:
-	uv run streamlit run app.py
 
 pdf:
 	uv run python scripts/utilidades/md_a_pdf.py
