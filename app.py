@@ -84,8 +84,8 @@ with st.sidebar:
     st.header("Ajustes")
     modelo = st.text_input("Modelo (Gemini o «deepseek-flash»)", MODELO_POR_DEFECTO)
     base = st.radio("Contexto del asistente", ["rag", "compacta", "completa"],
-                    help="«rag»: busca en toda la base los fragmentos relevantes a cada pregunta (recomendado). "
-                         "«compacta»: solo el inicio de cada documento, sin buscar. "
+                    help="«rag»: busca en toda la base los fragmentos relevantes a cada pregunta (recomendado).\n\n"
+                         "«compacta»: solo el inicio de cada documento, sin buscar.\n\n"
                          "«completa»: toda la base en el prompt, como pide el enunciado (~340.000 tokens por pregunta, unas 80 veces más cara que rag; úsala solo para demostrar la diferencia).")
 
 tab_qa, tab_resumen, tab_faq, tab_corpus = st.tabs(["Preguntas y respuestas", "Resumen", "Preguntas frecuentes", "Corpus y scraping"])
