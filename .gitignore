@@ -1,0 +1,17 @@
+.env
+.venv/
+__pycache__/
+# Bronze (~250 MB) se regenera con scripts/01_scrape_celsia.py; solo se versiona el registro de capturas (hash, HTTP, errores) y las sedes crudas
+data/1_bronze/*
+!data/1_bronze/_indice.jsonl
+!data/1_bronze/sedes_raw.json
+data/_demo_scraping/
+
+# Base vectorial Chroma: se regenera con scripts/07_construir_indice.py (los vectores salen del .npz)
+data/4_curaduria/chroma/
+
+# Binarios fuera del repositorio: los PDF se regeneran con `make pdf`
+*.pdf
+
+# Matriz de vectores (caché del índice): se regenera con `make indice`
+data/4_curaduria/indice_embeddings.npz
