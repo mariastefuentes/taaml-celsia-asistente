@@ -39,10 +39,13 @@ ayuda:
 setup:
 	uv sync
 	uv run python -c "import pathlib, shutil; p = pathlib.Path('.env'); p.exists() or shutil.copy('.env.example', p); print('Listo: .env disponible (completa GOOGLE_API_KEY si esta vacio)')"
-	$(info Descargando el modelo de embeddings (si ya esta, no hace nada):)
+	$(info Descargando los modelos de Ollama (si ya estan, no hace nada):)
+	-ollama --version
 	-ollama pull nomic-embed-text-v2-moe
+	-ollama pull llama3.2:3b
 	$(info )
 	$(info Siguiente paso: edita .env, pon tu GOOGLE_API_KEY y ejecuta 'make modulo1'.)
+	$(info Sin GOOGLE_API_KEY la app usa Ollama local (llama3.2:3b) y, si tampoco responde, las respuestas guardadas.)
 
 modulo1:
 	uv run streamlit run app_modulo1.py

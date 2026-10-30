@@ -3,7 +3,9 @@
 Las tres usan el mismo modelo (Gemini por defecto, temperature 0.0 y top_p 0.1; DeepSeek si el nombre empieza por «deepseek» u Ollama local si empieza por «ollama:») y prompts versionados en prompts/.
 Resumen y FAQ devuelven salida estructurada (Pydantic); Q&A devuelve texto.
 """
+import json
 import os
+import urllib.request
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -28,8 +30,9 @@ if os.environ.get("LANGSMITH_API_KEY") or os.environ.get("LANGCHAIN_API_KEY"):
     os.environ.setdefault("LANGCHAIN_PROJECT", "taaml-celsia")
 MODELO_POR_DEFECTO = "gemini-3.5-flash"  # el que se evaluó; el 3.6 ignora temperature y top_p (regla del proyecto)
 URL_DEEPSEEK = "https://api.deepseek.com"  # formato OpenAI; el modelo se elige por nombre: «deepseek-flash», «deepseek-v4-pro»
+OLLAMA_TAGS = "http://localhost:11434/api/tags"  # para resolver «llama3.2» al tag que de verdad está instalado («llama3.2:3b»)
 MAX_TOKENS_SALIDA = 8192  # el "pensamiento" del modelo cuenta aquí: con 2048 el FAQ se cortó (gastó 1.967 pensando)
-TIEMPO_MAXIMO_LOCAL = 120  # segundos: el modelo local es el último recurso y en CPU puede tardar minutos; mejor un error claro que una demo colgada
+TIEMPO_MAXIMO_LOCAL = 300  # segundos: el modelo local corre en CPU y con 12 fragmentos puede tardar minutos; mejor un error claro que una demo colgada
 VENTANA_CONTEXTO_LOCAL = 8192  # Ollama usa 4096 por defecto y recortaría el prompt (12 fragmentos son ~4.400 tokens)
 MAX_CARACTERES_DOCUMENTO = 12_000  # Resumen y FAQ reciben como máximo esto de un documento (los hay de más de 30.000)
 
@@ -49,6 +52,26 @@ class FaqDocumento(BaseModel):
     preguntas: list[PreguntaFrecuente]
 
 
+def _tag_instalado(nombre: str) -> str:
+    """Resuelve el nombre de un modelo de Ollama al tag que está instalado.
+
+    `ollama run llama3.2` funciona porque Ollama completa el tag, pero la API `/api/chat` es
+    literal: `llama3.2` devuelve 404 si solo existe `llama3.2:3b`. Aquí se consulta `/api/tags`
+    y se devuelve el tag real; si Ollama no responde o el modelo no está, se deja el nombre tal cual.
+    """
+    try:
+        with urllib.request.urlopen(OLLAMA_TAGS, timeout=3) as respuesta:
+            etiquetas = [m["name"] for m in json.loads(respuesta.read().decode("utf-8")).get("models", [])]
+    except Exception:  # noqa: BLE001  Ollama apagado: que falle más adelante con un error entendible
+        return nombre
+    if nombre in etiquetas:
+        return nombre
+    for candidato in (f"{nombre}:latest", *sorted(e for e in etiquetas if e.startswith(f"{nombre}:"))):
+        if candidato in etiquetas:
+            return candidato
+    return nombre
+
+
 @lru_cache(maxsize=4)
 def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
     """Gemini por defecto; si el nombre empieza por «deepseek» usa DeepSeek con el razonamiento apagado.
@@ -57,7 +80,7 @@ def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
     """
     if nombre.startswith("ollama:"):  # modelo local de respaldo (spec 003): sin clave y sin costo
         from langchain_ollama import ChatOllama
-        return ChatOllama(model=nombre.removeprefix("ollama:"), temperature=PARAMETROS_MODELO["temperature"], top_p=PARAMETROS_MODELO["top_p"], num_ctx=VENTANA_CONTEXTO_LOCAL,
+        return ChatOllama(model=_tag_instalado(nombre.removeprefix("ollama:")), temperature=PARAMETROS_MODELO["temperature"], top_p=PARAMETROS_MODELO["top_p"], num_ctx=VENTANA_CONTEXTO_LOCAL,
                           client_kwargs={"timeout": TIEMPO_MAXIMO_LOCAL})
     if nombre.startswith("deepseek"):
         if not os.environ.get("DEEPSEEK_API_KEY"):
