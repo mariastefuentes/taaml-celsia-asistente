@@ -1,0 +1,1138 @@
+{
+  "objectIdFieldName": "OBJECTID",
+  "globalIdFieldName": "GLOBALID",
+  "geometryType": "esriGeometryPoint",
+  "spatialReference": {
+    "wkid": 102100,
+    "latestWkid": 3857
+  },
+  "hasZ": false,
+  "fields": [
+    {
+      "name": "LONGITUDE",
+      "alias": "Longitud",
+      "type": "esriFieldTypeDouble"
+    },
+    {
+      "name": "LATITUDE",
+      "alias": "Latitud",
+      "type": "esriFieldTypeDouble"
+    },
+    {
+      "name": "STREET_VIEW",
+      "alias": "Street View",
+      "type": "esriFieldTypeString",
+      "length": 1000
+    },
+    {
+      "name": "GLOBALID",
+      "alias": "GLOBALID",
+      "type": "esriFieldTypeGlobalID",
+      "length": 38
+    },
+    {
+      "name": "OBJECTID",
+      "alias": "OBJECTID",
+      "type": "esriFieldTypeOID"
+    },
+    {
+      "name": "HQ_TYPE",
+      "alias": "Tipo de sede",
+      "type": "esriFieldTypeString",
+      "length": 255
+    },
+    {
+      "name": "COUNTRY",
+      "alias": "Pais",
+      "type": "esriFieldTypeString",
+      "length": 255
+    },
+    {
+      "name": "DEPARTMENT",
+      "alias": "Departamento",
+      "type": "esriFieldTypeString",
+      "length": 255
+    },
+    {
+      "name": "CITY",
+      "alias": "Ciudad",
+      "type": "esriFieldTypeString",
+      "length": 255
+    },
+    {
+      "name": "ADDRESS",
+      "alias": "Drección",
+      "type": "esriFieldTypeString",
+      "length": 100
+    },
+    {
+      "name": "PHONE",
+      "alias": "Teléfono",
+      "type": "esriFieldTypeString",
+      "length": 255
+    },
+    {
+      "name": "SHEDULE",
+      "alias": "Horario",
+      "type": "esriFieldTypeString",
+      "length": 255
+    },
+    {
+      "name": "NAME",
+      "alias": "Nombre de sede",
+      "type": "esriFieldTypeString",
+      "length": 255
+    },
+    {
+      "name": "SUBTYPE",
+      "alias": "SUBTYPE",
+      "type": "esriFieldTypeSmallInteger"
+    }
+  ],
+  "features": [
+    {
+      "attributes": {
+        "LONGITUDE": -75.64589235,
+        "LATITUDE": 3.1951239,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.195123899506964,-75.645892353550238&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{D171286E-FA72-4CC3-BEDE-17ECC03155FE}",
+        "OBJECTID": 2328,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Planadas",
+        "ADDRESS": "Calle 6 # 6-10",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Planadas",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.29449444,
+        "LATITUDE": 3.52555275,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.5255527459502258,-76.29449444097878&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{1CE05A47-5439-48A3-8068-E6BED6F77A08}",
+        "OBJECTID": 2922,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Palmira",
+        "ADDRESS": "CL 30 No. 22-49 La Trinidad",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 4:30 p.m  Viernes: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 3:40 p.m.",
+        "NAME": "Tienda Palmira",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.23803236,
+        "LATITUDE": 4.2415111,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.24151109649477,-75.238032360871&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{F4849433-3EA6-4A12-86C7-A3CBBB0E8D22}",
+        "OBJECTID": 2332,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Rovira",
+        "ADDRESS": "CALLE 4 No. 6-25 CENTRO",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Rovira",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.5406375,
+        "LATITUDE": 3.2609781,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.26097809986901,-76.54063750006702&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{BD800ECD-05A4-4E0F-AAD9-B6B9371B9E5C}",
+        "OBJECTID": 2921,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Jamundí",
+        "ADDRESS": "Cl. 10 #9-57, Jamundí, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 4:30 p.m  Viernes: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 3:40 p.m.",
+        "NAME": "Tienda Jamundí",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.0744218,
+        "LATITUDE": 4.3908024,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.3908024000229267,-76.07442180028107&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{B79215E7-7113-4ED0-98B7-168DD1FB21F0}",
+        "OBJECTID": 2923,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Zarzal",
+        "ADDRESS": "Cl. 5 #10-11, Zarzal, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 4:30 p.m  Viernes: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 3:40 p.m.",
+        "NAME": "Tienda Zarzal",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.31301178,
+        "LATITUDE": 3.68319339,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.6831933911358,-76.31301177774803&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{3018F066-950B-44CE-9CB2-B5138A154284}",
+        "OBJECTID": 2341,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "El Cerrito",
+        "ADDRESS": "CRA 12 No. 5-77 El Centro",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda El Cerrito",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.6922667,
+        "LATITUDE": 3.6576338,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.657633800049185,-76.692266699767046&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{91F55A51-52EA-46E0-9167-B4BB1D1FAAB1}",
+        "OBJECTID": 2924,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Dagua",
+        "ADDRESS": "Cl. 10 #13-43, Dagua, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 4:30 p.m  Viernes: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 3:40 p.m.",
+        "NAME": "Tienda Dagua",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -77.07716547,
+        "LATITUDE": 3.88996682,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.889966822566609,-77.0771654726115&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{A2197C4F-9E12-4618-9CC8-4E34DEBEA274}",
+        "OBJECTID": 2342,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Buenaventura",
+        "ADDRESS": "Dirección Edificio Trade Center Calle 7 #3 11 local 104",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 4:30 p.m  Viernes: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 3:40 p.m.",
+        "NAME": "Rapipagos Buenaventura",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.29449444,
+        "LATITUDE": 3.52555275,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.5255527459502258,-76.29449444097878&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{F3BE31E4-D25F-4FB8-B8CA-12054B3C17EC}",
+        "OBJECTID": 2349,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Palmira",
+        "ADDRESS": "CL 30 No. 22-49 La Trinidad",
+        "PHONE": null,
+        "SHEDULE": "Lunes a Viernes de 7:30 a 12:00 y de 1:30 a 4:00 PM",
+        "NAME": "Palmira - Trinidad",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.21470582,
+        "LATITUDE": 4.43692313,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.4369231332754948,-75.214705819566376&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{284C8A5F-BC46-43A3-B130-BDEB17295C70}",
+        "OBJECTID": 2350,
+        "HQ_TYPE": "Sedes Administrativas",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Ibagué",
+        "ADDRESS": "Calle 39 A # 5-15",
+        "PHONE": "608 277 08 22",
+        "SHEDULE": "7:15 a.m. - 12:00 m.  1:30 p.m. 5:30 p.m. Viernes 7:15 a.m. - 12:00 m. y 1:30 p.m.  a 4:30 p.m.",
+        "NAME": "Sede Ibagué – Calle 39 A",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.88918963,
+        "LATITUDE": 5.02768786,
+        "STREET_VIEW": "http://maps.google.com/?cbll=5.0276878557516786,-74.88918962611474&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{62C443CE-02AC-4318-A06B-E45F80C93D54}",
+        "OBJECTID": 2351,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Armero / Guayabal",
+        "ADDRESS": "CRA 6 Nº 5-51 BARRIO EL CENTRO",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Armero / Guayabal",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.29550973,
+        "LATITUDE": 3.89509961,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.895099612449374,-76.29550972589605&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{9520B622-007F-4F2E-8458-E497464B591E}",
+        "OBJECTID": 2358,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Buga",
+        "ADDRESS": "Cl. 4 No  #5-33, Guadalajara de Buga, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 7:30AM - 12M; 1:30PM - 4:00PM",
+        "NAME": "Buga",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.34861899,
+        "LATITUDE": 3.4091966,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.409196601703994,-76.34861898697754&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{D3D35B0A-4BB2-45A3-8C7C-9368D7038F7F}",
+        "OBJECTID": 2361,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Candelaria",
+        "ADDRESS": "Cra. 9 & Cl. 9 Candelaria, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 7:30AM - 12M; 1:30PM - 4:00PM",
+        "NAME": "Candelaria",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.54062484,
+        "LATITUDE": 3.26097293,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.260972929466944,-76.5406248446013&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{F36F9B8E-18E3-42AD-80A9-169A9B32A80C}",
+        "OBJECTID": 2362,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Jamundí",
+        "ADDRESS": "Cl. 10 #9-57, Jamundí, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 7:30AM - 12M; 1:30PM - 4:00PM\nSabado de 9:00am a 2:00pm",
+        "NAME": "Jamundí",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.1513942,
+        "LATITUDE": 4.4154736,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.4154736003840256,-76.15139419962408&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{4C0B1011-50B8-4E9E-B5A8-ACB03580A3DB}",
+        "OBJECTID": 2366,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Roldanillo",
+        "ADDRESS": "Calle 15 No. 6-59",
+        "PHONE": null,
+        "SHEDULE": "Lunes, Martes, Miercoles y Viernes 7:30AM - 12M; 1:30PM - 4:00PM",
+        "NAME": "Roldanillo",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.0744218,
+        "LATITUDE": 4.3908024,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.3908024000229267,-76.07442180028107&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{08BB0457-CB85-4353-99C6-D4B35FC6CB04}",
+        "OBJECTID": 2367,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Zarzal",
+        "ADDRESS": "Cl. 5 #10-11, Zarzal, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes, Martes, Miercoles y Viernes 7:30AM - 12M; 1:30PM - 4:00PM",
+        "NAME": "Zarzal",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.885819,
+        "LATITUDE": 4.152189,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.152189000173392,-74.88581899984503&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{B410C793-7B6D-4EE1-8EE3-B849AD9E69E9}",
+        "OBJECTID": 2368,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Espinal",
+        "ADDRESS": "Calle 10 N. 4- 16 centro",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes de 7:30 a.m. a 12:00 m. y de 1:30 p.m. a 4:00 p.m. Sabados 9:00 AM a  2:00 PM ",
+        "NAME": "Espinal",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.21257151,
+        "LATITUDE": 4.43554556,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.435545557936715,-75.21257150868956&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{3A1AA051-B1D8-4DED-B028-A6D2F1461CBE}",
+        "OBJECTID": 2369,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Ibagué",
+        "ADDRESS": "Carrera 5 N. 41-90",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 7:30 am - 12:00 m y 1:30 pm - 4:00 pm Sábado 9:00 am a 2:00 pm",
+        "NAME": "Ibagué",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.238449,
+        "LATITUDE": 4.443503,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.443502999871378,-75.2384490003981&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{B49952B1-F014-4825-A2E0-D5CC2F673465}",
+        "OBJECTID": 2370,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Ibagué",
+        "ADDRESS": "Calle 14 # 4-10 Local de la Esquina (Edificio Moncaleano)",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes de 7:30 a.m. a 12:00 m. y de 1:30 p.m. a 4:00 p.m. Sábados 9:00 AM 1:00 PM - 2:00 A 4:00 PM",
+        "NAME": "Ibagué",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.2076624,
+        "LATITUDE": 4.429626,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.429625999746002,-75.2076623998165&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{0A873DC9-F148-4D42-9C25-943F1B881F75}",
+        "OBJECTID": 2371,
+        "HQ_TYPE": "Internet Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Ibagué",
+        "ADDRESS": "Zona Industrial El Papayo",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 7:30 am - 12:00 m y 1:30 pm - 4:00 pm Sábado solo recaudo 9:00 am a 2:00 pm ",
+        "NAME": "Ibagué El Papayo",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.5005688,
+        "LATITUDE": 3.5171474,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.517147399581597,-76.50056879989407&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{869EB085-D29A-4D19-BF96-7DC692665C6A}",
+        "OBJECTID": 2375,
+        "HQ_TYPE": "Sedes Administrativas",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Yumbo",
+        "ADDRESS": "Calle 15  # 29B-30",
+        "PHONE": "602 321 00 00",
+        "SHEDULE": "lunes a jueves;  7:00 a.m. -5:00 p.m. Viernes de 7:00 a.m. a 4:20 p.m.",
+        "NAME": "Sede Valle del Cauca - Yumbo",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.2990678,
+        "LATITUDE": 3.51722033,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.5172203302687826,-76.29906780401949&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{EEA86889-3675-4A53-8B37-97D34BDADE1B}",
+        "OBJECTID": 2378,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Palmira",
+        "ADDRESS": "Calle 18 No. 26-40",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Palmira Recreo",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.72208108,
+        "LATITUDE": 4.14861506,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.14861506360541,-74.7220810823419&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{87D28C62-3E6A-413B-8424-548583CEBD67}",
+        "OBJECTID": 2380,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Carmen de Apicala",
+        "ADDRESS": "CRA 6 Nº 3-47 CASA DE RELIGIOSAS",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Carmen de Apicala",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.81440389,
+        "LATITUDE": 4.28603553,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.286035530091073,-74.8144038860734&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{6ECD9D13-22E9-4D86-A92B-E60ABF72B942}",
+        "OBJECTID": 2386,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Flandes",
+        "ADDRESS": "CRA 8 Nº 10-56 BARRIO TRIANA",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Flandes",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.22698882,
+        "LATITUDE": 3.2522011,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.2522010982629337,-76.22698882227311&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{8B402B16-9582-4594-9A00-9BE2652F9BFA}",
+        "OBJECTID": 2391,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Mariquita",
+        "ADDRESS": "CARRERA 3 NÚMERO 8-30 - BARRIO SANTA LUCÍA",
+        "PHONE": null,
+        "SHEDULE": "Lunes a Jueves 7 y 20 am a 12:30 pm y de 1:30 pm a 4:30 pm y Viernes 7 y 20 am a 12 y 30 pm y de 1:30 pm a 3:40 pm ",
+        "NAME": "Mariquita Tienda",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.5406375,
+        "LATITUDE": 3.2609781,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.26097809986901,-76.54063750006702&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{4BBE6CB8-F3D8-4121-B0C0-59F52FB2CC2A}",
+        "OBJECTID": 2285,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Jamundí",
+        "ADDRESS": "Cl. 10 #9-57, Jamundí, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Jamundí",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -79.5183302,
+        "LATITUDE": 8.9896197,
+        "STREET_VIEW": "http://maps.google.com/?cbll=8.989619699997245,-79.51833020004142&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{3B3FDA00-0BA7-45C5-9862-2C9B4F29FAA5}",
+        "OBJECTID": 2281,
+        "HQ_TYPE": "Sedes Administrativas",
+        "COUNTRY": "Panamá",
+        "DEPARTMENT": "Provincia de Panamá",
+        "CITY": "Panamá",
+        "ADDRESS": "Celsia Centroamérica, S.A. \nSanta Maria Business District, PH Nigtfall, Torre Argos, piso 2",
+        "PHONE": "507+ 2169900",
+        "SHEDULE": "Lunes a Jueves de 8:00 a.m. a 5:00 p.m.\nViernes 7:00 a.m. a 4:00 p.m. Sábados y domingos cerrados",
+        "NAME": "Sede Panamá – Santa Maria Business District",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.885819,
+        "LATITUDE": 4.152189,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.152189000173392,-74.88581899984503&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{8168A88B-A4D4-433F-AA6E-560A9E16FB12}",
+        "OBJECTID": 2283,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Espinal",
+        "ADDRESS": "Calle 10 N. 4- 16 centro",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Espinal",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.21257151,
+        "LATITUDE": 4.43554556,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.435545557936715,-75.21257150868956&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{932C2D21-3A86-4BF7-917A-6625D0EEFFEA}",
+        "OBJECTID": 2911,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Ibagué",
+        "ADDRESS": "Carrera 5 N. 41-90",
+        "PHONE": null,
+        "SHEDULE": "Lunes a Viernes \r\n7:30 am a 12:00 y de 1:30 a 4:00 pm ",
+        "NAME": "Ibagué Tienda Carrera Quinta",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.967563,
+        "LATITUDE": 4.031282,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.0312820000799,-74.96756300024563&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{880A26FD-E008-40F6-9317-FBABA3F12844}",
+        "OBJECTID": 2913,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Guamo",
+        "ADDRESS": "Carrera 7 # 10-41 Local 2",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Guamo Tienda",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.57283759,
+        "LATITUDE": 6.20168544,
+        "STREET_VIEW": "http://maps.google.com/?cbll=6.201685439323713,-75.5728375907046&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{36F1BE53-4F35-4AFD-B2DF-2A990A8AD3F1}",
+        "OBJECTID": 2287,
+        "HQ_TYPE": "Sedes Administrativas",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Antioquia",
+        "CITY": "Medellín",
+        "ADDRESS": "Edificio Centro Santillana, Torre Sur, \nCarrera 43 A # 1Asur-143",
+        "PHONE": "604 326 66 00",
+        "SHEDULE": "7:30 a.m. - 12:00 m. y de 1:30 p.m.  a 5:30 p.m.  Lunes a jueves; 7:30 a.m. a 12:00 y 1:00 p.m. a 4:30 p.m.  viernes.  ",
+        "NAME": "Sede Medellín - Santillana",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.885819,
+        "LATITUDE": 4.152189,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.152189000173392,-74.88581899984503&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{F3F0CDAE-C13E-429B-BE8E-34EBD703FDDF}",
+        "OBJECTID": 2914,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Espinal",
+        "ADDRESS": "Calle 10 N. 4- 16 centro",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Espinal Tienda",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.0744218,
+        "LATITUDE": 4.3908024,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.3908024000229267,-76.07442180028107&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{07A2A119-27BA-4A80-BD3C-6FA345A6C498}",
+        "OBJECTID": 2289,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Zarzal",
+        "ADDRESS": "Cl. 5 #10-11, Zarzal, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Zarzal",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.485309,
+        "LATITUDE": 3.72409,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.7240900001118278,-75.485309000423&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{50730EBC-5C75-4066-8EC0-DA18E3DEF92F}",
+        "OBJECTID": 2915,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Chaparral",
+        "ADDRESS": "Calle 8 No 8-31 barrio centro",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Chaparral Tienda",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.967563,
+        "LATITUDE": 4.031282,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.0312820000799,-74.96756300024563&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{0374784B-99FA-4EEE-9D35-6419A88A2EB6}",
+        "OBJECTID": 2291,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Guamo",
+        "ADDRESS": "Carrera 7 # 10-41 Local 2",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Guamo",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.21257151,
+        "LATITUDE": 4.43554556,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.435545557936715,-75.21257150868956&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{62B06E2F-FFD8-4F13-96BF-251BFD0F0B22}",
+        "OBJECTID": 2294,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Ibagué",
+        "ADDRESS": "Carrera 5 N. 41-90",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Ibagué Calle 5N",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.23651945,
+        "LATITUDE": 3.32574032,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.3257403241571426,-76.23651944797433&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{42224B30-5B07-4AB6-8484-4E298E4B55AA}",
+        "OBJECTID": 2295,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Florida",
+        "ADDRESS": "Cra 20 No.10-57 Puerto Nuevo",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Florida",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -85.254136,
+        "LATITUDE": 10.5251574,
+        "STREET_VIEW": "http://maps.google.com/?cbll=10.5251574004222,-85.254135999636247&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{CE8DD690-E858-4215-9111-54C5E8394100}",
+        "OBJECTID": 2299,
+        "HQ_TYPE": "Sedes Administrativas",
+        "COUNTRY": "Costa Rica",
+        "DEPARTMENT": "Provincia de Guanacaste",
+        "CITY": "Bagaces",
+        "ADDRESS": "Cantón de Bagaces, provincia de Guanacaste",
+        "PHONE": null,
+        "SHEDULE": null,
+        "NAME": "Cantón de Bagaces",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -88.0396331,
+        "LATITUDE": 15.5014757,
+        "STREET_VIEW": "http://maps.google.com/?cbll=15.50147569975982,-88.03963309983261&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{8AB44F36-B22A-453D-9CBA-B3DFDC3023D4}",
+        "OBJECTID": 2300,
+        "HQ_TYPE": "Sedes Administrativas",
+        "COUNTRY": "Honduras",
+        "DEPARTMENT": "Departamento de Cortés",
+        "CITY": "San Pedro Sula",
+        "ADDRESS": "Bo. Rio Piedras, 19 ave. 8 Calle S.O. \nEdificio Corporativo 1908, 5to Nivel",
+        "PHONE": null,
+        "SHEDULE": "Horarios: lunes a viernes 8:00 a.m. a 4:00 p.m.",
+        "NAME": "Sede Honduras – Bo. Rio Piedras",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.1513942,
+        "LATITUDE": 4.4154736,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.4154736003840256,-76.15139419962408&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{823C7C15-75AC-43AF-A67A-894E1CBDC57B}",
+        "OBJECTID": 2302,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Roldanillo",
+        "ADDRESS": "Calle 15 No. 6-59",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Roldanillo",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.6421424,
+        "LATITUDE": 4.2038157,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.2038156999365155,-74.6421424001166&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{D8CD3087-1303-42C9-B02A-AB5D02BEE5A8}",
+        "OBJECTID": 2292,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Melgar",
+        "ADDRESS": "Carrera 25 N. 7-44 B/ Centro",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Melgar",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.9334928,
+        "LATITUDE": 4.2656701,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.26567009992302,-75.9334928004428&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{6604814F-4E77-4DAB-84CC-146368FDA6DB}",
+        "OBJECTID": 2303,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Sevilla",
+        "ADDRESS": "Clle 52 49-52",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Sevilla",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.6421424,
+        "LATITUDE": 4.2038157,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.2038156999365155,-74.6421424001166&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{E5D78BEA-5762-4644-9C91-A23A30A4FA40}",
+        "OBJECTID": 2916,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Melgar",
+        "ADDRESS": "Carrera 25 N. 7-44 B/ Centro",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Melgar Tienda",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.9325985,
+        "LATITUDE": 3.8544338,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.854433800084864,-74.932598499669268&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{98FD1766-25B2-404B-BEE5-D902FD42E1E5}",
+        "OBJECTID": 2917,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Purificación",
+        "ADDRESS": "Calle 6 Nro. 6-18 Barrio El Cruce",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Purificación Tienda",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.89399,
+        "LATITUDE": 5.196093,
+        "STREET_VIEW": "http://maps.google.com/?cbll=5.196092999647738,-74.8939900002109&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{93D57B04-0C41-4569-A49D-36AC94E11201}",
+        "OBJECTID": 2306,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Mariquita",
+        "ADDRESS": "Carrera 5 N. 8-75 B/El Carmen",
+        "PHONE": "-",
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Tienda Mariquita",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.1987838,
+        "LATITUDE": 4.0829862,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.0829861998259318,-76.19878380015501&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{292984E4-009A-428D-9974-D4EB5FFAF239}",
+        "OBJECTID": 2307,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Tuluá",
+        "ADDRESS": "Cl. 29 #24-27, Tuluá, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Tuluá",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.0652233,
+        "LATITUDE": 4.9218412,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.92184119990523,-75.0652232996463&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{542DD841-BE5E-40D9-9CF9-6102CC684B1C}",
+        "OBJECTID": 2918,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Libano",
+        "ADDRESS": "Carrera 11 No 3-40",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Líbano Tienda",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.7383176,
+        "LATITUDE": 5.2050287,
+        "STREET_VIEW": "http://maps.google.com/?cbll=5.20502870014777,-74.738317600198&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{A4F3A635-0017-405A-BC7F-DCA54C994562}",
+        "OBJECTID": 2919,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Honda",
+        "ADDRESS": "Calle 13 N. 11-51 Parque las Américas",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Honda Tienda",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.6922667,
+        "LATITUDE": 3.6576338,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.657633800049185,-76.692266699767046&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{E61A2681-22C7-4E1F-9CF5-36A225FF4331}",
+        "OBJECTID": 2312,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Dagua",
+        "ADDRESS": "Cl. 10 #13-43, Dagua, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Dagua",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.3486419,
+        "LATITUDE": 3.4091793,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.4091793002814366,-76.3486419003055&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{54CE9A14-F47F-4138-9749-B3B60219E0E0}",
+        "OBJECTID": 2313,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Candelaria",
+        "ADDRESS": "Cra. 9 con Cl. 9 Esquina",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Candelaria",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -77.07741274,
+        "LATITUDE": 3.8892379,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.88923790291698,-77.077412740181657&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{E4D01476-F395-4B10-89C4-E15A84A8D315}",
+        "OBJECTID": 2920,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Buenaventura",
+        "ADDRESS": "Diagonal 3ª No. 3-20",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 4:30 p.m  Viernes: 7:20 a.m. a 12:30 p.m. -  1:30 p.m. a 3:40 p.m.",
+        "NAME": "Tienda Buenaventura",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.0652233,
+        "LATITUDE": 4.9218412,
+        "STREET_VIEW": "http://maps.google.com/?cbll=4.92184119990523,-75.0652232996463&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{45BA1764-911A-4645-BAA3-1CB2C47208B2}",
+        "OBJECTID": 2321,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Libano",
+        "ADDRESS": "Carrera 11 No 3-40",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Líbano",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -76.2970848,
+        "LATITUDE": 3.8907566,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.89075660020026,-76.297084799575885&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{86ECBF9C-2239-4AD2-B4AF-870A8643FC07}",
+        "OBJECTID": 2315,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Guadalajara de Buga",
+        "ADDRESS": "Cl. 4 No  #5-33, Guadalajara de Buga, Valle del Cauca",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Buga",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -77.07741274,
+        "LATITUDE": 3.8892379,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.88923790291698,-77.077412740181657&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{E5E67CFC-9CD5-4628-9E29-0B5DFB98E84A}",
+        "OBJECTID": 2316,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Valle del Cauca",
+        "CITY": "Buenaventura",
+        "ADDRESS": "Diagonal 3ª No. 3-20",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Buenaventura",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.9325985,
+        "LATITUDE": 3.8544338,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.854433800084864,-74.932598499669268&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{7AC454AC-3E50-4A46-B3CC-B2FADEC61C3C}",
+        "OBJECTID": 2318,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Purificación",
+        "ADDRESS": "Calle 6 Nro. 6-18 Barrio El Cruce",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Purificación",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.485309,
+        "LATITUDE": 3.72409,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.7240900001118278,-75.485309000423&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{5868B274-948D-427C-9198-4284868FD3B5}",
+        "OBJECTID": 2322,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Chaparral",
+        "ADDRESS": "Calle 8 No 8-31 barrio centro",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Chaparral",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -74.7383176,
+        "LATITUDE": 5.2050287,
+        "STREET_VIEW": "http://maps.google.com/?cbll=5.20502870014777,-74.738317600198&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{3F131877-0B79-453C-9345-22EB4B9A23DD}",
+        "OBJECTID": 2323,
+        "HQ_TYPE": "Tiendas Celsia",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Honda",
+        "ADDRESS": "Calle 13 N. 11-51 Parque las Américas",
+        "PHONE": null,
+        "SHEDULE": "Lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.  Viernes 7:20 a.m. a 12:30 p.m. y de  1:30 p.m a 3:40 p.m.",
+        "NAME": "Tienda Honda",
+        "SUBTYPE": 1
+      }
+    },
+    {
+      "attributes": {
+        "LONGITUDE": -75.21922043,
+        "LATITUDE": 3.93443951,
+        "STREET_VIEW": "http://maps.google.com/?cbll=3.9344395072573968,-75.2192204251976&cbp=12,90,0,0,5&layer=c",
+        "GLOBALID": "{9E2BEC39-36ED-48EC-8155-EE9240542FB6}",
+        "OBJECTID": 2325,
+        "HQ_TYPE": "Punto de Recaudo y Pago",
+        "COUNTRY": "Colombia",
+        "DEPARTMENT": "Tolima",
+        "CITY": "Ortega",
+        "ADDRESS": "CARRERA 5 No. 6-63 CENTRO",
+        "PHONE": null,
+        "SHEDULE": "Lunes a viernes 8:00 am - 12:30 pm y de 1:30 pm a 5:00 pm y Sabados 8:00 am -12:00 y de 1:00 pm a 3:00 pm",
+        "NAME": "Ortega",
+        "SUBTYPE": 1
+      }
+    }
+  ]
+}

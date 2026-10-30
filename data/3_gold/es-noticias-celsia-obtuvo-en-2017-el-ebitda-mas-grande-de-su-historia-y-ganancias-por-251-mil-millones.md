@@ -1,0 +1,44 @@
+---
+url: https://www.celsia.com/es/noticias/celsia-obtuvo-en-2017-el-ebitda-mas-grande-de-su-historia-y-ganancias-por-251-mil-millones/
+title: Celsia obtuvo en 2017 el Ebitda más grande de su historia y ganancias por $251 mil millones
+fuente: celsia.com (sitio oficial)
+fecha_extraccion: 2026-10-27T15:37:29.093808+00:00
+fecha_publicacion: 2018-01-26
+section: noticias
+categoria: noticias
+region: Valle del Cauca
+idioma: es
+caracteres: 6811
+tokens: 1563
+hash: 97f31932b3f82be62bacdd42b8a24f4804393975
+relevancia_propuesta: media
+motivo: noticia: depende del tema y de la vigencia (se decide en la curaduría, regla R7)
+---
+
+# Celsia obtuvo en 2017 el Ebitda más grande de su historia y ganancias por $251 mil millones
+
+Regresar a Noticias
+26 · 01 · 2018
+Compartir
+Celsia obtuvo en 2017 el Ebitda más grande de su historia y ganancias por $251 mil millones
+Tiempo de lectura: 4 minutos
+Medellín, 26 de enero de 2018. Celsia, empresa de energía del Grupo Argos, comenzó a recoger en 2017 los frutos de su renovada estrategia basada en la diferenciación, la innovación y el servicio a los clientes con sus operaciones en Colombia, Panamá y Costa Rica.
+Y ello no solamente se evidencia con las grandes transformaciones que está trayendo al sector de la energía en aspectos tales como: el liderazgo en energía solar, la movilidad eléctrica y un renovado portafolio de productos y servicios para ciudades, empresas y hogares, sino también en los sólidos resultados económicos.
+La utilidad neta para el año alcanzó los $251 mil millones con un crecimiento del 47% frente al año anterior. El resultado atribuible a la controladora es de $149 mil millones con un crecimiento de 352% frente a 2016. En el trimestre la utilidad neta registró $71 mil millones y el resultado atribuible a la controladora, $39 mil millones.
+El Ebitda , el más alto en la historia de la organización, alcanzó $1,12 billones, 9% por encima del obtenido en 2016, con un destacado margen del 38%. En el último trimestre, este indicador registró $309 mil millones, 21% por encima del mismo período del año anterior.
+Los ingresos consolidados alcanzaron $3,1 billones , inferiores en un 18% respecto al año anterior, considerando la menor generación térmica y menores precios en bolsa por mayor volumen de aportes hídricos en 2017. En el cuarto trimestre los ingresos fueron de $823 mil millones, 4% superiores al mismo período en 2016.
+En Colombia las ventas en el mercado mayorista sumaron en el año $1,11 billones. Para el trimestre, el valor registrado fue de $323 mil millones, valor similar del presentado en el mismo período de 2016. La energía producida en Colombia alcanzó en el año los 5.226 GWh, mientras que en el trimestre fueron 1.542 GWh destacándose el incremento de 31% en la generación hidráulica por la mayor disponibilidad de agua para operar.
+Dentro del negocio de transmisión y distribución se destaca la incorporación de los ingresos de los tres proyectos de Plan5Caribe que ya están en operación. En el negocio de comercialización minorista se registró en el año una variación positiva en la facturación gracias a una mayor demanda y al mayor número de clientes, tanto en el mercado regulado como en el no regulado.
+En Centroamérica destacamos unos ingresos por 245 millones de dólares, 9% más que lo registrado en 2016. En el trimestre se registraron 59 millones de dólares, con un crecimiento de 5% con respecto al año anterior.
+Finalmente, el costo de ventas alcanza $2,1 billones en lo corrido del año con una reducción de 28% frente a 2016. El en trimestre se registraron $548 mil millones por este concepto.
+En cuanto a las inversiones , en Colombia ejecutamos $477 mil millones durante el 2017, de los cuales el 23% corresponde al negocio de generación, 67% al negocio de distribución y el valor restante se destinó a inversiones en transformación digital, soporte y proyectos de innovación.
+“Estamos muy contentos con los resultados del 2017, alcanzados gracias a una cultura y un talento humano excepcional. Somos los líderes del mercado en energía solar con granjas y techos fotovoltaicos, hemos impulsado la hidroelectricidad sostenible, se alcanzó una transformación completa de Zona Franca Celsia y logramos importantes avances en nuestro esquema de experiencia del cliente, entre otros logros. Hemos puesto un pie firme en el futuro con energías no convencionales, cimentados también en una sólida gestión operacional de los activos de generación, transmisión y distribución” afirmó Ricardo Sierra, presidente de Celsia .
+Hitos importantes del 2017
+Liderazgo en energía solar: Celsia se encuentra desarrollando un conjunto de proyectos fotovoltaicos en Colombia y Centroamérica que permitirán contar con por lo menos 250 MW en este portafolio en el mediano plazo. La primera granja solar en Colombia es Celsia Solar Yumbo, que entró en operación en septiembre pasado, y entidades como Compañía Nacional de Chocolates en su planta de Rionegro, el centro de Investigaciones Agropecuarias Tropicales (CIAT) en Palmira, la Universidad Autónoma de Occidente y comercios como el mall La Reserva en Envigado y el almacén Década 10 en Tuluá ya cuentan con techos o pisos solares para hacer más sostenibles sus operaciones.
+Generación hídrica: se finalizó con éxito la repotenciación de una de las unidades de la planta Salvajina, con lo que se espera aumentar la capacidad de generación en 30 MW.
+Generación térmica: en Colombia, finalizamos satisfactoriamente el mantenimiento de la unidad Flores 1 en Zona Franca Celsia, con el cual la capacidad de la planta se incrementará en 6,5 MW. Gracias a la Resolución 140 de 2017 de la CREG sobre el Precio Marginal de Escasez, se define una nueva metodología de remuneración que beneficia a Zona Franca Celsia mitigando el riesgo de generación a pérdida. Adicionalmente, desde 2017 contamos con la operación de la planta de regasificación en Cartagena, que nos permite asegurar una fuente de abastecimiento de gas natural para esta central y disminuye el riesgo de faltante de gas para atender los picos de demanda.
+Transmisión y distribución: en noviembre se culminó el tercer proyecto que fue adjudicado del Plan5Caribe: la subestación Nueva Montería en Córdoba. Otros dos proyectos finalizados durante el año son la Guajira (Construcción subestación Cuestecitas y ampliación subestación Maicao y Riohacha) y la ampliación de la subestación Valledupar en el Cesar. A la fecha hemos ejecutado $199 mil millones de los $450 mil millones que tenemos planeados en esta iniciativa.
+Nuevos negocios: la organización siguió adelante con sus proyectos de techos solares, plantas para respaldo eléctrico, distritos térmicos e instalación de estaciones de carga para vehículos eléctricos, promoviendo la movilidad sostenible.
+Innovación y transformación cultural: Celsia fue reconocida en los Premios Portafolio 2017 como la empresa más innovadora del país. También fue destacada entre las 20 mejores empresas para trabajar en Colombia por el instituto Great Place To Work.
+Gestión Ambiental : el principal programa ambiental, ReverdeC, superó el millón de árboles sembrados en el 2017 llegando a 1,6 millones. Con estas siembras, se pudieron proteger 22 cuencas hidrográficas en 26 municipios del Valle del Cauca. En Panamá, Celsia participó por tercer año consecutivo de la Alianza por el Millón de hectáreas reforestadas.
+Fundaciones : durante 2017 Celsia, a través de sus fundaciones Celsia y Epsa, realizó inversiones de más de $9.600 millones, para continuar aportando a la educación del país.
