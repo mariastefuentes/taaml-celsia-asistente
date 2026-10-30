@@ -7,9 +7,11 @@ Con `--llamar` hace UNA llamada corta por proveedor disponible (Gemini, DeepSeek
 Uso:  uv run python scripts/16_ensayo_demo.py [--llamar]
 """
 import argparse
+import json
 import os
 import sys
 import time
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,11 +21,20 @@ from langchain_core.messages import HumanMessage  # noqa: E402
 
 from taaml.recuperacion import INDICE, buscar  # noqa: E402
 from taaml.respaldo import cadena_de_modelos, preguntas_guardadas  # noqa: E402
-from taaml.tareas import MODELO_POR_DEFECTO, obtener_modelo  # noqa: E402
+from taaml.tareas import MODELO_POR_DEFECTO, _tag_instalado, obtener_modelo  # noqa: E402
 
 
 def marca(ok: bool) -> str:
     return "OK   " if ok else "FALTA"
+
+
+def etiquetas_ollama() -> list[str]:
+    """Modelos que Ollama tiene instalados; lista vacía si está apagado."""
+    try:
+        with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=3) as r:
+            return [m["name"] for m in json.loads(r.read().decode("utf-8")).get("models", [])]
+    except Exception:  # noqa: BLE001
+        return []
 
 
 def main() -> None:
@@ -32,7 +43,7 @@ def main() -> None:
     a = ap.parse_args()
 
     print("Sin llamadas a modelos:")
-    print(f"  {marca(bool(os.environ.get('GOOGLE_API_KEY')))} clave de Gemini (GOOGLE_API_KEY) en el entorno")
+    print(f"  {marca(bool(os.environ.get('GOOGLE_API_KEY')))} clave de Gemini (GOOGLE_API_KEY); sin ella responde el modelo local")
     print(f"  {marca(bool(os.environ.get('DEEPSEEK_API_KEY')))} clave de DeepSeek (DEEPSEEK_API_KEY), respaldo opcional")
     print(f"  {marca(INDICE.exists())} índice de embeddings ({INDICE.name})")
     try:
@@ -41,6 +52,10 @@ def main() -> None:
     except Exception as e:  # noqa: BLE001
         print(f"  FALTA recuperación: {str(e)[:100]}")
     print(f"  {marca(len(preguntas_guardadas()) > 0)} respuestas guardadas para el último recurso ({len(preguntas_guardadas())} preguntas)")
+    instalados = etiquetas_ollama()
+    local = cadena_de_modelos(MODELO_POR_DEFECTO)[-1]
+    tag = _tag_instalado(local.removeprefix("ollama:")) if local.startswith("ollama:") else local
+    print(f"  {marca(tag in instalados)} modelo local de respaldo ({tag}); si no hay clave, responde este")
     print(f"  Cadena de modelos si el elegido falla: {' -> '.join(cadena_de_modelos(MODELO_POR_DEFECTO))}")
 
     if not a.llamar:

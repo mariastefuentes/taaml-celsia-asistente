@@ -59,14 +59,17 @@ La app tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resum
 
 ## Instalación
 
-Requisitos: [uv](https://docs.astral.sh/uv/) (regla del curso: solo `uv`, sin `pip` ni `requirements.txt`), Python 3.12 y [Ollama](https://ollama.com/) con el modelo `nomic-embed-text-v2-moe` para los embeddings de las preguntas.
+Requisitos: [uv](https://docs.astral.sh/uv/) (regla del curso: solo `uv`, sin `pip` ni `requirements.txt`), Python 3.12 y [Ollama](https://ollama.com/) con el modelo `nomic-embed-text-v2-moe` para los embeddings de las preguntas. Opcional: `llama3.2:3b`, el respaldo local que responde cuando no hay `GOOGLE_API_KEY` o se agota la cuota.
 
 ```bash
 git clone https://github.com/mariastefuentes/taaml-celsia-asistente.git
 cd taaml-celsia-asistente
-uv sync
-cp .env.example .env     # completa GOOGLE_API_KEY (Gemini)
-ollama pull nomic-embed-text-v2-moe
+make setup               # uv sync + .env + modelos de Ollama (nomic y llama3.2:3b)
+# o paso a paso:
+# uv sync
+# cp .env.example .env   # completa GOOGLE_API_KEY (Gemini); sin ella responde el modelo local
+# ollama pull nomic-embed-text-v2-moe
+# ollama pull llama3.2:3b
 make indice              # construye el índice de vectores con Ollama (el repositorio no versiona el .npz ni Chroma)
 ```
 
