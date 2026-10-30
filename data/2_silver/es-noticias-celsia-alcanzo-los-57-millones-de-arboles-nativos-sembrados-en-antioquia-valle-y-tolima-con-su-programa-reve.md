@@ -1,0 +1,36 @@
+---
+url: https://www.celsia.com/es/noticias/celsia-alcanzo-los-57-millones-de-arboles-nativos-sembrados-en-antioquia-valle-y-tolima-con-su-programa-reverdec/
+title: Celsia alcanzó los 5,7 millones de árboles nativos sembrados en Antioquia, Valle y Tolima con su programa ReverdeC
+section: noticias
+fecha_publicacion: 2021-01-20
+hash: 54874c63dd0aed0ed1cf3be286e7cb79c2b52c1a
+---
+
+# Celsia alcanzó los 5,7 millones de árboles nativos sembrados en Antioquia, Valle y Tolima con su programa ReverdeC
+
+Regresar a Noticias
+20 · 01 · 2021
+Compartir
+Celsia alcanzó los 5,7 millones de árboles nativos sembrados en Antioquia, Valle y Tolima con su programa ReverdeC
+Tiempo de lectura: 4 minutos
+En medio de un año atípico, el programa de restauración ecológica ReverdeC de Celsia cumplió la meta de sembrar el 1 millón de árboles anuales y se amplió a los departamentos de Antioquia y Tolima.
+Asimismo, se lograron importante alianzas público-privadas, lo que permitió llevar las sembrar a más sitios. Van más de 3.000 hectáreas intervenidas en 41 municipios.
+En 2020 el programa también pasó de 7 a 9 especies sembradas en categoría de amenaza y reemplazará la bolsa plástica de las plántulas por materiales biodegradables.
+El 100% de la mano de obra es local y el 16% de las personas vinculadas fueron mujeres, quienes trabajaron en siembras, rescate de semillas, actividades en viveros, cargue y descargue de material.
+20 de enero de 2021. ReverdeC, como los árboles que germinan en los bosques, no para de crecer. A pesar de la pandemia por covid-19 en 2020, el programa logró sobrepasar la meta de sembrar un millón de árboles, y llegó a 1,4 millones de árboles nativos sembrados en los departamentos de Valle, Antioquia y Tolima. En total ya van 5,7 millones de árboles sembrados desde el 2016, cuando inició el programa.
+Así, se han restaurado 3.884 hectáreas de bosque en 41 municipios del país, con actividades de participativas en las cuencas hidrográficas, muchas de la cuales abastecen acueductos municipales y veredales.
+“ Superar nuestra meta anual de un millón de árboles sembrados y cuidados, es una celebración que nos encanta, porque es un compromiso que tenemos como empresa privada de contribuir a la restauración ecológica y al cuidado del agua; y es además un propósito del Gobierno Nacional que nos sentimos muy orgullosos de apoyar. Alcanzar los 5 millones de árboles y más aún en las condiciones tan especiales del año pasado, es un gran logro. Seguiremos trabajando para sembrar más árboles en más lugares de Colombia, incluso queremos superar la meta que nos hemos planteado de 10 millones de árboles en 10 años ”, dijo Ricardo Sierra, líder de Celsia .
+Lograr en el 2020 la siembra de más de un millón de árboles no fue fácil. Durante enero y febrero el equipo logró avanzar con la producción de material vegetal para las siembras que se realizarían en las zonas rurales de los municipios de Riofrío, Calima, Palmira, Amaime y Yotoco, en el Valle del Cauca. Entonces llegó el periodo de confinamiento por la pandemia y se detuvieron las siembras.
+Terminada la declaratoria de aislamiento obligatorio y con la llegada de la temporada de lluvias, el programa reinició las labores con siembras en:
+Antioquia : Cuenca del río Cartama en el municipio de Támesis, suroeste antioqueño, en alianza con la Fundación Grupo Argos, Corantioquia, alcaldías, gobernación y la empresa de concesiones Odinsa. Y en la cuenca del río Claro, donde se consolidaron alianzas con Cornare, las fundaciones Natura y Grupo Argos y las alcaldías. Esta es una zona de vital importancia porque es un corredor apto para especies felinas.
+Tolima: las siembras se reanudaron en las cuencas de los ríos Saldaña, Coello, Gualí y Lagunilla, con el apoyo de Cortolima, las alcaldías y la Gobernación. Estas dos últimas zonas hacen parte de la zona amortiguadora del Parque Nacional Natural Los Nevados y hay más de 10 nacimientos de agua.
+Valle del Cauca: la Corporación Autónoma Regional del Valle del Cauca, CVC, aliado del proyecto desde sus inicios, ha aportado en total 1,8 millones de plántulas para ser sembradas en las cuencas hidrográficas. En el 2020 fueron más 400.000 plántulas que permitieron consolidar la cifra de un millón de árboles sembrados en el departamento y que aporta al programa Valle Más Verde de la entidad.
+“ Pero no es sólo sembrar árboles sino garantizar el sostenimiento hasta que estén fuertes para que se adapten a las condiciones de cada suelo, por eso cada esfuerzo que se haga hay que reconocerlo y celebrarlo como el programa ReverdeC, esta iniciativa que nació en el Valle y que acompañamos desde su génesis. ReverdeC hoy nos aporta considerablemente a la meta de conseguir un “Valle más verde”. La pandemia nos trajo una crisis sanitaria, económica y social que nos afectó la normalidad, pero no podemos parar y debemos ser resilientes. Con estos programas, además de beneficios ambientales, vinculamos más gente asegurando sus ingresos y convirtiéndonos en los aliados en la protección del medio ambiente ”, dijo el director de la CVC, Marco Antonio Suárez.
+Dos nuevas especies sembradas en categoría de amenaza
+El programa ReverdeC ha utilizado 96 especies para sus procesos de restauración, la mayoría de ellas nativas . De ahí que en las cuencas intervenidas se siembren árboles tradicionales como arrayanes, nogales, vainillos, nacederos y guadua. Estas especies son protectoras de las cuencas, aportan nutrientes a los suelos, producen follajes ricos en nitrógeno y otras son frutales.
+De igual manera, para contribuir con la preservación de los ecosistemas, este año se pasó de sembrar 7 a 9 especies de árboles que se encuentran en categoría de amenaza: algarrobo, roble, cedro negro, comino, caoba, cedro de altura y rosado, sangretoro y pino colombiano.
+En los viveros también se están produciendo semillas en espuma fenólica, elemento que reemplaza el uso de la bolsa plástica y está libre de hongos y bacterias y se usa para el desarrollo de raíces de plantas de alta calidad. El programa también busca emplear otros materiales biodegradables.
+Empleo para las mujeres de la región
+La participación de las comunidades en el desarrollo de este programa es el factor más importante para asegurar el éxito y la sostenibilidad de las siembras. Por eso, en la reactivación 100% de la mano de obra fue local y un 16% fueron mujeres.
+“Las mujeres con su compromiso y cuidado nos han aportado mucho en los viveros, rescate de semillas, en las siembras, cerramientos y hasta en el cargue y descargue de materiales. Todo esto nos llena de orgullo porque con la reactivación del programa ReverdeC hemos aportado a las economías locales y a la mano de obra de hombres y mujeres de las zonas rurales ”, explicó Martha Gallego, líder del programa.
+El programa comprende también una serie de actividades comunitarias educativas y de sensibilización, pues uno de sus propósitos es hacer de las siembras un modelo sostenible, donde las comunidades adquieran un alto nivel de apropiación e, incluso, encuentren su sostenimiento protegiendo las cuencas hídricas. Después de la reactivación económica en todo el país y cumpliendo los protocolos de bioseguridad, se lograron hacer actividades de formación con algunos propietarios de predios y trabajadores en el rescate de plántulas y recolección de semillas.

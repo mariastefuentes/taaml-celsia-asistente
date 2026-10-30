@@ -1,0 +1,37 @@
+---
+url: https://www.celsia.com/es/noticias/celsia-obtuvo-en-2016-resultados-favorables-en-medio-de-la-normalizacion-de-sus-operaciones/
+title: Celsia obtuvo en 2016 resultados favorables en medio de la normalización de sus operaciones
+section: noticias
+fecha_publicacion: 2017-02-21
+hash: 8b4be8e1ec24fcf5c6632ff74eb0d4a4863e30ce
+---
+
+# Celsia obtuvo en 2016 resultados favorables en medio de la normalización de sus operaciones
+
+Regresar a Noticias
+21 · 02 · 2017
+Compartir
+Celsia obtuvo en 2016 resultados favorables en medio de la normalización de sus operaciones
+Tiempo de lectura: 4 minutos
+Las cifras más destacadas son: el Ebitda, que alcanzó los $1,03 billones, es récord en la historia de la compañía, pues es 51% superior al 2015. La recuperación de la utilidad neta llegó a los COP$171 mil millones. Las inversiones ascendieron a COP$302 mil millones.
+Medellín, 21 de febrero de 2017. Celsia, empresa de energía del Grupo Argos, reporta resultados favorables luego de un 2016 caracterizado por la recuperación y normalización de sus operaciones.
+En el cuarto trimestre los ingresos consolidados alcanzaron COP$793 mil millones, destacando el aporte de Centroamérica por cerca de USD$58 millones. E n 2016 los ingresos llegaron a $3,8 billones mostrando un crecimiento de 3% debido al buen desempeño de los negocios de Comercialización y Transmisión y Distribución, los cuales registraron un crecimiento de 13%.
+En el trimestre se destaca la disminución del costo de ventas, el cual fue un 53% inferior al del mismo periodo de 2015 y alcanzó los COP$576 mil millones. Este resultado se dio principalmente por el retorno a condiciones normales de operación en Colombia, y en Centroamérica por la caída en los precios de los combustibles y la disminución del costo marginal que favoreció el valor de las compras de energía. En 2016 el costo de ventas alcanzó $2,9 billones con una disminución de 6%.
+El Ebitda en el cuarto trimestre fue de COP$256 mil millones, 118% por encima del mismo periodo de 2015, con un margen de 32,3%. Esta cifra se acerca a los márgenes históricos promedio de la compañía. En el consolidado de 2016 alcanzó los COP$1,03 billones , creciendo un 51% con respecto a 2015, cifra récord para la organización. En este resultado se destacan la contribución realizada por el negocio de Generación en Colombia que aportó en el año COP$420 mil millones, la operación de Centroamérica con COP$260 mil millones y el negocio de Transmisión y Distribución con COP$309 mil millones.
+Finalmente, el resultado neto para el cuarto trimestre fue cercano a COP$76 mil millones. En el consolidado de 2016 las ganancias ascendieron a COP$171 mil millones .
+“Estamos muy satisfechos con los resultados del último trimestre y por supuesto con el consolidado del año. El 2016 lo hemos llamado el año de la resiliencia, en el que logramos fortalecer nuestra operación gracias al compromiso y capacidad de nuestros colaboradores y a la puesta en marcha de procesos de mejora. Estos resultados nos devuelven la estabilidad en la operación de la compañía y nos permiten enfocarnos en el fortalecimiento de la gestión y de los nuevos negocios” , afirmó Ricardo Sierra, presidente de Celsia.
+Inversiones por COP$302 mil millones al cierre del 2016
+En 2016 la organización realizó importantes inversiones en sus diferentes negocios, que en el consolidado del año ascendieron a COP$302 mil millones . El 38% de la inversión total del año se dio en el negocio de Generación, el 47% en el negocio de Transmisión y Distribución, y el valor restante se destinó a inversiones en tecnología, áreas de apoyo y proyectos de innovación. Entre las principales inversiones se encuentran la actualización tecnológica de las centrales hidroeléctricas Salvajina y Alto Anchicayá, así como las inversiones enfocadas en la construcción de los proyectos del Plan5Caribe los cuales avanzan dentro del cronograma: en la Guajira se energizaron las obras realizadas en las Subestaciones Maicao y Riohacha, y la obra en Cuestecitas alcanzó un avance del 92% al finalizar 2016, quedando en servicio el 31 de enero de este año. En Valledupar se adelantan actualmente las obras de ampliación de la capacidad de esta subestación.
+Los proyectos solares y los nuevos negocios comienzan a dar resultados
+Luego de años de definiciones, aprendizajes y apropiación de herramientas y tecnologías, los proyectos de generación solar y los nuevos negocios enmarcados en los segmentos de clientes: hogares, empresas y ciudades, comienzan a materializarse:
+El primer gran proyecto solar se anunció en febrero de 2017, se trata de la construcción de la primera granja a gran escala en Colombia, llamada Celsia Solar Yumbo, un proyecto de 9,9 MW, conformado por 35.000 paneles solares en un terreno de 18 hectáreas en el municipio de Yumbo que generará aproximadamente 16 GWh al año, lo que equivale al consumo mensual de energía de 8 mil viviendas. La granja solar inicia construcción en marzo y entrará en funcionamiento en el tercer trimestre de este año.
+En nuevos negocios se destacan resultados importantes en los siguientes productos:
+– Energía solar: se está realizando la evaluación técnica de 92 potenciales clientes para el producto de techos solares con una capacidad total de 37 MW, lo que equivale a casi dos pequeñas centrales y cerca de 38 hectáreas de techos.
+– Energía de respaldo: con este producto la compañía instala las plantas de energía de respaldo, las monitorea, las opera y realiza el mantenimiento, y los clientes pagan por el respaldo en el suministro de energía. En este momento está en proceso la instalación de 24 plantas.
+– Distritos térmicos: instalación de equipos que producen energía eléctrica, agua caliente y agua fría, que por medio de redes se distribuyen permitiendo remplazar los sistemas convencionales de aire acondicionado, optimizando el consumo de energía. Sobre este producto la compañía inició la construcción de suprimer distrito térmico intramural en Colombia en el centro comercial Nuestro Montería en el departamento de Córdoba. El proyecto se encuentra actualmente en etapa de construcción y se espera que en mayo comiencen las pruebas de desempeño y funcionalidad de los equipos.
+Inversión social en las áreas de influencia de la compañía en Colombia y Centroamérica
+– En 2016 la inversión social en Colombia fue de COP$24 mil millones y en Centroamérica de USD$420 mil dólares.
+– En Colombia las fundaciones invirtieron más de COP$6.800 millones, logrando beneficiar 18 sedes educativas en la línea de mejoramiento de infraestructura escolar en energía y agua, y 304 sedes educativas en la línea de fortalecimiento de capacidades para la educación. Con esta inversión se impactando 98.409 personas, entre estudiantes, docentes, padres de familia, líderes comunitarios y comunidad en general.
+– Con el programa ReverdeC se lograron recuperar más de 785 hectáreas, aislar 83,1 km para protección y sembrar más de 562.000 árboles en 16 municipios del Valle del Cauca, que permitirán restaurar las cuencas hidrográficas de la región de la mano de las comunidades.
+Decisiones de la Junta Directiva
+La Junta Directiva de Celsia aprobó la proposición para distribuir un dividendo de COP$130 anuales por acción. Esta propuesta mantiene el compromiso con sus accionistas al entregarles un retorno estable sobre su inversión. Igualmente, la Junta Directiva solicitó al presidente convocar a la reunión ordinaria de la Asamblea de Accionistas para el próximo lunes 27 de marzo a las 10:00 a.m. en Plaza Mayor de Medellín.

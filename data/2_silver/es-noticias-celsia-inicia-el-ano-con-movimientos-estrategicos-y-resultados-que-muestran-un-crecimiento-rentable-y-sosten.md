@@ -1,0 +1,29 @@
+---
+url: https://www.celsia.com/es/noticias/celsia-inicia-el-ano-con-movimientos-estrategicos-y-resultados-que-muestran-un-crecimiento-rentable-y-sostenible/
+title: Celsia inicia el año con movimientos estratégicos y resultados que muestran un crecimiento rentable y sostenible
+section: noticias
+fecha_publicacion: 2019-05-08
+hash: 71e8af303dacc951deeaa5d81a9ac140131988cb
+---
+
+# Celsia inicia el año con movimientos estratégicos y resultados que muestran un crecimiento rentable y sostenible
+
+Regresar a Noticias
+08 · 05 · 2019
+Compartir
+Celsia inicia el año con movimientos estratégicos y resultados que muestran un crecimiento rentable y sostenible
+Tiempo de lectura: 3 minutos
+Medellín, 8 de mayo de 2019 . Celsia, empresa de energía del Grupo Argos, presenta los resultados del primer trimestre de 2019, acompañados de movimiento estratégicos importantes para el crecimiento sostenible de la compañía.
+Los ingresos consolidados sumaron $861 mil millones, un aumento de 2% frente al mismo periodo del año anterior. Dentro de estos resultados se destacan la contribución de Colombia con $705 mil millones (+7%) representando el 82% del total consolidado mientras que Centroamérica representa el 18%, con un aporte de USD 50 millones (-23%).
+Por negocio: la generación de energía en Colombia aportó $342 mil millones (+5%); el negocio de transmisión y distribución $77 mil (+20%); y el negocio de comercialización minorista $263 mil millones (+14%).
+El ebitda consolidado alcanzó los $276.000 millones, el segundo mayor ebitda registrado para un primer trimestre, superando las expectativas de la organización al considerar la terminación del contrato de venta de energía que tenía en Panamá a través Bahía las Minas (BLM), el cual dada la dinámica de ese mercado se espera recuperar por medio de nuevas licitaciones a partir de 2020. Al eliminar los efectos de este contrato, el ebitda de la operación de BLM en el trimestre registra una disminución de tan solo 800 mil dólares frente al mismo período de 2018. Esta planta ha contribuido de manera competitiva al suministro de energía en Panamá durante este trimestre y continuará generando energía por los próximos meses, aprovechando su posición competitiva e importancia estratégica para el sistema eléctrico en medio de una condición de baja hidrología como la que se vive en ese país.
+Colombia, por su parte, registró un ebitda de $238.000 millones representando el 86% del resultado consolidado y creciendo un 13% frente a 2018. Este aumento se debe al desempeño del portafolio de generación, a los buenos resultados del negocio de distribución con los activos de Plan5Caribe y al crecimiento de nuestro portafolio comercial.
+La compañía registró una ganancia neta consolidada en el trimestre de $54.000 millones (-32%). Al descontar el interés minoritario, el resultado neto atribuible a propietarios de la controladora fue de $34.000 millones con una disminución de 33%.
+Las inversiones ascendieron a $85.000 millones (Colombia $82 mil millones y Centroamérica USD 1,1 millones); de estos $54.000 millones fueron en transmisión y distribución, $23.000 millones en el negocio de generación y el monto restante en innovación, soporte y continuidad del negocio.
+“Seguimos trabajando con perseverancia para consolidarnos como jugadores relevantes del sector eléctrico nacional. Los importantes movimientos con los que empezamos este 2019, dan muestra de ello: estamos a punto de comenzar a operar el servicio de energía en el Tolima y alcanzar más de un millón de clientes; terminamos dentro de los plazos y con el presupuesto estimado las 7 licitaciones que nos fueron adjudicadas del Plan5Caribe; ampliamos en casi un 2% nuestra participación en Epsa y colocamos $1,1 billones en bonos ordinarios de esta compañía con la que estamos apalancando nuestro crecimiento en Colombia”, afirmó Ricardo Sierra Fernández , líder de Celsia.
+Así se movió el primer trimestre de 2019
+Se anunció la compra de los activos de distribución y el negocio de comercialización de energía eléctrica en el Tolima, a través de Epsa. A partir de junio la compañía será el operador de red en los 47 municipios de este departamento y alcanzará más de 1.115.000 clientes atendidos con el servicio de energía.
+Se realizó la emisión de bonos ordinarios por parte de Epsa en el mercado local por un monto de $1,1 billones. La colocación tuvo unos resultados exitosos pues la demanda fue superior a $2,0 billones. Más del 70% de los recursos será destinado a la compra de Tolima, mientras que el porcentaje restante será destinado a fortalecer la posición de liquidez, refinanciando algunas deudas y sustituyendo pasivos financieros.
+Al cierre de marzo Celsia compró un 1,87% de las acciones ordinarias de Epsa, aumentando su participación a 63,2%, lo cual mejora las capacidades organizacionales y optimiza la gestión del portafolio energético.
+Con la puesta en operación en marzo del séptimo proyecto en Barranquilla, la compañía cerró en el plazo acordado y con las inversiones estimadas el reto asumido con esta región del país a través del Plan5Caribe. El siguiente paso será la construcción del proyecto que incluye la nueva subestación Toluviejo a 220 kilovoltios en el departamento de Sucre y 160 km de líneas de transmisión Chinú–Toluviejo y Toluviejo–Bolívar. Este proyecto que estará en operación en el segundo semestre de 2022 requiere inversiones por aproximadamente USD 70 millones.
+“Estamos llenos de energía para continuar avanzando en estrategias que optimicen operativa y financieramente todos nuestros activos sumado a los proyectos de crecimiento en fuentes renovables. Esto es posible gracias al talento y pasión de nuestra gente, que son el motor que le da tracción y velocidad a la compañía por convencimiento, lo que nos ha permitido llegar a nuevos territorios, crecer y fortalecer los negocios. Nuestros clientes reconocen esa cultura Celsia que nos diferencia en el mercado”, concluyó Sierra.
