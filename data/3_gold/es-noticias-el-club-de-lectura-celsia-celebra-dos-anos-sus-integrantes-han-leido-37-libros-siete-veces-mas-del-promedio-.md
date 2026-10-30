@@ -1,0 +1,50 @@
+---
+url: https://www.celsia.com/es/noticias/el-club-de-lectura-celsia-celebra-dos-anos-sus-integrantes-han-leido-37-libros-siete-veces-mas-del-promedio-por-persona-en-colombia/
+title: El club de lectura Celsia celebra dos años: sus integrantes han leído 37 libros, siete veces más  del promedio por persona en Colombia
+fuente: celsia.com (sitio oficial)
+fecha_extraccion: 2026-10-27T15:51:39.002363+00:00
+fecha_publicacion: 2022-09-14
+section: noticias
+categoria: noticias
+region: Valle y Tolima
+idioma: es
+caracteres: 7662
+tokens: 1676
+hash: 84572c430b0870245e1bcb999f8fcf078847c95f
+relevancia_propuesta: media
+motivo: noticia: depende del tema y de la vigencia (se decide en la curaduría, regla R7)
+---
+
+# El club de lectura Celsia celebra dos años: sus integrantes han leído 37 libros, siete veces más  del promedio por persona en Colombia
+
+Regresar a Noticias
+14 · 09 · 2022
+Compartir
+El club de lectura Celsia celebra dos años: sus integrantes han leído 37 libros, siete veces más del promedio por persona en Colombia
+Tiempo de lectura: 5 minutos
+La iniciativa es un espacio de conversación, donde los colaboradores de Celsia, la empresa de energía de Grupo Argos, comparten experiencias y exploran todo tipo de literatura.
+Desde su inicio en el 2020, el club de lectura Celsia ha leído 37 obras, escritas por 35 autores de 18 países, bajo la orientación del escritor y columnista Diego Aristizábal.
+Este viernes 16 de septiembre, los integrantes del club de lectura Celsia de Colombia y Panamá se reúnen de forma presencial en Medellín, por primera vez, para celebrar los dos años.
+El programa ha dado lugar a otros espacios: un taller de escritura y tres clubes adicionales de lectura: uno, para hijos de colaboradores que lidera la Fundación Ratón de Biblioteca; otro, con enfoque en liderazgo, innovación y desarrollo, y otro, para cualificar docentes en Valle del Cauca, Tolima y Cauca.
+Un total de 18,5 libros es el promedio anual que leen los colaboradores de Celsia, pertenecientes al club de lectura de la compañía. De acuerdo con una publicación de la Revista Forbes, en 2021, en Colombia la media por persona fue de 2,7, lo que equivale a decir que la gente de Celsia supera siete veces esa cifra.
+“Nuestro club de lectura se creó hace dos años, durante la pandemia, como una oportunidad para encontrarnos, conversar, conectarnos desde la distancia y reconocer nuestras coincidencias como seres humanos. La iniciativa ha propiciado la creación de comunidades, grupos de colaboradores de distintas áreas de trabajo y geografías, que se encuentran en otros entornos y cambian la conversación sobre nuestro negocio que es la energía, para hablar de cultura, literatura, y hasta de su propia vida; recomendarse nuevos libros y construir conocimiento alrededor de las historias. Nuestra intención fue demostrar que los libros pueden acompañar, unir y transformar vidas”, afirmó Ricardo Sierra, líder de Celsia.
+En estos dos años se han leído 37 libros de literatura, escritos por 35 autores de 18 nacionalidades, 12 de ellos colombianos. En estos encuentros semanales, con sesiones virtuales de dos horas, han participado 120 colaboradores de Celsia en Colombia y Panamá, muchos de los cuales se conectan, incluso, con sus familias, pues el formato permite que las personas no se desacomoden de su rutina diaria y puedan, en cambio, lograr un balance entre su vida laboral, personal y familiar.
+“El objetivo de un club de lectura debe ser construir un hábito, aprender a conversar de libros desde nuestras propias cotidianidades, dejar de lado todos los pretextos que pueden surgir para no leer. Luego, en la medida que todo eso pasa, descubrimos que leer muchos libros es muy fácil, porque todo empieza con una página, dos, hasta sumar muchas y no poder parar. Y si luego, después de un tiempo, tenemos una cifra de libros leídos realmente fabulosa, como esta del club de lectura de Celsia, pues es la comprobación de que leer es una dicha porque suma experiencias, momentos agradables para comprender mejor la sociedad que habitamos, enriquece nuestras vidas y otras que, al escucharnos hablar de libros con tanta naturalidad, se antojan de leer; y así, sin darnos cuenta, construimos un universo donde los libros son familiares, desde lo que cada uno hace, desde lo que cada uno es. La magia de la lectura puede darse en cualquier entorno de nuestra vida, solo hay que propiciarlo”, expresó Diego Aristizábal, coordinador de la iniciativa, comunicador social-periodista y columnista de los periódicos El Colombiano.
+La historia del club de lectura de Celsia empezó con “El olvido que seremos”, de Héctor Abad Faciolince. En aquel momento varios de quienes se aventuraron a hacer parte de este grupo expresaron que leían poco o nada, pero querían saber cómo era hablar de libros y escuchar a los demás. Poco a poco se fue creando un proceso lector que hoy, dos años después, es sólido, vital y cercano.
+Celsia, una empresa lectora
+“Casi siempre las empresas que promueven la lectura tienen un lector a su cabeza. Probablemente esa persona ha comprendido que no estaría donde está si no hubiera leído. Los afanes cotidianos de una empresa pueden hacer olvidar que una novela puede dar ideas sobre las casas, la convivencia, la electricidad, la comunidad, las pasiones que apoyan o que se oponen a ciertas ideas. Ocupar una parte del tiempo en la lectura nos recuerda que los placeres más hondos y duraderos ocurren en la soledad y en la contemplación de la lectura. Si además estos gustos se comparten en un Club, se puede crear también una comunidad de intereses y de amigos” , expresó Héctor Abad Faciolince, uno de los escritores invitados a este espacio.
+Por su parte, Ricardo Silva Romero, otro autor leído e invitado al club de lectura dijo: “Es maravilloso que una empresa promueva la lectura porque justamente va en contravía de lo que uno siente que hacen las empresas, que es contribuir a la falta de tiempo, al agobio, a la angustia, a la ansiedad, a la incapacidad de detenerse para leer, pensar, reflexionar. Leer es justamente lo contrario a vivir de afán, a vivir hasta el cuello, a vivir insomne; es la muleta, el oxígeno que se requiere cuando uno está contra la pared. Que una empresa promueva el silencio, el tiempo de cada uno, es realmente una demostración de que la empresa tiene una vocación a contribuir a la convivencia, a la vida en paz de cada persona”.
+Sesión virtual con el escritor Juan Esteban Constaín.
+Que un espacio como este, nacido en pandemia, siga celebrando la vida y la alegría del encuentro alrededor de los libros, es una muestra de que en este país todos podemos hacer parte de procesos que transforman la sociedad desde el diálogo, la empatía y el respeto. Los libros no pueden ser ajenos en nuestra cotidianidad, los libros deben estar siempre al alcance de todos para poder hablar de ellos sin ningún misterio, como ocurre en el club de lectura Celsia, que este viernes 16 de septiembre celebrará, de forma presencial en Medellín, dos años de existencia.
+El club de lectura Celsia en cifras
+9.511 páginas de historias.
+11 escritoras mujeres hacen parte los 35 autores que se han leído.
+590 horas de conversación entre lectores.
+295 encuentros de lectura.
+11 charlas virtuales con escritores como Héctor Abad Faciolince, Laura Restrepo, Ricardo Silva Romero, Sara Jaramillo, Juan Esteban Constaín, Jaime Manrique, José Ardila, entre otros.
+El espacio ha inspirado la creación de:
+Clubes de lectura dentro de los equipos de trabajo , establecidos de manera espontánea, alrededor de temas como innovación, cultura, desarrollo, liderazgo y tendencias organizacionales.
+El Club de lectura infantil Celsia para hijos o familiares de los colaboradores, que mezcla la literatura con la creación y la ciencia. A partir de los relatos, los niños construyen piezas o hacen experimentos alusivos a cada narración.
+El Taller de escritura creativa Celsia , también para colaboradores, cuyo propósito es conversar, compartir aprendizajes y revisar los ejercicios de escritura planteados con antelación.
+El club de lectura para docentes , con la participación profesores de básica primaria del Valle del Cauca, Tolima y de Cauca, quienes hacen parte de las instituciones educativas que Celsia apoya a través de su Fundación. La intención es orientarlos y entregarles elementos para que sus alumnos entiendan mejor su entorno a través de los libros.
+Material para periodistas : Descarga las fotos y los audios de Diego Aristizabal y Ricardo Silva haciendo clic aquí

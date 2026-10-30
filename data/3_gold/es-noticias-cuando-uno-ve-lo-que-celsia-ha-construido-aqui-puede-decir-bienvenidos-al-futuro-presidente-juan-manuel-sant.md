@@ -1,0 +1,43 @@
+---
+url: https://www.celsia.com/es/noticias/cuando-uno-ve-lo-que-celsia-ha-construido-aqui-puede-decir-bienvenidos-al-futuro-presidente-juan-manuel-santos/
+title: “Cuando uno ve lo que Celsia ha construido aquí puede decir: bienvenidos al futuro”, presidente Juan Manuel Santos
+fuente: celsia.com (sitio oficial)
+fecha_extraccion: 2026-10-27T15:37:09.092969+00:00
+fecha_publicacion: 2018-03-02
+section: noticias
+categoria: noticias
+region: Valle del Cauca
+idioma: es
+caracteres: 7682
+tokens: 1700
+hash: 57186d67dea654f95ce624bab7c5eb6a4567390f
+relevancia_propuesta: media
+motivo: noticia: depende del tema y de la vigencia (se decide en la curaduría, regla R7)
+---
+
+# “Cuando uno ve lo que Celsia ha construido aquí puede decir: bienvenidos al futuro”, presidente Juan Manuel Santos
+
+Regresar a Noticias
+02 · 03 · 2018
+Compartir
+“Cuando uno ve lo que Celsia ha construido aquí puede decir: bienvenidos al futuro”, presidente Juan Manuel Santos
+Tiempo de lectura: 5 minutos
+El mandatario de los colombianos visitó la granja solar y NOVA y dijo que estas dos obras son “una inyección de optimismo para el país” y destacó el liderazgo de Celsia “pues está generando un volumen importante de energía con el sol y a un precio competitivo, cosa que hace siete años era imposible”.
+Durante su visita a la granja solar el presidente Juan Manuel Santos conoció todo el proceso de generación de esta planta y firmó un panel como acto simbólico. Lo acompañaron Ricardo Sierra, presidente de Celsia, Jorge Marío Velazques, presidente de Argos, y el ministro de Minas, German Arce.
+Yumbo, 2 de marzo de 2018. El presidente de la República, Juan Manuel Santos, en compañía de Jorge Mario Velásquez, presidente de Grupo Argos, y Ricardo Sierra, presidente de Celsia, visitaron Celsia Solar Yumbo, la primera granja de generación solar en el país enlazada al Sistema Interconectado Nacional, y el Núcleo de Operaciones de Visión Avanzada, NOVA. Durante la visita también estuvieron presentes el ministro de Minas y Energías, Germán Arce Zapata; el ministro de Vivienda, Camilo Sánchez Ortega; la gobernadora del Valle del Cauca, Dilian Francisca Toro; el alcalde de Cali, Maurice Armitage, y el alcalde de Yumbo, Carlos Alberto Bejarano. Además se unieron al evento varios líderes empresariales y gremiales del Valle del Cauca.
+La visita comenzó en Celsia Solar Yumbo. Allí el Presidente de la República y las autoridades nacionales, departamentales y locales, tuvieron la oportunidad de ver en plena operación los 35 mil módulos solares que desde el 3 de septiembre están generando energía fotovoltaica para el país.
+Tras la firma de un panel solar como acto conmemorativo de la primera granja fotovoltaica de Colombia, la comitiva y demás invitados se dirigieron a NOVA, el Núcleo de Operaciones de Visión Avanzada donde la organización concentra la supervisión y control de todos sus activos en Colombia y Centroamérica.
+“Cuando uno ve lo que ustedes han construido aquí puede decir: bienvenidos al futuro. Un futuro que estamos construyendo de la mano del sector público y privado, como debe ser. Visitar NOVA y comprobar cómo ya está funcionando la primera granja solar para Colombia es una inyección de optimismo para el país”, así comenzó su intervención el primer mandatario de los colombianos, Juan Manuel Santos , posterior al recorrido, y expresó : “Cuando uno ve que Epsa ha multiplicado su valor 2 veces en 7 años y que la reciente emisión de acciones de Celsia fue sobredemanda, o cuando vemos cómo están instalando una tecnología que es estado del arte a nivel mundial, nos damos cuenta de la transformación que ha tenido este país en los últimos años y que debemos todos valorar”.
+Frente a las fuentes de generación de energía, el Presidente destacó la prioridad que tenemos como país de proteger las cuencas y de continuar con la reforestación para mantener la generación hídrica que es una energía limpia y renovable, y concluyó: “teníamos que dar el paso a las energías renovables no convencionales, el sol y el viento, y qué bueno ver cómo ya una empresa como Celsia dio ese paso y está generando un volumen importante de energía con el sol y a un precio competitivo, cosa que hace siete años era imposible. La energía eólica y la solar se deben convertir en una fuente muy importante de nuestra matriz energética”.
+Por su parte, Jorge Mario Velásquez, presidente de Grupo Argos , y de la Junta Directiva de Celsia, indicó que “estamos convencidos de que nuestro aporte por el sector de la infraestructura, en los negocios de cemento, energía y concesiones, es pieza clave para movilizar la competitividad del país. Este compromiso se refleja en hechos: NOVA y la Granja Solar Yumbo son prueba tangible de nuestra apuesta por el país y por esta maravillosa región del Valle del Cauca. En este camino que estamos recorriendo es fundamental el avance de una regulación moderna y visionaria, que acompañe al sector privado en la transformación tecnológica del sector; por eso celebramos el impulso en políticas públicas para incentivar la inversión en energías limpias. El país está entendiendo el momento disruptivo por el que pasa el sector de energía en el mundo, promoviendo la actualización de un marco regulatorio acorde con las tendencias globales”.
+Durante la visita, Ricardo Sierra, presidente de Celsia , dijo con notable entusiasmo: “cuando se mire atrás dentro de unas décadas, todos recordaremos cómo esta nueva era de la energía tuvo sus inicios aquí, en estos proyectos que hoy estamos presentando: Celsia Solar Yumbo y NOVA”, y aprovechó la oportunidad para destacar la importancia de la unión de esfuerzos públicos y privados para sacar adelante estas iniciativas: “esto no lo hicimos solos, aquí está el fruto de una suma de voluntades: el gobierno nacional con los estímulos legislativos y los incentivos de Colciencias a la innovación y la tecnología, nuestros socios y aliados en EPSA, que han sabido orientar estos esfuerzos y han respaldado las decisiones de la administración. El futuro de la energía en Colombia se ve emocionante: gracias a la coordinación entre el Ministerio de Minas y Energía, la UPME, la CREG, Colciencias, las universidades y los centros de investigación, tenemos una red institucional de primera calidad; además contamos con una base legislativa poderosa y un modelo que nos permitirá seguirle dando seguridad energética a la nación y beneficios a nuestros clientes. Su gobierno, presidente Santos, pasará a la historia por haber hecho posible la revolución de las energías renovables en Colombia” , concluyó.
+El presidente Juan Manuel Santos visitó NOVA y conoció de primera mano cómo funciona este moderno centro de operaciones.
+Sobre la Granja Solar Yumbo y el Núcleo de Operaciones de visión Avanzada – NOVA-
+La Granja Solar Yumbo representa un hito en materia de energía al convertirse en la primera planta que le entregó energía no convencional al país a partir del aprovechamiento de un recurso abundante como el sol. Este proyecto, que fue construido en un terreno de 18 hectáreas cuenta con una capacidad instalada de 9,8 MW y genera alrededor de 16,5 GWh de energía al año, equivalentes al consumo de 8 mil hogares. Igualmente, evitará la emisión de 160 mil toneladas de CO2 en 25 años, que equivale a sembrar 26,5 millones de árboles o reforestar cerca 24.000 hectáreas.
+“En sus 6 meses de operación, Celsia Solar Yumbo ha generado 7.295 GWh, con un promedio por día de 40,3 MWh, lo que equivale a abastecer de energía limpia a 8.000 hogares durante un día”, comentó Julián Darío Cadavid, líder de Transmisión y Distribución de Celsia.
+Conozca más sobre Celsia Solar Yumbo haciendo clic aquí
+Por su parte, el Núcleo de Operaciones de Visión Avanzada – NOVA-, se constituye como el más moderno centro tecnológico de monitoreo y control de activos en Latinoamérica, que le permitirá a Celsia realizar seguimiento a sus operaciones tanto en Colombia como en Centroamérica y posibilitará la obtención de eficiencias en sus negocios:
+Es así como desde NOVA se controla y monitorea:
+La infraestructura eléctrica: plantas de generación, subestaciones, líneas de transmisión y distribución de energía y otros equipos, como, por ejemplo, los transformadores y los equipos de medición inteligente.
+La seguridad física de las instalaciones: vigilancia y control de accesos.
+La plataforma tecnológica sobre la cual se soportan todos los procesos de la organización y la atención y gestión de nuestros 600.000 clientes.

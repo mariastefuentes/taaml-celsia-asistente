@@ -1,0 +1,42 @@
+---
+url: https://www.celsia.com/es/noticias/celsia-inaugura-en-el-espinal-la-primera-granja-solar-del-tolima-que-genera-99-megavatios-de-energia-limpia/
+title: Celsia inaugura en El Espinal la primera granja solar del Tolima que genera 9,9 megavatios de energía limpia
+fuente: celsia.com (sitio oficial)
+fecha_extraccion: 2026-10-27T15:42:35.929985+00:00
+fecha_publicacion: 2020-12-09
+section: noticias
+categoria: noticias
+region: Valle y Tolima
+idioma: es
+caracteres: 7766
+tokens: 1786
+hash: 10178f2e2f24ddd511d2de9c12322d98cfbc0fb1
+relevancia_propuesta: media
+motivo: noticia: depende del tema y de la vigencia (se decide en la curaduría, regla R7)
+---
+
+# Celsia inaugura en El Espinal la primera granja solar del Tolima que genera 9,9 megavatios de energía limpia
+
+Regresar a Noticias
+09 · 12 · 2020
+Compartir
+Celsia inaugura en El Espinal la primera granja solar del Tolima que genera 9,9 megavatios de energía limpia
+Tiempo de lectura: 5 minutos
+La granja está construida en 17 hectáreas donde por muchos años operó la antigua Coltabaco. Está compuesta por 37.876 paneles solares y su producción de energía limpia equivale al consumo de 6.000 familias colombianas.
+El 31% de su energía es entregada directamente a la planta del Grupo Diana, suficiente para llevar a cabo el 43% de sus procesos con energía renovable, logrando producir así, el primer arroz con energía limpia del país. El excedente entrará directamente al Sistema Interconectado Nacional para consumo de todos los colombianos.
+Con Celsia Solar El Espinal se dejarán de emitir 194.775 toneladas de CO 2 en 25 años, contribuyendo al cuidado del medio ambiente por su mitigación de los efectos del cambio climático. Los paneles fotovoltaicos no incrementan la temperatura de la zona donde se ubica la planta.
+Esta es la tercera granja solar de Celsia en Colombia y la quinta en Latinoamérica, sumando una capacidad instalada de 54,43 MW.
+El Espinal, diciembre 9 de 2020. Celsia inauguró hoy su primera granja solar a gran escala en el Tolima, ubicada en el municipio de El Espinal, durante un evento presidido por el presidente de Colombia, Iván Duque, el ministro de Minas y Energía, Diego Mesa y el líder de Celsia, Ricardo Sierra, acompañados por el Gobernador del Tolima, Ricardo Orozco, el alcalde del Espinal Juan Carlos Tamayo, entre otros invitados especiales. Celsia Solar El Espinal es una planta cuya capacidad instalada es de 9,9 megavatios y su producción de energía limpia equivale al consumo promedio de 6.000 familias colombianas.
+La granja está compuesta de 37.876 paneles y dejará de emitir 194.775 Toneladas de CO 2 en 25 años, contribuyendo al cuidado del medio ambiente por su mitigación de los efectos del cambio climático. La compañía aprovechó un terreno de 17 hectáreas en el que hace algunos años se procesaba tabaco y estaba inutilizado. Así, cambió su vocación y lo puso a tono con las nuevas tendencias mundiales al albergar una planta de energía renovable.
+Proyecto solar liderado por una mujer
+Celsia hizo realidad este proyecto junto con Cubico Sustainable Investments y en ella se invirtieron $36 mil millones. Durante la construcción de la granja trabajaron alrededor de 200 personas, el 85% de ellas, mano de obra local. Rosario Orozco, líder de proyectos fotovoltaicos en Celsia, manifestó que “como mujer estoy muy contenta de haber participado liderando este proyecto. Con acciones como esta Celsia está cerrando la brecha y logrando que más mujeres aporten al desarrollo energético del país”.
+La granja le entregará a la planta de arroz del Grupo Diana el 31% de su energía limpia, con la que podrá llevar a cabo la producción de 94.600 toneladas de arroz con energía renovable, y el resto de la energía generada entrará directamente al SIN (Sistema Interconectado Nacional), para consumo de todos los colombianos. La construcción de la granja estuvo a cargo de la compañía Ventus.
+“La puesta en marcha de este proyecto es un avance significativo en la estrategia de sostenibilidad del Grupo Diana, hoy, le podemos decir a Colombia que empezamos a producir arroz con energía limpia. Gracias a esta importante alianza con Celsia, el Grupo Diana consolida su entrada al camino de la sostenibilidad y se suma a las iniciativas que buscan mitigar los impactos negativos del cambio climático”, afirmó Andrés Murra, gerente general del Grupo Diana.
+Es así como Celsia Solar El Espinal, se convierte en la quinta granja solar de Celsia en Latinoamérica, siendo ahora la tercera en Colombia luego de Celsia Solar Yumbo en el Valle del Cauca y Celsia Solar Bolívar.
+La inauguración estuvo acompañada por el presidente de Colombia, Iván Duque Márquez quien calificó a Celsia Solar Espinal como “una maravilla de proyecto, de iniciativa privada, pero con las herramientas que ha dispuesto el Estado, con los descuentos tributarios y con los incentivos de promoción”.
+En el evento de inauguración Ricardo Sierra, líder de Celsia expresó que “llegamos hace 17 meses a operar la red de distribución de Tolima y ya logramos inaugurar la primera granja solar de energía limpia y bonita para el departamento. Lo hicimos junto con la firma Cubico Sustainable Investment, un fondo de inversión muy grande que ha creído en Colombia, y con el que tenemos la idea de desarrollar 650 MW nuevos de energía solar en el país para el año entrante. Por otro lado, estamos muy contentos con la siembra de los 12 mil árboles con los que estamos creando un bosque nativo de cerca de 20 hectáreas, y no paramos ahí: hemos sembrado con Cortolima 200 mil árboles en el departamento y con el alcalde del Espinal estamos viendo cómo sembrar 2000 árboles en el casco urbano. A los Espinalunos queremos darles la seguridad de que esta es una instalación industrial que tendrá una responsabilidad social muy grande con el municipio. Finalmente, esta granja no se habría podio hacer sin el apoyo de nuestro cliente Arroz Diana, y esperamos que les ayude en esta ruta de sostenibilidad y crecimiento que tienen en su ADN”.
+Por su parte, el presidente Iván Duque durante su intervención en la inauguración de Celsia Solar Espinal dijo que “ esta es una maravilla de proyecto, de iniciativa privada, pero con las herramientas que ha dispuesto el Estado, con los descuentos tributarios y con los incentivos de promoción. En solo 27 meses de Gobierno ya hemos multiplicado por 7 veces lo que teníamos cuando empezamos, que era menos de 50 MW, y tenemos asegurados contratos a partir de las subastas para que Colombia tenga más de 2.500 MW, esto sin contar con los proyectos independientes que entran a la nueva subasta de no regulados en el 2021, que serán por más de 4.800 MW. Esto quiere decir que ya empezó, está en marcha y avanza la revolución de las energías renovables no convencionales en Colombia”. Asimismo, reconoció que “ me motiva ver estos 38.000 paneles, más de $36.000 millones invertidos, mano de obra local y liderazgo de la mujer, porque esta planta fue gerenciada por una mujer verraca, trabajadora y conocedora. Además, complementa este ejercicio un sentido ambiental que está presente en la reforestación en las zonas de influencia. Tengo ilusión que Colombia, gracias a esta transición, de un salto en materia ambienta l”.
+El ministro de Minas y Energía, Diego Mesa , acompaño el evento y dijo que “el país sigue avanzando con paso firme en la transición energética con la incorporación de energías renovables, provenientes del sol y del viento. Proyectos como esta nueva granja de Celsia demuestran que la política implementada por el Gobierno del presidente Iván Duque ha generado una atracción que nos permitirá seguir ampliando la capacidad instalada en este tipo de fuentes. Este año completaremos más de 220 megavatios de capacidad instalada, multiplicando por siete veces lo que había en 2018”.
+Contribución forestal
+Celsia está realizando la siembra de 12.269 árboles de especies nativas, de los cuales a la fecha se han sembrado cerca de cinco mil. Esta restauración se da como medida compensatoria por la intervención de 520 árboles que había en el terreno donde se construyó Celsia Solar El Espinal, de los cuales 381 (73%) estaban en muy mal estado, propensos a plagas y volcamientos.
+Entre las especies que se están sembrando en 19,20 hectáreas en el sector de Buenavista de la vereda Talura Puerto Peñol del municipio de El Espinal se encuentran: Ceiba, Cedro rosado, Caoba, Algarrobo, Caracolí, Guamo, Mango y Ocobo. Los árboles estarán al cuidado de la compañía por tres años para garantizar su buen estado, crecimiento y desarrollo.
