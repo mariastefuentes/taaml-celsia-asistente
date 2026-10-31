@@ -163,13 +163,13 @@ def recuperar(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, metodo: str = "aut
     """
     inicio = time.perf_counter()
     error: Exception | None = None
-    fragmentos, metodo = [], "error"
+    fragmentos, usado = [], "error"
     try:
-        fragmentos, metodo = _buscar(pregunta, k, metodo)
+        fragmentos, usado = _buscar(pregunta, k, metodo)
     except Exception as e:  # noqa: BLE001  el fallo viaja en las métricas, no se esconde
         error = e
     fin = time.perf_counter()
-    metricas: dict = {"k": k, "encontrados": len(fragmentos), "metodo": metodo, "tiempo_ms": round((fin - inicio) * 1000, 2)}
+    metricas: dict = {"k": k, "encontrados": len(fragmentos), "metodo": usado, "tiempo_ms": round((fin - inicio) * 1000, 2)}
     if error is not None:
         metricas["error"] = f"{type(error).__name__} {error}"
     return fragmentos, metricas
