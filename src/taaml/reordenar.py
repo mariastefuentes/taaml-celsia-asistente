@@ -11,7 +11,7 @@ import re
 from langchain_core.messages import HumanMessage
 
 from taaml.prompts import leer_prompt
-from taaml.recuperacion import FRAGMENTOS_POR_DEFECTO, buscar
+from taaml.recuperacion import FRAGMENTOS_POR_DEFECTO, recuperar
 
 MODELO_REORDENADOR = "gemini-3.5-flash-lite"  # barato y rápido: solo ordena, no responde
 MODELO_REORDENADOR_DEEPSEEK = "deepseek-flash"  # el mismo papel cuando el asistente trabaja con DeepSeek
@@ -59,4 +59,11 @@ def reordenar(pregunta: str, candidatos: list[dict], k: int = FRAGMENTOS_POR_DEF
 def buscar_reordenado(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, candidatos: int = CANDIDATOS_POR_DEFECTO,
                       modelo: str = MODELO_REORDENADOR) -> list[dict]:
     """Búsqueda en dos pasos: `candidatos` por significado y luego el reordenamiento a k."""
-    return reordenar(pregunta, buscar(pregunta, candidatos), k, modelo)
+    return buscar_reordenado_con_metricas(pregunta, k, candidatos, modelo)[0]
+
+
+def buscar_reordenado_con_metricas(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, candidatos: int = CANDIDATOS_POR_DEFECTO,
+                                  modelo: str = MODELO_REORDENADOR) -> tuple[list[dict], dict]:
+    """Dos pasos con métricas: la recuperación de candidatos mide su tiempo (el reordenamiento no se mide: no es recuperación)."""
+    candidatos_encontrados, metricas = recuperar(pregunta, candidatos, "auto")
+    return reordenar(pregunta, candidatos_encontrados, k, modelo), metricas
