@@ -10,8 +10,10 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 from taaml.base import cargar_documentos  # noqa: E402
 from taaml.corpus import MOTIVOS, RAG, SCRAPING, metricas  # noqa: E402
+from taaml.errores import mensaje_error  # noqa: E402
+from taaml.recuperacion import almacen_vectorial  # noqa: E402
 from taaml.respaldo import con_respaldo, es_falla_del_proveedor, preguntas_guardadas, respuesta_guardada  # noqa: E402
-from taaml.tareas import MODELO_POR_DEFECTO, generar_faq, responder_con_fuentes, resumir  # noqa: E402
+from taaml.tareas import MODELO_POR_DEFECTO, clave_faltante, generar_faq, responder_con_fuentes, resumir  # noqa: E402
 from taaml.validacion import datos_sin_respaldo  # noqa: E402
 
 st.set_page_config(page_title="Asistente Celsia", page_icon="⚡", layout="wide")
@@ -43,10 +45,7 @@ def documentos() -> dict[str, dict]:
 
 
 def mostrar_error(e: Exception) -> None:
-    if "RESOURCE_EXHAUSTED" in str(e) or "429" in str(e):
-        st.error("Se agotó la cuota del modelo y no hubo otro disponible. Intenta más tarde o cambia de modelo en la barra lateral.")
-    else:
-        st.error(f"No se pudo completar la tarea: {str(e)[:200]}")
+    st.error(mensaje_error(e))
 
 
 def con_modelos_de_respaldo(tarea, modelo: str):
@@ -74,7 +73,8 @@ def responder_o_mostrar_guardada(pregunta: str, base: str, modelo: str):
                     st.markdown(chr(10).join(f"- {p}" for p in disponibles))
             return None
         st.warning("Ningún modelo respondió. Esta es la **respuesta guardada** de la evaluación (prompt v3) a esta misma pregunta, no una respuesta nueva.")
-        return guardada
+        respuesta, fragmentos = guardada
+        return respuesta, fragmentos, {"encontrados": len(fragmentos), "metodo": "guardada", "tiempo_ms": 0}
     if avisos:
         st.info("Cambio de modelo: " + "; ".join(avisos) + ".")
     return resultado
@@ -95,20 +95,29 @@ with tab_qa:
         pregunta = st.text_area("¿Qué quieres saber sobre Celsia?", placeholder="¿Cuál es el teléfono de atención al cliente?", max_chars=500)
         enviar = st.form_submit_button("Preguntar", type="primary")
     if enviar and pregunta.strip():
+        if (faltante := clave_faltante(modelo)):
+            st.info(f"Falta la clave de la API {faltante} en la configuración: se intentará con el modelo de respaldo.")
         with st.spinner("Buscando en la información oficial..."):
             resultado = responder_o_mostrar_guardada(pregunta, base, modelo)
         if resultado:
-            respuesta, fragmentos = resultado
+            respuesta, fragmentos, metricas = resultado
             st.markdown(respuesta)
-            if fragmentos and fragmentos[0].get("metodo") == "palabras":
-                st.warning("La búsqueda se hizo por palabras porque Ollama no respondió: es menos precisa (54 % frente a 89 % con embeddings en la evaluación). Enciende Ollama y vuelve a preguntar.")
-            if fragmentos and (dudosos := datos_sin_respaldo(respuesta, fragmentos)):
-                st.warning("Estos datos de la respuesta no aparecen en las fuentes consultadas; verifícalos antes de usarlos: " + ", ".join(dudosos))
-            if fragmentos:
-                fuentes = list(dict.fromkeys((f["documento"], f["fuente"]) for f in fragmentos))
-                with st.expander(f"Fuentes consultadas ({len(fuentes)})", expanded=True):
-                    # los documentos escritos a mano no tienen enlace: se muestran como texto, no como un enlace roto
-                    st.markdown("\n".join(f"- [{titulo}]({url})" if url.startswith("http") else f"- {titulo} ({url})" for titulo, url in fuentes))
+            if base == "rag":
+                if not fragmentos:
+                    st.info("No se encontraron fragmentos relevantes para tu pregunta; no se inventó información.")
+                else:
+                    st.caption(f"Recuperación: {len(fragmentos)} fragmentos en {metricas.get('tiempo_ms', 0)} ms (búsqueda: {metricas.get('metodo', 'auto')}).")
+                    if metricas.get("metodo") == "palabras":
+                        if almacen_vectorial() == "ninguno":
+                            st.info("No hay un índice de búsqueda listo (falta el archivo de vectores o la base en Chroma); se usó la búsqueda por palabras, que es menos precisa. Se regenera con `make indice`.")
+                        else:
+                            st.warning("La búsqueda se hizo por palabras porque Ollama no respondió: es menos precisa (54 % frente a 89 % con embeddings en la evaluación). Enciende Ollama y vuelve a preguntar.")
+                    if (dudosos := datos_sin_respaldo(respuesta, fragmentos)):
+                        st.warning("Estos datos de la respuesta no aparecen en las fuentes consultadas; verifícalos antes de usarlos: " + ", ".join(dudosos))
+                    fuentes = list(dict.fromkeys((f["documento"], f["fuente"]) for f in fragmentos))
+                    with st.expander(f"Fuentes consultadas ({len(fuentes)})", expanded=True):
+                        # los documentos escritos a mano no tienen enlace: se muestran como texto, no como un enlace roto
+                        st.markdown("\n".join(f"- [{titulo}]({url})" if url.startswith("http") else f"- {titulo} ({url})" for titulo, url in fuentes))
 
 with tab_resumen:
     elegido = st.selectbox("Página oficial", list(documentos()), key="doc_resumen")

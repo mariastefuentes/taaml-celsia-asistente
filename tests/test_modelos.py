@@ -55,6 +55,20 @@ def test_sin_clave_de_deepseek_falla_con_mensaje_claro(monkeypatch):
         obtener_modelo("deepseek-v4-pro")
 
 
+def test_sin_clave_de_gemini_falla_con_mensaje_claro(monkeypatch):
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="GOOGLE_API_KEY"):
+        obtener_modelo("gemini-3.5-flash")
+
+
+def test_el_error_de_configuracion_no_incluye_el_valor_de_la_clave(monkeypatch):
+    monkeypatch.setenv("GOOGLE_API_KEY", "sk-valor-secreto-de-prueba")
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="DEEPSEEK_API_KEY") as error:
+        obtener_modelo("deepseek-v4-pro")
+    assert "sk-valor-secreto-de-prueba" not in str(error.value)
+
+
 def test_el_reordenador_es_de_la_misma_familia():
     assert modelo_reordenador("deepseek-flash") == "deepseek-flash"
     assert modelo_reordenador("gemini-3.5-flash") == MODELO_REORDENADOR
