@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from taaml import recuperacion
@@ -98,3 +99,14 @@ def test_si_no_hay_indice_se_usa_la_busqueda_por_palabras(monkeypatch):
     assert recuperacion.almacen_vectorial() == "ninguno"
     _, metricas = recuperar("teléfono de atención al cliente", k=3, metodo="auto")
     assert metricas["metodo"] == "palabras"
+
+
+def test_con_indice_vigente_la_recuperacion_automatica_usa_embeddings(monkeypatch):
+    """Regresión: `recuperar` con método «auto» no debe caer a palabras cuando hay índice y Ollama responde."""
+    n = len(cargar_fragmentos())
+    monkeypatch.setattr(recuperacion, "_matriz", lambda: np.ones((n, 4), dtype=np.float32))
+    monkeypatch.setattr(recuperacion, "embeddings", lambda textos, tipo: np.ones((1, 4), dtype=np.float32))
+    monkeypatch.setattr(recuperacion, "_similitudes", lambda vector: np.arange(n, dtype=float))
+    fragmentos, metricas = recuperar("teléfono de atención al cliente", k=3)
+    assert metricas["metodo"] == "embeddings" and metricas["encontrados"] == 3
+    assert all(f["metodo"] == "embeddings" for f in fragmentos)
