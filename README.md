@@ -78,7 +78,7 @@ make indice              # construye el índice de vectores con Ollama (el repos
 ## Ver el scraper en vivo
 
 ```bash
-make scraping-demo      # descarga 5 páginas de celsia.com en data/_demo_scraping/ (respeta robots.txt, pausa de 1 s; no toca data/1_bronze)
+make scraping-demo      # borra data/_demo_scraping y descarga 5 páginas del blog en data/_demo_scraping/ (respeta robots.txt, pausa de 1 s; no toca data/1_bronze)
 ```
 
 Para reconstruir la base **desde cero** (descargar todo el sitio): `scripts/01_scrape_celsia.py` y `scripts/02_obtener_sedes.py`, y luego `make datos` y `make indice` (tabla de pasos más abajo).
