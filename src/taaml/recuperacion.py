@@ -10,6 +10,7 @@ Si Ollama no responde, se usa una búsqueda por palabras (menos precisa, pero el
 import json
 import math
 import re
+import time
 import urllib.request
 from functools import lru_cache
 from pathlib import Path
@@ -122,8 +123,8 @@ def _por_rango(puntajes: np.ndarray) -> np.ndarray:
     return 1.0 / (60 + rangos)
 
 
-def buscar(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, metodo: str = "auto") -> list[dict]:
-    """Los k fragmentos más relevantes para la pregunta, del más al menos parecido, con su puntaje.
+def _buscar(pregunta: str, k: int, metodo: str) -> tuple[list[dict], str]:
+    """Los k fragmentos más relevantes para la pregunta, del más al menos parecido, con su puntaje, y el método con el que se encontraron.
 
     metodo: «embeddings» (significado), «palabras» (coincidencia de palabras) o «hibrido» (las dos combinadas por posición).
     «auto» usa embeddings (en la medición superó al híbrido); si no hay índice vigente o Ollama no responde, cae a palabras.
@@ -144,7 +145,34 @@ def buscar(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, metodo: str = "auto")
             por_palabras = _puntajes_por_palabras(pregunta)
         puntajes, metodo = por_palabras, "palabras"
     orden = np.argsort(-puntajes)[:k]
-    return [{**fragmentos[i], "puntaje": float(puntajes[i]), "metodo": metodo} for i in orden]
+    return [{**fragmentos[i], "puntaje": float(puntajes[i]), "metodo": metodo} for i in orden], metodo
+
+
+def buscar(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, metodo: str = "auto") -> list[dict]:
+    """Los k fragmentos más relevantes para la pregunta, del más al menos parecido, con su puntaje."""
+    fragmentos, _ = _buscar(pregunta, k, metodo)
+    return fragmentos
+
+
+def recuperar(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, metodo: str = "auto") -> tuple[list[dict], dict]:
+    """Recuperación con métricas para la app: devuelve `(fragmentos, métricas)`.
+
+    Las métricas miden esta misma recuperación: cuántos fragmentos se encontraron (`encontrados`), con qué
+    `metodo` y cuánto tardó (`tiempo_ms`, con `time.perf_counter` en la misma pasada: no se vuelve a buscar).
+    Si la recuperación falla, el error viaja en `error` y `encontrados` queda en 0; el tiempo se sigue midiendo.
+    """
+    inicio = time.perf_counter()
+    error: Exception | None = None
+    fragmentos, metodo = [], "error"
+    try:
+        fragmentos, metodo = _buscar(pregunta, k, metodo)
+    except Exception as e:  # noqa: BLE001  el fallo viaja en las métricas, no se esconde
+        error = e
+    fin = time.perf_counter()
+    metricas: dict = {"k": k, "encontrados": len(fragmentos), "metodo": metodo, "tiempo_ms": round((fin - inicio) * 1000, 2)}
+    if error is not None:
+        metricas["error"] = f"{type(error).__name__} {error}"
+    return fragmentos, metricas
 
 
 def formatear_contexto(resultados: list[dict]) -> str:
