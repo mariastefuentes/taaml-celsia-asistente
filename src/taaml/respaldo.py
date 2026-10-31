@@ -15,8 +15,15 @@ ROOT = Path(__file__).resolve().parents[2]
 RESULTADOS = ROOT / "docs" / "2 - Conjunto de prueba" / "resultados" / "resultados_gemini-gemini-3.5-flash_rag_v3.csv"
 MODELO_DEEPSEEK = "deepseek-flash"
 MODELO_LOCAL = "ollama:llama3.2"  # gratis y sin red, pero 3.000 millones de parámetros en CPU: lento y menos preciso
-# patrones precisos: un «429» o «falta» suelto dentro de otro mensaje no debe esconder un error de código
-MARCAS_DE_FALLA = re.compile(r"resource_exhausted|\b(429|503)\b|unavailable|quota|cuota|falta \w+_api_key|timed out|timeout|connecterror|connectionerror|overloaded", re.I)
+# patrones precisos: un «429» o «falta» suelto dentro de otro mensaje no debe esconder un error de código.
+# 401/403 entran porque una clave inválida o sin permisos es una falla del proveedor, no del código:
+# sin ellos, la app mostraba el 401 y no probaba DeepSeek ni el modelo local.
+MARCAS_DE_FALLA = re.compile(
+    r"resource_exhausted|\b(401|403|429|503)\b|unauthenticated|unauthorized|permission[_ ]denied|"
+    r"api[_ ]?key[_ ]?(not valid|invalid)|invalid api key|quota|cuota|falta \w+_api_key|"
+    r"timed out|timeout|connecterror|connectionerror|overloaded",
+    re.I,
+)
 
 
 def es_falla_del_proveedor(error: Exception) -> bool:
