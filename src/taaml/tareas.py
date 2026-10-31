@@ -18,7 +18,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
 from taaml.base import cargar_base
-from taaml.recuperacion import buscar, formatear_contexto
+from taaml.recuperacion import formatear_contexto, recuperar
 from taaml.prompts import PARAMETROS_MODELO, construir_mensaje_usuario, construir_prompt_sistema, leer_prompt
 
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
@@ -73,6 +73,14 @@ def _tag_instalado(nombre: str) -> str:
 
 
 @lru_cache(maxsize=4)
+def clave_faltante(modelo: str = MODELO_POR_DEFECTO) -> str | None:
+    """La variable de entorno con la clave que falta para responder con `modelo`; None si la configuración alcanza (los modelos locales no la usan)."""
+    if modelo.startswith("ollama:"):
+        return None
+    clave = "DEEPSEEK_API_KEY" if modelo.startswith("deepseek") else "GOOGLE_API_KEY"
+    return None if os.environ.get(clave) else clave
+
+
 def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
     """Gemini por defecto; si el nombre empieza por «deepseek» usa DeepSeek con el razonamiento apagado.
 
@@ -101,21 +109,29 @@ def _estructurado(modelo: str, esquema: type[BaseModel]):
 
 
 def responder_con_fuentes(pregunta: str, base: str = "rag", modelo: str = MODELO_POR_DEFECTO,
-                          reordenar: bool = False) -> tuple[str, list[dict]]:
+                          reordenar: bool = False) -> tuple[str, list[dict], dict]:
     """Q&A: responde con la base de conocimiento y devuelve también los fragmentos usados (vacío si `base` no es «rag»).
 
     base «rag»: solo los fragmentos más relevantes a la pregunta (recomendado). «completa» y «compacta» pegan la base entera.
     reordenar: recupera más candidatos y un modelo elige los mejores (una llamada más; ver reordenar.py).
+
+    Devuelve `(respuesta, fragmentos, métricas)`: las métricas de la recuperación (cuántos fragmentos, con qué
+    método y el tiempo en ms) solo se miden cuando la pregunta se busca en la base («rag»); si la recuperación
+    falla, se propaga el error para que el respaldo y el mensaje al usuario lo manejen.
     """
     if base == "rag" and reordenar:
-        from taaml.reordenar import buscar_reordenado, modelo_reordenador  # import tardío: reordenar usa obtener_modelo de este módulo
-        fragmentos = buscar_reordenado(pregunta, modelo=modelo_reordenador(modelo))
+        from taaml.reordenar import buscar_reordenado_con_metricas, modelo_reordenador  # import tardío: reordenar usa obtener_modelo de este módulo
+        fragmentos, metricas = buscar_reordenado_con_metricas(pregunta, modelo=modelo_reordenador(modelo))
+    elif base == "rag":
+        fragmentos, metricas = recuperar(pregunta)
     else:
-        fragmentos = buscar(pregunta) if base == "rag" else []
+        fragmentos, metricas = [], {"encontrados": 0, "metodo": base, "tiempo_ms": 0}
+    if metricas.get("error") is not None:
+        raise RuntimeError(metricas["error"])
     contexto = formatear_contexto(fragmentos) if base == "rag" else cargar_base(base)
     mensajes = [SystemMessage(construir_prompt_sistema(contexto)), HumanMessage(construir_mensaje_usuario(pregunta))]
     config = {"run_name": "qa_celsia", "tags": ["rag", base], "metadata": {"fragmentos": [f["chunk_id"] for f in fragmentos], "reordenar": reordenar}}
-    return obtener_modelo(modelo).invoke(mensajes, config=config).text.strip(), fragmentos
+    return obtener_modelo(modelo).invoke(mensajes, config=config).text.strip(), fragmentos, metricas
 
 
 def responder(pregunta: str, base: str = "rag", modelo: str = MODELO_POR_DEFECTO, reordenar: bool = False) -> str:
