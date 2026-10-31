@@ -72,7 +72,6 @@ def _tag_instalado(nombre: str) -> str:
     return nombre
 
 
-@lru_cache(maxsize=4)
 def clave_faltante(modelo: str = MODELO_POR_DEFECTO) -> str | None:
     """La variable de entorno con la clave que falta para responder con `modelo`; None si la configuración alcanza (los modelos locales no la usan)."""
     if modelo.startswith("ollama:"):
@@ -81,6 +80,7 @@ def clave_faltante(modelo: str = MODELO_POR_DEFECTO) -> str | None:
     return None if os.environ.get(clave) else clave
 
 
+@lru_cache(maxsize=4)
 def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
     """Gemini por defecto; si el nombre empieza por «deepseek» usa DeepSeek con el razonamiento apagado.
 
