@@ -20,7 +20,7 @@ ayuda:
 	$(info     make app             App completa: Q&A, Resumen, FAQ y Corpus)
 	$(info )
 	$(info   DATOS Y SCRAPING)
-	$(info     make scraping-demo   descarga 5 paginas de celsia.com (no toca data/1_bronze ni gasta cuota))
+	$(info     make scraping-demo   borra la carpeta de demo y descarga 5 paginas del blog (no toca data/1_bronze ni gasta cuota))
 	$(info     make datos           reconstruye silver, gold, curaduria y fragmentos (necesita el HTML de Bronze))
 	$(info     make indice          construye el indice de vectores con Ollama (sube la busqueda del 54 % al 89 %))
 	$(info )
@@ -69,7 +69,8 @@ datos:
 	uv run python scripts/09_conjunto_de_prueba.py
 
 scraping-demo:
-	uv run python scripts/01_scrape_celsia.py --sections page --limit 5 --salida data/_demo_scraping
+	@uv run python -c "import pathlib, shutil; shutil.rmtree(pathlib.Path('data/_demo_scraping'), ignore_errors=True)"
+	uv run python scripts/01_scrape_celsia.py --sections blog-celsia --limit 5 --salida data/_demo_scraping
 
 indice:
 	uv run python scripts/07_construir_indice.py
