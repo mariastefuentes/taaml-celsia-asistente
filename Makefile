@@ -48,16 +48,16 @@ setup:
 	$(info Sin GOOGLE_API_KEY la app usa Ollama local (llama3.2:3b) y, si tampoco responde, las respuestas guardadas.)
 
 modulo1:
-	uv run streamlit run app_modulo1.py
+	uv run streamlit run app/modulo1.py
 
 app:
-	uv run streamlit run app.py
+	uv run streamlit run app/asistente.py
 
 test:
 	uv run python -m pytest
 
 lint:
-	uvx ruff@0.17.3 check --select F,E9 src tests scripts app.py app_modulo1.py
+	uvx ruff@0.17.3 check --select F,E9 src tests scripts app
 	uv lock --check
 
 datos:

@@ -70,7 +70,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | 4. Base vectorial Chroma (specs 004) | ✅ Hecha | `data/4_curaduria/chroma` |
 | 5. Evidencia de resumen y FAQ (specs 005) | ✅ Hecha | `docs/2 - Conjunto de prueba/` |
 | 6. Tabla y pruebas del pipeline (specs 006) | ✅ Hecha | `src/taaml/corpus.py` |
-| 7. Pestaña Corpus y scraping (specs 007) | ✅ Hecha | `app.py`, `app_modulo1.py` |
+| 7. Pestaña Corpus y scraping (specs 007) | ✅ Hecha | `app/asistente.py`, `app/modulo1.py` |
 | 8. Prueba del scraper (specs 008) | ✅ Hecha | `tests/test_scraper.py` |
 | 9. Etapa Descubrir (specs 009) | ✅ Hecha | `data/2_silver/_descubrimiento.json` |
 
@@ -86,7 +86,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Modelo por defecto** | `gemini-3.5-flash`; respaldo `deepseek-flash` y `ollama:llama3.2` |
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
 | **Base vectorial** | Chroma persistente, similitud del coseno, sin telemetría |
-| **Interfaz** | Streamlit (`app.py`, `app_modulo1.py`) |
+| **Interfaz** | Streamlit (`app/asistente.py`, `app/modulo1.py`) |
 | **Testing** | `pytest` (78 pruebas, sin Gemini ni Ollama) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
 | **CI/CD** | GitHub Actions (`.github/workflows/ci.yml`) |
@@ -128,8 +128,9 @@ taaml-celsia-asistente/
 ├── .opencode/skills/         # skills propias para agentes (corpus-medallion)
 ├── .specify/memory/          # este archivo — verdad central
 ├── .github/                  # plantilla de PR y CI
-├── app.py                    # app completa: Q&A, Resumen, FAQ y Corpus
-├── app_modulo1.py            # app del Módulo 1: solo corpus y scraping
+├── app/                      # aplicaciones Streamlit (puntos de entrada, no librería)
+│   ├── asistente.py          # app completa: Q&A, Resumen, FAQ y Corpus
+│   └── modulo1.py            # app del Módulo 1: solo corpus y scraping
 ├── AGENTS.md                 # contexto y reglas para agentes LLM
 ├── Makefile                  # menú de atajos (interfaz única)
 ├── pyproject.toml            # metadatos y dependencias (uv)
@@ -142,7 +143,7 @@ taaml-celsia-asistente/
 - **Estilo:** PEP 8 y PEP 257, con Ruff (`line-length = 100`).
 - **Nomenclatura:** `snake_case` (funciones/variables), `PascalCase` (clases),
   `UPPER_CASE` (constantes). Los nombres de archivos, variables y constantes **nunca**
-  llevan tildes; el texto para personas y el código de `src/` y `app.py` sí.
+  llevan tildes; el texto para personas y el código de `src/` y `app/` sí.
 - **Idioma:** UI, documentación, prompts y commits en español; identificadores en inglés
   cuando el dominio lo pide (p. ej. `chunk`, `hash`).
 - **Docstrings** en módulos, clases y funciones públicas.
@@ -212,6 +213,7 @@ git push -u origin feat/mi-cambio
 | 2026-10-30 | Cadena de respaldo y respuestas guardadas | La demo no se cae por cuota o conexión |
 | 2026-10-30 | El respaldo reconoce 401/403 como falla del proveedor | Una clave inválida o sin permisos no debe impedir DeepSeek ni el modelo local |
 | 2026-10-30 | `app_modulo1.py` para la sustentación | Muestra solo lo que evalúa la rúbrica; el resto queda en `app.py` |
+| 2026-11-05 | Las apps pasan a `app/asistente.py` y `app/modulo1.py` | La raíz queda para configuración y documentos; `src/taaml` sigue siendo solo la librería |
 
 ## 10. Notas y tareas pendientes
 

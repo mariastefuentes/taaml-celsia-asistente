@@ -1,13 +1,13 @@
 """Aplicación Streamlit del asistente de Celsia: Q&A, Resumen y FAQ.
 
-Uso:  uv run streamlit run app.py
+Uso:  uv run streamlit run app/asistente.py
 """
 import sys
 from pathlib import Path
 
 import streamlit as st
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from taaml.base import cargar_documentos  # noqa: E402
 from taaml.corpus import MOTIVOS, RAG, SCRAPING, metricas  # noqa: E402
 from taaml.errores import mensaje_error  # noqa: E402
