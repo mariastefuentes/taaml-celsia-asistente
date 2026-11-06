@@ -5,17 +5,17 @@ criterio 1 de la rúbrica sobre los datos: el proceso de scraping por etapas
 (descubrir → extraer → limpiar → deduplicar → enriquecer), las métricas del corpus
 (URLs, páginas, tokens, descartes) y los descartes por motivo.
 
-La app completa (Q&A con fuentes, Resumen y FAQ) está en `app.py` y se abre con
-`make app`. El scraping en vivo se ejecuta aparte con `make scraping-demo`.
+La app completa (Q&A con fuentes, Resumen y FAQ) está en `app/asistente.py` y se
+abre con `make app`. El scraping en vivo se ejecuta aparte con `make scraping-demo`.
 
-Uso:  uv run streamlit run app_modulo1.py
+Uso:  uv run streamlit run app/modulo1.py
 """
 import sys
 from pathlib import Path
 
 import streamlit as st
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 from taaml.corpus import MOTIVOS, RAG, SCRAPING, metricas  # noqa: E402
 
 st.set_page_config(page_title="Corpus Celsia · Módulo 1", page_icon="⚡", layout="wide")
