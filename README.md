@@ -88,7 +88,7 @@ Para reconstruir la base **desde cero** (descargar todo el sitio): `scripts/01_s
 ```bash
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)
 make modulo1                              # la app del Módulo 1: solo el corpus y las etapas del scraping
-uv run streamlit run app.py               # la aplicación completa (Q&A, Resumen, FAQ y Corpus)
+uv run streamlit run app/asistente.py     # la aplicación completa (Q&A, Resumen, FAQ y Corpus)
 make test                                 # pruebas de componentes, sin Gemini ni Ollama (el CI las corre en cada PR)
 make lint                                 # ruff y lock vigente
 uv run python scripts/16_ensayo_demo.py   # revisa que la demo esté lista, sin gastar cuota
@@ -96,7 +96,7 @@ uv run python scripts/16_ensayo_demo.py   # revisa que la demo esté lista, sin 
 
 `make` muestra el menú de atajos (`setup`, `modulo1`, `app`, `datos`, `indice`, `scraping-demo`, `recuperacion`, `ensayo`, `evaluar`, `pdf`).
 
-**Demo del Módulo 1.** `app_modulo1.py` es la versión que se sustenta en la sesión 8: muestra solo las métricas del corpus y las etapas del scraping (descubrir → extraer → limpiar → deduplicar → enriquecer → curar → fragmentar), sin Q&A, Resumen ni FAQ. La app completa queda en `app.py` (`make app`). El scraping en vivo se ejecuta con `make scraping-demo`.
+**Demo del Módulo 1.** `app/modulo1.py` es la versión que se sustenta en la sesión 8: muestra solo las métricas del corpus y las etapas del scraping (descubrir → extraer → limpiar → deduplicar → enriquecer → curar → fragmentar), sin Q&A, Resumen ni FAQ. La app completa queda en `app/asistente.py` (`make app`). El scraping en vivo se ejecuta con `make scraping-demo`.
 
 <details>
 <summary><b>Referencia detallada: cómo se construye la base, pruebas y opciones</b></summary>
@@ -150,8 +150,7 @@ specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 009: a
 .specify/   memoria del proyecto: memory/constitution.md (verdad central)
 .opencode/  skills propias para agentes (skills/corpus-medallion), escaneadas con SkillSpector
 .github/    plantilla de Pull Request y CI
-app.py       aplicación Streamlit completa (preguntas y respuestas, resumen y FAQ)
-app_modulo1.py  aplicación del Módulo 1 (solo corpus y scraping)
+app/        aplicaciones Streamlit: asistente.py (completa) y modulo1.py (solo corpus y scraping)
 ```
 
 ## Licencia

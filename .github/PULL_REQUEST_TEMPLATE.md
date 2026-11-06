@@ -21,7 +21,7 @@ Marca las áreas que toca esta PR:
 - [ ] **Respaldo y continuidad** (`src/taaml/respaldo.py`, `scripts/16_ensayo_demo.py`)
 - [ ] **Prompts y tareas** (`prompts/`, `src/taaml/prompts.py`, `tareas.py`)
 - [ ] **Evaluación y conjunto de prueba** (`scripts/09`–`14`, `docs/2 - Conjunto de prueba/`)
-- [ ] **Aplicación** (`app.py`, `app_modulo1.py`)
+- [ ] **Aplicación** (`app/asistente.py`, `app/modulo1.py`)
 - [ ] **Pruebas** (`tests/`)
 - [ ] **Gobernanza** (`.specify/memory/constitution.md`, `specs/`, `.github/`, `.opencode/skills/`)
 - [ ] **Documentación** (`README.md`, `AGENTS.md`, `docs/`)
