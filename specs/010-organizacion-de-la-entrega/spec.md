@@ -24,6 +24,7 @@ Taller 2, sin cambiar el comportamiento del asistente.
 - `make modulo1` y `make app` abren la misma interfaz que antes.
 - `make test` y `make lint` pasan.
 - En GitHub solo queda la rama `main`.
-- No se reescribe la historia: los créditos de coautoría de Claude se conservan
-  porque es una herramienta declarada en el informe, y reescribir cambiaría todos
-  los hashes y desalinearía las PR.
+- Los contribuidores quedan organizados: `.mailmap` une los nombres y correos de
+  cada persona. El 7 de noviembre se limpió el historial de `main` (se quitó la
+  línea de coautoría de los mensajes y se unificó un correo duplicado); el código
+  no cambió. El uso de IA sigue declarado en el informe.
