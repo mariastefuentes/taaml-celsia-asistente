@@ -122,19 +122,24 @@ taaml-celsia-asistente/
 │   ├── 4_curaduria/          # base final, chunks, registro e índice vectorial
 │   └── 5_extraccion/         # JSONL de contactos
 ├── prompts/                  # prompts versionados (nunca se editan: se versionan)
-├── docs/                     # análisis, conjunto de prueba, informe y capturas
-├── specs/                    # especificaciones 001–009 (spec, plan, tareas)
+├── docs/                     # análisis, conjunto de prueba, informe, capturas y diagramas (Archify)
+├── specs/                    # especificaciones 001–010 (spec, plan, tareas)
 ├── tests/                    # pruebas automáticas de componentes
 ├── .opencode/skills/         # skills propias para agentes (corpus-medallion)
 ├── .specify/memory/          # este archivo — verdad central
-├── .github/                  # plantilla de PR y CI
+├── .github/                  # plantillas de PR e issues, CI, Dependabot y etiquetas
 ├── app/                      # aplicaciones Streamlit (puntos de entrada, no librería)
 │   ├── asistente.py          # app completa: Q&A, Resumen, FAQ y Corpus
 │   └── modulo1.py            # app del Módulo 1: solo corpus y scraping
+├── CONSTITUTION.md           # puntero a este archivo (el estándar del curso la pide en la raíz)
+├── CONTRIBUTING.md           # ramas, commits y proceso de PR
+├── CODE_OF_CONDUCT.md        # normas de convivencia
 ├── AGENTS.md                 # contexto y reglas para agentes LLM
 ├── Makefile                  # menú de atajos (interfaz única)
 ├── pyproject.toml            # metadatos y dependencias (uv)
 ├── uv.lock                   # lockfile determinista (versionado)
+├── .mailmap                  # une nombres y correos de cada contribuidor
+├── .editorconfig             # estilo común entre editores
 └── .python-version           # versión de Python fijada
 ```
 
@@ -214,6 +219,11 @@ git push -u origin feat/mi-cambio
 | 2026-10-30 | El respaldo reconoce 401/403 como falla del proveedor | Una clave inválida o sin permisos no debe impedir DeepSeek ni el modelo local |
 | 2026-10-30 | `app_modulo1.py` para la sustentación | Muestra solo lo que evalúa la rúbrica; el resto queda en `app.py` |
 | 2026-11-05 | Las apps pasan a `app/asistente.py` y `app/modulo1.py` | La raíz queda para configuración y documentos; `src/taaml` sigue siendo solo la librería |
+| 2026-11-07 | Limpiar el historial de `main`: quitar la línea de coautoría de los mensajes y unir un correo duplicado | Pedido del profesor sobre los contribuidores; el código no cambió (mismo árbol), solo los identificadores de commit |
+| 2026-11-07 | `.mailmap` con una identidad por persona | `git shortlog` muestra cuatro contribuidores, sin duplicados |
+| 2026-11-07 | Diagramas con Archify (`docs/arquitectura.*` y `docs/pipeline.*`) en lugar de Mermaid | Estándar del curso (skill `jan-project-standard`): un diagrama por pregunta, JSON como fuente |
+| 2026-11-07 | Adoptar de la skill la gobernanza (plantillas de issues, Dependabot, etiquetas, CONTRIBUTING, código de conducta) y `make check` | Cumple el estándar sin tocar el código |
+| 2026-11-07 | No adoptar pre-commit, Python 3.13, Ruff completo ni Squash & Merge | GGA es el guardián de commits del curso; 3.12 es válido; la rúbrica evalúa los commits individuales (se fusiona con merge commit) |
 
 ## 10. Notas y tareas pendientes
 

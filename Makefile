@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app test lint datos scraping-demo indice recuperacion ensayo evaluar pdf
+.PHONY: help ayuda setup modulo1 app test lint check format clean datos scraping-demo indice recuperacion ensayo evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -28,11 +28,14 @@ ayuda:
 	$(info     make ensayo          revisa que la demo este lista, sin gastar cuota)
 	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
 	$(info     make lint            errores de codigo con ruff y lock vigente)
+	$(info     make check           lint + pruebas: lo que corre el CI; correrlo antes de subir)
 	$(info     make recuperacion    mide la recuperacion de fragmentos (gratis; necesita Ollama))
 	$(info )
 	$(info   OTROS)
 	$(info     make evaluar         corre las 59 preguntas con Gemini (GASTA CUOTA: confirmar antes))
 	$(info     make pdf             regenera el PDF del informe)
+	$(info     make format          da formato al codigo con ruff (cambia archivos: revisa el diff antes del commit))
+	$(info     make clean           borra caches (pytest, ruff, __pycache__))
 	$(info )
 	@:
 
@@ -59,6 +62,14 @@ test:
 lint:
 	uvx ruff@0.17.3 check --select F,E9 src tests scripts app
 	uv lock --check
+
+check: lint test
+
+format:
+	uvx ruff@0.17.3 format src tests scripts app
+
+clean:
+	@uv run python -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for pat in ('.pytest_cache', '.ruff_cache', '**/__pycache__') for p in pathlib.Path('.').glob(pat) if '.venv' not in p.parts]"
 
 datos:
 	uv run python scripts/03_construir_silver.py
