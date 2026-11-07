@@ -6,7 +6,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [
-    { name = "María Stella Fuentes", email = "mariastella.1807@gmail.com" },
+    { name = "María Stella Fuentes", email = "maria_ste.fuentes@uao.edu.co" },
     { name = "Juan José Mosquera" },
     { name = "Nicolás Bolaños" },
     { name = "Jensen Fabián Tamayo" },

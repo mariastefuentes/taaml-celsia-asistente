@@ -159,6 +159,15 @@ Licencia MIT ([LICENSE](LICENSE)), © 2026 María Stella Fuentes, Juan José Mos
 
 ## Créditos
 
-**Grupo 4, Celsia.** Juan José Mosquera, Nicolás Bolaños, Jensen Fabián Tamayo y María Stella Fuentes. Maestría en IA y Ciencias de Datos, Universidad Autónoma de Occidente, curso *Técnicas avanzadas de IA aplicadas en modelos de lenguaje*, 2026-2S.
+**Grupo 4, Celsia.** Maestría en IA y Ciencias de Datos, Universidad Autónoma de Occidente, curso *Técnicas avanzadas de IA aplicadas en modelos de lenguaje*, 2026-2S.
+
+| Integrante | GitHub |
+|---|---|
+| María Stella Fuentes | [@mariastefuentes](https://github.com/mariastefuentes) |
+| Juan José Mosquera | [@juanmosqueraesquivel-hub](https://github.com/juanmosqueraesquivel-hub) |
+| Jensen Fabián Tamayo | [@Jensentamayo](https://github.com/Jensentamayo) |
+| Nicolás Bolaños | [@nico10102003](https://github.com/nico10102003) |
+
+Para contribuir, lee la [guía de contribución](CONTRIBUTING.md), el [código de conducta](CODE_OF_CONDUCT.md) y la [constitución](CONSTITUTION.md) del proyecto.
 
 Herramientas: LangChain, Streamlit, Chroma, Ollama, Gemini y DeepSeek. El código se escribió con ayuda de Claude Code; la declaración completa de uso de IA está en el informe.
