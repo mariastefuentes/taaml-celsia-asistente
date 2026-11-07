@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Asistente Celsia: arquitectura de la aplicación",
+    "subtitle": "Camino de una pregunta, desde la interfaz hasta la respuesta con fuentes",
+    "output": "arquitectura.html",
+    "locale": "es",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "usuario", "type": "external", "label": "Cliente", "sublabel": "Pregunta en español", "pos": [30, 200], "size": [110, 54] },
+    { "id": "app", "type": "frontend", "label": "Streamlit", "sublabel": "app/asistente.py", "pos": [190, 200], "size": [120, 54] },
+    { "id": "recuperacion", "type": "backend", "label": "Recuperación", "sublabel": "12 fragmentos", "pos": [360, 200], "size": [130, 54] },
+    { "id": "ollama", "type": "cloud", "label": "Ollama", "sublabel": "nomic-embed-text-v2-moe", "pos": [345, 50], "size": [160, 54] },
+    { "id": "chroma", "type": "database", "label": "Chroma", "sublabel": "1.690 fragmentos", "pos": [360, 360], "size": [130, 54], "tag": "coseno" },
+    { "id": "prompt", "type": "backend", "label": "Prompt v3", "sublabel": "5 bloques + XML", "pos": [590, 200], "size": [120, 54] },
+    { "id": "validacion", "type": "security", "label": "Post-validación", "sublabel": "cifras y enlaces", "pos": [790, 200], "size": [130, 54] },
+    { "id": "gemini", "type": "cloud", "label": "Gemini 3.5 Flash", "sublabel": "temp 0,0 · top_p 0,1", "pos": [610, 360], "size": [150, 54] },
+    { "id": "respaldo", "type": "cloud", "label": "Respaldos", "sublabel": "DeepSeek → Llama 3.2 local", "pos": [820, 360], "size": [180, 54] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Aplicación local (LangChain)", "wraps": ["app", "recuperacion", "prompt", "validacion"] }
+  ],
+  "connections": [
+    { "id": "usuario-app", "from": "usuario", "to": "app", "label": "pregunta", "variant": "emphasis", "labelDy": 19 },
+    { "id": "app-recuperacion", "from": "app", "to": "recuperacion", "label": "consulta", "labelDy": 19 },
+    { "id": "recuperacion-ollama", "from": "recuperacion", "to": "ollama", "label": "embedding", "fromSide": "top", "toSide": "bottom", "labelAt": [440, 135] },
+    { "id": "recuperacion-chroma", "from": "recuperacion", "to": "chroma", "label": "búsqueda", "fromSide": "bottom", "toSide": "top", "labelAt": [440, 310] },
+    { "id": "recuperacion-prompt", "from": "recuperacion", "to": "prompt", "label": "fragmentos", "labelDy": 19 },
+    { "id": "prompt-gemini", "from": "prompt", "to": "gemini", "label": "mensaje", "fromSide": "bottom", "toSide": "top", "labelAt": [670, 310] },
+    { "id": "gemini-validacion", "from": "gemini", "to": "validacion", "label": "respuesta", "variant": "emphasis", "fromSide": "top", "toSide": "bottom", "labelAt": [810, 310] },
+    { "id": "gemini-respaldo", "from": "gemini", "to": "respaldo", "label": "si falla", "variant": "dashed", "labelDy": -19 }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Recuperación", "items": ["Embeddings con Ollama, búsqueda por coseno en Chroma", "Si no hay índice o Ollama falla, busca por palabras", "Acierto medido: 89 % con embeddings, 54 % con palabras"] },
+    { "dot": "cyan", "title": "Generación", "items": ["Gemini 3.5 Flash con temperatura 0,0 y top_p 0,1", "Si falla: DeepSeek, luego Llama 3.2 local, luego respuesta guardada"] },
+    { "dot": "rose", "title": "Control", "items": ["Contexto aislado en etiquetas XML (defensa contra inyección)", "Cada cifra y enlace de la respuesta se valida contra los fragmentos", "Las fuentes consultadas se muestran en la interfaz"] }
+  ]
+}

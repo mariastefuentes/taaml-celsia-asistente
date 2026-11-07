@@ -27,27 +27,13 @@ El detalle y las limitaciones están en el [informe](docs/3%20-%20Informe/inform
 
 ## Arquitectura
 
-```mermaid
-flowchart LR
-    subgraph Datos["Pipeline de datos (scripts 01 a 07)"]
-        W[celsia.com<br/>sitemaps + robots.txt] --> B[Bronze<br/>HTML crudo]
-        B --> S[Silver<br/>texto limpio]
-        S --> G[Gold<br/>metadatos + tokens]
-        G --> C[Curaduría<br/>393 documentos]
-        C --> F[Fragmentos<br/>1.000 / 150]
-        F --> E[Embeddings<br/>nomic-embed-text-v2-moe]
-        E --> V[(Chroma)]
-    end
-    subgraph App["Aplicación Streamlit"]
-        Q[Pregunta] --> R[Recuperación<br/>12 fragmentos]
-        V --> R
-        R --> P[Prompt v3<br/>5 bloques + XML]
-        P --> M[Gemini 3.5 Flash]
-        M --> A[Respuesta + fuentes]
-        A --> X[Post-validación<br/>de cifras y enlaces]
-    end
-    M -. falla .-> D[DeepSeek] -. falla .-> L[Llama 3.2 local] -. falla .-> H[Respuesta guardada]
-```
+[![Arquitectura de la aplicación](docs/capturas/arquitectura.png)](docs/arquitectura.html)
+
+El diagrama es interactivo: abre [docs/arquitectura.html](docs/arquitectura.html) (fuente en [docs/arquitectura.json](docs/arquitectura.json)). La preparación de los datos, de celsia.com a los fragmentos indexados, tiene su propio diagrama:
+
+[![Pipeline de datos](docs/capturas/pipeline.png)](docs/pipeline.html)
+
+Interactivo en [docs/pipeline.html](docs/pipeline.html) (fuente en [docs/pipeline.json](docs/pipeline.json)). Los HTML se generan con Archify desde el JSON y no se editan a mano.
 
 La app tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes** y **Corpus y scraping** (etapas del pipeline y métricas).
 

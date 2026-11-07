@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Asistente Celsia: pipeline de datos",
+    "subtitle": "De las páginas de celsia.com a los fragmentos indexados que consulta la aplicación (scripts 01 a 07)",
+    "output": "pipeline.html",
+    "locale": "es",
+    "quality_profile": "showcase"
+  },
+  "stages": [
+    { "label": "Descarga" },
+    { "label": "Limpieza" },
+    { "label": "Enriquecimiento" },
+    { "label": "Curaduría y partición" },
+    { "label": "Índice" }
+  ],
+  "nodes": [
+    { "id": "sitio", "type": "external", "label": "celsia.com", "sublabel": "sitemaps + robots.txt", "stage": 0, "row": 0 },
+    { "id": "bronze", "type": "database", "label": "Bronze", "sublabel": "HTML crudo · 1.273 URLs", "stage": 0, "row": 1 },
+    { "id": "silver", "type": "database", "label": "Silver", "sublabel": "texto limpio · 1.101 docs", "stage": 1, "row": 1 },
+    { "id": "gold", "type": "database", "label": "Gold", "sublabel": "metadatos + tokens · 1.101 docs", "stage": 2, "row": 1 },
+    { "id": "curaduria", "type": "backend", "label": "Curaduría", "sublabel": "393 documentos", "stage": 3, "row": 0 },
+    { "id": "fragmentos", "type": "backend", "label": "Fragmentos", "sublabel": "1.000 caracteres · 150 de solape", "stage": 3, "row": 1 },
+    { "id": "embeddings", "type": "cloud", "label": "Embeddings", "sublabel": "Ollama · nomic-embed-text-v2-moe", "stage": 4, "row": 0 },
+    { "id": "chroma", "type": "database", "label": "Chroma", "sublabel": "1.690 vectores", "stage": 4, "row": 1 }
+  ],
+  "flows": [
+    { "id": "sitio-bronze", "from": "sitio", "to": "bronze", "label": "01 scraping", "variant": "emphasis" },
+    { "id": "bronze-silver", "from": "bronze", "to": "silver", "label": "03 limpiar" },
+    { "id": "silver-gold", "from": "silver", "to": "gold", "label": "04 enriquecer" },
+    { "id": "gold-curaduria", "from": "gold", "to": "curaduria", "label": "05 curar" },
+    { "id": "curaduria-fragmentos", "from": "curaduria", "to": "fragmentos", "label": "06 partir" },
+    { "id": "fragmentos-embeddings", "from": "fragmentos", "to": "embeddings", "label": "vectorizar" },
+    { "id": "embeddings-chroma", "from": "embeddings", "to": "chroma", "label": "07 indexar", "variant": "emphasis" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Descarga", "items": ["Respeta robots.txt y pausa entre páginas", "1.272 respuestas HTTP 200 y 1 error 500 del sitio"] },
+    { "dot": "cyan", "title": "Curaduría", "items": ["Quita contenido en inglés, casi duplicado y noticias viejas", "De 1.101 documentos quedan 393"] },
+    { "dot": "rose", "title": "Índice", "items": ["1.690 fragmentos con su vector", "La aplicación busca por coseno en Chroma"] }
+  ]
+}
