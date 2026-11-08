@@ -19,6 +19,7 @@ Es el entregable 2 del proyecto integrador (Fase 2, 30 %): «agente con memoria 
 - Las pruebas automáticas no llaman a Gemini ni a Ollama (modelo simulado) y son gratis.
 - Las llamadas reales a Gemini se hacen en un ensayo aparte, con confirmación previa de la usuaria.
 - La pestaña «Agente» de la app muestra la conversación y qué herramienta usó cada respuesta.
+- Excepción declarada: `gemini-3.8-flash` ignora `temperature` y `top_p`; la respuesta puede variar y se compensa con las herramientas, la validación y el «No tengo esa información».
 - El Taller 1 no cambia: sus tres tareas siguen con `gemini-3.5-flash`.
 
 ## Fuera de alcance

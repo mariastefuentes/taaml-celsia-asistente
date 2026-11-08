@@ -2,7 +2,7 @@
 
 Es el patrón «modelo + herramientas + prompt», con memoria por conversación (`thread_id`) y dos herramientas: `buscar_en_base`
 (texto, reutiliza `recuperacion.buscar`) y `consultar_datos` (datos exactos). Usa Gemini de pago (indicación del profesor) y, si
-falla, cae a un modelo local de Ollama; temperature 0.0 y top_p 0.1.
+falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1, pero gemini-3.8-flash los ignora (medido): la respuesta puede variar.
 """
 from typing import Literal
 from uuid import uuid4

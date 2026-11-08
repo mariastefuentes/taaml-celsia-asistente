@@ -160,7 +160,7 @@ taaml-celsia-asistente/
   - `data/0_manual/` es el único lugar de datos escritos a mano, siempre con su fuente.
   - Un cambio de prompt es una **versión nueva** (`prompts/vN_*.md`), no una edición.
   - Toda cifra, teléfono o enlace que responda el asistente debe existir en la base.
-  - `temperature = 0.0` y `top_p = 0.1` en RAG y agentes.
+  - `temperature = 0.0` y `top_p = 0.1` en RAG y agentes. **Excepción:** el agente (`gemini-3.8-flash`) los ignora (medido el 2026-11-08: 5 frases distintas en 5 intentos con 0,0 y 0,1, igual que con 2,0 y 1,0); sus respuestas pueden variar entre ejecuciones y se protege con las herramientas, la validación de datos sin respaldo y el «No tengo esa información».
 
 ## 6. Calidad y automatización
 
@@ -231,6 +231,7 @@ git push -u origin feat/mi-cambio
 | 2026-11-08 | Memoria con `InMemorySaver` y `thread_id` por conversación (en RAM) | Cumple la Fase 2; guardarla en disco es de la Fase 3 |
 | 2026-11-08 | Router por prompt (`prompts/v2_agente.md`): el agente elige entre `buscar_en_base` y `consultar_datos` | Más simple que un clasificador aparte y coincide con el RAG Agent de la Clase 9 |
 | 2026-11-08 | Tag `taller-1` sobre el `main` sustentado | Conservar el estado exacto de la primera entrega |
+| 2026-11-08 | Mantener `gemini-3.8-flash` en el agente aunque ignora `temperature` y `top_p` | El profesor pidió un modelo reciente de pago; el 3.5 sí los respeta pero va de baja. Las defensas contra datos inventados no dependen de la temperatura |
 
 ## 10. Notas y tareas pendientes
 
