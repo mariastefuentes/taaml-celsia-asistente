@@ -1,6 +1,6 @@
 ---
 version: v1
-estado: vigente
+estado: reemplazado por v2
 cambios: prompt del agente con herramienta; la información llega al llamar a buscar_en_base, no pegada en el prompt
 ---
 # 1. ROL
