@@ -35,7 +35,7 @@ El diagrama es interactivo: abre [docs/arquitectura.html](docs/arquitectura.html
 
 Interactivo en [docs/pipeline.html](docs/pipeline.html) (fuente en [docs/pipeline.json](docs/pipeline.json)). Los HTML se generan con Archify desde el JSON y no se editan a mano.
 
-La app tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes** y **Corpus y scraping** (etapas del pipeline y métricas).
+La app tiene cinco pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes**, **Corpus y scraping** (etapas del pipeline y métricas) y **Agente** (chat con memoria que elige entre datos exactos y búsqueda en el texto).
 
 ## Capturas
 
@@ -114,7 +114,7 @@ Los datos que el sitio muestra solo como enlaces (WhatsApp, PQR, pagos) están e
 ### Opciones que se activan a propósito
 - **Post-validación.** La app avisa si una cifra, un correo o un enlace de la respuesta no aparece en las fuentes consultadas (`src/taaml/validacion.py`); `scripts/14_validar_respuestas.py` lo mide sobre las respuestas guardadas, sin modelo.
 - **Continuidad de la demo.** Si el modelo elegido falla por cuota o conexión, la app prueba `deepseek-flash` (si hay clave) y luego `ollama:llama3.2` (local), y si ninguno responde muestra la respuesta ya evaluada (v3) de esa pregunta, marcada como guardada (`src/taaml/respaldo.py`). `uv run python scripts/16_ensayo_demo.py` revisa que todo esté listo sin gastar; con `--llamar` hace una llamada corta por proveedor.
-- **Agente con herramienta.** `uv run python scripts/15_probar_agente.py` pregunta a un agente `create_agent` con Llama 3.2 en Ollama (sin costo; tarda minutos en CPU).
+- **Agente con memoria y router (spec 011).** `src/taaml/agente.py` arma un agente `create_agent` con `gemini-3.8-flash` (respaldo `ollama:llama3.2`), memoria por conversación (`thread_id`) y dos herramientas: `buscar_en_base` (texto del sitio) y `consultar_datos` (sedes, contactos y catálogo con filtros exactos, `src/taaml/consulta_datos.py`). El prompt `prompts/v2_agente.md` fija cuándo usar cada una. Está en la pestaña **Agente**; `uv run python scripts/18_ensayo_agente.py` hace una conversación de cuatro preguntas (gasta unas 8 a 12 llamadas a Gemini) y `scripts/15_probar_agente.py` hace preguntas sueltas.
 - **Extracción a JSONL.** `uv run python scripts/13_extraer_contactos.py` (3 llamadas a Gemini) escribe `data/5_extraccion/contactos.jsonl`.
 - **Trazabilidad (LangSmith).** Si el `.env` tiene `LANGCHAIN_API_KEY`, la app y las tareas registran cada ejecución (pregunta, fragmentos, prompt, respuesta, tokens y tiempo) en el proyecto `taaml-celsia` de smith.langchain.com. Sin la clave no se envía nada. La evaluación (`11_evaluar_modelo.py`) llama a la API directamente y no se traza.
 - **Reordenamiento de fragmentos.** `responder_con_fuentes(..., reordenar=True)` o `--reordenar` en los scripts 10 y 11: recupera 30 candidatos y `gemini-3.5-flash-lite` elige los 12 mejores. Cuesta una llamada más por pregunta y está apagado por defecto.
@@ -127,12 +127,12 @@ Equivalencias de datos: `data/1_bronze/` es el crudo (raw), `data/2_silver/` el 
 
 ```
 docs/        análisis de la empresa, conjunto de prueba, informe y capturas
-scripts/     01 a 17: etapas del pipeline y pruebas en el orden en que se usan; utilidades/: herramientas sueltas
+scripts/     01 a 18: etapas del pipeline y pruebas en el orden en que se usan; utilidades/: herramientas sueltas
 data/        0_manual/ 1_bronze/ 2_silver/ 3_gold/ 4_curaduria/ 5_extraccion/
-src/taaml/   código del asistente (base.py, recuperacion.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, prompts.py, tareas.py)
-prompts/     prompts versionados (asistente v3 vigente, v4 y v5 descartados; resumen y FAQ v2; agente y extracción v1)
+src/taaml/   código del asistente (base.py, recuperacion.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, consulta_datos.py, prompts.py, tareas.py)
+prompts/     prompts versionados (asistente v3 vigente, v4 y v5 descartados; resumen y FAQ v2; agente v2 vigente; extracción v1)
 tests/       pruebas automáticas de componentes (make test)
-specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 009: asistente, validación y agente, continuidad de la demo, base vectorial, evidencia de Resumen y FAQ, pestaña Corpus, prueba del scraper y etapa Descubrir
+specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 011: asistente, validación y agente, continuidad de la demo, base vectorial, evidencia de Resumen y FAQ, pestaña Corpus, prueba del scraper, etapa Descubrir, organización de la entrega y agente con memoria y router
 .specify/   memoria del proyecto: memory/constitution.md (verdad central)
 .opencode/  skills propias para agentes (skills/corpus-medallion), escaneadas con SkillSpector
 .github/    plantilla de Pull Request y CI
