@@ -1,13 +1,15 @@
-"""Aplicación Streamlit del asistente de Celsia: Q&A, Resumen y FAQ.
+"""Aplicación Streamlit del asistente de Celsia: Q&A, Resumen, FAQ, Corpus y Agente (con memoria y dos herramientas).
 
 Uso:  uv run streamlit run app/asistente.py
 """
 import sys
 from pathlib import Path
+from uuid import uuid4
 
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+from taaml.agente import MODELO_AGENTE, conversar, etiqueta_herramientas  # noqa: E402
 from taaml.base import cargar_documentos  # noqa: E402
 from taaml.corpus import MOTIVOS, RAG, SCRAPING, metricas  # noqa: E402
 from taaml.errores import mensaje_error  # noqa: E402
@@ -88,7 +90,7 @@ with st.sidebar:
                          "«compacta»: solo el inicio de cada documento, sin buscar.\n\n"
                          "«completa»: toda la base en el prompt, como pide el enunciado (~340.000 tokens por pregunta, unas 80 veces más cara que rag; úsala solo para demostrar la diferencia).")
 
-tab_qa, tab_resumen, tab_faq, tab_corpus = st.tabs(["Preguntas y respuestas", "Resumen", "Preguntas frecuentes", "Corpus y scraping"])
+tab_qa, tab_resumen, tab_faq, tab_corpus, tab_agente = st.tabs(["Preguntas y respuestas", "Resumen", "Preguntas frecuentes", "Corpus y scraping", "Agente"])
 
 with tab_qa:
     with st.form("form_pregunta", border=False):
@@ -168,3 +170,29 @@ with tab_corpus:
     with st.expander(f"Documentos descartados en la curaduría (primeros {len(c['descartados_ejemplos'])})"):
         st.dataframe([{"Regla": f["regla"], "Título": f["title"], "Motivo": f["motivo"], "Fuente": f["url"]} for f in c["descartados_ejemplos"]],
                      hide_index=True, use_container_width=True)
+
+with tab_agente:
+    st.caption(f"Conversación con memoria. El agente ({MODELO_AGENTE}) decide si consulta datos exactos (sedes, contactos) o busca en el texto del sitio.")
+    if "agente_hilo" not in st.session_state:
+        st.session_state.agente_hilo, st.session_state.agente_mensajes = uuid4().hex, []
+    if st.button("Nueva conversación"):
+        st.session_state.agente_hilo, st.session_state.agente_mensajes = uuid4().hex, []
+    for mensaje in st.session_state.agente_mensajes:
+        with st.chat_message(mensaje["rol"]):
+            st.markdown(mensaje["texto"])
+            if mensaje.get("usadas"):
+                st.caption(mensaje["usadas"])
+    if (entrada := st.chat_input("Pregunta por sedes, teléfonos, trámites...", max_chars=500)):
+        st.session_state.agente_mensajes.append({"rol": "user", "texto": entrada})
+        with st.chat_message("user"):
+            st.markdown(entrada)
+        with st.chat_message("assistant"):
+            try:
+                with st.spinner("Pensando..."):
+                    respuesta, llamadas = conversar(entrada, st.session_state.agente_hilo)
+            except Exception as e:  # noqa: BLE001
+                mostrar_error(e)
+            else:
+                st.markdown(respuesta)
+                st.caption(etiqueta := etiqueta_herramientas(llamadas))
+                st.session_state.agente_mensajes.append({"rol": "assistant", "texto": respuesta, "usadas": etiqueta})
