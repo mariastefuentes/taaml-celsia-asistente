@@ -59,6 +59,7 @@ def test_resumen_del_descubrimiento_cuenta_cada_estado():
 
     ruta = Path(__file__).resolve().parents[1] / "scripts" / "03_construir_silver.py"
     spec = util.spec_from_file_location("silver", ruta)
+    assert spec is not None and spec.loader is not None
     modulo = util.module_from_spec(spec)
     spec.loader.exec_module(modulo)
     filas = [{"section": "page"}, {"section": "page", "error": "bloqueada por robots.txt"},

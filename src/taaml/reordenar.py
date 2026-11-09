@@ -24,8 +24,11 @@ LARGO_VISTA = 400  # caracteres de cada candidato que ve el reordenador
 
 def parsear_orden(texto: str, total: int) -> list[int]:
     """Posiciones (desde 0) que el modelo eligió, sin repetidas ni fuera de rango. Lista vacía si no se puede leer."""
+    encontrado = re.search(r"\{.*\}", texto, re.S)
+    if encontrado is None:
+        return []
     try:
-        numeros = json.loads(re.search(r"\{.*\}", texto, re.S).group(0))["orden"]
+        numeros = json.loads(encontrado.group(0))["orden"]
     except Exception:  # noqa: BLE001  cualquier respuesta ilegible equivale a «sin orden»
         return []
     vistos: list[int] = []

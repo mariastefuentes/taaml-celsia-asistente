@@ -67,7 +67,7 @@ def main() -> None:
                                               separators=["\n\n", "\n", ". ", " ", ""], length_function=len)
     docs = [json.loads(ln) for ln in (CURADURIA / "documentos_incluidos.jsonl").read_text(encoding="utf-8").splitlines()]
 
-    chunks = []
+    chunks: list[dict] = []
     for d in docs:
         piezas = fragmentar(d, splitter)
         for i, p in enumerate(piezas, 1):

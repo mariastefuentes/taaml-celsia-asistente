@@ -130,7 +130,10 @@ def juzgar(juez: str, p: dict, respuesta: str) -> tuple[str, str]:
         proveedor, _, nombre = juez.rpartition(":")  # «deepseek:<id>»; sin prefijo es un modelo de Gemini
         llamar = llamar_deepseek if proveedor == "deepseek" else llamar_gemini
         texto, _, _ = llamar(nombre, "Eres un evaluador. Respondes solo JSON.", prompt, json_salida=True)
-        j = json.loads(re.search(r"\{.*\}", texto, re.S).group(0))
+        encontrado = re.search(r"\{.*\}", texto, re.S)
+        if encontrado is None:
+            return "sin_calificar", "el juez no devolvió JSON"
+        j = json.loads(encontrado.group(0))
         cal = j.get("calificacion", "").strip()
         return (cal if cal in CALIFICACIONES else "sin_calificar"), j.get("motivo", "")
     except Exception as e:  # noqa: BLE001

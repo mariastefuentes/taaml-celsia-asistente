@@ -47,3 +47,8 @@ def test_buscar_reordenado_con_metricas_devuelve_los_fragmentos_y_las_metricas(m
     fragmentos, metricas = buscar_reordenado_con_metricas("p", k=2, candidatos=5)
     assert [f["chunk_id"] for f in fragmentos] == ["c0", "c1"]
     assert metricas["tiempo_ms"] == 12.5
+
+
+def test_parsear_orden_sin_llaves_o_con_json_roto_devuelve_vacio():
+    assert parsear_orden("solo texto, sin llaves", 5) == []
+    assert parsear_orden('{"orden": [1, 2', 5) == []

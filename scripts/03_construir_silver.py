@@ -17,6 +17,8 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 
+from taaml.sanitizar import quitar_invisibles
+
 ROOT = Path(__file__).resolve().parent.parent
 BRONZE = ROOT / "data" / "1_bronze"
 SILVER = ROOT / "data" / "2_silver"
@@ -47,7 +49,7 @@ def extraer(html: str) -> tuple[str, str, str]:
     for tag in main.find_all(BLOCK_TAGS):
         tag.insert_before("\n")
         tag.insert_after("\n")
-    lineas = [re.sub(r"\s+", " ", ln).strip() for ln in main.get_text(" ").splitlines()]
+    lineas = [re.sub(r"\s+", " ", ln).strip() for ln in quitar_invisibles(main.get_text(" ")).splitlines()]
     vistas: set[str] = set()
     conservadas = []
     for ln in lineas:
@@ -65,7 +67,7 @@ def resumen_descubrimiento(filas: list[dict]) -> dict:
             return "descargadas"
         return "bloqueadas" if "robots" in r["error"] else "con_error"
 
-    resumen = {"descubiertas": len(filas), "descargadas": 0, "bloqueadas": 0, "con_error": 0, "por_seccion": {}}
+    resumen: dict = {"descubiertas": len(filas), "descargadas": 0, "bloqueadas": 0, "con_error": 0, "por_seccion": {}}
     for r in filas:
         e = estado(r)
         resumen[e] += 1

@@ -120,3 +120,30 @@ def test_el_modelo_de_respaldo_no_se_respalda_a_si_mismo(monkeypatch):
     monkeypatch.setattr(mod, "obtener_modelo", lambda nombre: pedidos.append(nombre) or ModeloEspia(messages=iter([]), vistos=[]))
     mod.crear_agente(mod.MODELO_RESPALDO)
     assert pedidos == [mod.MODELO_RESPALDO]
+
+
+def _agente_con(mensajes):
+    from types import SimpleNamespace
+    return SimpleNamespace(get_state=lambda config: SimpleNamespace(values={"messages": mensajes}))
+
+
+def test_el_uso_del_turno_suma_las_llamadas_y_cuenta_el_pensamiento():
+    from langchain_core.messages import AIMessage, HumanMessage
+    from taaml.agente import uso_del_turno
+    mensajes = [HumanMessage("turno viejo"), AIMessage("r", usage_metadata={"input_tokens": 999, "output_tokens": 9, "total_tokens": 1008}),
+                HumanMessage("turno actual"),
+                AIMessage("", usage_metadata={"input_tokens": 100, "output_tokens": 10, "total_tokens": 160}),  # 50 de pensamiento
+                AIMessage("final", usage_metadata={"input_tokens": 200, "output_tokens": 20, "total_tokens": 230})]
+    assert uso_del_turno(_agente_con(mensajes), "h") == (300, 90)
+
+
+def test_el_costo_usa_la_tarifa_vigente_y_cambia_en_2027():
+    from datetime import date
+    from taaml.agente import costo_usd
+    assert costo_usd(1_000_000, 1_000_000, "gemini-3.8-flash", hoy=date(2026, 11, 8)) == 0.75 + 3.75
+    assert costo_usd(1_000_000, 1_000_000, "gemini-3.8-flash", hoy=date(2027, 1, 1)) == 1.50 + 7.50
+
+
+def test_el_costo_de_un_modelo_local_es_cero_y_sin_precio_es_desconocido():
+    from taaml.agente import costo_usd
+    assert costo_usd(5000, 500, "ollama:llama3.2") == 0.0 and costo_usd(5000, 500, "modelo-raro") is None

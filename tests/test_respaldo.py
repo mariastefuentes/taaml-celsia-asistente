@@ -97,3 +97,9 @@ def test_con_una_clave_invalida_pasa_al_modelo_local(monkeypatch):
     assert (resultado, usado) == ("respuesta local", "ollama:llama3.2")
     assert "no respondió" in avisos[0]
     assert es_falla_del_proveedor(TimeoutError("timed out"))
+
+
+def test_con_respaldo_con_cadena_vacia_falla_con_un_error_claro(monkeypatch):
+    monkeypatch.setattr("taaml.respaldo.cadena_de_modelos", lambda elegido: [])
+    with pytest.raises(RuntimeError, match="vacía"):
+        con_respaldo(lambda m: "ok", "gemini-3.5-flash")

@@ -88,7 +88,7 @@ def main() -> None:
     if args.solo_completar:
         print(f"Hash agregado a {completar_hash()} filas del indice")
         return
-    filtro = re.compile(args.filtro, re.I) if args.filtro else None
+    filtro: re.Pattern[str] | None = re.compile(args.filtro, re.I) if args.filtro else None
 
     BRONZE.mkdir(parents=True, exist_ok=True)
     session = requests.Session()

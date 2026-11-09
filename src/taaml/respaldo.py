@@ -59,7 +59,7 @@ def con_respaldo(funcion, elegido: str):
         if avisos:
             avisos.append(f"se usó {modelo}" + (" (modelo local: más lento y menos preciso)" if modelo == MODELO_LOCAL else ""))
         return resultado, modelo, avisos
-    raise ultimo
+    raise ultimo or RuntimeError("la cadena de modelos está vacía")
 
 
 def _normalizar(texto: str) -> str:

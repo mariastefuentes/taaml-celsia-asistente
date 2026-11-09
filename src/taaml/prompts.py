@@ -10,6 +10,8 @@ repetidas al final (sandwich) y entrada del cliente delimitada con etiquetas XML
 from datetime import date
 from pathlib import Path
 
+from taaml.sanitizar import quitar_invisibles
+
 PROMPTS = Path(__file__).resolve().parents[2] / "prompts"
 VERSION_VIGENTE = "v3"
 PARAMETROS_MODELO = {"temperature": 0.0, "top_p": 0.1}  # regla del proyecto para RAG y agentes
@@ -34,6 +36,6 @@ def construir_mensaje_usuario(pregunta: str, version: str = VERSION_VIGENTE) -> 
     if version == "v1":
         return pregunta
     # se neutraliza una etiqueta de cierre dentro de la pregunta, para que no pueda "salirse" del bloque
-    segura = pregunta.replace("</user_input>", "").replace("<user_input>", "")
+    segura = quitar_invisibles(pregunta).replace("</user_input>", "").replace("<user_input>", "")
     recordatorio = leer_prompt(f"{version}_recordatorio.md")
     return f"<user_input>\n{segura}\n</user_input>\n\n{recordatorio}"

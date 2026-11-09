@@ -11,14 +11,14 @@ from uuid import uuid4
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from taaml.agente import conversar, crear_agente, etiqueta_herramientas  # noqa: E402
+from taaml.agente import MODELO_AGENTE, conversar, costo_usd, crear_agente, etiqueta_herramientas, uso_del_turno  # noqa: E402
 
 # (pregunta, herramienta que debe usar o None si da igual, texto que debe aparecer o None)
 CONVERSACION = [
     ("¿Qué sedes hay en Ibagué?", "consultar_datos", None),
-    ("¿Y cuál es el teléfono de la sede administrativa?", None, "608 277 08 22")  # basta la memoria: el dato ya está en el turno 1,
+    ("¿Y cuál es el teléfono de la sede administrativa?", None, "608 277 08 22"),  # basta la memoria: el dato ya está en el turno 1
     ("¿Cómo cancelo mi servicio?", "buscar_en_base", None),
-    ("¿Cuánto cuesta un viaje a Cartagena?", None, "No tengo esa información")  # puede buscar antes de rendirse,
+    ("¿Cuánto cuesta un viaje a Cartagena?", None, "No tengo esa información"),  # puede buscar antes de rendirse
 ]
 
 
@@ -29,7 +29,7 @@ def modelos_del_turno(agente, hilo: str) -> set[str]:
 
 
 def main() -> None:
-    agente, hilo, fallas = crear_agente(), uuid4().hex, 0
+    agente, hilo, fallas, total = crear_agente(), uuid4().hex, 0, 0.0
     for pregunta, esperada, texto in CONVERSACION:
         respuesta, llamadas = conversar(pregunta, hilo, agente=agente)
         usadas = {ll["herramienta"] for ll in llamadas}
@@ -37,8 +37,12 @@ def main() -> None:
         ok_texto = texto is None or texto in respuesta
         fallas += not (ok_herramienta and ok_texto)
         print(f"\nPregunta: {pregunta}\n{etiqueta_herramientas(llamadas)}  |  modelo: {', '.join(sorted(modelos_del_turno(agente, hilo)))}")
+        entrada, salida = uso_del_turno(agente, hilo)
+        costo = costo_usd(entrada, salida, MODELO_AGENTE) or 0.0
+        total += costo
+        print(f"Tokens del turno: {entrada} de entrada y {salida} de salida  |  costo: ${costo:.5f} USD")
         print(f"Respuesta: {respuesta}\nHerramienta esperada: {'sí' if ok_herramienta else 'NO'}  |  texto esperado: {'sí' if ok_texto else 'NO'}")
-    print(f"\nResultado: {len(CONVERSACION) - fallas} de {len(CONVERSACION)} preguntas correctas")
+    print(f"\nResultado: {len(CONVERSACION) - fallas} de {len(CONVERSACION)} preguntas correctas  |  costo de la conversación: ${total:.5f} USD")
 
 
 if __name__ == "__main__":

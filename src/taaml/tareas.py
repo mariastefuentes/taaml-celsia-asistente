@@ -13,6 +13,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.runnables import RunnableConfig
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
@@ -130,7 +131,7 @@ def responder_con_fuentes(pregunta: str, base: str = "rag", modelo: str = MODELO
         raise RuntimeError(metricas["error"])
     contexto = formatear_contexto(fragmentos) if base == "rag" else cargar_base(base)
     mensajes = [SystemMessage(construir_prompt_sistema(contexto)), HumanMessage(construir_mensaje_usuario(pregunta))]
-    config = {"run_name": "qa_celsia", "tags": ["rag", base], "metadata": {"fragmentos": [f["chunk_id"] for f in fragmentos], "reordenar": reordenar}}
+    config: RunnableConfig = {"run_name": "qa_celsia", "tags": ["rag", base], "metadata": {"fragmentos": [f["chunk_id"] for f in fragmentos], "reordenar": reordenar}}
     return obtener_modelo(modelo).invoke(mensajes, config=config).text.strip(), fragmentos, metricas
 
 

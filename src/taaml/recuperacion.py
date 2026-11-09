@@ -139,7 +139,7 @@ def _buscar(pregunta: str, k: int, metodo: str) -> tuple[list[dict], str]:
         if metodo in ("embeddings", "auto"):
             puntajes, metodo = por_significado, "embeddings"
         else:
-            puntajes, metodo = _por_rango(por_significado) + _por_rango(por_palabras), "hibrido"
+            puntajes, metodo = _por_rango(por_significado) + _por_rango(por_palabras if por_palabras is not None else _puntajes_por_palabras(pregunta)), "hibrido"
     except Exception:  # noqa: BLE001  Ollama apagado, índice desactualizado o método forzado
         if por_palabras is None:
             por_palabras = _puntajes_por_palabras(pregunta)
