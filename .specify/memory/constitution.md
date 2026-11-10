@@ -245,7 +245,7 @@ git push -u origin feat/mi-cambio
 > Configuración específica de la máquina. **NO incluir en commits.**
 
 - Las claves viven en `.env` (ignorado por Git) y se documentan vacías en `.env.example`:
-  `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, `HF_TOKEN` y `LANGCHAIN_API_KEY`.
+  `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, `HF_TOKEN` y `LANGSMITH_API_KEY`.
 - `data/1_bronze/` (HTML crudo), `data/4_curaduria/chroma/`,
   `data/4_curaduria/indice_embeddings.npz`, `data/_demo_scraping/` y los PDF
   **no se versionan**: se regeneran con `make datos`, `make indice` y `make pdf`.
