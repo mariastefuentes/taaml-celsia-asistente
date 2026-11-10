@@ -9,6 +9,7 @@ Si Ollama no responde, se usa una búsqueda por palabras (menos precisa, pero el
 """
 import json
 import math
+import os
 import re
 import time
 import urllib.request
@@ -18,9 +19,10 @@ from pathlib import Path
 import chromadb
 import numpy as np
 
+from taaml.sanitizar import quitar_invisibles
 from taaml.sinonimos import ampliar_consulta
 
-CURADURIA = Path(__file__).resolve().parents[2] / "data" / "4_curaduria"
+CURADURIA = Path(os.environ.get("TAAML_CURADURIA") or Path(__file__).resolve().parents[2] / "data" / "4_curaduria")  # TAAML_CURADURIA: carpeta alterna para ensayar otro índice sin tocar el vigente
 CHUNKS = CURADURIA / "chunks.jsonl"
 INDICE = CURADURIA / "indice_embeddings.npz"  # caché de vectores y respaldo de Chroma
 CHROMA = CURADURIA / "chroma"  # base vectorial persistente; se regenera con scripts/07_construir_indice.py
@@ -177,8 +179,8 @@ def recuperar(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, metodo: str = "aut
 
 def formatear_contexto(resultados: list[dict]) -> str:
     """Arma el contexto del prompt: cada fragmento con su documento, categoría y fuente."""
-    # un fragmento no puede cerrar el bloque <contexto> del prompt (defensa contra inyección indirecta)
-    limpio = lambda t: t.replace("</contexto>", "").replace("<contexto>", "")  # noqa: E731
+    # un fragmento no puede cerrar el bloque <contexto> del prompt ni esconder órdenes con caracteres invisibles (defensa contra inyección indirecta)
+    limpio = lambda t: quitar_invisibles(t).replace("</contexto>", "").replace("<contexto>", "")  # noqa: E731
     bloques = [f"=== {r['documento']} | categoría: {r['categoria']} | región: {r['region']} | fuente: {r['fuente']} ===\n{limpio(r['texto'])}"
                for r in resultados]
     return "\n\n".join(bloques)

@@ -9,6 +9,7 @@ Resultado: docs/2 - Conjunto de prueba/resultados/ranking_k10.csv
 """
 import csv
 import math
+import os
 import re
 import sys
 from pathlib import Path
@@ -21,6 +22,8 @@ TALLER = ROOT / "docs"
 INVENTARIO = TALLER / "1 - Analisis de la empresa" / "inventario_intenciones.csv"
 PRUEBA = TALLER / "2 - Conjunto de prueba" / "conjunto_de_prueba.csv"
 SALIDA = TALLER / "2 - Conjunto de prueba" / "resultados" / "ranking_k10.csv"
+if os.environ.get("TAAML_CURADURIA"):  # ensayo con otro índice: el resultado se queda en esa carpeta y no pisa el del informe
+    SALIDA = Path(os.environ["TAAML_CURADURIA"]) / "ranking_k10.csv"
 K = 10
 METODOS = ["palabras", "embeddings", "hibrido"]
 
