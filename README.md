@@ -134,10 +134,14 @@ prompts/     prompts versionados (asistente v3 vigente, v4 y v5 descartados; res
 tests/       pruebas automáticas de componentes (make test)
 specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 011: asistente, validación y agente, continuidad de la demo, base vectorial, evidencia de Resumen y FAQ, pestaña Corpus, prueba del scraper, etapa Descubrir, organización de la entrega y agente con memoria y router
 .specify/   memoria del proyecto: memory/constitution.md (verdad central)
-.opencode/  skills propias para agentes (skills/corpus-medallion), escaneadas con SkillSpector
+docs/        incluye skillspector-corpus-medallion.md, el reporte de seguridad de la skill
 .github/    plantilla de Pull Request y CI
 app/        aplicaciones Streamlit: asistente.py (completa) y modulo1.py (solo corpus y scraping)
 ```
+
+## Skills
+
+Las skills del proyecto (`corpus-medallion` y `agente-rag-router`) viven en su propio repositorio público: [mariastefuentes/taaml-skills](https://github.com/mariastefuentes/taaml-skills). Se instalan con `npx skills add mariastefuentes/taaml-skills --skill corpus-medallion`. La revisión de seguridad de `corpus-medallion` está en [docs/skillspector-corpus-medallion.md](docs/skillspector-corpus-medallion.md).
 
 ## Licencia
 

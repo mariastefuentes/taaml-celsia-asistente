@@ -128,7 +128,6 @@ taaml-celsia-asistente/
 ├── docs/                     # análisis, conjunto de prueba, informe, capturas y diagramas (Archify)
 ├── specs/                    # especificaciones 001–011 (spec, plan, tareas)
 ├── tests/                    # pruebas automáticas de componentes
-├── .opencode/skills/         # skills propias para agentes (corpus-medallion)
 ├── .specify/memory/          # este archivo — verdad central
 ├── .github/                  # plantillas de PR e issues, CI, Dependabot y etiquetas
 ├── app/                      # aplicaciones Streamlit (puntos de entrada, no librería)
