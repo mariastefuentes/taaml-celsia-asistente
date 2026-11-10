@@ -61,7 +61,7 @@ def main() -> None:
         w = csv.DictWriter(f, fieldnames=list(filas[0]), quoting=csv.QUOTE_ALL)
         w.writeheader()
         w.writerows(filas)
-    print(f"{len(preguntas)} preguntas con respuesta. Guardado en {SALIDA.relative_to(ROOT)}")
+    print(f"{len(preguntas)} preguntas con respuesta. Guardado en {SALIDA}")
 
 
 if __name__ == "__main__":
