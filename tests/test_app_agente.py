@@ -62,3 +62,25 @@ def test_un_error_del_agente_se_muestra_sin_romper_la_app(monkeypatch):
     at.run()
     at.chat_input[0].set_value("hola").run()
     assert not at.exception and any("cuota" in e.value for e in at.error)
+
+
+def test_al_recargar_con_el_hilo_en_la_direccion_se_recupera_la_conversacion(monkeypatch):
+    guardado = [{"rol": "user", "texto": "¿Sedes en Ibagué?"}, {"rol": "assistant", "texto": "Hay sedes en Ibagué.", "usadas": "Usó: consultó la tabla sedes"}]
+    pedidos = []
+    monkeypatch.setattr("taaml.agente.historial_visible", lambda hilo, *a, **k: pedidos.append(hilo) or guardado)
+    at = AppTest.from_file(str(RAIZ / "app" / "asistente.py"), default_timeout=30)
+    at.query_params["hilo"] = "hilo-guardado"
+    at.run()
+    assert not at.exception and pedidos == ["hilo-guardado"]
+    assert at.session_state.agente_hilo == "hilo-guardado" and at.session_state.agente_mensajes == guardado
+    assert "Hay sedes en Ibagué." in [m.value for m in at.markdown]
+
+
+def test_una_memoria_ilegible_no_tumba_la_app_y_empieza_en_blanco(monkeypatch):
+    def rota(*args, **kwargs):
+        raise RuntimeError("base dañada")
+    monkeypatch.setattr("taaml.agente.historial_visible", rota)
+    at = AppTest.from_file(str(RAIZ / "app" / "asistente.py"), default_timeout=30)
+    at.query_params["hilo"] = "hilo-x"
+    at.run()
+    assert not at.exception and at.session_state.agente_mensajes == []

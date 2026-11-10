@@ -106,16 +106,18 @@ def test_el_agente_usa_gemini_de_pago_y_ollama_de_respaldo():
     assert MODELO_AGENTE == "gemini-3.8-flash" and MODELO_RESPALDO.startswith("ollama:")
 
 
-def test_crear_agente_pide_el_modelo_a_obtener_modelo_y_arma_el_respaldo(monkeypatch):
+def test_crear_agente_pide_el_modelo_a_obtener_modelo_y_arma_el_respaldo(monkeypatch, tmp_path):
     from taaml import agente as mod
+    monkeypatch.setattr(mod, "RUTA_MEMORIA", tmp_path / "memoria.sqlite")
     pedidos = []
     monkeypatch.setattr(mod, "obtener_modelo", lambda nombre: pedidos.append(nombre) or ModeloEspia(messages=iter([]), vistos=[]))
     mod.crear_agente()
     assert pedidos == [mod.MODELO_AGENTE, mod.MODELO_RESPALDO]
 
 
-def test_el_modelo_de_respaldo_no_se_respalda_a_si_mismo(monkeypatch):
+def test_el_modelo_de_respaldo_no_se_respalda_a_si_mismo(monkeypatch, tmp_path):
     from taaml import agente as mod
+    monkeypatch.setattr(mod, "RUTA_MEMORIA", tmp_path / "memoria.sqlite")
     pedidos = []
     monkeypatch.setattr(mod, "obtener_modelo", lambda nombre: pedidos.append(nombre) or ModeloEspia(messages=iter([]), vistos=[]))
     mod.crear_agente(mod.MODELO_RESPALDO)
@@ -147,3 +149,54 @@ def test_el_costo_usa_la_tarifa_vigente_y_cambia_en_2027():
 def test_el_costo_de_un_modelo_local_es_cero_y_sin_precio_es_desconocido():
     from taaml.agente import costo_usd
     assert costo_usd(5000, 500, "ollama:llama3.2") == 0.0 and costo_usd(5000, 500, "modelo-raro") is None
+
+
+# --- memoria en disco (SQLite) y recorte del historial ---
+def test_la_conversacion_sobrevive_a_un_agente_nuevo_con_el_mismo_archivo(tmp_path):
+    from taaml.agente import almacen_de_memoria
+    ruta = tmp_path / "memoria.sqlite"
+    primero = ModeloEspia(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[])
+    conversar("¿Qué sedes hay en Ibagué?", "hilo-1", agente=crear_agente(llm=primero, checkpointer=almacen_de_memoria(ruta)))
+    segundo = ModeloEspia(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[])  # como tras reiniciar la app
+    conversar("¿Y su teléfono?", "hilo-1", agente=crear_agente(llm=segundo, checkpointer=almacen_de_memoria(ruta)))
+    assert segundo.vistos[0] == ["¿Qué sedes hay en Ibagué?", "¿Y su teléfono?"]
+
+
+def test_otro_hilo_no_ve_la_conversacion_guardada(tmp_path):
+    from taaml.agente import almacen_de_memoria
+    modelo = ModeloEspia(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[])
+    agente = crear_agente(llm=modelo, checkpointer=almacen_de_memoria(tmp_path / "m.sqlite"))
+    conversar("uno", "hilo-a", agente=agente)
+    conversar("dos", "hilo-b", agente=agente)
+    assert modelo.vistos[1] == ["dos"]
+
+
+def test_el_modelo_ve_solo_los_ultimos_turnos_pero_todo_queda_guardado(monkeypatch):
+    from taaml import agente as mod
+    monkeypatch.setattr(mod, "MAX_TOKENS_HISTORIAL", 40)
+    agente, modelo = _agente_espia()
+    for n in range(8):
+        conversar(f"pregunta número {n} sobre las sedes de Celsia", "hilo-largo", agente=agente)
+    ultimo = modelo.vistos[-1]
+    assert 1 <= len(ultimo) < 8 and ultimo[-1].startswith("pregunta número 7")
+    guardados = agente.get_state({"configurable": {"thread_id": "hilo-largo"}}).values["messages"]
+    assert sum(m.type == "human" for m in guardados) == 8
+
+
+def test_un_turno_mas_grande_que_el_limite_no_deja_al_modelo_sin_mensajes(monkeypatch):
+    from taaml import agente as mod
+    monkeypatch.setattr(mod, "MAX_TOKENS_HISTORIAL", 1)
+    agente, modelo = _agente_espia()
+    conversar("una pregunta bastante más larga que el límite", "hilo-x", agente=agente)
+    assert modelo.vistos[0] == ["una pregunta bastante más larga que el límite"]
+
+
+def test_historial_visible_devuelve_los_turnos_para_pintarlos():
+    from taaml.agente import historial_visible
+    agente, _ = _agente_espia()
+    conversar("hola", "hilo-v", agente=agente)
+    conversar("¿y las sedes?", "hilo-v", agente=agente)
+    visibles = historial_visible("hilo-v", agente=agente)
+    assert [(v["rol"], v["texto"]) for v in visibles] == [("user", "hola"), ("assistant", "ok"), ("user", "¿y las sedes?"), ("assistant", "ok")]
+    assert visibles[1]["usadas"] == "Respondió sin consultar herramientas"
+    assert historial_visible("hilo-que-no-existe", agente=agente) == []

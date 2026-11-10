@@ -9,7 +9,7 @@ from uuid import uuid4
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-from taaml.agente import MODELO_AGENTE, conversar, etiqueta_herramientas  # noqa: E402
+from taaml.agente import MODELO_AGENTE, conversar, etiqueta_herramientas, historial_visible  # noqa: E402
 from taaml.base import cargar_documentos  # noqa: E402
 from taaml.corpus import MOTIVOS, RAG, SCRAPING, metricas  # noqa: E402
 from taaml.errores import mensaje_error  # noqa: E402
@@ -173,10 +173,17 @@ with tab_corpus:
 
 with tab_agente:
     st.caption(f"Conversación con memoria. El agente ({MODELO_AGENTE}) decide si consulta datos exactos (sedes, contactos) o busca en el texto del sitio.")
-    if "agente_hilo" not in st.session_state:
-        st.session_state.agente_hilo, st.session_state.agente_mensajes = uuid4().hex, []
+    if "agente_hilo" not in st.session_state:  # el hilo va en la dirección (?hilo=...): al recargar la página la conversación se recupera de SQLite
+        hilo = st.query_params.get("hilo") or uuid4().hex
+        try:
+            mensajes = historial_visible(hilo) if "hilo" in st.query_params else []
+        except Exception:  # noqa: BLE001  una memoria ilegible no debe tumbar la app: se empieza en blanco
+            mensajes = []
+        st.session_state.agente_hilo, st.session_state.agente_mensajes = hilo, mensajes
+        st.query_params["hilo"] = hilo
     if st.button("Nueva conversación"):
         st.session_state.agente_hilo, st.session_state.agente_mensajes = uuid4().hex, []
+        st.query_params["hilo"] = st.session_state.agente_hilo
     for mensaje in st.session_state.agente_mensajes:
         with st.chat_message(mensaje["rol"]):
             st.markdown(mensaje["texto"])

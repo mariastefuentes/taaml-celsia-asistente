@@ -4,14 +4,18 @@ Es el patrón «modelo + herramientas + prompt», con memoria por conversación 
 (texto, reutiliza `recuperacion.buscar`) y `consultar_datos` (datos exactos). Usa Gemini de pago (indicación del profesor) y, si
 falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1, pero gemini-3.8-flash los ignora (medido): la respuesta puede variar.
 """
+import sqlite3
 from datetime import date
+from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
 from langchain.agents import create_agent
-from langchain.agents.middleware import ModelFallbackMiddleware
+from langchain.agents.middleware import ModelFallbackMiddleware, wrap_model_call
+from langchain_core.messages.utils import count_tokens_approximately, trim_messages
 from langchain_core.tools import tool
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
 
 from taaml.consulta_datos import consultar
 from taaml.prompts import leer_prompt
@@ -21,6 +25,8 @@ from taaml.tareas import obtener_modelo
 
 MODELO_AGENTE = "gemini-3.8-flash"  # API de pago, el más reciente de la familia Flash (indicación del profesor)
 MODELO_RESPALDO = "ollama:llama3.2"  # 3B local y gratis: solo entra si Gemini falla (cuota, red)
+RUTA_MEMORIA = Path(__file__).resolve().parents[2] / "data" / "memoria" / "conversaciones.sqlite"  # las conversaciones sobreviven a reiniciar la app
+MAX_TOKENS_HISTORIAL = 3000  # lo que el modelo ve de la conversación; el historial completo sigue guardado
 FRAGMENTOS_AGENTE = 4  # cada turno reenvía el historial: pocos fragmentos mantienen bajo el costo en tokens
 
 
@@ -49,16 +55,38 @@ def consultar_datos(tabla: Literal["sedes", "contactos", "catalogo"], ciudad: st
 HERRAMIENTAS = [buscar_en_base, consultar_datos]
 
 
+@wrap_model_call
+def limitar_historial(request, handler):
+    """Al modelo solo le llegan los últimos mensajes que caben en `MAX_TOKENS_HISTORIAL` (siempre empezando en un turno del cliente).
+
+    Recorta lo que ve el modelo, no lo guardado: el checkpointer conserva todo y la pantalla puede mostrarlo entero.
+    """
+    recorte = trim_messages(request.messages, max_tokens=MAX_TOKENS_HISTORIAL, strategy="last", token_counter=count_tokens_approximately, start_on="human")
+    return handler(request.override(messages=recorte or request.messages))  # un solo turno gigante no se recorta a nada
+
+
+def almacen_de_memoria(ruta: Path | None = None) -> SqliteSaver:
+    """Checkpointer en SQLite: guarda cada conversación en disco bajo su `thread_id`."""
+    ruta = ruta or RUTA_MEMORIA
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    return SqliteSaver(sqlite3.connect(ruta, check_same_thread=False))  # Streamlit atiende cada usuario en un hilo distinto
+
+
 _AGENTES: dict = {}  # un agente (con su memoria) por modelo: el cuaderno vive dentro del agente, así que hay que reutilizarlo
 
 
-def crear_agente(modelo: str = MODELO_AGENTE, llm=None):
-    """Agente con memoria: el checkpointer guarda cada conversación bajo su `thread_id`. `llm` permite inyectar un modelo (pruebas)."""
-    con_respaldo = llm is None and modelo != MODELO_RESPALDO  # un modelo inyectado o el propio respaldo no necesitan otro
+def crear_agente(modelo: str = MODELO_AGENTE, llm=None, checkpointer=None):
+    """Agente con memoria: el checkpointer guarda cada conversación bajo su `thread_id`. `llm` permite inyectar un modelo (pruebas).
+
+    Sin `checkpointer`, un modelo real guarda en SQLite y uno inyectado en memoria (así las pruebas no escriben en disco).
+    """
+    es_real = llm is None
+    con_respaldo = es_real and modelo != MODELO_RESPALDO  # un modelo inyectado o el propio respaldo no necesitan otro
     llm = llm or obtener_modelo(modelo)
+    checkpointer = checkpointer or (almacen_de_memoria() if es_real else InMemorySaver())
     respaldo = [ModelFallbackMiddleware(obtener_modelo(MODELO_RESPALDO))] if con_respaldo else []
-    return create_agent(model=llm, tools=HERRAMIENTAS, system_prompt=leer_prompt("v2_agente.md"), checkpointer=InMemorySaver(),
-                        middleware=respaldo)
+    return create_agent(model=llm, tools=HERRAMIENTAS, system_prompt=leer_prompt("v2_agente.md"), checkpointer=checkpointer,
+                        middleware=[limitar_historial, *respaldo])
 
 
 def _agente(modelo: str):
@@ -79,6 +107,22 @@ def conversar(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente
     ultimo = max(i for i, m in enumerate(mensajes) if m.type == "human")  # la memoria trae turnos viejos: solo cuenta lo de este turno
     llamadas = [{"herramienta": ll["name"], "args": ll["args"]} for m in mensajes[ultimo:] for ll in getattr(m, "tool_calls", [])]
     return mensajes[-1].text.strip(), llamadas
+
+
+def historial_visible(thread_id: str, modelo: str = MODELO_AGENTE, agente=None) -> list[dict]:
+    """La conversación guardada, lista para pintarla en pantalla: `rol`, `texto` y, en las respuestas, qué herramientas usó."""
+    agente = agente or _agente(modelo)
+    mensajes = agente.get_state({"configurable": {"thread_id": thread_id}}).values.get("messages", [])
+    visibles, llamadas = [], []
+    for m in mensajes:
+        if m.type == "human":
+            visibles.append({"rol": "user", "texto": m.text})
+            llamadas = []
+        elif m.type == "ai":
+            llamadas += [{"herramienta": ll["name"], "args": ll["args"]} for ll in m.tool_calls]
+            if m.text.strip() and not m.tool_calls:
+                visibles.append({"rol": "assistant", "texto": m.text.strip(), "usadas": etiqueta_herramientas(llamadas)})
+    return visibles
 
 
 def uso_del_turno(agente, thread_id: str) -> tuple[int, int]:
