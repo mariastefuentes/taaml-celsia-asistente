@@ -5,6 +5,7 @@ modelo respondió, para notar si entró el respaldo local. Necesita GOOGLE_API_K
 Uso:  uv run python scripts/18_ensayo_agente.py
 """
 import sys
+import time
 from pathlib import Path
 from uuid import uuid4
 
@@ -31,7 +32,9 @@ def modelos_del_turno(agente, hilo: str) -> set[str]:
 def main() -> None:
     agente, hilo, fallas, total = crear_agente(), uuid4().hex, 0, 0.0
     for pregunta, esperada, texto in CONVERSACION:
+        inicio = time.perf_counter()
         respuesta, llamadas = conversar(pregunta, hilo, agente=agente)
+        segundos = time.perf_counter() - inicio
         usadas = {ll["herramienta"] for ll in llamadas}
         ok_herramienta = esperada is None or esperada in usadas
         ok_texto = texto is None or texto in respuesta
@@ -40,7 +43,7 @@ def main() -> None:
         entrada, salida = uso_del_turno(agente, hilo)
         costo = costo_usd(entrada, salida, MODELO_AGENTE) or 0.0
         total += costo
-        print(f"Tokens del turno: {entrada} de entrada y {salida} de salida  |  costo: ${costo:.5f} USD")
+        print(f"Tokens del turno: {entrada} de entrada y {salida} de salida  |  costo: ${costo:.5f} USD  |  tiempo: {segundos:.1f} s")
         print(f"Respuesta: {respuesta}\nHerramienta esperada: {'sí' if ok_herramienta else 'NO'}  |  texto esperado: {'sí' if ok_texto else 'NO'}")
     print(f"\nResultado: {len(CONVERSACION) - fallas} de {len(CONVERSACION)} preguntas correctas  |  costo de la conversación: ${total:.5f} USD")
 
