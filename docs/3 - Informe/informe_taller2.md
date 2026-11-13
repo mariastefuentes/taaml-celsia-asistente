@@ -56,6 +56,10 @@ El Q&A del Taller 1 es una cadena: `RunnablePassthrough.assign` agrega el prompt
 
 **Qué ve el modelo.** Solo los últimos ~3.000 tokens. Sin este recorte, la entrada crece en cada turno porque el historial se reenvía completo: en el ensayo de cuatro turnos pasó de 2.238 a 8.554 tokens. El recorte controla el costo sin borrar nada de lo guardado.
 
+**Viaje en el tiempo.** Cada paso del agente (la pregunta, la respuesta del modelo, cada herramienta) deja un punto de control en la base. `scripts/27_viaje_en_el_tiempo.py` lo demuestra con un modelo simulado (no gasta llamadas): lista los puntos de control de un hilo (`get_state_history`), repite desde uno anterior (replay: `invoke(None, config_del_punto)`) y crea una rama a partir de él con otra pregunta (fork: `update_state` y luego `invoke(None, ...)`), sin modificar el punto original. Sirve para depurar una respuesta mala o probar una variante sin repetir la conversación.
+
+**SQLite y PostgreSQL.** La memoria usa `SqliteSaver` para el corto plazo y `SqliteStore` para el largo plazo, ambos en archivos de `data/memoria/`: persisten entre reinicios y bastan para un solo servidor. `PostgresSaver` y `PostgresStore` ofrecen la misma interfaz para varias instancias de la API que comparten memoria; no se implementaron ni se probaron aquí (no hay un servidor PostgreSQL en el entorno), y el cambio se limita a las funciones `almacen_de_memoria` y `almacen_de_largo_plazo` de `src/taaml/agente.py`.
+
 La memoria guardada en SQLite corresponde a lo que la literatura llama memoria de corto plazo (la conversación en curso) con persistencia (Wu et al., 2025). La memoria de largo plazo se describe más abajo. El historial se recorta a unos 3.000 tokens para el modelo y, si lo guardado pasa de 8.000, un resumen automático (`SummarizationMiddleware`) reemplaza lo antiguo.
 
 **Cómo se verificó.**
@@ -228,7 +232,7 @@ El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al mo
 
 Tampoco se adoptaron la autoconsistencia (varias respuestas por pregunta), la optimización automática de prompts (DSPy) ni la repetición del prompt: multiplican las llamadas y el costo con un modelo que ya razona, y no hay evidencia propia de que mejoren. La idea de una «wiki» que el propio modelo mantiene como base de conocimiento tampoco se usó: la base sigue siendo el texto oficial indexado, que se puede auditar contra el sitio.
 
-No se usaron viaje en el tiempo del estado, pasos de aprobación humana ni un guardrail externo (Llama Guard, NeMo): el índice es pequeño, las herramientas de consulta solo leen, la única que escribe guarda lo que el cliente cuenta de sí mismo (máximo 20 datos, con la instrucción de no guardar cédulas, claves ni tarjetas, y borrables por él) y las defensas del prompt, del delimitador y de la validación resistieron las pruebas. Si se agregara una herramienta que escriba (por ejemplo, abrir un reclamo), la aprobación humana y la memoria persistente ya existente permitirían pausar el agente antes de la acción. El filtro por región (Valle o Tolima) existe en la recuperación, pero el agente no lo usa todavía: solo 5 de las 35 preguntas del conjunto permiten medirlo.
+No se usaron pasos de aprobación humana ni un guardrail externo (Llama Guard, NeMo): el índice es pequeño, las herramientas de consulta solo leen, la única que escribe guarda lo que el cliente cuenta de sí mismo (máximo 20 datos, con la instrucción de no guardar cédulas, claves ni tarjetas, y borrables por él) y las defensas del prompt, del delimitador y de la validación resistieron las pruebas. Si se agregara una herramienta que escriba (por ejemplo, abrir un reclamo), la aprobación humana y la memoria persistente ya existente permitirían pausar el agente antes de la acción. El filtro por región (Valle o Tolima) existe en la recuperación, pero el agente no lo usa todavía: solo 5 de las 35 preguntas del conjunto permiten medirlo.
 
 ## Referencias
 
