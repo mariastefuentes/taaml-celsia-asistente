@@ -15,8 +15,10 @@ Las preguntas salen de la matriz de enrutamiento (`docs/2 - Conjunto de prueba/m
 |---|---|---|---|---|---|
 | 1 | Consulta estructurada | «¿Qué sedes hay en Ibagué?» | Usa `consultar_datos` (tabla sedes, ciudad Ibagué) y lista las sedes con dirección y horario exactos | La etiqueta de herramienta usada: datos exactos, no texto que el modelo resume | ~9 s |
 | 2 | Memoria | «¿y su teléfono?» | Entiende que «su» es la sede del turno anterior y da el teléfono de la sede administrativa (608 277 08 22) | La pregunta sola no dice de qué sede habla: lo sabe por la conversación | ~10 s |
-| 3 | RAG | «¿Cómo cancelo mi servicio?» | Usa `buscar_en_base` y responde con el trámite del texto oficial | Cambio de herramienta: ahora es una explicación, no un dato exacto | ~10 s |
+| 3 | RAG documental | «¿Qué dice el corpus sobre la política de calidad?» | Usa `buscar_en_base` (Qdrant) y cita la política de calidad de Celsia | Abrir «Fragmentos consultados»: documento «Gobierno corporativo», fragmento 18 de 29 y su enlace; el texto citado está literal en ese fragmento | ~8 s (ensayo: $0,004) |
 | 4 | Enrutamiento mixto | «Quiero reportar un daño en Ibagué: ¿qué hago y a qué número llamo?» | Usa las dos herramientas en el mismo turno: los contactos (tabla) y los pasos para reportar (texto) | Una sola pregunta, dos fuentes: el router es el prompt, no código | ~10 s (ensayo: $0,009) |
+
+**Variante del caso 3: sin evidencia (que no invente).** Escribir «¿Qué dice el corpus sobre la política de teletrabajo?». El corpus no tiene nada sobre teletrabajo (0 fragmentos con esa palabra): el agente debe responder «No tengo esa información» y remitir a la línea 01 8000 112 115, y la pantalla no muestra fragmentos citados porque no hubo evidencia. En el ensayo hizo dos búsquedas, 7.301 tokens y $0,0065. Si el profesor pide otra variación, el patrón es el mismo: si hay texto, cita documento y fragmento; si no, lo dice.
 
 Dato para decir en voz alta en el caso 4: hace dos búsquedas en el mismo turno y reenvía la conversación completa al modelo.
 
