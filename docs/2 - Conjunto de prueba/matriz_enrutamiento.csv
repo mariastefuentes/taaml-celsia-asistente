@@ -21,3 +21,6 @@
 "R20","fuera_de_dominio","","¿Cuál es la capital de Francia?","ninguna","","Debe decir «No tengo esa información» y remitir a la línea 01 8000 112 115"
 "R21","sedes","","¿Cuál es el teléfono de la sede de Medellín?","consultar_datos","tabla=sedes; ciudad=Medellín","Medellín SÍ está en la tabla (sede administrativa 604 326 66 00): el diseño original como negativa era un error de la matriz; falta un negativo real (ciudad sin sede)"
 "R22","sedes_sin_dato","","¿Cuál es la dirección de la sede de Pasto?","consultar_datos","tabla=sedes; ciudad=Pasto","Pasto no tiene sede en la tabla: debe probar buscar_en_base y, si tampoco hay dato, decir «No tengo esa información» sin inventar"
+"R23","saludo","","Hola","ninguna","","Un saludo no debe disparar ninguna búsqueda: responde breve y ofrece ayuda"
+"R24","cortesia","","Gracias, eso era todo","ninguna","","Un agradecimiento no debe disparar ninguna búsqueda: se despide"
+"R25","trivial","","¿Cuánto es 2 + 2?","ninguna","","Pregunta trivial fuera del dominio: sin herramientas (por el prompt no usa conocimiento general, así que puede negarse o responder breve)"

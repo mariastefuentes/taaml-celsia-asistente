@@ -378,6 +378,17 @@ def test_conversar_en_vivo_emite_las_fuentes_y_el_historial_las_conserva(monkeyp
     assert respuesta["fuentes"][0]["documento"] == "Gobierno corporativo"
 
 
+def test_el_tope_de_herramientas_por_turno_corta_a_un_modelo_que_insiste(monkeypatch):
+    from taaml.agente import MAX_LLAMADAS_POR_TURNO, conversar
+    ejecutadas = []
+    monkeypatch.setattr("taaml.agente.consultar", lambda tabla, filtros: ejecutadas.append(tabla) or "Sin resultados en los datos estructurados.")
+    insiste = [_llamada("consultar_datos", {"tabla": "sedes", "ciudad": f"Ciudad{n}"}, f"t{n}") for n in range(MAX_LLAMADAS_POR_TURNO + 3)]
+    agente = crear_agente(llm=ModeloSinTrozos(messages=iter([*insiste, AIMessage(content="No tengo esa información.")])))
+    respuesta, llamadas = conversar("¿Hay oficina en Marte?", "hilo-tope", agente=agente)
+    assert len(ejecutadas) == MAX_LLAMADAS_POR_TURNO
+    assert respuesta == "No tengo esa información."
+
+
 def test_una_pregunta_sin_busqueda_no_trae_fuentes():
     from taaml.agente import conversar_en_vivo, historial_visible
     agente = crear_agente(llm=ModeloSinTrozos(messages=iter([AIMessage(content="Hola")])))

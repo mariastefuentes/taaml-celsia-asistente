@@ -12,7 +12,7 @@ from typing import Literal
 from uuid import uuid4
 
 from langchain.agents import create_agent
-from langchain.agents.middleware import ModelFallbackMiddleware, wrap_model_call
+from langchain.agents.middleware import ModelFallbackMiddleware, ToolCallLimitMiddleware, wrap_model_call
 from langchain.tools import ToolRuntime
 from langchain_core.messages.utils import count_tokens_approximately, trim_messages
 from langchain_core.tools import tool
@@ -35,6 +35,7 @@ RUTA_MEMORIA = Path(__file__).resolve().parents[2] / "data" / "memoria" / "conve
 RUTA_MEMORIA_LARGA = RUTA_MEMORIA.with_name("largo_plazo.sqlite")  # lo que el cliente cuenta de sí mismo, para otras conversaciones
 MAX_DATOS_CLIENTE = 20  # tope de datos guardados por cliente
 MAX_TOKENS_HISTORIAL = 3000  # lo que el modelo ve de la conversación; el historial completo sigue guardado
+MAX_LLAMADAS_POR_TURNO = 4  # tope duro de herramientas por pregunta: una consulta mixta usa 2; más es un modelo que insiste (en un ensayo llegó a 5 y 27.000 tokens)
 FRAGMENTOS_AGENTE = 4  # cada turno reenvía el historial: pocos fragmentos mantienen bajo el costo en tokens
 
 
@@ -189,7 +190,8 @@ def crear_agente(modelo: str = MODELO_AGENTE, llm=None, checkpointer=None, store
     store = store or (almacen_compartido() if es_real else InMemoryStore())
     respaldo = [ModelFallbackMiddleware(obtener_modelo(MODELO_RESPALDO))] if con_respaldo else []
     return create_agent(model=llm, tools=HERRAMIENTAS, system_prompt=leer_prompt("v3_agente.md"), checkpointer=checkpointer, store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
-                        context_schema=Contexto, middleware=[limitar_historial, *respaldo])
+                        context_schema=Contexto,
+                        middleware=[limitar_historial, ToolCallLimitMiddleware(run_limit=MAX_LLAMADAS_POR_TURNO, exit_behavior="continue"), *respaldo])
 
 
 def _agente(modelo: str):

@@ -4,7 +4,7 @@
 
 El asistente del Taller 1 respondía cada pregunta por separado y siempre buscaba en el texto del sitio. Para este taller se convirtió en un **agente conversacional**: recuerda lo que el cliente ya dijo (dentro de la conversación y entre conversaciones), tiene dos herramientas de consulta (búsqueda por significado en el texto oficial y datos exactos en tablas) y dos de memoria, y decide cuál usar con un prompt que hace de enrutador. El modelo del agente es `gemini-3.8-flash` por API de pago, con respaldo local (`llama3.2`). La interfaz es una aplicación React que habla por HTTP, con respuestas en streaming, con una API FastAPI que ejecuta el agente.
 
-Con 22 preguntas etiquetadas, el agente eligió la herramienta esperada en 22 de 22 casos y los parámetros de la consulta (tabla y ciudad) en 11 de 11. Una conversación de cuatro turnos cuesta unos 0,02 USD y un turno tarda 8,8 s de mediana (de 2,6 a 28 s). Los 11 ataques directos y los 8 casos de inyección indirecta contra el agente (uno de ellos intenta envenenar su memoria) fueron rechazados. Los límites principales son que el modelo ignora `temperature` y `top_p` (sus textos pueden variar entre ejecuciones), que algunas preguntas disparan búsquedas de más y que el conjunto de enrutamiento es pequeño.
+Con 25 preguntas etiquetadas, el agente eligió la herramienta esperada en 25 de 25 casos y los parámetros de la consulta (tabla y ciudad) en 11 de 11. Una conversación de cuatro turnos cuesta unos 0,02 USD y un turno tarda 8,4 s de mediana (de 2,1 a 23 s). Los 11 ataques directos y los 8 casos de inyección indirecta contra el agente (uno de ellos intenta envenenar su memoria) fueron rechazados. Los límites principales son que el modelo ignora `temperature` y `top_p` (sus textos pueden variar entre ejecuciones), que algunas preguntas disparan búsquedas de más y que el conjunto de enrutamiento es pequeño.
 
 ## 1. Problema y objetivo
 
@@ -83,22 +83,25 @@ El enrutador no es código sino el **prompt avanzado** (`prompts/v3_agente.md`):
 
 ### 5.1 Matriz de enrutamiento
 
-Son 22 preguntas con la herramienta esperada escrita antes de correrlas: 6 de sedes, 4 de contactos, 5 de texto, 3 mixtas (trámite más lugar o número), 2 de memoria, 1 fuera de dominio y 1 de una ciudad sin sede. Cada una se hizo en una conversación nueva (las de memoria, tras un turno de preparación).
+Son 25 preguntas con la herramienta esperada escrita antes de correrlas: 6 de sedes, 4 de contactos, 5 de texto, 3 mixtas (trámite más lugar o número), 2 de memoria, 1 fuera de dominio, 1 de una ciudad sin sede y 3 sin nada que consultar (un saludo, un agradecimiento y una cuenta trivial). Cada una se hizo en una conversación nueva (las de memoria, tras un turno de preparación).
 
 | Resultado | Valor |
 |---|---|
-| Herramienta esperada | 22 de 22 |
+| Herramienta esperada | 25 de 25 |
 | Parámetros correctos (tabla y ciudad) | 11 de 11 donde la matriz los fija |
-| Preguntas con una herramienta de más | 6 de 22 (R04, R05, R08, R09, R13, R22) |
-| Tokens de entrada por turno (mediana) | 4.068 |
-| Tiempo por turno | mediana 8,8 s; de 2,6 s a 28,4 s |
-| Costo de las 22 preguntas | 0,173 USD |
+| Preguntas con una herramienta de más | 6 de 25 (R04, R05, R08, R09, R13, R22) |
+| Saludo, agradecimiento y cuenta trivial | 0 herramientas, 1.482 a 1.490 tokens de entrada, de 2,1 a 2,7 s |
+| Tokens de entrada por turno (mediana) | 3.882 |
+| Tiempo por turno | mediana 8,4 s; de 2,1 s a 22,6 s |
+| Costo de las 25 preguntas | 0,181 USD |
 
 **Cómo se calificó.** Una pregunta cuenta como correcta si la herramienta esperada está entre las usadas; usar una herramienta de más no se penaliza (se cuenta aparte). Las de memoria aceptan responder sin herramienta o con una consulta de datos, y la del enlace de pago acepta cualquiera de las dos herramientas. Los parámetros (tabla y ciudad) se comparan sin tildes. Las etiquetas las escribió el equipo antes de correr y dos se corrigieron después de ver los resultados: Medellín sí está en la tabla de sedes, así que no era un caso sin dato, y se agregó Pasto, que no tiene sede, como caso negativo.
 
-Por tipo de pregunta, las de sedes tardan unos 7 s, las de contactos y las de texto de 9 a 10 s, las mixtas 15 s (dos herramientas y más historial) y las de memoria o fuera de dominio entre 3 y 9 s. Cuando una pregunta de datos usó además `buscar_en_base` (por ejemplo, el enlace de pago), la respuesta fue correcta pero más cara y lenta.
+Por tipo de pregunta, las de sedes tardan unos 7 s, las de contactos y las de texto de 9 a 10 s, las mixtas de 16 a 23 s (dos herramientas y más historial) las de memoria o fuera de dominio entre 3 y 9 s, y las de saludo o cuenta trivial 2 s. Cuando una pregunta de datos usó además `buscar_en_base` (por ejemplo, el enlace de pago), la respuesta fue correcta pero más cara y lenta.
 
-**Caso débil.** «¿Cuánto cuesta reconectar el servicio?» eligió bien la herramienta, pero encadenó búsquedas, gastó 36.941 tokens de entrada (0,030 USD, 28 s) y terminó en «No tengo esa información». No hay una respuesta incorrecta, pero es el patrón a vigilar: una pregunta sin respuesta clara en el corpus puede hacer que el agente busque varias veces. Para una ciudad sin sede (Pasto) el agente consultó la tabla, buscó en el texto y respondió «No tengo esa información» con la línea de atención, sin inventar una dirección.
+**Tope de herramientas.** Cada pregunta puede ejecutar como máximo 4 herramientas (`ToolCallLimitMiddleware`): una consulta mixta usa 2 y el reintento tras un «Sin resultados» suma una más. Lo que pase de ahí se bloquea y el modelo responde con lo que ya tiene.
+
+**Caso débil.** «¿Cuánto cuesta reconectar el servicio?» eligió bien la herramienta, pero encadenó búsquedas y terminó en «No tengo esa información»: en la primera medición gastó 36.941 tokens de entrada (0,030 USD, 28 s) y, con el tope, 23.685 (0,020 USD, 22,6 s). No hay una respuesta incorrecta, pero es el patrón a vigilar: una pregunta sin respuesta clara en el corpus puede hacer que el agente pida hasta cinco herramientas (la quinta se bloquea). Las tres mixtas medidas con el tope pidieron 5, 5 y 3 herramientas, de modo que el tope acota el gasto pero no lo elimina. Para una ciudad sin sede (Pasto) el agente consultó la tabla, buscó en el texto y respondió «No tengo esa información» con la línea de atención, sin inventar una dirección.
 
 ### 5.2 Cadena frente a agente
 
@@ -107,7 +110,7 @@ Por tipo de pregunta, las de sedes tardan unos 7 s, las de contactos y las de te
 | ¿Quién decide buscar? | Siempre busca (dos pasos fijos) | El modelo decide |
 | Fragmentos al modelo | 12 por pregunta | 4 por búsqueda |
 | Tokens de entrada | 4.615 de media (59 preguntas) | 2.238 a 8.554 por turno según el historial |
-| Tiempo por pregunta | 7,2 s de media | 8,8 s de mediana en la matriz |
+| Tiempo por pregunta | 7,2 s de media | 8,4 s de mediana en la matriz |
 | Memoria | No | Sí |
 
 El agente puede ser más barato cuando no necesita buscar (el turno resuelto desde la memoria costó 0,0022 USD) y más caro cuando encadena herramientas o el historial crece. Los modelos son distintos (`gemini-3.5-flash` en la cadena y `gemini-3.8-flash` en el agente), así que la comparación es orientativa y no un experimento controlado.
@@ -134,7 +137,7 @@ El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al mo
 ## 7. Limitaciones
 
 - **Variabilidad del modelo.** `gemini-3.8-flash` ignora `temperature` y `top_p` (se midió: cinco frases distintas en cinco intentos con 0,0 y 0,1, igual que con 2,0 y 1,0). Los textos pueden variar entre ejecuciones; lo que se protege son la herramienta elegida, los datos exactos que salen de las tablas y la abstención.
-- **Matriz pequeña.** Son 22 preguntas, cada una corrida una sola vez, con etiquetas escritas por el equipo. Sirve para ver el comportamiento, no para estimar una tasa con precisión.
+- **Matriz pequeña.** Son 25 preguntas, cada una corrida una sola vez, con etiquetas escritas por el equipo. Sirve para ver el comportamiento, no para estimar una tasa con precisión.
 - **Costo y latencia.** Las búsquedas encadenadas y el historial elevan el costo y el tiempo. El precio de `gemini-3.8-flash` es de 0,75 USD por millón de tokens de entrada y 3,75 de salida hasta el 31/12/2026; desde el 1/1/2027 sube a 1,50 y 7,50.
 - **Respaldo local.** `llama3.2` solo acertó 2 de 4 casos con herramientas y es lento: cubre una caída, no reemplaza al modelo principal.
 - **Dependencia del modelo del Taller 1.** El asistente de preguntas y respuestas usa `gemini-3.5-flash`, que existe en la API pero no figura en la documentación pública de precios; podría retirarse. Cambiarlo es un ajuste de configuración, pero habría que repetir la evaluación.
