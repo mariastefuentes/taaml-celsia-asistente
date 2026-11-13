@@ -44,10 +44,17 @@ PRECIOS_USD_2027 = {"gemini-3.8-flash": (1.50, 7.50)}  # desde el 1 de enero de 
 INICIO_2027 = date(2027, 1, 1)
 
 
-@tool
-def buscar_en_base(pregunta: str) -> str:
+def fuentes_de(fragmentos: list[dict]) -> list[dict]:
+    """Cita verificable de cada fragmento recuperado: documento, número de fragmento dentro del documento y enlace de origen."""
+    return [{"documento": f["documento"], "fragmento": f"{f['orden']} de {f['de']}", "fuente": f["fuente"], "chunk_id": f["chunk_id"]}
+            for f in fragmentos]
+
+
+@tool(response_format="content_and_artifact")
+def buscar_en_base(pregunta: str) -> tuple[str, list[dict]]:
     """Busca en la información oficial de Celsia los fragmentos que responden la pregunta del cliente."""
-    return formatear_contexto(buscar(pregunta, k=FRAGMENTOS_AGENTE))
+    fragmentos = buscar(pregunta, k=FRAGMENTOS_AGENTE)
+    return formatear_contexto(fragmentos), fuentes_de(fragmentos)  # el modelo lee el texto; la pantalla muestra las fuentes (artefacto)
 
 
 class ConsultaDatos(BaseModel):
@@ -208,7 +215,7 @@ def conversar(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente
 def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente=None, usuario: str = ANONIMO):
     """Un turno como flujo de eventos (para el streaming de la API): `herramienta`, `texto` (trozos de la respuesta) y `fin`.
 
-    Mismo `thread_id` = misma conversación. El evento `fin` trae los tokens y el costo del turno. Un error del modelo sube como excepción.
+    Mismo `thread_id` = misma conversación. Los eventos `fuentes` traen la cita (documento, fragmento y enlace) de lo que recuperó `buscar_en_base`. El evento `fin` trae los tokens y el costo del turno. Un error del modelo sube como excepción.
     """
     agente = agente or _agente(modelo)
     entrada = {"messages": [{"role": "user", "content": quitar_invisibles(pregunta)}]}
@@ -224,6 +231,8 @@ def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE
         else:
             for actualizacion in datos.values():
                 for m in (actualizacion or {}).get("messages", []):
+                    if m.type == "tool" and m.name == "buscar_en_base" and m.artifact:
+                        yield {"tipo": "fuentes", "fuentes": m.artifact}
                     for ll in getattr(m, "tool_calls", []):
                         llamadas.append({"herramienta": ll["name"], "args": ll["args"]})
                         yield {"tipo": "herramienta", "herramienta": ll["name"], "args": ll["args"]}
@@ -238,15 +247,17 @@ def historial_visible(thread_id: str, modelo: str = MODELO_AGENTE, agente=None) 
     """La conversación guardada, lista para pintarla en pantalla: `rol`, `texto` y, en las respuestas, qué herramientas usó."""
     agente = agente or _agente(modelo)
     mensajes = agente.get_state({"configurable": {"thread_id": thread_id}}).values.get("messages", [])
-    visibles, llamadas = [], []
+    visibles, llamadas, fuentes = [], [], []
     for m in mensajes:
         if m.type == "human":
             visibles.append({"rol": "user", "texto": m.text})
-            llamadas = []
+            llamadas, fuentes = [], []
+        elif m.type == "tool" and m.name == "buscar_en_base" and m.artifact:
+            fuentes += m.artifact
         elif m.type == "ai":
             llamadas += [{"herramienta": ll["name"], "args": ll["args"]} for ll in m.tool_calls]
             if m.text.strip() and not m.tool_calls:
-                visibles.append({"rol": "assistant", "texto": m.text.strip(), "usadas": etiqueta_herramientas(llamadas)})
+                visibles.append({"rol": "assistant", "texto": m.text.strip(), "usadas": etiqueta_herramientas(llamadas), "fuentes": fuentes})
     return visibles
 
 

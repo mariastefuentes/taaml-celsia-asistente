@@ -23,6 +23,31 @@ function actualizarUltimo(lista, cambio) {
   return [...lista.slice(0, -1), cambio(lista.at(-1))];
 }
 
+function sinRepetidas(fuentes) {
+  return [...new Map(fuentes.map((f) => [f.chunk_id, f])).values()];
+}
+
+// Si la respuesta es «no tengo esa información» no se muestran fuentes: no hubo evidencia que citar.
+function sinEvidencia(texto) {
+  return /no tengo esa informaci[oó]n/i.test(texto ?? "");
+}
+
+function Fuentes({ fuentes, texto }) {
+  if (!fuentes?.length || sinEvidencia(texto)) return null;
+  return (
+    <details className="fuentes">
+      <summary>Fragmentos consultados ({fuentes.length})</summary>
+      <ul>
+        {fuentes.map((f) => (
+          <li key={f.chunk_id}>
+            <strong>{f.documento}</strong>, fragmento {f.fragmento} · <a href={f.fuente} target="_blank" rel="noreferrer">{f.fuente}</a>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 function etiqueta(h) {
   if (h.herramienta === "buscar_en_base") return "Buscando en el texto del sitio";
   if (h.herramienta === "guardar_dato_del_cliente") return "Guardando un dato del cliente";
@@ -55,6 +80,8 @@ export default function App() {
       fijarHilo(e.hilo);
     } else if (e.tipo === "herramienta") {
       setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, herramientas: [...(a.herramientas ?? []), e] })));
+    } else if (e.tipo === "fuentes") {
+      setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, fuentes: sinRepetidas([...(a.fuentes ?? []), ...e.fuentes]) })));
     } else if (e.tipo === "texto") {
       setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, texto: a.texto + e.texto })));
     } else if (e.tipo === "fin") {
@@ -146,6 +173,7 @@ export default function App() {
               <p className="herramienta">{m.usadas ?? m.herramientas.map(etiqueta).join("; ")}</p>
             )}
             <div className="contenido">{m.texto ? <Markdown texto={m.texto} /> : (enCurso && i === mensajes.length - 1 ? "Pensando…" : "")}</div>
+            {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
           </article>
         ))}
