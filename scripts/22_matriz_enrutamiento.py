@@ -28,7 +28,7 @@ PREPARACION = {  # turno previo que sustituye al «contexto_previo» escrito en 
 }
 ALTERNAS = {"R09": {"buscar_en_base"}}  # un enlace de pago puede estar en las tablas o en el texto: cualquiera de las dos vale
 TEXTO_ESPERADO = {"R19": ["Ana", "Cali"], "R20": ["No tengo esa información"], "R21": ["604 326 66 00"], "R22": ["No tengo esa información"]}
-CAMPOS = ["id", "categoria", "herramienta_esperada", "herramientas_usadas", "enrutamiento_ok", "parametros_ok", "texto_ok",
+CAMPOS = ["id", "categoria", "herramienta_esperada", "herramientas_usadas", "n_llamadas", "enrutamiento_ok", "parametros_ok", "texto_ok",
           "tokens_entrada", "tokens_salida", "costo_usd", "segundos", "respuesta"]
 
 
@@ -94,9 +94,9 @@ def main() -> None:
         ok_texto = all(t in respuesta for t in TEXTO_ESPERADO.get(f["id"], [])) if f["id"] in TEXTO_ESPERADO else None
         total += costo
         resultados.append({"id": f["id"], "categoria": f["categoria"], "herramienta_esperada": f["herramienta_esperada"], "herramientas_usadas": "+".join(sorted(usadas)) or "ninguna",
-                           "enrutamiento_ok": ok_ruta, "parametros_ok": ok_params, "texto_ok": ok_texto, "tokens_entrada": entrada, "tokens_salida": salida,
+                           "n_llamadas": len(llamadas), "enrutamiento_ok": ok_ruta, "parametros_ok": ok_params, "texto_ok": ok_texto, "tokens_entrada": entrada, "tokens_salida": salida,
                            "costo_usd": f"{costo:.5f}", "segundos": f"{segundos:.1f}", "respuesta": respuesta})
-        print(f"{f['id']} [{f['categoria']}] esperada {f['herramienta_esperada']} | usó {'+'.join(sorted(usadas)) or 'ninguna'} | ruta {'OK' if ok_ruta else 'NO'} | "
+        print(f"{f['id']} [{f['categoria']}] esperada {f['herramienta_esperada']} | usó {'+'.join(sorted(usadas)) or 'ninguna'} ({len(llamadas)} llamadas) | ruta {'OK' if ok_ruta else 'NO'} | "
               f"params {ok_params} | texto {ok_texto} | {entrada}/{salida} tokens | ${costo:.5f} | {segundos:.1f} s")
     SALIDA.parent.mkdir(parents=True, exist_ok=True)
     if filtro and SALIDA.exists():  # una corrida parcial no borra lo ya medido: reemplaza solo esas filas
