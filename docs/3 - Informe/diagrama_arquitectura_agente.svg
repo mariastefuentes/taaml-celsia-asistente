@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" font-family="Segoe UI, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
+  </defs>
+  <rect width="900" height="470" fill="#ffffff"/>
+  <text x="450" y="26" text-anchor="middle" font-size="16" font-weight="600" fill="#111827">Arquitectura del agente: camino de una pregunta</text>
+
+  <g stroke="#374151" stroke-width="1.5">
+    <rect x="20" y="170" width="110" height="60" rx="8" fill="#f3f4f6"/>
+    <rect x="165" y="170" width="130" height="60" rx="8" fill="#dbeafe"/>
+    <rect x="330" y="110" width="250" height="180" rx="10" fill="#fef9c3"/>
+    <rect x="620" y="170" width="140" height="60" rx="8" fill="#dcfce7"/>
+    <rect x="330" y="340" width="150" height="60" rx="8" fill="#e0e7ff"/>
+    <rect x="510" y="340" width="150" height="60" rx="8" fill="#e0e7ff"/>
+    <rect x="700" y="340" width="170" height="60" rx="8" fill="#f3f4f6"/>
+    <rect x="620" y="60" width="140" height="60" rx="8" fill="#fee2e2"/>
+  </g>
+
+  <text x="75" y="196" text-anchor="middle" font-weight="600">Cliente</text>
+  <text x="75" y="214" text-anchor="middle" font-size="11">pregunta en español</text>
+  <text x="230" y="196" text-anchor="middle" font-weight="600">Streamlit</text>
+  <text x="230" y="214" text-anchor="middle" font-size="11">pestaña Agente · ?hilo=</text>
+
+  <text x="455" y="134" text-anchor="middle" font-weight="600">Agente (create_agent)</text>
+  <text x="455" y="156" text-anchor="middle" font-size="12">1. limpia caracteres invisibles</text>
+  <text x="455" y="176" text-anchor="middle" font-size="12">2. recorta el historial (3.000 tokens)</text>
+  <text x="455" y="196" text-anchor="middle" font-size="12">3. Gemini 3.8 Flash + prompt v2 (router)</text>
+  <text x="455" y="216" text-anchor="middle" font-size="12">4. decide: herramienta o responder</text>
+  <text x="455" y="236" text-anchor="middle" font-size="12">5. guarda el turno en SQLite (hilo)</text>
+  <text x="455" y="270" text-anchor="middle" font-size="11" fill="#6b7280">repite 3–4 mientras pida herramientas</text>
+
+  <text x="690" y="196" text-anchor="middle" font-weight="600">Respuesta</text>
+  <text x="690" y="214" text-anchor="middle" font-size="11">vuelve a la pantalla</text>
+
+  <text x="690" y="86" text-anchor="middle" font-weight="600">Respaldo local</text>
+  <text x="690" y="104" text-anchor="middle" font-size="11">llama3.2 si Gemini falla</text>
+
+  <text x="405" y="366" text-anchor="middle" font-weight="600">consultar_datos</text>
+  <text x="405" y="384" text-anchor="middle" font-size="11">sedes · contactos · catálogo</text>
+  <text x="585" y="366" text-anchor="middle" font-weight="600">buscar_en_base</text>
+  <text x="585" y="384" text-anchor="middle" font-size="11">4 fragmentos del texto oficial</text>
+  <text x="785" y="366" text-anchor="middle" font-weight="600">Chroma + embeddings</text>
+  <text x="785" y="384" text-anchor="middle" font-size="11">1.690 fragmentos · Ollama</text>
+
+  <g stroke="#374151" stroke-width="1.5" fill="none" marker-end="url(#flecha)">
+    <path d="M130,200 L165,200"/>
+    <path d="M295,200 L330,200"/>
+    <path d="M580,200 L620,200"/>
+    <path d="M620,110 L580,150" stroke-dasharray="5 4"/>
+    <path d="M405,290 L405,340"/>
+    <path d="M530,290 L530,340"/>
+    <path d="M565,340 L565,290" stroke-dasharray="5 4"/>
+    <path d="M660,370 L700,370"/>
+    <path d="M440,340 L440,290" stroke-dasharray="5 4"/>
+  </g>
+  <text x="368" y="322" font-size="11" fill="#374151">llama</text>
+  <text x="446" y="322" font-size="11" fill="#6b7280">datos</text>
+  <text x="498" y="322" font-size="11" fill="#374151">llama</text>
+  <text x="572" y="322" font-size="11" fill="#6b7280">datos</text>
+  <text x="455" y="450" text-anchor="middle" font-size="11" fill="#6b7280">Las herramientas solo leen: devuelven datos, nunca órdenes. El prompt indica ignorar frases que parezcan instrucciones dentro de lo recuperado.</text>
+</svg>

@@ -18,7 +18,7 @@ from pathlib import Path
 import markdown
 
 PROYECTO = Path(__file__).resolve().parents[2]
-CURSO = PROYECTO.parents[1]  # ...\TECNICAS AVANZADAS DE IA (solo con --curso)
+CURSO = PROYECTO.parents[1] if len(PROYECTO.parents) > 1 else PROYECTO  # ...\TECNICAS AVANZADAS DE IA (solo con --curso)
 EXCLUIR = ("Clase 1", "Clase 2", "Clase 3", "Clase 4", "Clase 5", ".venv", ".git")
 EDGE = [
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -57,13 +57,13 @@ def a_html(texto: str) -> str:
     return f"<!doctype html><html lang='es'><head><meta charset='utf-8'><style>{CSS}</style></head><body>{cuerpo}</body></html>"
 
 
-PDF_DEL_REPOSITORIO = {"3 - Informe/informe_taller1.md"}
+PDF_DEL_REPOSITORIO = {"3 - Informe/informe_taller1.md", "3 - Informe/informe_taller2.md"}
 
 
 def convertir(md: Path, pdf: Path, edge: str) -> None:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:  # Edge puede tardar en soltar su perfil
         html = Path(tmp) / "doc.html"
-        html.write_text(a_html(md.read_text(encoding="utf-8")), encoding="utf-8")
+        html.write_text(a_html(md.read_text(encoding="utf-8")).replace("<head>", f"<head><base href='{md.parent.as_uri()}/'>", 1), encoding="utf-8")  # base: las imágenes (diagramas) se buscan junto al .md
         subprocess.run(
             [edge, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
              f"--user-data-dir={Path(tmp) / 'perfil'}",  # perfil propio: con Edge ya abierto, sin esto el PDF no se escribe
