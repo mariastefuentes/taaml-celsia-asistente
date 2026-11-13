@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import Markdown from "./Markdown.jsx";
 import { cargarDatos, cargarMensajes, enviar, olvidarDatos } from "./api.js";
 
 const SUGERENCIAS = [
   "¿Qué sedes hay en Ibagué?",
   "¿Cómo cancelo mi servicio?",
-  "¿Cómo pago mi factura y dónde puedo hacerlo en Cali?",
+  "Quiero reportar un daño en Ibagué: ¿qué hago y a qué número llamo?",
 ];
 
 function hiloDeLaDireccion() {
@@ -23,7 +24,10 @@ function actualizarUltimo(lista, cambio) {
 }
 
 function etiqueta(h) {
-  return h.herramienta === "buscar_en_base" ? "Buscando en el texto del sitio" : `Consultando la tabla ${h.args?.tabla ?? ""}`;
+  if (h.herramienta === "buscar_en_base") return "Buscando en el texto del sitio";
+  if (h.herramienta === "guardar_dato_del_cliente") return "Guardando un dato del cliente";
+  if (h.herramienta === "recordar_datos_del_cliente") return "Recordando lo que sabe del cliente";
+  return `Consultando la tabla ${h.args?.tabla ?? ""}`;
 }
 
 export default function App() {
@@ -141,7 +145,7 @@ export default function App() {
             {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
               <p className="herramienta">{m.usadas ?? m.herramientas.map(etiqueta).join("; ")}</p>
             )}
-            <p className="contenido">{m.texto || (enCurso && i === mensajes.length - 1 ? "Pensando…" : "")}</p>
+            <div className="contenido">{m.texto ? <Markdown texto={m.texto} /> : (enCurso && i === mensajes.length - 1 ? "Pensando…" : "")}</div>
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
           </article>
         ))}

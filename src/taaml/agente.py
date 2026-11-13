@@ -281,6 +281,10 @@ def etiqueta_herramientas(llamadas: list[dict]) -> str:
     for ll in llamadas:
         if ll["herramienta"] == "buscar_en_base":
             partes.append("buscó en el texto del sitio")
+        elif ll["herramienta"] == "guardar_dato_del_cliente":
+            partes.append("guardó un dato del cliente")
+        elif ll["herramienta"] == "recordar_datos_del_cliente":
+            partes.append("recordó lo que sabe del cliente")
         else:
             filtros = ", ".join(f"{k}: {v}" for k, v in ll["args"].items() if k != "tabla" and v)
             partes.append(f"consultó la tabla {ll['args'].get('tabla', '?')}" + (f" ({filtros})" if filtros else ""))

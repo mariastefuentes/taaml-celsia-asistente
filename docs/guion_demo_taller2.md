@@ -7,7 +7,7 @@ Las preguntas salen de la matriz de enrutamiento (`docs/2 - Conjunto de prueba/m
 1. Ollama encendido (los embeddings lo necesitan) y `GOOGLE_API_KEY` con facturación en `.env`.
 2. Terminal 1: `uv run uvicorn api.main:app --port 8000` (la API). Terminal 2: `cd frontend && npm run dev`. Abrir http://localhost:5173 y hacer una pregunta de calentamiento fuera del guion (por ejemplo «hola»): la primera vez la API carga los modelos.
 3. Pulsar **Nueva conversación** para empezar en blanco y, en «Lo que recuerdo», borrar lo guardado de ensayos anteriores.
-4. Ensayar la secuencia completa una vez y guardar capturas de la pestaña Agente en `docs/capturas` (hoy no hay ninguna del agente) para mostrarlas si falla la red.
+4. Ensayar la secuencia completa una vez y guardar capturas de la pestaña Agente en `docs/capturas` (ya hay cuatro en `docs/capturas/agente_*.jpg`, tomadas en el ensayo del 13 de noviembre) para mostrarlas si falla la red.
 
 ## Los cuatro casos
 
@@ -16,9 +16,11 @@ Las preguntas salen de la matriz de enrutamiento (`docs/2 - Conjunto de prueba/m
 | 1 | Consulta estructurada | «¿Qué sedes hay en Ibagué?» | Usa `consultar_datos` (tabla sedes, ciudad Ibagué) y lista las sedes con dirección y horario exactos | La etiqueta de herramienta usada: datos exactos, no texto que el modelo resume | ~9 s |
 | 2 | Memoria | «¿y su teléfono?» | Entiende que «su» es la sede del turno anterior y da el teléfono de la sede administrativa (608 277 08 22) | La pregunta sola no dice de qué sede habla: lo sabe por la conversación | ~10 s |
 | 3 | RAG | «¿Cómo cancelo mi servicio?» | Usa `buscar_en_base` y responde con el trámite del texto oficial | Cambio de herramienta: ahora es una explicación, no un dato exacto | ~10 s |
-| 4 | Enrutamiento mixto | «¿Cómo pago mi factura y dónde puedo hacerlo en Cali?» | Usa las dos herramientas en el mismo turno: el trámite (texto) y los puntos de Cali (tabla) | Una sola pregunta, dos fuentes: el router es el prompt, no código | ~19 s |
+| 4 | Enrutamiento mixto | «Quiero reportar un daño en Ibagué: ¿qué hago y a qué número llamo?» | Usa las dos herramientas en el mismo turno: los contactos (tabla) y los pasos para reportar (texto) | Una sola pregunta, dos fuentes: el router es el prompt, no código | ~10 s (ensayo: $0,009) |
 
-Dato para decir en voz alta en el caso 4: es el turno más lento porque hace dos búsquedas y reenvía la conversación completa al modelo.
+Dato para decir en voz alta en el caso 4: hace dos búsquedas en el mismo turno y reenvía la conversación completa al modelo.
+
+Evitar «¿Cómo pago mi factura y dónde puedo hacerlo en Cali?»: la tabla de sedes no tiene ninguna fila en Cali. El agente responde bien («Celsia no dispone de tiendas en Cali»), pero en el ensayo hizo 5 consultas, 27.000 tokens y $0,025, y no muestra el enrutamiento mixto.
 
 ## Memoria de largo plazo (1 minuto)
 1. Escribir «Me llamo Ana y trabajo en Carvajal»: el agente lo guarda (etiqueta `guardar_dato_del_cliente`).
