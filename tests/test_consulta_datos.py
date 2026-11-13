@@ -34,4 +34,16 @@ def test_consultar_ignora_filtros_de_otra_tabla():
 
 def test_consultar_limita_las_filas():
     salida = consultar("sedes", {"departamento": "Tolima"})
-    assert salida.count("\n- ") <= 10 and "Afina el filtro" in salida
+    assert salida.count("\n- ") <= 10 and "afina el filtro" in salida
+
+
+def test_el_total_lo_calcula_el_codigo_con_pocas_o_muchas_filas():
+    pocas = consultar("sedes", {"ciudad": "Ibagué"})
+    assert pocas.splitlines()[-1] == f"Total: {len(sedes(ciudad='Ibagué'))} filas."
+    muchas = consultar("sedes", {"departamento": "Tolima"})
+    assert muchas.splitlines()[-1].startswith(f"Total: {len(sedes(departamento='Tolima'))} filas (se muestran 10")
+
+
+def test_con_una_sola_fila_el_total_va_en_singular():
+    una = next(f for f in sedes() if len(sedes(ciudad=f["CITY"])) == 1)
+    assert consultar("sedes", {"ciudad": una["CITY"]}).splitlines()[-1] == "Total: 1 fila."
