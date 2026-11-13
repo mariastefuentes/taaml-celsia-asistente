@@ -111,7 +111,7 @@ with tab_qa:
                     st.caption(f"Recuperación: {len(fragmentos)} fragmentos en {metricas.get('tiempo_ms', 0)} ms (búsqueda: {metricas.get('metodo', 'auto')}).")
                     if metricas.get("metodo") == "palabras":
                         if almacen_vectorial() == "ninguno":
-                            st.info("No hay un índice de búsqueda listo (falta el archivo de vectores o la base en Chroma); se usó la búsqueda por palabras, que es menos precisa. Se regenera con `make indice`.")
+                            st.info("No hay un índice de búsqueda listo (falta el archivo de vectores o la base en Qdrant); se usó la búsqueda por palabras, que es menos precisa. Se regenera con `make indice`.")
                         else:
                             st.warning("La búsqueda se hizo por palabras porque Ollama no respondió: es menos precisa (54 % frente a 89 % con embeddings en la evaluación). Enciende Ollama y vuelve a preguntar.")
                     if (dudosos := datos_sin_respaldo(respuesta, fragmentos)):

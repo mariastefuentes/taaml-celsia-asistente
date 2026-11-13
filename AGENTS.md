@@ -24,7 +24,7 @@ Base de conocimiento y asistente de preguntas y respuestas (Q&A) de **Celsia**, 
 - Los documentos del taller (`.md`: análisis, conjunto de prueba e informe) están en `docs/`. Solo el informe tiene PDF, que se regenera con `make pdf`.
 
 ## Cómo trabajar
-- Orden del pipeline: `01_scrape_celsia.py` → `03_construir_silver.py` → `04_construir_gold.py` → `05_curar_base.py` → `06_construir_chunks.py` → `07_construir_indice.py` (embeddings y carga en Chroma; necesita Ollama) → `08_inventario_intenciones.py` → `09_conjunto_de_prueba.py`; `02_obtener_sedes.py` agrega las sedes. Ver `README.md`.
+- Orden del pipeline: `01_scrape_celsia.py` → `03_construir_silver.py` → `04_construir_gold.py` → `05_curar_base.py` → `06_construir_chunks.py` → `07_construir_indice.py` (embeddings y carga en Qdrant; necesita Ollama) → `08_inventario_intenciones.py` → `09_conjunto_de_prueba.py`; `02_obtener_sedes.py` agrega las sedes. Ver `README.md`.
 - Después de cambiar la curaduría o el alcance, ejecutar `08_inventario_intenciones.py` y `09_conjunto_de_prueba.py`: comprueban que las preguntas siguen teniendo respaldo.
 - Para el modelo: `temperature = 0.0` y `top_p = 0.1` en RAG y agentes (regla del proyecto; excepción: el agente con `gemini-3.8-flash`, que los ignora, ver la constitución). El prompt tiene cinco bloques (rol, contexto, instrucción, formato, restricciones) y la entrada del usuario va delimitada con etiquetas XML.
 - La base completa (~316.600 tokens) no se pega entera en el prompt: Q&A recupera los 12 fragmentos más relevantes (`--base rag`, por defecto). La calidad de la recuperación se mide sin gastar cuota con `scripts/10_evaluar_recuperacion.py`. Si cambia la base o el chunking, hay que volver a ejecutar `07_construir_indice.py`.

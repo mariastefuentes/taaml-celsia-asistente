@@ -37,7 +37,7 @@ La alternativa de armar el flujo a mano con un grafo de estados (`StateGraph`) d
 | Marco de trabajo | LangChain | El Taller 1 ya estaba construido con él; `create_agent` trae el ciclo de herramientas, el checkpointer de memoria y los componentes intermedios (recorte del historial, respaldo de modelo) sin código propio. LlamaIndex se centra en indexar y consultar documentos, y el agente aquí importa más que el índice; Agno es otra alternativa de agentes que no ofrecía ventaja para dos herramientas. |
 | Modelo de conversación | `obtener_modelo` propio | Elige entre Gemini, DeepSeek y Ollama y arma la cadena de respaldo. `init_chat_model` de LangChain hace algo parecido; se reevalúa en el siguiente taller. |
 | Conocimiento | RAG, no fine-tuning | Los datos cambian (sedes, avisos, tarifas), cada respuesta debe poder citar su fuente y no hay un conjunto de entrenamiento: actualizar un índice es barato y reentrenar no. |
-| Motor de vectores | Chroma, índice HNSW con coseno | HNSW organiza los vectores en un grafo por capas: se baja desde pocos nodos lejanos hasta los vecinos cercanos y así encuentra los más parecidos sin comparar contra los 1.690 fragmentos. Chroma funciona dentro del proceso, sin servidor, y alcanza para este tamaño. |
+| Motor de vectores | Qdrant en modo local, coseno | Qdrant corre dentro del proceso, sin servidor, y guarda los vectores en disco (`data/4_curaduria/qdrant`). En modo local compara la pregunta con los 1.690 vectores (búsqueda exacta), lo que alcanza para este tamaño y no depende de un índice aproximado; con un servidor Qdrant se usaría un índice HNSW. Antes se usó Chroma: el cambio no alteró la recuperación (31 de 35 con embeddings, igual que antes) y quitó `chromadb` de las dependencias, que arrastraba vulnerabilidades sin corrección publicada. |
 | Embeddings | `nomic-embed-text-v2-moe` (Ollama) | Multilingüe y de licencia abierta. Los rankings generales (MTEB, Muennighoff et al., 2022; BEIR, Thakur et al., 2021) orientan, pero no miden español sobre este corpus, así que se midió con un conjunto propio (hit@k, precisión, recall y nDCG). |
 | API frente a modelo local | Gemini por API; Ollama solo para embeddings y respaldo | El equipo tiene 7,7 GB de RAM y sin GPU: un modelo local tarda minutos por pregunta. La API es aceptable porque los datos son públicos. |
 
@@ -69,7 +69,7 @@ La memoria guardada en SQLite corresponde a lo que la literatura llama memoria d
 |---|---|---|
 | `consultar_datos` | Dato exacto | Filtra tablas locales: «sedes» (direcciones, horarios y teléfonos de sedes, tiendas y puntos de pago, con ciudad, departamento y tipo), «contactos» (teléfonos, WhatsApp, correos y enlaces) y «catálogo» (páginas del sitio). Sin modelo ni embeddings: la respuesta es idéntica cada vez. Sus argumentos se validan con un esquema Pydantic (`ConsultaDatos`): tabla restringida a las tres existentes y filtros de largo acotado. |
 | `guardar_dato_del_cliente` y `recordar_datos_del_cliente` | Memoria de largo plazo | Escriben y leen en el Store el dato que el cliente cuenta de sí mismo, en un espacio por cliente. |
-| `buscar_en_base` | Explicación en texto | Busca por significado en 1.690 fragmentos del texto oficial (embeddings `nomic-embed-text-v2-moe` en Chroma) y devuelve 4 fragmentos. Son 4 y no los 12 del Taller 1 porque cada turno reenvía el historial. |
+| `buscar_en_base` | Explicación en texto | Busca por significado en 1.690 fragmentos del texto oficial (embeddings `nomic-embed-text-v2-moe` en Qdrant) y devuelve 4 fragmentos. Son 4 y no los 12 del Taller 1 porque cada turno reenvía el historial. |
 
 Las de consulta solo leen; las de memoria solo escriben o leen el dato que el cliente cuenta de sí mismo, y ninguna ejecuta acciones. Lo que devuelven se trata como datos: el prompt indica ignorar frases que parezcan órdenes dentro de ellos y el texto recuperado se limpia de caracteres invisibles y de etiquetas que podrían cerrar el bloque de contexto.
 
@@ -139,7 +139,7 @@ El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al mo
 - **Respaldo local.** `llama3.2` solo acertó 2 de 4 casos con herramientas y es lento: cubre una caída, no reemplaza al modelo principal.
 - **Dependencia del modelo del Taller 1.** El asistente de preguntas y respuestas usa `gemini-3.5-flash`, que existe en la API pero no figura en la documentación pública de precios; podría retirarse. Cambiarlo es un ajuste de configuración, pero habría que repetir la evaluación.
 - **Datos.** Las sedes y los contactos salen de un scraping y de un manual del equipo; pueden quedar desactualizados. Hay avisos antiguos en el texto (por ejemplo, de 2021).
-- **Vulnerabilidades de dependencias.** La auditoría de dependencias dejó dos sin corrección posible hoy: `pillow` (lo limita la versión de Streamlit) y `chromadb` (sin versión corregida publicada).
+- **Vulnerabilidades de dependencias.** La auditoría de dependencias dejó una sin corrección posible hoy: `pillow` (lo limita la versión de Streamlit). `chromadb`, que tenía otra sin versión corregida, se reemplazó por Qdrant.
 - **Privacidad.** Las preguntas viajan a Google; con datos públicos no es un problema, pero en una empresa real habría que revisarlo, así como la retención de las conversaciones.
 
 ### Técnicas consideradas y no adoptadas

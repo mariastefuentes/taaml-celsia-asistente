@@ -1,7 +1,7 @@
 """INDICE: calcula el embedding de cada fragmento de data/4_curaduria/chunks.jsonl con Ollama.
 
 Escribe data/4_curaduria/indice_embeddings.npz (vectores e identificadores de los fragmentos, que sirven de caché) y los carga
-en la base vectorial Chroma (data/4_curaduria/chroma), que es donde busca el asistente. Es reanudable: guarda
+en la base vectorial Qdrant (data/4_curaduria/qdrant, modo local), que es donde busca el asistente. Apaga la API antes de correrlo: el modo local bloquea la carpeta. Es reanudable: guarda
 cada tanda en un archivo temporal, así que si se interrumpe retoma donde quedó. Los fragmentos que no cambiaron
 (mismo texto) reutilizan su vector, por lo que reindexar tras un cambio pequeño es rápido.
 
@@ -17,7 +17,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-from taaml.recuperacion import CURADURIA, INDICE, MODELO_EMBEDDINGS, cargar_fragmentos, construir_chroma, embeddings  # noqa: E402
+from taaml.recuperacion import CURADURIA, INDICE, MODELO_EMBEDDINGS, cargar_fragmentos, construir_qdrant, embeddings  # noqa: E402
 from taaml.sinonimos import etiquetas_fragmento  # noqa: E402
 
 PARCIAL = CURADURIA / "indice_parcial.npz"
@@ -62,7 +62,7 @@ def main() -> None:
             guardar(PARCIAL, list(previos), [""] * len(previos), list(previos.values()))
     guardar(INDICE, huellas, [f["chunk_id"] for f in fragmentos], [previos[h] for h in huellas])
     PARCIAL.unlink(missing_ok=True)
-    construir_chroma([f["chunk_id"] for f in fragmentos], np.array([previos[h] for h in huellas], dtype=np.float32),
+    construir_qdrant([f["chunk_id"] for f in fragmentos], np.array([previos[h] for h in huellas], dtype=np.float32),
                      [{"categoria": f["categoria"], "region": f["region"], "fuente": f["fuente"]} for f in fragmentos])
     print(f"Listo: {INDICE.name} con {len(fragmentos)} vectores de {len(previos[huellas[0]])} dimensiones en {(time.time() - t0) / 60:.1f} min")
 

@@ -70,7 +70,7 @@ Verifica que la PR respeta [`.specify/memory/constitution.md`](../.specify/memor
 - [ ] **Entorno:** el código corre con `uv` y Python **3.12**.
 - [ ] **Pruebas:** `make test` pasa completo (indica abajo si hay pruebas omitidas y por qué).
 - [ ] **Lint y lock:** `make lint` pasa (Ruff `F`,`E9` + `uv lock --check`).
-- [ ] **Datos fuera de Git:** `data/1_bronze/`, `chroma/`, `indice_embeddings.npz`, `.env` y PDF no están rastreados.
+- [ ] **Datos fuera de Git:** `data/1_bronze/`, `qdrant/`, `indice_embeddings.npz`, `.env` y PDF no están rastreados.
 - [ ] **Reproducibilidad:** los comandos del README funcionan desde cero (`make setup` → `make modulo1`).
 - [ ] **Documentación:** README, informe o spec actualizados si cambió el comportamiento.
 - [ ] **Cifras verificadas:** cualquier número del README o del informe sale de un archivo de resultados.

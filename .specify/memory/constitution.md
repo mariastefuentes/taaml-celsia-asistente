@@ -67,7 +67,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | 1. Pipeline de datos (specs 001) | ✅ Hecha | `data/1_bronze` → `4_curaduria` |
 | 2. Recuperación y agente (specs 002) | ✅ Hecha | `src/taaml/recuperacion.py`, `08`–`15` |
 | 3. Continuidad de la demo (specs 003) | ✅ Hecha | `src/taaml/respaldo.py` |
-| 4. Base vectorial Chroma (specs 004) | ✅ Hecha | `data/4_curaduria/chroma` |
+| 4. Base vectorial Qdrant (specs 004 y 012) | ✅ Hecha | `data/4_curaduria/qdrant` |
 | 5. Evidencia de resumen y FAQ (specs 005) | ✅ Hecha | `docs/2 - Conjunto de prueba/` |
 | 6. Tabla y pruebas del pipeline (specs 006) | ✅ Hecha | `src/taaml/corpus.py` |
 | 7. Pestaña Corpus y scraping (specs 007) | ✅ Hecha | `app/asistente.py`, `app/modulo1.py` |
@@ -87,7 +87,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Modelo por defecto** | `gemini-3.5-flash` (Q&A, Resumen y FAQ); respaldo `deepseek-flash` y `ollama:llama3.2` |
 | **Modelo del agente** | `gemini-3.8-flash` (API de pago); respaldo `ollama:llama3.2` |
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
-| **Base vectorial** | Chroma persistente, similitud del coseno, sin telemetría |
+| **Base vectorial** | Qdrant en modo local (persistente, sin servidor), similitud del coseno |
 | **Interfaz** | Streamlit (`app/asistente.py`, `app/modulo1.py`) |
 | **Testing** | `pytest` (133 pruebas, sin Gemini ni Ollama) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
@@ -105,7 +105,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 taaml-celsia-asistente/
 ├── src/taaml/                # código del asistente (src-layout)
 │   ├── base.py               # lectura de la base de conocimiento
-│   ├── recuperacion.py       # embeddings, Chroma y búsqueda por palabras
+│   ├── recuperacion.py       # embeddings, Qdrant y búsqueda por palabras
 │   ├── sinonimos.py          # diccionario cliente → sitio
 │   ├── reordenar.py          # reordenamiento opcional de candidatos
 │   ├── validacion.py         # cifras, correos y enlaces sin respaldo
@@ -213,7 +213,7 @@ git push -u origin feat/mi-cambio
 | 2026-10-17 | Patrón Medallion con Silver, Gold y curaduría versionados | Reproducir sin volver a la web; Bronze pesa ~250 MB |
 | 2026-10-17 | Respetar `robots.txt` y no descargar PDF | Requisito legal y del curso |
 | 2026-10-24 | Descartar `trafilatura` y limpiar con BeautifulSoup + reglas | Conserva tarjetas y acordeones institucionales |
-| 2026-10-28 | Embeddings locales con `nomic-embed-text-v2-moe` + Chroma | Sin costo y sin enviar el corpus a terceros |
+| 2026-10-28 | Embeddings locales con `nomic-embed-text-v2-moe` + Qdrant (antes Chroma, ver specs/012) | Sin costo y sin enviar el corpus a terceros |
 | 2026-10-29 | RAG (12 fragmentos) en lugar de pegar la base completa | ~80 veces menos costo por pregunta |
 | 2026-10-29 | Prompt v3 con cinco bloques y etiquetas XML | Defensa del rol y contra inyección |
 | 2026-10-30 | `gemini-3.5-flash` como modelo vigente | Respeta `temperature` y `top_p`; el 3.6 no |
@@ -246,7 +246,7 @@ git push -u origin feat/mi-cambio
 
 - Las claves viven en `.env` (ignorado por Git) y se documentan vacías en `.env.example`:
   `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, `HF_TOKEN` y `LANGSMITH_API_KEY`.
-- `data/1_bronze/` (HTML crudo), `data/4_curaduria/chroma/`,
+- `data/1_bronze/` (HTML crudo), `data/4_curaduria/qdrant/`,
   `data/4_curaduria/indice_embeddings.npz`, `data/_demo_scraping/` y los PDF
   **no se versionan**: se regeneran con `make datos`, `make indice` y `make pdf`.
 - En Windows conviene clonar en una ruta corta, fuera de OneDrive, con
