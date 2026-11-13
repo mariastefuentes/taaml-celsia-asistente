@@ -37,6 +37,12 @@ def test_consultar_datos_tiene_esquema_pydantic_con_campos_descritos():
     assert all(c.description for c in campos.values())
 
 
+def test_la_etiqueta_nombra_las_herramientas_de_memoria():
+    from taaml.agente import etiqueta_herramientas
+    assert etiqueta_herramientas([{"herramienta": "guardar_dato_del_cliente", "args": {"dato": "x"}}]) == "Usó: guardó un dato del cliente"
+    assert etiqueta_herramientas([{"herramienta": "recordar_datos_del_cliente", "args": {}}]) == "Usó: recordó lo que sabe del cliente"
+
+
 def test_el_esquema_rechaza_filtros_demasiado_largos():
     import pytest
     from pydantic import ValidationError
