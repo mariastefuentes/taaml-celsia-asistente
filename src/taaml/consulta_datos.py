@@ -7,8 +7,8 @@ estas funciones, así se prueban sin Gemini ni Ollama.
 import csv
 import json
 import unicodedata
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 DATOS = Path(__file__).resolve().parents[2] / "data"
 SEDES = DATOS / "3_gold" / "sedes.json"
@@ -30,13 +30,24 @@ def _contiene(valor: Any, buscado: Any) -> bool:
     return not buscado or _norm(buscado) in _norm(valor)
 
 
+def _contiene_alguno(valor: Any, buscado: Any) -> bool:
+    """Como `_contiene`, pero `buscado` puede traer varias opciones separadas por comas o «;» («Ibagué, Cali»): basta con que el valor contenga una."""
+    opciones = [o for o in str(buscado or "").replace(";", ",").split(",") if o.strip()]
+    return not opciones or any(_norm(o) in _norm(valor) for o in opciones)
+
+
 def sedes(ciudad: str = "", departamento: str = "", tipo: str = "") -> list[dict]:
-    """Sedes, tiendas y puntos de pago cuyos campos contienen el texto de cada filtro (sin tildes ni mayúsculas); sin filtros, todas."""
+    """Sedes, tiendas y puntos de pago cuyos campos contienen el texto de cada filtro (sin tildes ni mayúsculas); sin filtros, todas.
+
+    Cada filtro admite varias opciones separadas por comas («Ibagué, Cali»): la fila entra si cumple cualquiera, y el total las cuenta juntas.
+    """
     filas = json.loads(SEDES.read_text(encoding="utf-8"))
     return [
         f
         for f in filas
-        if _contiene(f["CITY"], ciudad) and _contiene(f["DEPARTMENT"], departamento) and _contiene(f["HQ_TYPE"], tipo)
+        if _contiene_alguno(f["CITY"], ciudad)
+        and _contiene_alguno(f["DEPARTMENT"], departamento)
+        and _contiene_alguno(f["HQ_TYPE"], tipo)
     ]
 
 
@@ -45,7 +56,7 @@ def contactos(tipo: str = "", tema: str = "") -> list[dict]:
     salida = []
     for linea in CONTACTOS.read_text(encoding="utf-8").splitlines():
         for c in json.loads(linea)["contactos"]:
-            if _contiene(c["tipo"], tipo) and _contiene(c["para_que_sirve"], tema):
+            if _contiene_alguno(c["tipo"], tipo) and _contiene_alguno(c["para_que_sirve"], tema):
                 salida.append(c)
     return salida
 
