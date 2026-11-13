@@ -44,6 +44,7 @@ def embeddings(textos: list[str], tipo: str, timeout: int = 300) -> np.ndarray:
 
 @lru_cache(maxsize=1)
 def cargar_fragmentos() -> list[dict]:
+    """Los fragmentos del corpus (`chunks.jsonl`), en su orden, con documento, categoría, región, fuente y texto."""
     return [json.loads(ln) for ln in CHUNKS.read_text(encoding="utf-8").splitlines()]
 
 

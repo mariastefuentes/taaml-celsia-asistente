@@ -6,10 +6,11 @@ falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1, 
 """
 import re
 import sqlite3
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 from uuid import uuid4
 
 from langchain.agents import create_agent
@@ -143,7 +144,7 @@ HERRAMIENTAS = [buscar_en_base, consultar_datos, guardar_dato_del_cliente, recor
 
 
 @wrap_model_call
-def limitar_historial(request, handler):
+def limitar_historial(request: Any, handler: Any) -> Any:
     """Al modelo solo le llegan los últimos mensajes que caben en `MAX_TOKENS_HISTORIAL` (siempre empezando en un turno del cliente).
 
     Recorta lo que ve el modelo, no lo guardado: el checkpointer conserva todo y la pantalla puede mostrarlo entero.
@@ -153,7 +154,7 @@ def limitar_historial(request, handler):
 
 
 @dynamic_prompt
-def con_fecha_de_hoy(request):
+def con_fecha_de_hoy(request: Any) -> str:
     """El prompt de sistema se arma en cada turno: al texto fijo de `v3_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
     base = request.system_message.text if request.system_message else ""
     return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
@@ -179,17 +180,18 @@ _ALMACEN_LARGO: list[SqliteStore] = []  # uno solo por proceso: la API y el agen
 
 
 def almacen_compartido() -> SqliteStore:
+    """El Store de largo plazo del proceso (se crea la primera vez que se pide)."""
     if not _ALMACEN_LARGO:
         _ALMACEN_LARGO.append(almacen_de_largo_plazo())
     return _ALMACEN_LARGO[0]
 
 
-def datos_del_cliente(usuario: str, almacen=None) -> list[str]:
+def datos_del_cliente(usuario: str, almacen: Any = None) -> list[str]:
     """Lo que hay guardado de un cliente (para mostrárselo)."""
     return [i.value["dato"] for i in (almacen or almacen_compartido()).search(("perfil", usuario), limit=MAX_DATOS_CLIENTE)]
 
 
-def olvidar_cliente(usuario: str, almacen=None) -> int:
+def olvidar_cliente(usuario: str, almacen: Any = None) -> int:
     """Borra todo lo guardado de un cliente (su derecho a la supresión de datos) y devuelve cuántos datos eran."""
     almacen = almacen or almacen_compartido()
     items = almacen.search(("perfil", usuario), limit=MAX_DATOS_CLIENTE)
@@ -201,7 +203,7 @@ def olvidar_cliente(usuario: str, almacen=None) -> int:
 _AGENTES: dict = {}  # un agente (con su memoria) por modelo: el cuaderno vive dentro del agente, así que hay que reutilizarlo
 
 
-def crear_agente(modelo: str = MODELO_AGENTE, llm=None, checkpointer=None, store: BaseStore | None = None):
+def crear_agente(modelo: str = MODELO_AGENTE, llm: Any = None, checkpointer: Any = None, store: BaseStore | None = None) -> Any:
     """Agente con memoria corta (checkpointer, por `thread_id`) y larga (Store, por cliente). `llm` permite inyectar un modelo (pruebas).
 
     Sin `checkpointer` ni `store`, un modelo real guarda en SQLite y uno inyectado en memoria (así las pruebas no escriben en disco).
@@ -219,13 +221,13 @@ def crear_agente(modelo: str = MODELO_AGENTE, llm=None, checkpointer=None, store
                                     ToolCallLimitMiddleware(run_limit=MAX_LLAMADAS_POR_TURNO, exit_behavior="continue"), *respaldo])
 
 
-def _agente(modelo: str):
+def _agente(modelo: str) -> Any:
     if modelo not in _AGENTES:
         _AGENTES[modelo] = crear_agente(modelo)
     return _AGENTES[modelo]
 
 
-def conversar(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente=None, usuario: str = ANONIMO) -> tuple[str, list[dict]]:
+def conversar(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None, usuario: str = ANONIMO) -> tuple[str, list[dict]]:
     """Un turno de una conversación: devuelve la respuesta y las herramientas que usó en este turno (nombre y argumentos).
 
     Mismo `thread_id` = misma conversación (el agente ve los turnos anteriores); otro `thread_id` empieza en blanco.
@@ -249,7 +251,7 @@ def datos_dudosos(respuesta: str, mensajes: list) -> list[str]:
     return datos_sin_respaldo(respuesta, [{"texto": t} for t in soporte])
 
 
-def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente=None, usuario: str = ANONIMO):
+def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None, usuario: str = ANONIMO) -> Iterator[dict]:
     """Un turno como flujo de eventos (para el streaming de la API): `herramienta`, `texto` (trozos de la respuesta) y `fin`.
 
     Mismo `thread_id` = misma conversación. Los eventos `fuentes` traen la cita (documento, fragmento y enlace) de lo que recuperó `buscar_en_base`. El evento `fin` trae los tokens y el costo del turno. Un error del modelo sube como excepción.
@@ -283,7 +285,7 @@ def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE
            "costo_usd": costo_usd(entrada_tokens, salida_tokens, modelo)}
 
 
-def historial_visible(thread_id: str, modelo: str = MODELO_AGENTE, agente=None) -> list[dict]:
+def historial_visible(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> list[dict]:
     """La conversación guardada, lista para pintarla en pantalla: `rol`, `texto` y, en las respuestas, qué herramientas usó."""
     agente = agente or _agente(modelo)
     mensajes = agente.get_state({"configurable": {"thread_id": thread_id}}).values.get("messages", [])
@@ -303,7 +305,7 @@ def historial_visible(thread_id: str, modelo: str = MODELO_AGENTE, agente=None) 
     return visibles
 
 
-def uso_del_turno(agente, thread_id: str) -> tuple[int, int]:
+def uso_del_turno(agente: Any, thread_id: str) -> tuple[int, int]:
     """Tokens (entrada, salida) que gastó el último turno de una conversación, sumando todas las llamadas al modelo.
 
     La salida se calcula como total - entrada, porque así incluye el «pensamiento» del modelo, que también se cobra.

@@ -6,6 +6,7 @@ estas funciones, así se prueban sin Gemini ni Ollama.
 import csv
 import json
 import unicodedata
+from typing import Any
 from pathlib import Path
 
 DATOS = Path(__file__).resolve().parents[2] / "data"
@@ -18,17 +19,18 @@ SIN_RESULTADOS = "Sin resultados en los datos estructurados."
 LIMITE = 10  # el modelo es pequeño o de pago por token: se devuelven pocas filas
 
 
-def _norm(texto) -> str:
+def _norm(texto: Any) -> str:
     """Minúsculas y sin tildes, para que «Líbano» y «libano» coincidan."""
     sin_tildes = unicodedata.normalize("NFKD", str(texto)).encode("ascii", "ignore").decode()
     return sin_tildes.lower().strip()
 
 
-def _contiene(valor, buscado) -> bool:
+def _contiene(valor: Any, buscado: Any) -> bool:
     return not buscado or _norm(buscado) in _norm(valor)
 
 
 def sedes(ciudad: str = "", departamento: str = "", tipo: str = "") -> list[dict]:
+    """Sedes, tiendas y puntos de pago cuyos campos contienen el texto de cada filtro (sin tildes ni mayúsculas); sin filtros, todas."""
     filas = json.loads(SEDES.read_text(encoding="utf-8"))
     return [f for f in filas
             if _contiene(f["CITY"], ciudad) and _contiene(f["DEPARTMENT"], departamento) and _contiene(f["HQ_TYPE"], tipo)]
@@ -45,6 +47,7 @@ def contactos(tipo: str = "", tema: str = "") -> list[dict]:
 
 
 def catalogo(seccion: str = "", categoria: str = "", texto: str = "") -> list[dict]:
+    """Páginas del sitio cuyos campos (sección, categoría, título) contienen el texto de cada filtro."""
     with CATALOGO.open(encoding="utf-8-sig", newline="") as f:
         filas = list(csv.DictReader(f))
     return [r for r in filas
