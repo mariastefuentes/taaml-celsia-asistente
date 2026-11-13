@@ -69,6 +69,7 @@ sequenceDiagram
 | Componente | Qué usa |
 |---|---|
 | Memoria corta | Checkpointer SQLite con `thread_id` (persiste entre reinicios) |
+| Confianza baja | `buscar_en_base` antepone un aviso del sistema cuando el mejor fragmento tiene coseno < 0,50; el agente responde con cautela y remite a la línea de atención (`scripts/28_confianza_baja.py`) |
 | Viaje en el tiempo | `scripts/27_viaje_en_el_tiempo.py`: historial de puntos de control, replay y fork de un hilo, con un modelo simulado (sin costo) |
 | Memoria larga | Store con espacio `("perfil", usuario)`, máximo 20 datos por cliente, borrable por el cliente |
 | Prompt y resumen | `@dynamic_prompt` (`con_fecha_de_hoy`) arma el prompt en cada turno con la fecha; `trim_messages` recorta lo que ve el modelo; `SummarizationMiddleware` resume la conversación guardada pasados 8.000 tokens |
