@@ -28,6 +28,7 @@ from taaml.consulta_datos import consultar
 from taaml.prompts import leer_prompt
 from taaml.recuperacion import buscar, formatear_contexto
 from taaml.sanitizar import quitar_invisibles
+from taaml.validacion import datos_sin_respaldo
 from taaml.tareas import obtener_modelo
 
 MODELO_AGENTE = "gemini-3.8-flash"  # API de pago, el más reciente de la familia Flash (indicación del profesor)
@@ -239,6 +240,15 @@ def conversar(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente
     return mensajes[-1].text.strip(), llamadas
 
 
+def datos_dudosos(respuesta: str, mensajes: list) -> list[str]:
+    """Cifras, correos y enlaces de la respuesta que no están en lo que el agente tuvo delante: lo que devolvieron las herramientas, lo que dijo el cliente y la fecha de hoy.
+
+    Es la misma revisión del Q&A del Taller 1 (`taaml.validacion`): una revisión de texto, no de significado.
+    """
+    soporte = [m.text for m in mensajes if m.type in ("tool", "human")] + [date.today().isoformat()]
+    return datos_sin_respaldo(respuesta, [{"texto": t} for t in soporte])
+
+
 def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente=None, usuario: str = ANONIMO):
     """Un turno como flujo de eventos (para el streaming de la API): `herramienta`, `texto` (trozos de la respuesta) y `fin`.
 
@@ -265,6 +275,9 @@ def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE
                         yield {"tipo": "herramienta", "herramienta": ll["name"], "args": ll["args"]}
     if not hubo_texto:  # un modelo que no emite trozos (o el respaldo) entrega la respuesta completa de una vez
         yield {"tipo": "texto", "texto": agente.get_state(config).values["messages"][-1].text.strip()}
+    mensajes = agente.get_state(config).values["messages"]
+    if dudosos := datos_dudosos(mensajes[-1].text, mensajes):  # validación antes de dar la respuesta por buena: el cliente ve qué datos no tienen respaldo
+        yield {"tipo": "aviso", "datos": dudosos}
     entrada_tokens, salida_tokens = uso_del_turno(agente, thread_id)
     yield {"tipo": "fin", "usadas": etiqueta_herramientas(llamadas), "tokens_entrada": entrada_tokens, "tokens_salida": salida_tokens,
            "costo_usd": costo_usd(entrada_tokens, salida_tokens, modelo)}
