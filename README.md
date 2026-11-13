@@ -35,6 +35,45 @@ El diagrama es interactivo: abre [docs/arquitectura.html](docs/arquitectura.html
 
 Interactivo en [docs/pipeline.html](docs/pipeline.html) (fuente en [docs/pipeline.json](docs/pipeline.json)). Los HTML se generan con Archify desde el JSON y no se editan a mano.
 
+### Agente del Módulo 2
+
+El agente (`create_agent` de LangChain) decide en cada turno qué herramienta usar: el prompt v3 hace de enrutador. Habla con el cliente por una API FastAPI con streaming, y un frontend React independiente la consume.
+
+![Arquitectura del agente](docs/3%20-%20Informe/diagrama_arquitectura_agente.svg)
+
+![Enrutamiento por herramienta](docs/3%20-%20Informe/diagrama_enrutamiento.svg)
+
+```mermaid
+sequenceDiagram
+    participant C as Frontend React
+    participant A as API FastAPI
+    participant G as Agente
+    participant M as Gemini 3.8 Flash
+    participant T as Herramientas
+    participant S as SQLite (checkpointer y Store)
+    C->>A: POST /api/chat {mensaje, hilo, usuario}
+    A->>G: stream(thread_id=hilo, context=usuario)
+    G->>S: lee historial del hilo (memoria corta)
+    G->>M: prompt v3 + historial recortado
+    M-->>G: llama herramienta
+    G->>T: buscar_en_base, consultar_datos, guardar/recordar dato
+    T-->>G: datos (nunca órdenes)
+    G->>M: resultado de la herramienta
+    M-->>G: texto
+    G->>S: guarda el turno y los datos del cliente (memoria larga)
+    G-->>A: eventos herramienta, texto, fin
+    A-->>C: Server-Sent Events
+```
+
+| Componente | Qué usa |
+|---|---|
+| Memoria corta | Checkpointer SQLite con `thread_id` (persiste entre reinicios) |
+| Memoria larga | Store con espacio `("perfil", usuario)`, máximo 20 datos por cliente, borrable por el cliente |
+| Datos estructurados | `consultar_datos`, con esquema Pydantic (`ConsultaDatos`) sobre sedes, contactos y catálogo |
+| RAG | `buscar_en_base`: 4 fragmentos del texto oficial (Chroma + embeddings de Ollama) |
+| Blindaje | Limpieza de caracteres invisibles, reglas del prompt y 11/11 ataques directos y 8/8 indirectos resistidos |
+| Respaldo | `llama3.2` local si Gemini falla |
+
 La app tiene cinco pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes**, **Corpus y scraping** (etapas del pipeline y métricas) y **Agente** (chat con memoria que elige entre datos exactos y búsqueda en el texto).
 
 ## Capturas
