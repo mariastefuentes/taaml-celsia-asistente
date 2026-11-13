@@ -169,6 +169,42 @@ Con 512 dimensiones el nDCG baja 0,005 (dentro del ruido de 35 preguntas) y con 
 
 El mapa conserva los grupos: de los 10 vecinos más cercanos de cada fragmento, el 77,7 % es de su misma categoría, tanto en el mapa de dos dimensiones como en el espacio original, frente a un 18,3 % que habría al azar. t-SNE sirve para explorar, no para medir: las distancias entre grupos lejanos y el tamaño de cada nube no significan nada.
 
+### 5.6 La base vectorial: colecciones, filtros y aproximación
+
+**Colección, payload y alias.** Qdrant guarda un punto por fragmento: el vector de 768 dimensiones y un payload con `chunk_id`, `categoria`, `region` y `fuente` (el texto se queda en `chunks.jsonl`). La aplicación consulta siempre el alias `celsia`, que apunta a una colección versionada (`celsia_v1`, `celsia_v2`…).
+
+**Migración blue/green.** `construir_qdrant` carga la colección nueva (green) mientras la que está en uso (blue) sigue respondiendo, la valida (tiene todos los puntos y un fragmento se encuentra a sí mismo con similitud 1) y solo entonces mueve el alias en una sola operación. Se conserva la versión anterior y `revertir_qdrant` vuelve a ella. Si la validación falla, la colección nueva se borra y el alias no cambia. En modo local la carpeta la abre un solo proceso, así que esto da validación y reversión, no un cambio sin corte entre procesos: eso exigiría un servidor.
+
+**Búsqueda exacta frente a ANN.** El modo local compara la pregunta con los 1.690 vectores (exacta). Un índice aproximado reduce lo que se compara a cambio de perder algunos vecinos. HNSW (grafo jerárquico de vecinos, con los parámetros `m`, `ef_construct` y `ef`) es el índice de un servidor Qdrant y no se midió aquí porque el modo local no lo usa. Sobre los mismos vectores se midieron las otras dos familias, escritas con NumPy (`scripts/26_explorar_ann_y_filtros.py`), con recall@10 frente a la búsqueda exacta:
+
+| IVF (41 celdas) | recall@10 | Vectores comparados |
+|---|---|---|
+| 1 celda (`nprobe`=1) | 0,380 | 2,9 % |
+| 4 celdas | 0,746 | 10,5 % |
+| 8 celdas | 0,857 | 22,0 % |
+| 16 celdas | 0,957 | 43,0 % |
+| 41 celdas (todas) | 1,000 | 100 % |
+
+| PQ (8 trozos, 1 byte por trozo) | recall@10 | Memoria |
+|---|---|---|
+| Solo códigos | 0,509 | 0,8 MB (los códigos son 14 KB; el resto son los libros de centroides) |
+| Con reranking de 50 candidatos | 0,823 | 6,0 MB (también guarda los vectores completos) |
+| Con reranking de 100 candidatos | 0,929 | 6,0 MB |
+
+La búsqueda exacta tarda unos 0,6 ms por pregunta y los vectores ocupan 5,2 MB: a este tamaño un índice aproximado no aporta nada y solo pierde recall, por eso se mantiene la búsqueda exacta. IVF reduce las comparaciones pero necesita comparar casi la mitad del corpus para pasar de 0,95; PQ comprime los vectores unas 380 veces (5,19 MB a 14 KB de códigos), a cambio de un recall de 0,51 que el reranking sube a 0,93. Los tiempos de las pruebas con NumPy no sirven para comparar índices: las versiones aproximadas usan bucles de Python y la exacta una sola multiplicación de matrices.
+
+**Filtrado por payload.** Se puede filtrar por `categoria` y `region` (parámetro `filtro` de `buscar`; el agente todavía no lo usa). Hay tres estrategias: el pre-filtrado compara solo los puntos que cumplen el filtro (es lo que hace Qdrant al consultar con filtro); el post-filtrado busca primero los K' más parecidos y después descarta; el filtrado en una sola etapa, de un servidor con HNSW, descarta mientras recorre el grafo. Para medir las dos primeras se pidieron los 10 mejores con filtro y se compararon con los resultados del pre-filtrado:
+
+| Categoría (puntos que la cumplen) | Post-filtrado, K'=10 | K'=50 | K'=200 |
+|---|---|---|---|
+| blog (589, 34,9 %) | 4,5 de 10 / recall 0,45 | 7,8 de 10 / 0,78 | 10,0 de 10 / 1,00 |
+| servicios (108, 6,4 %) | 0,5 de 10 / 0,05 | 3,0 de 10 / 0,30 | 8,5 de 10 / 0,85 |
+| sedes (58, 3,4 %) | 0,5 de 10 / 0,05 | 2,0 de 10 / 0,20 | 5,0 de 10 / 0,50 |
+
+Cuanto más selectivo es el filtro, más candidatos hay que pedir para que sobrevivan 10: con «sedes» ni siquiera 200 alcanzan. El pre-filtrado devuelve siempre los 10 (o todos los que existan).
+
+**Métricas.** La recuperación se mide con hit@k, precision, recall y nDCG sobre las 35 preguntas del conjunto de prueba, y la aproximación con el recall@10 frente a la búsqueda exacta.
+
 ## 6. Aplicación
 
 El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al modelo: habla por HTTP con una API FastAPI (`api/main.py`) que ejecuta el agente y responde por streaming (Server-Sent Events). Muestra la conversación a medida que se escribe, qué herramienta usó cada respuesta con sus tokens y costo, maneja errores de red y del modelo con un mensaje que no filtra detalles internos y un botón de reintento, y permite empezar una conversación nueva, ver lo que el agente recuerda y borrarlo. El hilo va en la dirección (`?hilo=`) y al recargar la página se recupera desde SQLite. El código del agente está en `src/taaml/agente.py`, el prompt en `prompts/v3_agente.md` y las pruebas automáticas cubren la memoria, el recorte, el enrutamiento y la aplicación sin llamar a Gemini ni a Ollama.
@@ -188,7 +224,7 @@ El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al mo
 
 Tampoco se adoptaron la autoconsistencia (varias respuestas por pregunta), la optimización automática de prompts (DSPy) ni la repetición del prompt: multiplican las llamadas y el costo con un modelo que ya razona, y no hay evidencia propia de que mejoren. La idea de una «wiki» que el propio modelo mantiene como base de conocimiento tampoco se usó: la base sigue siendo el texto oficial indexado, que se puede auditar contra el sitio.
 
-No se usaron viaje en el tiempo del estado, pasos de aprobación humana ni un guardrail externo (Llama Guard, NeMo): el índice es pequeño, las herramientas de consulta solo leen, la única que escribe guarda lo que el cliente cuenta de sí mismo (máximo 20 datos, con la instrucción de no guardar cédulas, claves ni tarjetas, y borrables por él) y las defensas del prompt, del delimitador y de la validación resistieron las pruebas. Si se agregara una herramienta que escriba (por ejemplo, abrir un reclamo), la aprobación humana y la memoria persistente ya existente permitirían pausar el agente antes de la acción. El filtro por región (Valle o Tolima) queda como mejora: solo 5 de las 35 preguntas del conjunto permiten medirlo.
+No se usaron viaje en el tiempo del estado, pasos de aprobación humana ni un guardrail externo (Llama Guard, NeMo): el índice es pequeño, las herramientas de consulta solo leen, la única que escribe guarda lo que el cliente cuenta de sí mismo (máximo 20 datos, con la instrucción de no guardar cédulas, claves ni tarjetas, y borrables por él) y las defensas del prompt, del delimitador y de la validación resistieron las pruebas. Si se agregara una herramienta que escriba (por ejemplo, abrir un reclamo), la aprobación humana y la memoria persistente ya existente permitirían pausar el agente antes de la acción. El filtro por región (Valle o Tolima) existe en la recuperación, pero el agente no lo usa todavía: solo 5 de las 35 preguntas del conjunto permiten medirlo.
 
 ## Referencias
 
