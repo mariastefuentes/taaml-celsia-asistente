@@ -8,6 +8,7 @@ Endpoints:
   DELETE /api/usuarios/{usuario}/datos  borra todo lo que el agente recuerda del cliente
 Uso:  uv run uvicorn api.main:app --reload --port 8000
 """
+
 import json
 import logging
 import re
@@ -23,10 +24,14 @@ from taaml.agente import MODELO_AGENTE, conversar_en_vivo, datos_del_cliente, hi
 
 log = logging.getLogger("taaml.api")
 ORIGENES = ["http://localhost:5173", "http://127.0.0.1:5173"]  # el servidor de desarrollo del frontend
-HILO = re.compile(r"^[0-9a-f]{32}$")  # los hilos y los clientes son uuid4 en hexadecimal: no se acepta otra cosa como id
+HILO = re.compile(
+    r"^[0-9a-f]{32}$"
+)  # los hilos y los clientes son uuid4 en hexadecimal: no se acepta otra cosa como id
 
 app = FastAPI(title="Agente Celsia", version="1.0")
-app.add_middleware(CORSMiddleware, allow_origins=ORIGENES, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
+app.add_middleware(
+    CORSMiddleware, allow_origins=ORIGENES, allow_methods=["GET", "POST"], allow_headers=["Content-Type"]
+)
 
 
 class Pregunta(BaseModel):
@@ -34,7 +39,9 @@ class Pregunta(BaseModel):
 
     mensaje: str = Field(min_length=1, max_length=1000, description="Lo que escribe el cliente")
     hilo: str | None = Field(default=None, description="Identificador de la conversación; si falta se crea uno nuevo")
-    usuario: str | None = Field(default=None, description="Identificador del cliente (para su memoria de largo plazo); si falta es anónimo")
+    usuario: str | None = Field(
+        default=None, description="Identificador del cliente (para su memoria de largo plazo); si falta es anónimo"
+    )
 
 
 def _evento(tipo: str, datos: dict) -> str:
@@ -50,7 +57,12 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
             yield _evento(e["tipo"], {k: v for k, v in e.items() if k != "tipo"})
     except Exception:  # el detalle va al registro del servidor; el cliente recibe un mensaje que no filtra nada interno
         log.exception("falló el turno del hilo %s", hilo)
-        yield _evento("error", {"mensaje": "No pude responder en este momento. Intenta de nuevo; si sigue fallando, llama a la línea 01 8000 112 115."})
+        yield _evento(
+            "error",
+            {
+                "mensaje": "No pude responder en este momento. Intenta de nuevo; si sigue fallando, llama a la línea 01 8000 112 115."
+            },
+        )
 
 
 @app.get("/api/salud")
@@ -65,7 +77,11 @@ def chat(pregunta: Pregunta) -> StreamingResponse:
     hilo = pregunta.hilo or uuid4().hex
     if not HILO.match(hilo) or (pregunta.usuario and not HILO.match(pregunta.usuario)):
         raise HTTPException(status_code=422, detail="Identificador inválido")
-    return StreamingResponse(_turno(pregunta.mensaje, hilo, pregunta.usuario or "anonimo"), media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    return StreamingResponse(
+        _turno(pregunta.mensaje, hilo, pregunta.usuario or "anonimo"),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.get("/api/hilos/{hilo}/mensajes")

@@ -26,6 +26,7 @@ def test_chat_transmite_los_eventos_del_agente(monkeypatch):
         yield {"tipo": "herramienta", "herramienta": "consultar_datos", "args": {"tabla": "sedes"}}
         yield {"tipo": "texto", "texto": "Hola"}
         yield {"tipo": "fin", "usadas": "Usó: x", "tokens_entrada": 1, "tokens_salida": 2, "costo_usd": 0.1}
+
     monkeypatch.setattr("api.main.conversar_en_vivo", falso)
     r = cliente.post("/api/chat", json={"mensaje": "hola", "hilo": HILO})
     assert r.headers["content-type"].startswith("text/event-stream")
@@ -43,6 +44,7 @@ def test_un_error_del_modelo_llega_como_evento_sin_detalles_internos(monkeypatch
     def roto(mensaje, hilo, usuario):
         raise RuntimeError("clave secreta rota")
         yield
+
     monkeypatch.setattr("api.main.conversar_en_vivo", roto)
     texto = cliente.post("/api/chat", json={"mensaje": "hola", "hilo": HILO}).text
     tipo, datos = _eventos(texto)[-1]
@@ -58,7 +60,10 @@ def test_rechaza_mensajes_vacios_demasiado_largos_o_hilos_inventados():
 
 def test_historial_devuelve_la_conversacion_guardada(monkeypatch):
     monkeypatch.setattr("api.main.historial_visible", lambda hilo: [{"rol": "user", "texto": "hola"}])
-    assert cliente.get(f"/api/hilos/{HILO}/mensajes").json() == {"hilo": HILO, "mensajes": [{"rol": "user", "texto": "hola"}]}
+    assert cliente.get(f"/api/hilos/{HILO}/mensajes").json() == {
+        "hilo": HILO,
+        "mensajes": [{"rol": "user", "texto": "hola"}],
+    }
 
 
 def test_el_chat_pasa_el_cliente_al_agente(monkeypatch):
@@ -67,6 +72,7 @@ def test_el_chat_pasa_el_cliente_al_agente(monkeypatch):
     def falso(mensaje, hilo, usuario):
         recibido["usuario"] = usuario
         yield {"tipo": "fin"}
+
     monkeypatch.setattr("api.main.conversar_en_vivo", falso)
     cliente.post("/api/chat", json={"mensaje": "hola", "usuario": "b" * 32})
     assert recibido["usuario"] == "b" * 32

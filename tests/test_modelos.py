@@ -24,7 +24,11 @@ class _RespuestaTags:
 def test_un_modelo_local_sin_tag_usa_el_tag_que_ollama_tiene_instalado(monkeypatch):
     from taaml import tareas
 
-    monkeypatch.setattr(tareas.urllib.request, "urlopen", lambda *a, **k: _RespuestaTags(["llama3.2:3b", "nomic-embed-text-v2-moe:latest"]))
+    monkeypatch.setattr(
+        tareas.urllib.request,
+        "urlopen",
+        lambda *a, **k: _RespuestaTags(["llama3.2:3b", "nomic-embed-text-v2-moe:latest"]),
+    )
     assert _tag_instalado("llama3.2") == "llama3.2:3b"
     assert _tag_instalado("llama3.2:3b") == "llama3.2:3b"
     assert _tag_instalado("nomic-embed-text-v2-moe") == "nomic-embed-text-v2-moe:latest"

@@ -1,7 +1,13 @@
 import pytest
 
 from taaml import respaldo
-from taaml.respaldo import cadena_de_modelos, con_respaldo, es_falla_del_proveedor, preguntas_guardadas, respuesta_guardada
+from taaml.respaldo import (
+    cadena_de_modelos,
+    con_respaldo,
+    es_falla_del_proveedor,
+    preguntas_guardadas,
+    respuesta_guardada,
+)
 
 
 def test_la_cuota_y_la_conexion_son_fallas_del_proveedor_y_un_error_de_codigo_no():
@@ -58,7 +64,9 @@ def test_si_fallan_todos_se_propaga_el_ultimo_error(monkeypatch):
 
 def test_la_respuesta_guardada_ignora_tildes_y_mayusculas_y_trae_las_fuentes():
     pregunta = preguntas_guardadas()[0]
-    guardada = respuesta_guardada(pregunta.upper().replace("Á", "A").replace("É", "E").replace("Ó", "O").replace("¿", "").replace("?", ""))
+    guardada = respuesta_guardada(
+        pregunta.upper().replace("Á", "A").replace("É", "E").replace("Ó", "O").replace("¿", "").replace("?", "")
+    )
     assert guardada is not None and guardada[0] and guardada[1] and "fuente" in guardada[1][0]
     assert respuesta_guardada("¿Cuál es la capital de Francia?") is None
 
@@ -77,9 +85,12 @@ def test_un_numero_o_una_palabra_suelta_no_se_confunde_con_una_falla_del_proveed
 
 def test_una_clave_invalida_o_sin_permisos_es_falla_del_proveedor():
     # el error real de Gemini con una clave mala: debe probar DeepSeek o el modelo local, no quedarse ahí
-    assert es_falla_del_proveedor(RuntimeError(
-        "Error calling model 'gemini-3.5-flash' (UNAUTHENTICATED): 401 UNAUTHENTICATED. "
-        "'error': {'code': 401, 'message': 'API key not valid. Please pass a valid API key.', 'status': 'UNAUTHENTICATED'}"))
+    assert es_falla_del_proveedor(
+        RuntimeError(
+            "Error calling model 'gemini-3.5-flash' (UNAUTHENTICATED): 401 UNAUTHENTICATED. "
+            "'error': {'code': 401, 'message': 'API key not valid. Please pass a valid API key.', 'status': 'UNAUTHENTICATED'}"
+        )
+    )
     assert es_falla_del_proveedor(RuntimeError("403 PERMISSION_DENIED: The caller does not have permission"))
     assert es_falla_del_proveedor(RuntimeError("API_KEY_INVALID"))
     assert es_falla_del_proveedor(RuntimeError("invalid api key"))

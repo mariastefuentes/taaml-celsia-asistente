@@ -1,4 +1,5 @@
 """El scraper respeta robots.txt, usa su User-Agent y timeout, espera entre peticiones, es reanudable y registra errores. Sin red."""
+
 import hashlib
 import json
 import sys
@@ -30,6 +31,7 @@ class Respuesta:
 
 class SesionFalsa:
     """Sustituye a requests.Session: responde con páginas de ejemplo y anota cada petición."""
+
     llamadas: list = []
 
     def __init__(self):

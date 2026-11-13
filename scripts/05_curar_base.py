@@ -24,6 +24,7 @@ Salida:
 
 Uso:  uv run python scripts/05_curar_base.py
 """
+
 import csv
 import json
 import re
@@ -37,21 +38,30 @@ MANUAL = ROOT / "data" / "0_manual"
 
 # R7: las noticias envejecen (lo dicho en una de 2021 suele estar vencido); los avisos de fraude y la explicacion de la tarifa no
 MESES_VIGENCIA_NOTICIAS = 12
-FECHA_CAPTURA = date(2026, 10, 17)  # primer día del scraping (data/1_bronze/_indice.jsonl: 521 páginas el 17/10, 751 el 27/10 y 1 el 29/10); se deja fija en el 17/10 porque moverla cambiaría qué noticias vencen y con ello el corpus ya evaluado
+FECHA_CAPTURA = date(
+    2026, 10, 17
+)  # primer día del scraping (data/1_bronze/_indice.jsonl: 521 páginas el 17/10, 751 el 27/10 y 1 el 29/10); se deja fija en el 17/10 porque moverla cambiaría qué noticias vencen y con ello el corpus ya evaluado
 NOTICIA_ATEMPORAL = re.compile(r"suplant|enga[ñn]ad|estafa|c[oó]mo entender la tarifa", re.I)
 
 MIN_CARACTERES = 150  # R8
 
 # Marcas de URL en ingles: entre dos paginas casi iguales, se prefiere la que NO las tiene
-URL_INGLES = re.compile(r"teacher|training|special-projects|improving|about-us|the-new-era|investors|companies|"
-                        r"foundation|culture|energy|solutions|efficient|sales|projects", re.I)
+URL_INGLES = re.compile(
+    r"teacher|training|special-projects|improving|about-us|the-new-era|investors|companies|"
+    r"foundation|culture|energy|solutions|efficient|sales|projects",
+    re.I,
+)
 UMBRAL_CASI_DUPLICADO = 0.65  # similitud de palabras entre dos documentos para considerarlos el mismo
 
 
 def fecha_publicacion(d: dict) -> str:
     """Fecha de publicacion para el encabezado, solo en blogs y noticias (en las demas paginas es la del sitio, no la del contenido).
     Permite que el asistente avise cuando un dato viene de un texto antiguo."""
-    return f" | publicado: {d['fecha_publicacion']}" if d["categoria"] in ("blog", "noticias") and d.get("fecha_publicacion") else ""
+    return (
+        f" | publicado: {d['fecha_publicacion']}"
+        if d["categoria"] in ("blog", "noticias") and d.get("fecha_publicacion")
+        else ""
+    )
 
 
 def decidir(d: dict) -> tuple[bool, str, str]:
@@ -89,9 +99,19 @@ def main() -> None:
                     break
             else:
                 conservados.append((d["title"], palabras))
-        filas.append({"decision": "incluido" if incluir else "excluido", "regla": regla, "motivo": motivo,
-                      "categoria": d["categoria"], "region": d["region"], "caracteres": d["caracteres"],
-                      "title": d["title"], "archivo": d["archivo"], "url": d["url"]})
+        filas.append(
+            {
+                "decision": "incluido" if incluir else "excluido",
+                "regla": regla,
+                "motivo": motivo,
+                "categoria": d["categoria"],
+                "region": d["region"],
+                "caracteres": d["caracteres"],
+                "title": d["title"],
+                "archivo": d["archivo"],
+                "url": d["url"],
+            }
+        )
         if incluir:
             elegidos.append(d)
     # documentos escritos a mano (datos que el sitio muestra solo como enlaces): siempre incluidos
@@ -99,31 +119,70 @@ def main() -> None:
         _, cab, cuerpo = md.read_text(encoding="utf-8").split("---", 2)
         titulo = next(ln.split(": ", 1)[1] for ln in cab.splitlines() if ln.startswith("title: "))
         texto = cuerpo.strip()
-        d = {"title": titulo, "categoria": "atencion", "region": "General", "caracteres": len(texto), "text": texto,
-             "archivo": md.name, "url": "documento manual (ver encabezado)"}
-        filas.append({"decision": "incluido", "regla": "M0", "motivo": "escrito a mano con datos de páginas oficiales",
-                      "categoria": "atencion", "region": "General", "caracteres": len(texto),
-                      "title": titulo, "archivo": md.name, "url": d["url"]})
+        d = {
+            "title": titulo,
+            "categoria": "atencion",
+            "region": "General",
+            "caracteres": len(texto),
+            "text": texto,
+            "archivo": md.name,
+            "url": "documento manual (ver encabezado)",
+        }
+        filas.append(
+            {
+                "decision": "incluido",
+                "regla": "M0",
+                "motivo": "escrito a mano con datos de páginas oficiales",
+                "categoria": "atencion",
+                "region": "General",
+                "caracteres": len(texto),
+                "title": titulo,
+                "archivo": md.name,
+                "url": d["url"],
+            }
+        )
         elegidos.append(d)
     elegidos.sort(key=lambda x: (x["categoria"], x["title"]))
     filas.sort(key=lambda f: (f["decision"], f["categoria"], f["title"]))
     bloques = []
     for d in elegidos:
         total += d["caracteres"]
-        bloques.append(f"=== {d['title']} | categoría: {d['categoria']} | región: {d['region']}{fecha_publicacion(d)} | fuente: {d['url']} ===\n{d['text']}")
+        bloques.append(
+            f"=== {d['title']} | categoría: {d['categoria']} | región: {d['region']}{fecha_publicacion(d)} | fuente: {d['url']} ===\n{d['text']}"
+        )
 
     (SALIDA / "base_conocimiento.txt").write_text("\n\n".join(bloques) + "\n", encoding="utf-8")
     # los mismos documentos, uno por línea y con sus metadatos: insumo del chunking (06_construir_chunks.py)
     with (SALIDA / "documentos_incluidos.jsonl").open("w", encoding="utf-8") as f:
         for d in elegidos:
-            f.write(json.dumps({k: d.get(k, "") for k in ("archivo", "title", "categoria", "region", "url", "caracteres", "fecha_publicacion", "text")}, ensure_ascii=False) + "\n")
+            f.write(
+                json.dumps(
+                    {
+                        k: d.get(k, "")
+                        for k in (
+                            "archivo",
+                            "title",
+                            "categoria",
+                            "region",
+                            "url",
+                            "caracteres",
+                            "fecha_publicacion",
+                            "text",
+                        )
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
     with (SALIDA / "registro_curaduria.csv").open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(filas[0]))
         w.writeheader()
         w.writerows(filas)
 
     inc = [f for f in filas if f["decision"] == "incluido"]
-    print(f"Incluidos: {len(inc)} de {len(filas)} documentos, {total:,} caracteres (~{total // 4:,} tokens, estimado como caracteres/4)")
+    print(
+        f"Incluidos: {len(inc)} de {len(filas)} documentos, {total:,} caracteres (~{total // 4:,} tokens, estimado como caracteres/4)"
+    )
     por_regla: dict[str, int] = {}
     for f in filas:
         k = f"{f['decision']} {f['regla']}"

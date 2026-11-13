@@ -47,3 +47,6 @@ dev = [
 testpaths = ["tests"]
 pythonpath = ["."]  # para importar api/ (src/ ya lo instala uv como paquete)
 addopts = "-q -p no:cacheprovider"  # sin carpeta de caché: el proyecto vive en OneDrive
+
+[tool.ruff]
+line-length = 120

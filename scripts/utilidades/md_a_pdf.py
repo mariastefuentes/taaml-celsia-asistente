@@ -8,6 +8,7 @@ Uso (desde proyecto-taaml):
     uv run python scripts/utilidades/md_a_pdf.py --force
     uv run python scripts/utilidades/md_a_pdf.py --curso
 """
+
 import argparse
 import re
 import subprocess
@@ -18,7 +19,9 @@ from pathlib import Path
 import markdown
 
 PROYECTO = Path(__file__).resolve().parents[2]
-CURSO = PROYECTO.parents[1] if len(PROYECTO.parents) > 1 else PROYECTO  # ...\TECNICAS AVANZADAS DE IA (solo con --curso)
+CURSO = (
+    PROYECTO.parents[1] if len(PROYECTO.parents) > 1 else PROYECTO
+)  # ...\TECNICAS AVANZADAS DE IA (solo con --curso)
 EXCLUIR = ("Clase 1", "Clase 2", "Clase 3", "Clase 4", "Clase 5", ".venv", ".git")
 EDGE = [
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
@@ -49,8 +52,14 @@ def a_html(texto: str) -> str:
     for ln in texto.splitlines():
         if ln.strip().startswith("```"):
             en_codigo = not en_codigo
-        if (not en_codigo and ITEM.match(ln) and salida and salida[-1].strip()
-                and not ITEM.match(salida[-1]) and not salida[-1].lstrip().startswith("|")):
+        if (
+            not en_codigo
+            and ITEM.match(ln)
+            and salida
+            and salida[-1].strip()
+            and not ITEM.match(salida[-1])
+            and not salida[-1].lstrip().startswith("|")
+        ):
             salida.append("")
         salida.append(ln)
     cuerpo = markdown.markdown("\n".join(salida), extensions=["tables", "fenced_code"])
@@ -63,12 +72,23 @@ PDF_DEL_REPOSITORIO = {"3 - Informe/informe_taller1.md", "3 - Informe/informe_ta
 def convertir(md: Path, pdf: Path, edge: str) -> None:
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:  # Edge puede tardar en soltar su perfil
         html = Path(tmp) / "doc.html"
-        html.write_text(a_html(md.read_text(encoding="utf-8")).replace("<head>", f"<head><base href='{md.parent.as_uri()}/'>", 1), encoding="utf-8")  # base: las imágenes (diagramas) se buscan junto al .md
+        html.write_text(
+            a_html(md.read_text(encoding="utf-8")).replace("<head>", f"<head><base href='{md.parent.as_uri()}/'>", 1),
+            encoding="utf-8",
+        )  # base: las imágenes (diagramas) se buscan junto al .md
         subprocess.run(
-            [edge, "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
-             f"--user-data-dir={Path(tmp) / 'perfil'}",  # perfil propio: con Edge ya abierto, sin esto el PDF no se escribe
-             f"--print-to-pdf={pdf}", html.as_uri()],
-            check=True, capture_output=True, timeout=120,
+            [
+                edge,
+                "--headless=new",
+                "--disable-gpu",
+                "--no-pdf-header-footer",
+                f"--user-data-dir={Path(tmp) / 'perfil'}",  # perfil propio: con Edge ya abierto, sin esto el PDF no se escribe
+                f"--print-to-pdf={pdf}",
+                html.as_uri(),
+            ],
+            check=True,
+            capture_output=True,
+            timeout=120,
         )
         for _ in range(120):  # Edge entrega el PDF unos segundos después de que el comando devuelve
             if pdf.exists() and pdf.stat().st_mtime >= md.stat().st_mtime:
@@ -81,7 +101,9 @@ def convertir(md: Path, pdf: Path, edge: str) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--force", action="store_true", help="regenerar todos los PDF")
-    ap.add_argument("--curso", action="store_true", help="incluir los .md del resto de la carpeta del curso, no solo docs/")
+    ap.add_argument(
+        "--curso", action="store_true", help="incluir los .md del resto de la carpeta del curso, no solo docs/"
+    )
     args = ap.parse_args()
 
     edge = next((e for e in EDGE if Path(e).exists()), None)

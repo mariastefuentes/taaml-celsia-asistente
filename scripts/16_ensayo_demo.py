@@ -6,6 +6,7 @@ Con `--llamar` hace UNA llamada corta por proveedor disponible (Gemini, DeepSeek
 
 Uso:  uv run python scripts/16_ensayo_demo.py [--llamar]
 """
+
 import argparse
 import json
 import os
@@ -39,19 +40,29 @@ def etiquetas_ollama() -> list[str]:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--llamar", action="store_true", help="una llamada corta por proveedor (gasta cuota: hasta 3 llamadas en total)")
+    ap.add_argument(
+        "--llamar", action="store_true", help="una llamada corta por proveedor (gasta cuota: hasta 3 llamadas en total)"
+    )
     a = ap.parse_args()
 
     print("Sin llamadas a modelos:")
-    print(f"  {marca(bool(os.environ.get('GOOGLE_API_KEY')))} clave de Gemini (GOOGLE_API_KEY); sin ella responde el modelo local")
-    print(f"  {marca(bool(os.environ.get('DEEPSEEK_API_KEY')))} clave de DeepSeek (DEEPSEEK_API_KEY), respaldo opcional")
+    print(
+        f"  {marca(bool(os.environ.get('GOOGLE_API_KEY')))} clave de Gemini (GOOGLE_API_KEY); sin ella responde el modelo local"
+    )
+    print(
+        f"  {marca(bool(os.environ.get('DEEPSEEK_API_KEY')))} clave de DeepSeek (DEEPSEEK_API_KEY), respaldo opcional"
+    )
     print(f"  {marca(INDICE.exists())} índice de embeddings ({INDICE.name})")
     try:
         metodo = buscar("teléfono de atención al cliente", 3)[0]["metodo"]
-        print(f"  {marca(metodo == 'embeddings')} recuperación con embeddings (método usado: {metodo}; si es «palabras», Ollama no respondió)")
+        print(
+            f"  {marca(metodo == 'embeddings')} recuperación con embeddings (método usado: {metodo}; si es «palabras», Ollama no respondió)"
+        )
     except Exception as e:  # noqa: BLE001
         print(f"  FALTA recuperación: {str(e)[:100]}")
-    print(f"  {marca(len(preguntas_guardadas()) > 0)} respuestas guardadas para el último recurso ({len(preguntas_guardadas())} preguntas)")
+    print(
+        f"  {marca(len(preguntas_guardadas()) > 0)} respuestas guardadas para el último recurso ({len(preguntas_guardadas())} preguntas)"
+    )
     instalados = etiquetas_ollama()
     local = cadena_de_modelos(MODELO_POR_DEFECTO)[-1]
     tag = _tag_instalado(local.removeprefix("ollama:")) if local.startswith("ollama:") else local

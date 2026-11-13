@@ -59,6 +59,7 @@ def test_prompt_del_agente_explica_el_router_la_memoria_y_la_defensa():
 
 def test_el_prompt_del_agente_nombra_herramientas_que_existen():
     from taaml.agente import HERRAMIENTAS
+
     texto = leer_prompt("v3_agente.md")
     assert all(f"`{h.name}`" in texto for h in HERRAMIENTAS)
 
@@ -66,4 +67,5 @@ def test_el_prompt_del_agente_nombra_herramientas_que_existen():
 def test_el_agente_carga_el_prompt_v3():
     import inspect
     from taaml import agente
+
     assert "v3_agente.md" in inspect.getsource(agente.crear_agente)
