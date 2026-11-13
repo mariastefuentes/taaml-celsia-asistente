@@ -4,6 +4,7 @@ Lee solo archivos versionados en data/ (no necesita el HTML de Bronze) y no llam
 """
 import csv
 import json
+from typing import cast
 from collections import Counter
 from pathlib import Path
 
@@ -88,6 +89,6 @@ def metricas() -> dict:
         "tokens": tokens,
         "tokens_con_o200k": exacto,
         "por_categoria": dict(Counter(d["categoria"] for d in incluidos).most_common()),
-        "descartes": {MOTIVOS[k]: v for k, v in (Counter({k: v for e in etapas for k, v in e["descartes"].items()})).items() if v},
+        "descartes": {MOTIVOS[k]: v for k, v in (Counter({k: v for e in etapas for k, v in cast(dict[str, int], e["descartes"]).items()})).items() if v},
         "descartados_ejemplos": [f for f in curaduria if f["decision"] == "excluido"][:200],
     }

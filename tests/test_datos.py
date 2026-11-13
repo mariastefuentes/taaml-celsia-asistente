@@ -8,6 +8,7 @@ CURADURIA = RAIZ / "data" / "4_curaduria"
 
 def _cargar_script(nombre):
     spec = importlib.util.spec_from_file_location(nombre, RAIZ / "scripts" / f"{nombre}.py")
+    assert spec is not None and spec.loader is not None
     modulo = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(modulo)
     return modulo

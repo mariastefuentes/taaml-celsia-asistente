@@ -1,6 +1,6 @@
 """AGENTE CON HERRAMIENTA: hace unas preguntas a un agente `create_agent` que consulta la base de Celsia con una herramienta.
 
-Usa un modelo local de Ollama (sin costo); necesita Ollama encendido y `ollama pull llama3.2`.
+Usa Gemini de pago (gemini-3.8-flash, necesita GOOGLE_API_KEY con facturación) y cae a Ollama si falla.
 Uso:  uv run python scripts/15_probar_agente.py ["pregunta"]   (sin argumento, hace tres preguntas de ejemplo; en CPU cada una tarda varios minutos)
 """
 import sys

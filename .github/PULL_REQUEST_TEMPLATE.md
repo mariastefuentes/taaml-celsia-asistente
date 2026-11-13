@@ -23,7 +23,7 @@ Marca las áreas que toca esta PR:
 - [ ] **Evaluación y conjunto de prueba** (`scripts/09`–`14`, `docs/2 - Conjunto de prueba/`)
 - [ ] **Aplicación** (`app/asistente.py`, `app/modulo1.py`)
 - [ ] **Pruebas** (`tests/`)
-- [ ] **Gobernanza** (`.specify/memory/constitution.md`, `specs/`, `.github/`, `.opencode/skills/`)
+- [ ] **Gobernanza** (`.specify/memory/constitution.md`, `specs/`, `.github/`)
 - [ ] **Documentación** (`README.md`, `AGENTS.md`, `docs/`)
 - [ ] **Infraestructura** (`pyproject.toml`, `uv.lock`, `Makefile`, `.gitignore`, CI)
 

@@ -57,6 +57,7 @@ def main() -> None:
             doc = corpus[nombre.strip()]
             ficha = modelo.invoke([HumanMessage(leer_prompt("v1_extraccion.md").replace("{documento}", doc["text"]))],
                                   config={"run_name": "extraer_contactos", "tags": ["extraccion"]})
+            assert isinstance(ficha, FichaContactos)
             texto = normalizar(doc["text"])
             no_verificados = [c.valor for c in ficha.contactos if normalizar(c.valor) not in texto]
             total, verificados = total + len(ficha.contactos), verificados + len(ficha.contactos) - len(no_verificados)

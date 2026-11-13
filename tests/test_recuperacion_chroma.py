@@ -10,6 +10,7 @@ hay_chroma = pytest.mark.skipif(almacen_vectorial() != "chroma", reason="falta d
 @hay_chroma
 def test_chroma_ordena_igual_que_la_matriz():
     matriz, ids = _matriz(), [f["chunk_id"] for f in cargar_fragmentos()]
+    assert matriz is not None
     coleccion = _coleccion()
     for i in (0, 123, 777, 1500):
         vector = matriz[i]  # la consulta es el vector de un fragmento: él mismo debe quedar primero
@@ -22,6 +23,7 @@ def test_chroma_ordena_igual_que_la_matriz():
 @hay_chroma
 def test_las_similitudes_de_chroma_coinciden_con_las_de_la_matriz():
     matriz = _matriz()
+    assert matriz is not None
     vector = matriz[42]
     de_chroma, de_matriz = recuperacion._similitudes(vector), matriz @ vector
     assert np.allclose(de_chroma, de_matriz, atol=1e-3)

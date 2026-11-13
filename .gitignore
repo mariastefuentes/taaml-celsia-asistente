@@ -8,6 +8,7 @@ data/1_bronze/*
 data/_demo_scraping/
 
 # Base vectorial Chroma: se regenera con scripts/07_construir_indice.py (los vectores salen del .npz)
+data/memoria/
 data/4_curaduria/chroma/
 
 # Binarios fuera del repositorio: los PDF se regeneran con `make pdf`

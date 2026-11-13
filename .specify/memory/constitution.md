@@ -58,7 +58,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 - PDFs, vídeos y transcripciones de celsia.com (bloqueados por `robots.txt`).
 - Datos de clientes o cualquier información no pública.
 - Despliegue en producción y autenticación de usuarios finales.
-- Agentes autónomos con herramientas más allá del prototipo de `scripts/15`.
+- Agentes autónomos más allá del agente de la spec 011 (memoria en RAM, dos herramientas); la persistencia y los canales son la Fase 3.
 
 ### Fases
 
@@ -73,6 +73,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | 7. Pestaña Corpus y scraping (specs 007) | ✅ Hecha | `app/asistente.py`, `app/modulo1.py` |
 | 8. Prueba del scraper (specs 008) | ✅ Hecha | `tests/test_scraper.py` |
 | 9. Etapa Descubrir (specs 009) | ✅ Hecha | `data/2_silver/_descubrimiento.json` |
+| 11. Agente con memoria y router (specs 011) | ✅ Hecha (falta el PR) | `src/taaml/agente.py`, `consulta_datos.py`, `prompts/v2_agente.md`, pestaña Agente |
 
 ## 3. Stack técnico
 
@@ -83,11 +84,12 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Build backend** | `uv_build` (src-layout, paquete `taaml`) |
 | **HTTP y scraping** | `requests` + `beautifulsoup4` + `lxml` |
 | **Orquestación de LLM** | LangChain (`langchain`, `langchain-google-genai`, `langchain-openai`, `langchain-ollama`) |
-| **Modelo por defecto** | `gemini-3.5-flash`; respaldo `deepseek-flash` y `ollama:llama3.2` |
+| **Modelo por defecto** | `gemini-3.5-flash` (Q&A, Resumen y FAQ); respaldo `deepseek-flash` y `ollama:llama3.2` |
+| **Modelo del agente** | `gemini-3.8-flash` (API de pago); respaldo `ollama:llama3.2` |
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
 | **Base vectorial** | Chroma persistente, similitud del coseno, sin telemetría |
 | **Interfaz** | Streamlit (`app/asistente.py`, `app/modulo1.py`) |
-| **Testing** | `pytest` (78 pruebas, sin Gemini ni Ollama) |
+| **Testing** | `pytest` (133 pruebas, sin Gemini ni Ollama) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
 | **CI/CD** | GitHub Actions (`.github/workflows/ci.yml`) |
 
@@ -108,11 +110,12 @@ taaml-celsia-asistente/
 │   ├── reordenar.py          # reordenamiento opcional de candidatos
 │   ├── validacion.py         # cifras, correos y enlaces sin respaldo
 │   ├── respaldo.py           # cadena de modelos y respuestas guardadas
-│   ├── agente.py             # agente con herramienta (Ollama)
+│   ├── agente.py             # agente con memoria, dos herramientas y router (Gemini 3.8)
+│   ├── consulta_datos.py     # sedes, contactos y catálogo con filtros exactos
 │   ├── prompts.py            # armado del prompt (5 bloques + XML)
 │   ├── corpus.py             # métricas del pipeline para la app
 │   └── tareas.py             # Q&A, resumen y FAQ
-├── scripts/                  # 01–17: etapas del pipeline y pruebas (orden de uso)
+├── scripts/                  # 01–18: etapas del pipeline y pruebas (orden de uso)
 │   └── utilidades/           # herramientas sueltas (PDF, claves)
 ├── data/                     # capas Medallion
 │   ├── 0_manual/             # único lugar de datos escritos a mano, con fuente
@@ -123,9 +126,8 @@ taaml-celsia-asistente/
 │   └── 5_extraccion/         # JSONL de contactos
 ├── prompts/                  # prompts versionados (nunca se editan: se versionan)
 ├── docs/                     # análisis, conjunto de prueba, informe, capturas y diagramas (Archify)
-├── specs/                    # especificaciones 001–010 (spec, plan, tareas)
+├── specs/                    # especificaciones 001–011 (spec, plan, tareas)
 ├── tests/                    # pruebas automáticas de componentes
-├── .opencode/skills/         # skills propias para agentes (corpus-medallion)
 ├── .specify/memory/          # este archivo — verdad central
 ├── .github/                  # plantillas de PR e issues, CI, Dependabot y etiquetas
 ├── app/                      # aplicaciones Streamlit (puntos de entrada, no librería)
@@ -157,7 +159,7 @@ taaml-celsia-asistente/
   - `data/0_manual/` es el único lugar de datos escritos a mano, siempre con su fuente.
   - Un cambio de prompt es una **versión nueva** (`prompts/vN_*.md`), no una edición.
   - Toda cifra, teléfono o enlace que responda el asistente debe existir en la base.
-  - `temperature = 0.0` y `top_p = 0.1` en RAG y agentes.
+  - `temperature = 0.0` y `top_p = 0.1` en RAG y agentes. **Excepción:** el agente (`gemini-3.8-flash`) los ignora (medido el 2026-11-08: 5 frases distintas en 5 intentos con 0,0 y 0,1, igual que con 2,0 y 1,0); sus respuestas pueden variar entre ejecuciones y se protege con las herramientas, la validación de datos sin respaldo y el «No tengo esa información».
 
 ## 6. Calidad y automatización
 
@@ -224,6 +226,11 @@ git push -u origin feat/mi-cambio
 | 2026-11-07 | Diagramas con Archify (`docs/arquitectura.*` y `docs/pipeline.*`) en lugar de Mermaid | Estándar del curso (skill `jan-project-standard`): un diagrama por pregunta, JSON como fuente |
 | 2026-11-07 | Adoptar de la skill la gobernanza (plantillas de issues, Dependabot, etiquetas, CONTRIBUTING, código de conducta) y `make check` | Cumple el estándar sin tocar el código |
 | 2026-11-07 | No adoptar pre-commit, Python 3.13, Ruff completo ni Squash & Merge | GGA es el guardián de commits del curso; 3.12 es válido; la rúbrica evalúa los commits individuales (se fusiona con merge commit) |
+| 2026-11-08 | El agente usa `gemini-3.8-flash` (API de pago) con respaldo `ollama:llama3.2`; las tres tareas del Taller 1 siguen con 3.5 | Indicación del profesor de usar API de pago y un modelo reciente; el 3.5 es el que se evaluó |
+| 2026-11-08 | Memoria con `InMemorySaver` y `thread_id` por conversación (en RAM) | Cumple la Fase 2; guardarla en disco es de la Fase 3 |
+| 2026-11-08 | Router por prompt (`prompts/v2_agente.md`): el agente elige entre `buscar_en_base` y `consultar_datos` | Más simple que un clasificador aparte y coincide con el RAG Agent de la Clase 9 |
+| 2026-11-08 | Tag `taller-1` sobre el `main` sustentado | Conservar el estado exacto de la primera entrega |
+| 2026-11-08 | Mantener `gemini-3.8-flash` en el agente aunque ignora `temperature` y `top_p` | El profesor pidió un modelo reciente de pago; el 3.5 sí los respeta pero va de baja. Las defensas contra datos inventados no dependen de la temperatura |
 
 ## 10. Notas y tareas pendientes
 
@@ -238,7 +245,7 @@ git push -u origin feat/mi-cambio
 > Configuración específica de la máquina. **NO incluir en commits.**
 
 - Las claves viven en `.env` (ignorado por Git) y se documentan vacías en `.env.example`:
-  `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, `HF_TOKEN` y `LANGCHAIN_API_KEY`.
+  `GOOGLE_API_KEY`, `DEEPSEEK_API_KEY`, `HF_TOKEN` y `LANGSMITH_API_KEY`.
 - `data/1_bronze/` (HTML crudo), `data/4_curaduria/chroma/`,
   `data/4_curaduria/indice_embeddings.npz`, `data/_demo_scraping/` y los PDF
   **no se versionan**: se regeneran con `make datos`, `make indice` y `make pdf`.

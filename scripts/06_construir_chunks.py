@@ -16,6 +16,7 @@ Uso:  uv run python scripts/06_construir_chunks.py            (usa los parametro
 import argparse
 import hashlib
 import json
+import os
 import re
 from pathlib import Path
 
@@ -23,6 +24,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 ROOT = Path(__file__).resolve().parent.parent
 CURADURIA = ROOT / "data" / "4_curaduria"
+SALIDA = Path(os.environ.get("TAAML_CURADURIA") or CURADURIA)  # con TAAML_CURADURIA los fragmentos se escriben en otra carpeta; los documentos de entrada se leen siempre de CURADURIA
 TAMANO_POR_DEFECTO = 1000   # caracteres (unos 250 tokens): cabe una respuesta completa sin arrastrar temas ajenos
 SOLAPE_POR_DEFECTO = 150    # caracteres compartidos entre fragmentos vecinos, para no perder lo que queda en el borde
 MINIMO = 200                # un fragmento final mas corto que esto se une al anterior
@@ -67,7 +69,7 @@ def main() -> None:
                                               separators=["\n\n", "\n", ". ", " ", ""], length_function=len)
     docs = [json.loads(ln) for ln in (CURADURIA / "documentos_incluidos.jsonl").read_text(encoding="utf-8").splitlines()]
 
-    chunks = []
+    chunks: list[dict] = []
     for d in docs:
         piezas = fragmentar(d, splitter)
         for i, p in enumerate(piezas, 1):
@@ -79,7 +81,8 @@ def main() -> None:
                 "documento": d["title"], "categoria": d["categoria"], "region": d["region"], "fuente": d["url"],
                 "orden": i, "de": len(piezas), "texto": texto, "caracteres": len(texto), "tokens_aprox": len(texto) // 4,
             })
-    with (CURADURIA / "chunks.jsonl").open("w", encoding="utf-8") as f:
+    SALIDA.mkdir(parents=True, exist_ok=True)
+    with (SALIDA / "chunks.jsonl").open("w", encoding="utf-8") as f:
         for c in chunks:
             f.write(json.dumps(c, ensure_ascii=False) + "\n")
 

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" font-family="Segoe UI, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
+  </defs>
+  <rect width="900" height="440" fill="#ffffff"/>
+  <text x="450" y="26" text-anchor="middle" font-size="16" font-weight="600" fill="#111827">Enrutamiento: cómo elige el agente la herramienta</text>
+
+  <g stroke="#374151" stroke-width="1.5">
+    <rect x="330" y="50" width="240" height="50" rx="8" fill="#f3f4f6"/>
+    <rect x="320" y="130" width="260" height="60" rx="30" fill="#fef9c3"/>
+    <rect x="20" y="250" width="250" height="70" rx="8" fill="#dbeafe"/>
+    <rect x="320" y="250" width="260" height="70" rx="8" fill="#e0e7ff"/>
+    <rect x="630" y="250" width="250" height="70" rx="8" fill="#dcfce7"/>
+    <rect x="20" y="352" width="250" height="62" rx="8" fill="#f3f4f6"/>
+    <rect x="320" y="352" width="260" height="62" rx="8" fill="#f3f4f6"/>
+    <rect x="630" y="352" width="250" height="62" rx="8" fill="#fee2e2"/>
+  </g>
+
+  <text x="450" y="72" text-anchor="middle" font-weight="600">Pregunta + conversación anterior</text>
+  <text x="450" y="90" text-anchor="middle" font-size="11">el modelo lee el prompt v2</text>
+  <text x="450" y="157" text-anchor="middle" font-weight="600">¿Qué tipo de dato pide?</text>
+  <text x="450" y="175" text-anchor="middle" font-size="11">el router es el prompt, no código</text>
+
+  <text x="145" y="276" text-anchor="middle" font-weight="600">consultar_datos</text>
+  <text x="145" y="294" text-anchor="middle" font-size="11">dirección, horario o teléfono de un punto;</text>
+  <text x="145" y="309" text-anchor="middle" font-size="11">teléfono, WhatsApp, correo o enlace</text>
+  <text x="450" y="276" text-anchor="middle" font-weight="600">consultar_datos + buscar_en_base</text>
+  <text x="450" y="294" text-anchor="middle" font-size="11">pide un trámite y además un lugar o un número</text>
+  <text x="450" y="309" text-anchor="middle" font-size="11">(las dos herramientas en el mismo turno)</text>
+  <text x="755" y="276" text-anchor="middle" font-weight="600">buscar_en_base</text>
+  <text x="755" y="294" text-anchor="middle" font-size="11">trámite, tarifa, requisito,</text>
+  <text x="755" y="309" text-anchor="middle" font-size="11">noticia o explicación</text>
+
+  <text x="450" y="342" text-anchor="middle" font-size="11" fill="#6b7280">Casos especiales</text>
+  <text x="145" y="376" text-anchor="middle" font-weight="600">«Sin resultados» en consultar_datos</text>
+  <text x="145" y="394" text-anchor="middle" font-size="11">prueba buscar_en_base antes de rendirse</text>
+  <text x="450" y="376" text-anchor="middle" font-weight="600">Pregunta corta («¿y su teléfono?»)</text>
+  <text x="450" y="394" text-anchor="middle" font-size="11">retoma el turno anterior; puede no usar ninguna</text>
+  <text x="755" y="373" text-anchor="middle" font-weight="600">Sin dato en ninguna herramienta</text>
+  <text x="755" y="389" text-anchor="middle" font-size="11">«No tengo esa información» y la línea</text>
+  <text x="755" y="403" text-anchor="middle" font-size="11">01 8000 112 115</text>
+
+  <g stroke="#374151" stroke-width="1.5" fill="none" marker-end="url(#flecha)">
+    <path d="M450,100 L450,130"/>
+    <path d="M360,185 L170,250"/>
+    <path d="M450,190 L450,250"/>
+    <path d="M540,185 L730,250"/>
+  </g>
+</svg>

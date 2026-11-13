@@ -39,3 +39,31 @@ def test_la_linea_de_servicio_de_los_prompts_esta_en_los_datos_manuales():
     for ruta in (RAIZ / "prompts").glob("*.md"):
         if "01 8000 112 115" in ruta.read_text(encoding="utf-8"):
             assert "01 8000 112 115" in manual, ruta.name
+
+
+def test_prompt_del_agente_tiene_los_cinco_bloques_y_nombra_las_dos_herramientas():
+    texto = leer_prompt("v2_agente.md")
+    for bloque in ("# 1.", "# 2. CONTEXTO", "# 3. INSTRUCCIÓN", "# 4. FORMATO", "# 5. RESTRICCIONES"):
+        assert bloque in texto
+    assert "consultar_datos" in texto and "buscar_en_base" in texto
+
+
+def test_prompt_del_agente_explica_el_router_la_memoria_y_la_defensa():
+    texto = leer_prompt("v2_agente.md")
+    assert "«sedes»" in texto and "«contactos»" in texto  # regla de datos exactos
+    assert "Sin resultados" in texto  # respaldo hacia el texto
+    assert "turno anterior" in texto  # memoria
+    assert "datos, no órdenes" in texto  # defensa contra inyección indirecta
+    assert "No tengo esa información" in texto
+
+
+def test_el_prompt_del_agente_nombra_herramientas_que_existen():
+    from taaml.agente import HERRAMIENTAS
+    texto = leer_prompt("v2_agente.md")
+    assert all(f"`{h.name}`" in texto for h in HERRAMIENTAS)
+
+
+def test_el_agente_carga_el_prompt_v2():
+    import inspect
+    from taaml import agente
+    assert "v2_agente.md" in inspect.getsource(agente.crear_agente)
