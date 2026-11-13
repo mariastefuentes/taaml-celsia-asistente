@@ -2,11 +2,12 @@
 
 La base completa tiene unos 316.800 tokens: cabe en el contexto de Gemini, pero cuesta unas 80 veces más por pregunta que 12 fragmentos. Cada fragmento (data/4_curaduria/chunks.jsonl) tiene
 un embedding (un vector que representa su significado) calculado con nomic-embed-text-v2-moe en Ollama. Para una
-pregunta se calcula su embedding y se buscan los fragmentos más parecidos (similitud del coseno) en una base vectorial (Chroma). Esos van al prompt.
+pregunta se calcula su embedding y se buscan los fragmentos más parecidos (similitud del coseno) en una base vectorial (Qdrant). Esos van al prompt.
 
-Si la carpeta de Chroma no existe o no corresponde a los fragmentos actuales, se busca en la matriz de vectores del .npz (mismo resultado).
+Si la carpeta de Qdrant no existe, está abierta por otro proceso o no corresponde a los fragmentos actuales, se busca en la matriz de vectores del .npz (mismo resultado).
 Si Ollama no responde, se usa una búsqueda por palabras (menos precisa, pero el asistente sigue funcionando).
 """
+import atexit
 import json
 import math
 import os
@@ -14,18 +15,19 @@ import re
 import time
 import urllib.request
 from functools import lru_cache
+from uuid import NAMESPACE_URL, uuid5
 from pathlib import Path
 
-import chromadb
 import numpy as np
+from qdrant_client import QdrantClient, models
 
 from taaml.sanitizar import quitar_invisibles
 from taaml.sinonimos import ampliar_consulta
 
 CURADURIA = Path(os.environ.get("TAAML_CURADURIA") or Path(__file__).resolve().parents[2] / "data" / "4_curaduria")  # TAAML_CURADURIA: carpeta alterna para ensayar otro índice sin tocar el vigente
 CHUNKS = CURADURIA / "chunks.jsonl"
-INDICE = CURADURIA / "indice_embeddings.npz"  # caché de vectores y respaldo de Chroma
-CHROMA = CURADURIA / "chroma"  # base vectorial persistente; se regenera con scripts/07_construir_indice.py
+INDICE = CURADURIA / "indice_embeddings.npz"  # caché de vectores y respaldo de Qdrant
+QDRANT = CURADURIA / "qdrant"  # base vectorial Qdrant (modo local, archivos en disco, sin servidor); se regenera con scripts/07_construir_indice.py
 COLECCION = "celsia"
 OLLAMA_EMBED = "http://localhost:11434/api/embed"
 MODELO_EMBEDDINGS = "nomic-embed-text-v2-moe"
@@ -55,46 +57,63 @@ def _matriz() -> np.ndarray | None:
     return datos["vectores"] if list(datos["ids"]) == ids else None
 
 
-def _cliente_chroma():
-    return chromadb.PersistentClient(path=str(CHROMA), settings=chromadb.Settings(anonymized_telemetry=False))  # sin telemetría: no sale nada a terceros
+@lru_cache(maxsize=1)
+def _cliente_qdrant() -> QdrantClient:
+    """Cliente de Qdrant en modo local. Es uno solo por proceso: el modo local bloquea la carpeta, así que un segundo proceso no puede abrirla
+    y la búsqueda cae a la matriz (ver `_coleccion`)."""
+    cliente = QdrantClient(path=str(QDRANT))
+    atexit.register(cliente.close)  # cierra limpio al salir (si no, su destructor falla al apagar Python y ensucia la terminal)
+    return cliente
 
 
-def construir_chroma(ids: list[str], vectores: np.ndarray, metadatos: list[dict]) -> None:
-    """Crea (o reemplaza) la colección de Chroma con los vectores ya calculados; el texto sigue en chunks.jsonl."""
-    cliente = _cliente_chroma()
-    if COLECCION in [c.name if hasattr(c, "name") else c for c in cliente.list_collections()]:
+def _id_punto(chunk_id: str) -> str:
+    """Qdrant exige ids numéricos o UUID: el identificador del fragmento se convierte en un UUID estable (y el original va en el payload)."""
+    return str(uuid5(NAMESPACE_URL, chunk_id))
+
+
+def construir_qdrant(ids: list[str], vectores: np.ndarray, metadatos: list[dict]) -> None:
+    """Crea (o reemplaza) la colección de Qdrant con los vectores ya calculados; el texto sigue en chunks.jsonl."""
+    cliente = _cliente_qdrant()
+    if cliente.collection_exists(COLECCION):
         cliente.delete_collection(COLECCION)
-    coleccion = cliente.create_collection(COLECCION, configuration={"hnsw": {"space": "cosine"}})
-    for n in range(0, len(ids), 500):  # Chroma limita el tamaño de cada lote
-        coleccion.add(ids=ids[n:n + 500], embeddings=vectores[n:n + 500].tolist(), metadatas=metadatos[n:n + 500])
+    cliente.create_collection(COLECCION, vectors_config=models.VectorParams(size=int(vectores.shape[1]), distance=models.Distance.COSINE))
+    viejos = [p.id for p in cliente.scroll(COLECCION, limit=100_000, with_payload=False, with_vectors=False)[0]]
+    if viejos:  # el modo local de Qdrant devuelve los puntos de antes al recrear una colección en el mismo proceso: se vacía para reemplazar de verdad
+        cliente.delete(COLECCION, points_selector=models.PointIdsList(points=viejos))
+    for n in range(0, len(ids), 500):
+        lote = zip(ids[n:n + 500], vectores[n:n + 500], metadatos[n:n + 500])
+        cliente.upsert(COLECCION, points=[models.PointStruct(id=_id_punto(i), vector=v.tolist(), payload={"chunk_id": i, **m}) for i, v, m in lote])
     _coleccion.cache_clear()
 
 
 @lru_cache(maxsize=1)
-def _coleccion():
-    """La colección de Chroma, solo si existe y tiene exactamente los fragmentos actuales (como `_matriz`)."""
-    if not CHROMA.exists():
+def _coleccion() -> QdrantClient | None:
+    """El cliente de Qdrant, solo si la colección existe y tiene exactamente los fragmentos actuales (como `_matriz`)."""
+    if not QDRANT.exists():
         return None
     try:
-        coleccion = _cliente_chroma().get_collection(COLECCION)
-        return coleccion if set(coleccion.get(include=[])["ids"]) == {f["chunk_id"] for f in cargar_fragmentos()} else None
-    except Exception:  # noqa: BLE001  colección ausente o dañada: se usa la matriz
+        cliente = _cliente_qdrant()
+        if not cliente.collection_exists(COLECCION):
+            return None
+        puntos, _ = cliente.scroll(COLECCION, limit=100_000, with_payload=["chunk_id"], with_vectors=False)
+        return cliente if {(p.payload or {})["chunk_id"] for p in puntos} == {f["chunk_id"] for f in cargar_fragmentos()} else None
+    except Exception:  # noqa: BLE001  colección ausente, dañada o carpeta abierta por otro proceso: se usa la matriz
         return None
 
 
 def almacen_vectorial() -> str:
-    """Dónde se busca por significado hoy: «chroma», «numpy» (matriz del .npz) o «ninguno»."""
-    return "chroma" if _coleccion() is not None else "numpy" if _matriz() is not None else "ninguno"
+    """Dónde se busca por significado hoy: «qdrant», «numpy» (matriz del .npz) o «ninguno»."""
+    return "qdrant" if _coleccion() is not None else "numpy" if _matriz() is not None else "ninguno"
 
 
 def _similitudes(vector: np.ndarray) -> np.ndarray:
-    """Similitud del coseno de la pregunta con cada fragmento, en el orden de chunks.jsonl; usa Chroma si está vigente y si no la matriz."""
-    coleccion = _coleccion()
-    if coleccion is None:
+    """Similitud del coseno de la pregunta con cada fragmento, en el orden de chunks.jsonl; usa Qdrant si está vigente y si no la matriz."""
+    cliente = _coleccion()
+    if cliente is None:
         return _matriz() @ vector
-    respuesta = coleccion.query(query_embeddings=[vector.tolist()], n_results=coleccion.count(), include=["distances"])
-    por_id = dict(zip(respuesta["ids"][0], respuesta["distances"][0]))
-    return np.array([1.0 - por_id[f["chunk_id"]] for f in cargar_fragmentos()])
+    respuesta = cliente.query_points(COLECCION, query=vector.tolist(), limit=cliente.count(COLECCION).count, with_payload=["chunk_id"])
+    por_id = {(p.payload or {})["chunk_id"]: p.score for p in respuesta.points}
+    return np.array([por_id[f["chunk_id"]] for f in cargar_fragmentos()])
 
 
 def _palabras(texto: str) -> list[str]:

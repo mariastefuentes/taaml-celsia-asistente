@@ -13,7 +13,7 @@
     { "id": "app", "type": "frontend", "label": "Streamlit", "sublabel": "app/asistente.py", "pos": [190, 200], "size": [120, 54] },
     { "id": "recuperacion", "type": "backend", "label": "Recuperación", "sublabel": "12 fragmentos", "pos": [360, 200], "size": [130, 54] },
     { "id": "ollama", "type": "cloud", "label": "Ollama", "sublabel": "nomic-embed-text-v2-moe", "pos": [345, 50], "size": [160, 54] },
-    { "id": "chroma", "type": "database", "label": "Chroma", "sublabel": "1.690 fragmentos", "pos": [360, 360], "size": [130, 54], "tag": "coseno" },
+    { "id": "chroma", "type": "database", "label": "Qdrant", "sublabel": "1.690 fragmentos", "pos": [360, 360], "size": [130, 54], "tag": "coseno" },
     { "id": "prompt", "type": "backend", "label": "Prompt v3", "sublabel": "5 bloques + XML", "pos": [590, 200], "size": [120, 54] },
     { "id": "validacion", "type": "security", "label": "Post-validación", "sublabel": "cifras y enlaces", "pos": [790, 200], "size": [130, 54] },
     { "id": "gemini", "type": "cloud", "label": "Gemini 3.5 Flash", "sublabel": "temp 0,0 · top_p 0,1", "pos": [610, 360], "size": [150, 54] },
@@ -33,7 +33,7 @@
     { "id": "gemini-respaldo", "from": "gemini", "to": "respaldo", "label": "si falla", "variant": "dashed", "labelDy": -19 }
   ],
   "cards": [
-    { "dot": "emerald", "title": "Recuperación", "items": ["Embeddings con Ollama, búsqueda por coseno en Chroma", "Si no hay índice o Ollama falla, busca por palabras", "Acierto medido: 89 % con embeddings, 54 % con palabras"] },
+    { "dot": "emerald", "title": "Recuperación", "items": ["Embeddings con Ollama, búsqueda por coseno en Qdrant", "Si no hay índice o Ollama falla, busca por palabras", "Acierto medido: 89 % con embeddings, 54 % con palabras"] },
     { "dot": "cyan", "title": "Generación", "items": ["Gemini 3.5 Flash con temperatura 0,0 y top_p 0,1", "Si falla: DeepSeek, luego Llama 3.2 local, luego respuesta guardada"] },
     { "dot": "rose", "title": "Control", "items": ["Contexto aislado en etiquetas XML (defensa contra inyección)", "Cada cifra y enlace de la respuesta se valida contra los fragmentos", "Las fuentes consultadas se muestran en la interfaz"] }
   ]

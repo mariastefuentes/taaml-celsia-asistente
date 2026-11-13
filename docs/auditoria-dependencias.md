@@ -3,6 +3,8 @@
 Comando: `uv export --frozen --no-hashes --no-emit-project` seguido de `uvx pip-audit -r <archivo> --no-deps --disable-pip`.
 Alcance: las versiones fijadas en `uv.lock`. Es solo lectura: no se cambió ninguna dependencia.
 
+Actualización (2026-11-13): se reemplazó `chromadb` por `qdrant-client`; la misma auditoría da **44 vulnerabilidades en 3 paquetes** (pillow, opentelemetry-api y soupsieve), ninguna de Qdrant. La tabla de abajo es la medición original.
+
 Resultado: **62 vulnerabilidades conocidas en 5 paquetes**, cuatro indirectos y chromadb, que es dependencia directa.
 
 | Paquete | Versión fijada | Avisos | Corregido en | Entra por |

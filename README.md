@@ -14,7 +14,7 @@ Base de conocimiento y asistente de preguntas y respuestas (Q&A, resumen y FAQ) 
 
 **Problema de información.** La información pública de Celsia está repartida en más de mil páginas de celsia.com, y no hay un lugar donde preguntar y recibir la respuesta con su fuente.
 
-**Solución.** Un sistema de **RAG** (generación aumentada por recuperación): se descarga y limpia el sitio, se divide en fragmentos, y para cada pregunta se buscan los 12 más parecidos por significado (embeddings en una base vectorial Chroma). Solo esos fragmentos van al prompt, con instrucciones que obligan a responder con ellos y a citar la fuente.
+**Solución.** Un sistema de **RAG** (generación aumentada por recuperación): se descarga y limpia el sitio, se divide en fragmentos, y para cada pregunta se buscan los 12 más parecidos por significado (embeddings en una base vectorial Qdrant). Solo esos fragmentos van al prompt, con instrucciones que obligan a responder con ellos y a citar la fuente.
 
 | Resultado medido | Valor |
 |---|---|
@@ -71,7 +71,7 @@ sequenceDiagram
 | Memoria corta | Checkpointer SQLite con `thread_id` (persiste entre reinicios) |
 | Memoria larga | Store con espacio `("perfil", usuario)`, máximo 20 datos por cliente, borrable por el cliente |
 | Datos estructurados | `consultar_datos`, con esquema Pydantic (`ConsultaDatos`) sobre sedes, contactos y catálogo |
-| RAG | `buscar_en_base`: 4 fragmentos del texto oficial (Chroma + embeddings de Ollama) |
+| RAG | `buscar_en_base`: 4 fragmentos del texto oficial (Qdrant + embeddings de Ollama) |
 | Blindaje | Limpieza de caracteres invisibles, reglas del prompt y 11/11 ataques directos y 8/8 indirectos resistidos |
 | Respaldo | `llama3.2` local si Gemini falla |
 
@@ -96,7 +96,7 @@ make setup               # uv sync + .env + modelos de Ollama (nomic y llama3.2:
 # cp .env.example .env   # completa GOOGLE_API_KEY (Gemini); sin ella responde el modelo local
 # ollama pull nomic-embed-text-v2-moe
 # ollama pull llama3.2:3b
-make indice              # construye el índice de vectores con Ollama (el repositorio no versiona el .npz ni Chroma)
+make indice              # construye el índice de vectores con Ollama (el repositorio no versiona el .npz ni Qdrant)
 ```
 
 **En Windows:** clona en una ruta corta y fuera de OneDrive (por ejemplo `C:\taaml`) y activa las rutas largas con `git config --global core.longpaths true`; si `uv sync` falla por enlaces duros, ejecuta antes `$env:UV_LINK_MODE="copy"`. Sin esto, Windows corta las rutas de más de 260 caracteres y el clon queda incompleto.
@@ -149,7 +149,7 @@ Los datos pasan por tres capas (patrón Medallion): cada script hace una sola et
 | 3. Enriquecer (Gold) | `uv run python scripts/04_construir_gold.py` | texto con metadatos en `data/3_gold/` |
 | 4. Curar | `uv run python scripts/05_curar_base.py` | `data/4_curaduria/base_conocimiento.txt` y el registro de decisiones |
 | 4b. Fragmentar (chunking) | `uv run python scripts/06_construir_chunks.py` | `data/4_curaduria/chunks.jsonl`: 1.690 fragmentos con sus metadatos |
-| 4c. Indexar (embeddings) | `uv run python scripts/07_construir_indice.py` (necesita Ollama y `nomic-embed-text-v2-moe`) | `data/4_curaduria/indice_embeddings.npz` (un vector por fragmento, caché) y la base vectorial Chroma `data/4_curaduria/chroma` (no se sube a Git; sin ella la app usa el `.npz`) |
+| 4c. Indexar (embeddings) | `uv run python scripts/07_construir_indice.py` (necesita Ollama y `nomic-embed-text-v2-moe`) | `data/4_curaduria/indice_embeddings.npz` (un vector por fragmento, caché) y la base vectorial Qdrant `data/4_curaduria/qdrant` (no se sube a Git; sin ella la app usa el `.npz`) |
 | 5. Verificar alcance | `uv run python scripts/08_inventario_intenciones.py` | cobertura de las intenciones del cliente |
 | 6. Validar la prueba | `uv run python scripts/09_conjunto_de_prueba.py` | comprueba los criterios del conjunto de prueba (59 preguntas) |
 | 7. Evaluar un modelo | `uv run python scripts/11_evaluar_modelo.py --modelo gemini:gemini-3.5-flash` | respuestas y calificaciones en `docs/2 - Conjunto de prueba/resultados/` |
@@ -214,4 +214,4 @@ Licencia MIT ([LICENSE](LICENSE)), © 2026 María Stella Fuentes, Juan José Mos
 
 Para contribuir, lee la [guía de contribución](CONTRIBUTING.md), el [código de conducta](CODE_OF_CONDUCT.md) y la [constitución](CONSTITUTION.md) del proyecto.
 
-Herramientas: LangChain, Streamlit, Chroma, Ollama, Gemini y DeepSeek. El código se escribió con ayuda de Claude Code; la declaración completa de uso de IA está en el informe.
+Herramientas: LangChain, Streamlit, Qdrant, Ollama, Gemini y DeepSeek. El código se escribió con ayuda de Claude Code; la declaración completa de uso de IA está en el informe.
