@@ -1,16 +1,24 @@
 // Cliente de la API del agente. Un turno llega por streaming (Server-Sent Events sobre un POST).
 
-// Identificador anónimo del cliente: la API lo usa para su memoria de largo plazo. Vive en el navegador.
+// Identificador anónimo del cliente: la API lo usa para su memoria de largo plazo. Vive en el navegador (localStorage); si el navegador lo
+// bloquea (ventana privada, por ejemplo) se usa uno por pestaña, así «Nueva conversación» sigue recordando al cliente mientras la pestaña esté abierta.
+let delaPestana = null;
+
+function nuevoId() {
+  return crypto.randomUUID().replaceAll("-", "");
+}
+
 export function usuario() {
   try {
     let id = localStorage.getItem("usuario");
     if (!id) {
-      id = crypto.randomUUID().replaceAll("-", "");
+      id = nuevoId();
       localStorage.setItem("usuario", id);
     }
     return id;
   } catch {
-    return null; // sin almacenamiento local el cliente es anónimo y no hay memoria de largo plazo
+    delaPestana ??= nuevoId();
+    return delaPestana;
   }
 }
 
