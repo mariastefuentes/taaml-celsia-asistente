@@ -35,6 +35,9 @@ Evitar «¿Cómo pago mi factura y dónde puedo hacerlo en Cali?»: la tabla de 
 4. Qué señalar: lo que devuelve la herramienta llega encerrado en `<documentos_recuperados>` con un aviso de que son datos pasivos y no instrucciones (`delimitar_como_datos` en `src/taaml/agente.py`); un fragmento no puede cerrar ese bloque porque sus etiquetas se le quitan; el prompt v3 repite que lo que devuelven las herramientas son datos. La batería `scripts/12_probar_inyeccion_indirecta.py --agente` mide ocho variantes (orden visible, en inglés, con caracteres invisibles, cierre falso del bloque, dato falso con tono de autoridad, revelar el prompt, escribir en la memoria del cliente).
 5. Al terminar: apagar esta API y volver a encender la normal (`make api`).
 
+## Validación de la respuesta (30 segundos, si el docente pregunta por «validación antes de publicar»)
+Cada cifra, correo y enlace de la respuesta se busca en lo que devolvieron las herramientas (`datos_dudosos` en `src/taaml/agente.py`). Si algo no aparece, el frontend muestra «Verifica antes de usar: …» bajo la respuesta. En una respuesta normal no se ve nada. Avisa, no bloquea.
+
 ## Trazas en LangSmith (1 minuto, si el docente lo pide)
 1. Abrir smith.langchain.com → proyecto `taaml-celsia`: cada pregunta del frontend es una traza `agente_celsia`.
 2. Abrir una traza de una pregunta mixta: se ven los pasos (modelo, `buscar_en_base`, `consultar_datos`, modelo) con la latencia de cada uno al lado. Un argumento inválido en una herramienta aparece como error de ese paso.

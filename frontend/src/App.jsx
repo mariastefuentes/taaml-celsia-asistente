@@ -84,6 +84,8 @@ export default function App() {
       setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, fuentes: sinRepetidas([...(a.fuentes ?? []), ...e.fuentes]) })));
     } else if (e.tipo === "texto") {
       setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, texto: a.texto + e.texto })));
+    } else if (e.tipo === "aviso") {
+      setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, aviso: e.datos })));
     } else if (e.tipo === "fin") {
       setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, usadas: e.usadas, tokens: e.tokens_entrada + e.tokens_salida, costo: e.costo_usd })));
     } else if (e.tipo === "error") {
@@ -173,6 +175,9 @@ export default function App() {
               <p className="herramienta">{m.usadas ?? m.herramientas.map(etiqueta).join("; ")}</p>
             )}
             <div className="contenido">{m.texto ? <Markdown texto={m.texto} /> : (enCurso && i === mensajes.length - 1 ? "Pensando…" : "")}</div>
+            {m.rol === "assistant" && m.aviso?.length > 0 && (
+              <p className="aviso">Verifica antes de usar: estos datos de la respuesta no aparecen en lo que el asistente consultó ({m.aviso.join(", ")}).</p>
+            )}
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
           </article>

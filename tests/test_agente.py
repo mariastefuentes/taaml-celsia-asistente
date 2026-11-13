@@ -438,6 +438,26 @@ def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
     assert sum(v["rol"] == "user" for v in historial_visible("hilo-resumen", agente=agente)) < 6
 
 
+def test_los_datos_de_la_respuesta_se_validan_contra_lo_que_el_agente_tuvo_delante():
+    from langchain_core.messages import HumanMessage, ToolMessage
+
+    from taaml.agente import datos_dudosos
+    mensajes = [HumanMessage("Mi número es 3105551234"), ToolMessage(content="Sede Ibagué. Teléfono 604 326 66 00. https://www.celsia.com/sedes", name="consultar_datos", tool_call_id="1")]
+    assert datos_dudosos("Llama al 604 326 66 00 o mira https://www.celsia.com/sedes", mensajes) == []
+    assert datos_dudosos("Tu número es 3105551234", mensajes) == []  # lo dicho por el cliente también cuenta
+    assert datos_dudosos("Llama al 601 999 88 77 o escribe a falso@celsia.com", mensajes) == ["falso@celsia.com", "601 999 88 77"]
+
+
+def test_conversar_en_vivo_avisa_de_un_dato_inventado_y_no_avisa_de_uno_con_respaldo():
+    from taaml.agente import conversar_en_vivo
+    modelo = ModeloSinTrozos(messages=iter([AIMessage(content="Llama al 601 999 88 77"), AIMessage(content="Hola, ¿en qué te ayudo?")]), vistos=[])
+    agente = crear_agente(llm=modelo)
+    con_aviso = list(conversar_en_vivo("¿Cuál es el teléfono?", "hilo-val-1", agente=agente))
+    assert any(e["tipo"] == "aviso" and e["datos"] == ["601 999 88 77"] for e in con_aviso) and con_aviso[-1]["tipo"] == "fin"
+    sin_aviso = list(conversar_en_vivo("hola", "hilo-val-2", agente=agente))
+    assert all(e["tipo"] != "aviso" for e in sin_aviso)
+
+
 def test_una_pregunta_sin_busqueda_no_trae_fuentes():
     from taaml.agente import conversar_en_vivo, historial_visible
     agente = crear_agente(llm=ModeloSinTrozos(messages=iter([AIMessage(content="Hola")])))

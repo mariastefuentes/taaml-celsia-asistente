@@ -25,6 +25,7 @@ El agente se construye con `create_agent` de LangChain. En cada turno ocurre lo 
 3. El modelo lee el prompt (rol, contexto, instrucción, formato y restricciones) y decide si responde o llama a una herramienta.
 4. Si llama a una herramienta, recibe el resultado y vuelve a decidir; el ciclo termina cuando responde.
 5. El turno queda guardado en SQLite bajo el identificador de la conversación.
+6. Al terminar la respuesta, cada cifra, correo y enlace se busca en lo que devolvieron las herramientas, en lo que dijo el cliente y en la fecha de hoy (`taaml.validacion`, la misma revisión del Q&A del Taller 1). Lo que no aparece en ninguno llega al frontend como un aviso («Verifica antes de usar»). Es una revisión de texto, no de significado, y la respuesta ya se mostró: avisa, no la bloquea.
 
 Si Gemini falla (cuota o red), un respaldo cambia al modelo local `llama3.2`. En la prueba del respaldo acertó 2 de 4 casos con herramientas y es lento, por lo que sirve para no dejar al cliente sin respuesta y no como alternativa de calidad.
 
