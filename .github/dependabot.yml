@@ -7,7 +7,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0  # sin PRs automáticos durante la entrega del Módulo 2; subir a 5 para reactivarlos
     labels:
       - chore
       - infra
@@ -20,7 +20,7 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 0  # sin PRs automáticos durante la entrega del Módulo 2; subir a 5 para reactivarlos
     labels:
       - chore
       - infra
