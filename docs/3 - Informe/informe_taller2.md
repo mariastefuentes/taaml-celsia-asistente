@@ -31,13 +31,13 @@ Si Gemini falla (cuota o red), un respaldo cambia al modelo local `llama3.2`. En
 
 El Q&A del Taller 1 es una cadena: `RunnablePassthrough.assign` agrega el prompt de sistema y la pregunta delimitada, `ChatPromptTemplate` los coloca como mensajes y el resultado pasa por el modelo y `StrOutputParser`.
 
-La alternativa de armar el flujo a mano con un grafo de estados (`StateGraph`) daría más control, pero para dos herramientas y un ciclo de decisión `create_agent` ya lo resuelve con menos código que mantener.
+`create_agent` corre sobre LangGraph: el ciclo modelo → herramientas → modelo es un grafo con estado (los mensajes), y el checkpointer y el Store son de LangGraph. No se armó un `StateGraph` propio porque el flujo es un solo ciclo de decisión, sin ramas ni pasos obligatorios; hacerlo a mano daría más control con más código que mantener. Se justificaría con ramas explícitas, por ejemplo una aprobación humana antes de abrir un reclamo. Deep Agents (opcional) está pensado para tareas largas con planificación y subagentes; una consulta de atención al cliente se resuelve en uno o dos pasos, así que no se usó.
 
 ### 2.1 Decisiones de tecnología
 
 | Decisión | Elegido | Por qué |
 |---|---|---|
-| Marco de trabajo | LangChain | El Taller 1 ya estaba construido con él; `create_agent` trae el ciclo de herramientas, el checkpointer de memoria y los componentes intermedios (recorte del historial, respaldo de modelo) sin código propio. LlamaIndex se centra en indexar y consultar documentos, y el agente aquí importa más que el índice; Agno es otra alternativa de agentes que no ofrecía ventaja para dos herramientas. |
+| Marco de trabajo | LangChain | El Taller 1 ya estaba construido con él; `create_agent` trae el ciclo de herramientas, el checkpointer de memoria y los componentes intermedios (recorte del historial, respaldo de modelo) sin código propio. LlamaIndex se centra en indexar y consultar documentos, y el agente aquí importa más que el índice; Agno es otra alternativa de agentes que no ofrecía ventaja para cuatro herramientas. |
 | Modelo de conversación | `obtener_modelo` propio | Elige entre Gemini, DeepSeek y Ollama y arma la cadena de respaldo. `init_chat_model` de LangChain hace algo parecido; se reevalúa en el siguiente taller. |
 | Conocimiento | RAG, no fine-tuning | Los datos cambian (sedes, avisos, tarifas), cada respuesta debe poder citar su fuente y no hay un conjunto de entrenamiento: actualizar un índice es barato y reentrenar no. |
 | Motor de vectores | Qdrant en modo local, coseno | Qdrant corre dentro del proceso, sin servidor, y guarda los vectores en disco (`data/4_curaduria/qdrant`). En modo local compara la pregunta con los 1.690 vectores (búsqueda exacta), lo que alcanza para este tamaño y no depende de un índice aproximado; con un servidor Qdrant se usaría un índice HNSW. Antes se usó Chroma: el cambio no alteró la recuperación (31 de 35 con embeddings, igual que antes) y quitó `chromadb` de las dependencias, que arrastraba vulnerabilidades sin corrección publicada. |
@@ -54,7 +54,7 @@ La alternativa de armar el flujo a mano con un grafo de estados (`StateGraph`) d
 
 **Qué ve el modelo.** Solo los últimos ~3.000 tokens. Sin este recorte, la entrada crece en cada turno porque el historial se reenvía completo: en el ensayo de cuatro turnos pasó de 2.238 a 8.554 tokens. El recorte controla el costo sin borrar nada de lo guardado.
 
-La memoria guardada en SQLite corresponde a lo que la literatura llama memoria de corto plazo (la conversación en curso) con persistencia (Wu et al., 2025). No se agregó memoria de largo plazo ni resumen del historial: el índice es pequeño, no se guardan datos del cliente a propósito y el recorte ya controla el costo.
+La memoria guardada en SQLite corresponde a lo que la literatura llama memoria de corto plazo (la conversación en curso) con persistencia (Wu et al., 2025). La memoria de largo plazo se describe más abajo. El historial se recorta a unos 3.000 tokens para el modelo y, si lo guardado pasa de 8.000, un resumen automático (`SummarizationMiddleware`) reemplaza lo antiguo.
 
 **Cómo se verificó.**
 - Pruebas automáticas: persistencia entre dos agentes distintos sobre el mismo archivo, aislamiento entre hilos, que el recorte no borra lo almacenado, un turno que por sí solo supera el límite, y recuperación de la conversación al recargar la aplicación, también cuando el archivo de memoria está dañado.
@@ -152,7 +152,7 @@ El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al mo
 
 Tampoco se adoptaron la autoconsistencia (varias respuestas por pregunta), la optimización automática de prompts (DSPy) ni la repetición del prompt: multiplican las llamadas y el costo con un modelo que ya razona, y no hay evidencia propia de que mejoren. La idea de una «wiki» que el propio modelo mantiene como base de conocimiento tampoco se usó: la base sigue siendo el texto oficial indexado, que se puede auditar contra el sitio.
 
-No se usaron resumen automático del historial, almacén de memoria de largo plazo, viaje en el tiempo del estado, pasos de aprobación humana ni un guardrail externo (Llama Guard, NeMo): el índice es pequeño, las herramientas solo leen, no se guardan datos personales a propósito y las defensas del prompt y de la validación resistieron las pruebas. Si se agregara una herramienta que escriba (por ejemplo, abrir un reclamo), la aprobación humana y la memoria persistente ya existente permitirían pausar el agente antes de la acción. El filtro por región (Valle o Tolima) queda como mejora: solo 5 de las 35 preguntas del conjunto permiten medirlo.
+No se usaron viaje en el tiempo del estado, pasos de aprobación humana ni un guardrail externo (Llama Guard, NeMo): el índice es pequeño, las herramientas de consulta solo leen, la única que escribe guarda lo que el cliente cuenta de sí mismo (máximo 20 datos, con la instrucción de no guardar cédulas, claves ni tarjetas, y borrables por él) y las defensas del prompt, del delimitador y de la validación resistieron las pruebas. Si se agregara una herramienta que escriba (por ejemplo, abrir un reclamo), la aprobación humana y la memoria persistente ya existente permitirían pausar el agente antes de la acción. El filtro por región (Valle o Tolima) queda como mejora: solo 5 de las 35 preguntas del conjunto permiten medirlo.
 
 ## Referencias
 
