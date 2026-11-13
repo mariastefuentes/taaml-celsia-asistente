@@ -71,6 +71,18 @@ Para reconstruir la base **desde cero** (descargar todo el sitio): `scripts/01_s
 
 ## Uso
 
+**Agente conversacional (Módulo 2): API y frontend separados.** El frontend (React con Vite, carpeta `frontend/`) no llama al modelo: habla por HTTP con una API FastAPI (`api/`) que ejecuta el agente y le responde por streaming (Server-Sent Events). Se corren en dos terminales:
+
+```bash
+uv run uvicorn api.main:app --port 8000   # API del agente (necesita GOOGLE_API_KEY en .env y Ollama encendido)
+```
+
+```bash
+cd frontend && npm install && npm run dev # frontend en http://localhost:5173
+```
+
+La API expone `GET /api/salud`, `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). El identificador de la conversación va en la dirección (`?hilo=`), así que recargar la página recupera el hilo desde SQLite.
+
 ```bash
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)
 make modulo1                              # la app del Módulo 1: solo el corpus y las etapas del scraping

@@ -15,6 +15,7 @@ requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.15.0",
     "chromadb>=1.5.9",
+    "fastapi>=0.162.7",
     "langchain>=1.4.7",
     "langchain-core>=1.7.0",
     "langchain-google-genai>=4.4.2",
@@ -44,4 +45,5 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]  # para importar api/ (src/ ya lo instala uv como paquete)
 addopts = "-q -p no:cacheprovider"  # sin carpeta de caché: el proyecto vive en OneDrive

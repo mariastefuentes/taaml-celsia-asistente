@@ -21,3 +21,7 @@ data/4_curaduria/indice_parcial.npz
 # Engram: se versiona la configuración del proyecto, no los chunks de sincronización
 .engram/*
 !.engram/config.json
+
+node_modules/
+frontend/dist/
+frontend/.vite/
