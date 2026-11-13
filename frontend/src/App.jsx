@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { cargarMensajes, enviar } from "./api.js";
+import { cargarDatos, cargarMensajes, enviar, olvidarDatos } from "./api.js";
 
 const SUGERENCIAS = [
   "¿Qué sedes hay en Ibagué?",
@@ -32,6 +32,7 @@ export default function App() {
   const [texto, setTexto] = useState("");
   const [enCurso, setEnCurso] = useState(false);
   const [error, setError] = useState("");
+  const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
   const fin = useRef(null);
   const ultimaPregunta = useRef("");
 
@@ -78,6 +79,24 @@ export default function App() {
     }
   }
 
+  async function verRecuerdos() {
+    if (recuerdos) return setRecuerdos(null);
+    try {
+      setRecuerdos(await cargarDatos());
+    } catch {
+      setError("No se pudo consultar lo que recuerdo de ti.");
+    }
+  }
+
+  async function olvidar() {
+    try {
+      await olvidarDatos();
+      setRecuerdos([]);
+    } catch {
+      setError("No se pudo borrar lo guardado.");
+    }
+  }
+
   function nueva() {
     setHilo(null);
     fijarHilo(null);
@@ -92,8 +111,19 @@ export default function App() {
           <h1>Asistente Celsia</h1>
           <p>Agente con memoria, datos exactos y búsqueda en el sitio oficial</p>
         </div>
-        <button className="secundario" onClick={nueva} disabled={enCurso}>Nueva conversación</button>
+        <div className="acciones">
+          <button className="secundario" onClick={verRecuerdos}>Lo que recuerdo</button>
+          <button className="secundario" onClick={nueva} disabled={enCurso}>Nueva conversación</button>
+        </div>
       </header>
+
+      {recuerdos && (
+        <section className="recuerdos" aria-label="Memoria de largo plazo">
+          <strong>Memoria de largo plazo</strong>
+          {recuerdos.length === 0 ? <p>No tengo datos tuyos guardados.</p> : <ul>{recuerdos.map((d) => <li key={d}>{d}</li>)}</ul>}
+          {recuerdos.length > 0 && <button className="secundario" onClick={olvidar}>Olvidar todo</button>}
+        </section>
+      )}
 
       <main aria-live="polite">
         {mensajes.length === 0 && (

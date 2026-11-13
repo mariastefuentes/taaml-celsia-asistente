@@ -35,9 +35,9 @@ def test_la_descripcion_orienta_al_modelo_sobre_cuando_usarla():
     assert "sedes" in d and "contactos" in d and "teléfonos" in d
 
 
-def test_el_agente_tiene_las_dos_herramientas():
+def test_el_agente_tiene_las_herramientas():
     from taaml.agente import HERRAMIENTAS
-    assert [h.name for h in HERRAMIENTAS] == ["buscar_en_base", "consultar_datos"]
+    assert [h.name for h in HERRAMIENTAS] == ["buscar_en_base", "consultar_datos", "guardar_dato_del_cliente", "recordar_datos_del_cliente"]
 
 
 # --- memoria conversacional (modelo simulado: no llama a Gemini ni a Ollama) ---
@@ -228,3 +228,79 @@ def test_conversar_en_vivo_guarda_el_turno_en_la_memoria():
     agente = crear_agente(llm=ModeloEspia(messages=iter([AIMessage(content="Hola Ana")])))
     list(conversar_en_vivo("Me llamo Ana", "hilo-vivo-2", agente=agente))
     assert [m["texto"] for m in historial_visible("hilo-vivo-2", agente=agente)] == ["Me llamo Ana", "Hola Ana"]
+
+
+# --- memoria de largo plazo (Store por cliente) ---
+def _llamada(nombre, args, id_="t"):
+    return AIMessage(content="", tool_calls=[{"name": nombre, "args": args, "id": id_}])
+
+
+def _resultado_de_herramienta(agente, hilo):
+    return [m.content for m in agente.get_state({"configurable": {"thread_id": hilo}}).values["messages"] if m.type == "tool"][-1]
+
+
+def test_un_dato_guardado_en_una_conversacion_se_recupera_en_otra_del_mismo_cliente():
+    from taaml.agente import conversar
+    guiones = iter([_llamada("guardar_dato_del_cliente", {"dato": "Trabaja en Carvajal"}), AIMessage(content="Listo, Ana"),
+                    _llamada("recordar_datos_del_cliente", {}), AIMessage(content="Trabajas en Carvajal")])
+    agente = crear_agente(llm=ModeloSinTrozos(messages=guiones))
+    conversar("Me llamo Ana y trabajo en Carvajal", "hilo-a", agente=agente, usuario="ana")
+    conversar("¿Dónde trabajo?", "hilo-b", agente=agente, usuario="ana")  # hilo nuevo: el checkpointer no sabe nada de hilo-a
+    assert "Carvajal" in _resultado_de_herramienta(agente, "hilo-b")
+
+
+def test_un_cliente_no_ve_lo_que_guardo_otro():
+    from taaml.agente import conversar
+    guiones = iter([_llamada("guardar_dato_del_cliente", {"dato": "Trabaja en Carvajal"}), AIMessage(content="ok"),
+                    _llamada("recordar_datos_del_cliente", {}), AIMessage(content="no sé")])
+    agente = crear_agente(llm=ModeloSinTrozos(messages=guiones))
+    conversar("trabajo en Carvajal", "h1", agente=agente, usuario="ana")
+    conversar("¿dónde trabajo?", "h2", agente=agente, usuario="luis")
+    assert "No hay datos guardados" in _resultado_de_herramienta(agente, "h2")
+
+
+def test_no_guarda_dos_veces_lo_mismo_ni_pasa_del_tope():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import MAX_DATOS_CLIENTE, Contexto, guardar_dato_del_cliente
+    almacen = InMemoryStore()
+
+    class Corrida:  # lo mínimo que la herramienta necesita de ToolRuntime
+        store, context = almacen, Contexto(usuario="ana")
+    assert guardar_dato_del_cliente.func("Vive en Cali", Corrida) == "Guardado."
+    assert guardar_dato_del_cliente.func("Vive en Cali", Corrida) == "Ya lo tenía guardado."
+    for i in range(MAX_DATOS_CLIENTE):
+        guardar_dato_del_cliente.func(f"dato {i}", Corrida)
+    assert "demasiados" in guardar_dato_del_cliente.func("uno más", Corrida)
+
+
+def test_el_cliente_puede_ver_y_borrar_lo_guardado():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import datos_del_cliente, olvidar_cliente
+    almacen = InMemoryStore()
+    almacen.put(("perfil", "ana"), "1", {"dato": "Vive en Cali"})
+    almacen.put(("perfil", "luis"), "2", {"dato": "Vive en Ibagué"})
+    assert datos_del_cliente("ana", almacen) == ["Vive en Cali"]
+    assert olvidar_cliente("ana", almacen) == 1
+    assert datos_del_cliente("ana", almacen) == [] and datos_del_cliente("luis", almacen) == ["Vive en Ibagué"]  # solo borra el suyo
+
+
+def test_el_store_en_sqlite_conserva_los_datos_al_reabrir(tmp_path):
+    from taaml.agente import almacen_de_largo_plazo
+    ruta = tmp_path / "largo.sqlite"
+    almacen_de_largo_plazo(ruta).put(("perfil", "ana"), "1", {"dato": "Vive en Cali"})
+    assert almacen_de_largo_plazo(ruta).get(("perfil", "ana"), "1").value == {"dato": "Vive en Cali"}
+
+
+def test_un_cliente_anonimo_no_tiene_memoria_de_largo_plazo():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import Contexto, guardar_dato_del_cliente, recordar_datos_del_cliente
+    almacen = InMemoryStore()
+
+    class Corrida:
+        store, context = almacen, Contexto()  # sin identificador: anónimo
+    assert "anónimo" in guardar_dato_del_cliente.func("Vive en Cali", Corrida)
+    assert "No hay datos" in recordar_datos_del_cliente.func(Corrida)
+    assert almacen.search(("perfil", "anonimo")) == []  # nada se guardó en un espacio compartido
