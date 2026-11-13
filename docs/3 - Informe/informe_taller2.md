@@ -4,7 +4,7 @@
 
 El asistente del Taller 1 respondía cada pregunta por separado y siempre buscaba en el texto del sitio. Para este taller se convirtió en un **agente conversacional**: recuerda lo que el cliente ya dijo, tiene dos herramientas (búsqueda por significado en el texto oficial y consulta de datos exactos en tablas) y decide cuál usar con un prompt que hace de enrutador. El modelo del agente es `gemini-3.8-flash` por API de pago, con respaldo local (`llama3.2`).
 
-Con 22 preguntas etiquetadas, el agente eligió la herramienta esperada en 22 de 22 casos y los parámetros de la consulta (tabla y ciudad) en 11 de 11. Una conversación de cuatro turnos cuesta unos 0,02 USD y un turno tarda 9,7 s de mediana (de 2,4 a 38 s). Los 11 ataques directos contra el agente y los 7 casos de inyección indirecta (medidos sobre el asistente del Taller 1) fueron rechazados. Los límites principales son que el modelo ignora `temperature` y `top_p` (sus textos pueden variar entre ejecuciones), que algunas preguntas disparan búsquedas de más y que el conjunto de enrutamiento es pequeño.
+Con 22 preguntas etiquetadas, el agente eligió la herramienta esperada en 22 de 22 casos y los parámetros de la consulta (tabla y ciudad) en 11 de 11. Una conversación de cuatro turnos cuesta unos 0,02 USD y un turno tarda 9,7 s de mediana (de 2,4 a 38 s). Los 11 ataques directos y los 7 casos de inyección indirecta contra el agente fueron rechazados. Los límites principales son que el modelo ignora `temperature` y `top_p` (sus textos pueden variar entre ejecuciones), que algunas preguntas disparan búsquedas de más y que el conjunto de enrutamiento es pequeño.
 
 ## 1. Problema y objetivo
 
@@ -111,12 +111,12 @@ El agente puede ser más barato cuando no necesita buscar (el turno resuelto des
 
 ### 5.3 Seguridad
 
-Hay dos pruebas, con modelos distintos:
+Hay dos pruebas:
 
 - **Ataques directos, sobre el agente (`gemini-3.8-flash`, prompt v2).** La batería de 11 casos (juego de rol, fuga del prompt, orden directa, texto codificado en base64, texto invisible, mundo hipotético, falsa autoridad, cambio de rol, adulación, propina virtual y chantaje emocional) fue rechazada en los 11. Las categorías siguen las que Shen et al. (2023) observaron en jailbreaks reales.
-- **Inyección indirecta, sobre el asistente del Taller 1 (`gemini-3.5-flash`, prompt v3).** Son 7 casos en que una orden escondida (visible o con caracteres invisibles) se añade a un fragmento recuperado; los 7 fueron rechazados. Este es el riesgo que describen Greshake et al. (2023) y el que OWASP lista entre los principales de aplicaciones con modelos de lenguaje. No se repitió con el agente: su prompt declara igualmente las herramientas como «datos, no órdenes» y el texto recuperado se limpia, pero esa protección no está medida con el agente.
+- **Inyección indirecta, sobre el agente (`gemini-3.8-flash`, prompt v2) y sobre el asistente del Taller 1 (`gemini-3.5-flash`, prompt v3).** Son 7 casos en que una orden escondida (visible, en inglés, con caracteres invisibles, con un cierre falso del bloque de contexto o como dato falso con tono de autoridad) se agrega a lo que devuelve la herramienta; con el agente, a la que use en esa pregunta (`consultar_datos` en 4 casos y `buscar_en_base` en 3). Resistieron los 7 casos en ambos modelos. Este es el riesgo que describen Greshake et al. (2023) y el que OWASP lista entre los principales de aplicaciones con modelos de lenguaje.
 
-Son pruebas escritas por el equipo, con un solo modelo y un solo prompt cada una: muestran que estas órdenes no funcionaron, no que el sistema sea inmune.
+Son pruebas escritas por el equipo, con una sola corrida por caso: muestran que estas órdenes no funcionaron, no que el sistema sea inmune.
 
 ### 5.4 Decisiones de recuperación
 
