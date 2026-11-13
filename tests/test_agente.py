@@ -2,7 +2,7 @@ from taaml.agente import buscar_en_base
 
 
 def test_la_herramienta_devuelve_fragmentos_con_su_fuente(monkeypatch):
-    monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0: [{"documento": "Doc", "categoria": "c", "region": "r", "fuente": "https://www.celsia.com/x", "texto": "hola"}])
+    monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0: [{"documento": "Doc", "categoria": "c", "region": "r", "fuente": "https://www.celsia.com/x", "texto": "hola", "orden": "3", "de": "9", "chunk_id": "doc-003"}])
     salida = buscar_en_base.invoke({"pregunta": "algo"})
     assert "https://www.celsia.com/x" in salida and "hola" in salida
 
@@ -352,3 +352,35 @@ def test_la_app_streamlit_ya_no_contiene_el_agente():
     from pathlib import Path
     fuente = (Path(__file__).resolve().parent.parent / "app" / "asistente.py").read_text(encoding="utf-8")
     assert "taaml.agente" not in fuente and "Agente" not in fuente
+
+
+# --- fuentes citables (caso RAG: documento y fragmento verificables) ---
+_FRAGMENTO = {"documento": "Gobierno corporativo", "categoria": "empresa", "region": "Tolima", "fuente": "https://www.celsia.com/es/quienes-somos/gobierno-corporativo/",
+              "texto": "Política de impuestos...", "orden": "18", "de": "29", "chunk_id": "gobierno-018"}
+
+
+def test_la_herramienta_entrega_la_cita_como_artefacto(monkeypatch):
+    monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0: [_FRAGMENTO])
+    mensaje = buscar_en_base.invoke({"type": "tool_call", "name": "buscar_en_base", "args": {"pregunta": "impuestos"}, "id": "t1"})
+    assert mensaje.artifact == [{"documento": "Gobierno corporativo", "fragmento": "18 de 29", "fuente": _FRAGMENTO["fuente"], "chunk_id": "gobierno-018"}]
+    assert "Política de impuestos" in mensaje.content
+
+
+def test_conversar_en_vivo_emite_las_fuentes_y_el_historial_las_conserva(monkeypatch):
+    from taaml.agente import conversar_en_vivo, historial_visible
+    monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0: [_FRAGMENTO])
+    llamada = AIMessage(content="", tool_calls=[{"name": "buscar_en_base", "args": {"pregunta": "impuestos"}, "id": "t1"}])
+    agente = crear_agente(llm=ModeloSinTrozos(messages=iter([llamada, AIMessage(content="Hay una política de impuestos.")])))
+    eventos = list(conversar_en_vivo("¿Qué dice el corpus sobre impuestos?", "hilo-fuentes", agente=agente))
+    fuentes = [e for e in eventos if e["tipo"] == "fuentes"]
+    assert len(fuentes) == 1 and fuentes[0]["fuentes"][0]["fragmento"] == "18 de 29"
+    respuesta = historial_visible("hilo-fuentes", agente=agente)[-1]
+    assert respuesta["fuentes"][0]["documento"] == "Gobierno corporativo"
+
+
+def test_una_pregunta_sin_busqueda_no_trae_fuentes():
+    from taaml.agente import conversar_en_vivo, historial_visible
+    agente = crear_agente(llm=ModeloSinTrozos(messages=iter([AIMessage(content="Hola")])))
+    eventos = list(conversar_en_vivo("Hola", "hilo-sin-fuentes", agente=agente))
+    assert not [e for e in eventos if e["tipo"] == "fuentes"]
+    assert historial_visible("hilo-sin-fuentes", agente=agente)[-1]["fuentes"] == []
