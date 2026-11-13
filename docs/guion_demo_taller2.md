@@ -35,6 +35,12 @@ Evitar «¿Cómo pago mi factura y dónde puedo hacerlo en Cali?»: la tabla de 
 4. Qué señalar: lo que devuelve la herramienta llega encerrado en `<documentos_recuperados>` con un aviso de que son datos pasivos y no instrucciones (`delimitar_como_datos` en `src/taaml/agente.py`); un fragmento no puede cerrar ese bloque porque sus etiquetas se le quitan; el prompt v3 repite que lo que devuelven las herramientas son datos. La batería `scripts/12_probar_inyeccion_indirecta.py --agente` mide ocho variantes (orden visible, en inglés, con caracteres invisibles, cierre falso del bloque, dato falso con tono de autoridad, revelar el prompt, escribir en la memoria del cliente).
 5. Al terminar: apagar esta API y volver a encender la normal (`make api`).
 
+## Trazas en LangSmith (1 minuto, si el docente lo pide)
+1. Abrir smith.langchain.com → proyecto `taaml-celsia`: cada pregunta del frontend es una traza `agente_celsia`.
+2. Abrir una traza de una pregunta mixta: se ven los pasos (modelo, `buscar_en_base`, `consultar_datos`, modelo) con la latencia de cada uno al lado. Un argumento inválido en una herramienta aparece como error de ese paso.
+3. Evaluación: Datasets → `celsia-matriz-enrutamiento` → Experiments (si ya se corrió `scripts/24_evaluar_en_langsmith.py`): marcar `agente-con_tope` y `agente-sin_tope` y pulsar Compare.
+4. Decir: LangSmith observa y puntúa; no orquesta (eso lo hace `create_agent`).
+
 ## Memoria de largo plazo (1 minuto)
 1. Escribir «Me llamo Ana y trabajo en Carvajal»: el agente lo guarda (etiqueta `guardar_dato_del_cliente`).
 2. Pulsar **Nueva conversación** (hilo nuevo) y preguntar «¿Dónde trabajo y cómo me llamo?»: lo recupera del Store (`recordar_datos_del_cliente`). El hilo anterior ya no está, solo el dato del cliente.
