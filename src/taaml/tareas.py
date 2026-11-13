@@ -12,8 +12,10 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain_core.language_models import BaseChatModel
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.runnables import RunnableConfig
+from langchain_core.messages import HumanMessage
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable, RunnableConfig, RunnablePassthrough
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
@@ -109,6 +111,18 @@ def _estructurado(modelo: str, esquema: type[BaseModel]):
     return llm.with_structured_output(esquema, method="function_calling") if modelo.startswith(("deepseek", "ollama:")) else llm.with_structured_output(esquema)
 
 
+PLANTILLA_QA = ChatPromptTemplate.from_messages([("system", "{sistema}"), ("human", "{usuario}")])  # los textos ya vienen armados (prompts versionados); la plantilla solo los coloca
+
+
+def cadena_qa(modelo: str = MODELO_POR_DEFECTO) -> Runnable:
+    """Cadena del Q&A: {contexto, pregunta} → arma los dos mensajes → plantilla → modelo → texto.
+
+    `RunnablePassthrough.assign` conserva lo que entra y le suma `sistema` (base de conocimiento dentro del prompt) y `usuario` (pregunta delimitada).
+    """
+    preparar = RunnablePassthrough.assign(sistema=lambda e: construir_prompt_sistema(e["contexto"]), usuario=lambda e: construir_mensaje_usuario(e["pregunta"]))
+    return preparar | PLANTILLA_QA | obtener_modelo(modelo) | StrOutputParser()
+
+
 def responder_con_fuentes(pregunta: str, base: str = "rag", modelo: str = MODELO_POR_DEFECTO,
                           reordenar: bool = False) -> tuple[str, list[dict], dict]:
     """Q&A: responde con la base de conocimiento y devuelve también los fragmentos usados (vacío si `base` no es «rag»).
@@ -130,9 +144,8 @@ def responder_con_fuentes(pregunta: str, base: str = "rag", modelo: str = MODELO
     if metricas.get("error") is not None:
         raise RuntimeError(metricas["error"])
     contexto = formatear_contexto(fragmentos) if base == "rag" else cargar_base(base)
-    mensajes = [SystemMessage(construir_prompt_sistema(contexto)), HumanMessage(construir_mensaje_usuario(pregunta))]
     config: RunnableConfig = {"run_name": "qa_celsia", "tags": ["rag", base], "metadata": {"fragmentos": [f["chunk_id"] for f in fragmentos], "reordenar": reordenar}}
-    return obtener_modelo(modelo).invoke(mensajes, config=config).text.strip(), fragmentos, metricas
+    return cadena_qa(modelo).invoke({"contexto": contexto, "pregunta": pregunta}, config=config).strip(), fragmentos, metricas
 
 
 def responder(pregunta: str, base: str = "rag", modelo: str = MODELO_POR_DEFECTO, reordenar: bool = False) -> str:

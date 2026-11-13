@@ -21,12 +21,14 @@ El enfoque se apoya en tres ideas. La generación aumentada con recuperación (L
 El agente se construye con `create_agent` de LangChain. En cada turno ocurre lo siguiente:
 
 1. La pregunta se limpia de caracteres invisibles (Unicode), que pueden esconder órdenes.
-2. Un componente intermedio recorta lo que ve el modelo a los últimos mensajes que caben en unos 3.000 tokens, siempre empezando en un turno del cliente. El historial completo sigue guardado.
+2. Un componente intermedio recorta lo que ve el modelo a los últimos mensajes que caben en unos 3.000 tokens, siempre empezando en un turno del cliente (`trim_messages`). El historial completo sigue guardado; si la conversación guardada pasa de 8.000 tokens, `SummarizationMiddleware` reemplaza lo antiguo por un resumen y deja los últimos 6 mensajes tal cual. El prompt de sistema se arma en cada turno (`@dynamic_prompt`): el texto fijo de `v3_agente.md` más la fecha de hoy.
 3. El modelo lee el prompt (rol, contexto, instrucción, formato y restricciones) y decide si responde o llama a una herramienta.
 4. Si llama a una herramienta, recibe el resultado y vuelve a decidir; el ciclo termina cuando responde.
 5. El turno queda guardado en SQLite bajo el identificador de la conversación.
 
 Si Gemini falla (cuota o red), un respaldo cambia al modelo local `llama3.2`. En la prueba del respaldo acertó 2 de 4 casos con herramientas y es lento, por lo que sirve para no dejar al cliente sin respuesta y no como alternativa de calidad.
+
+El Q&A del Taller 1 es una cadena: `RunnablePassthrough.assign` agrega el prompt de sistema y la pregunta delimitada, `ChatPromptTemplate` los coloca como mensajes y el resultado pasa por el modelo y `StrOutputParser`.
 
 La alternativa de armar el flujo a mano con un grafo de estados (`StateGraph`) daría más control, pero para dos herramientas y un ciclo de decisión `create_agent` ya lo resuelve con menos código que mantener.
 

@@ -13,7 +13,7 @@ from typing import Literal
 from uuid import uuid4
 
 from langchain.agents import create_agent
-from langchain.agents.middleware import ModelFallbackMiddleware, ToolCallLimitMiddleware, wrap_model_call
+from langchain.agents.middleware import ModelFallbackMiddleware, SummarizationMiddleware, ToolCallLimitMiddleware, dynamic_prompt, wrap_model_call
 from langchain.tools import ToolRuntime
 from langchain_core.messages.utils import count_tokens_approximately, trim_messages
 from langchain_core.tools import tool
@@ -36,6 +36,8 @@ RUTA_MEMORIA = Path(__file__).resolve().parents[2] / "data" / "memoria" / "conve
 RUTA_MEMORIA_LARGA = RUTA_MEMORIA.with_name("largo_plazo.sqlite")  # lo que el cliente cuenta de sí mismo, para otras conversaciones
 MAX_DATOS_CLIENTE = 20  # tope de datos guardados por cliente
 MAX_TOKENS_HISTORIAL = 3000  # lo que el modelo ve de la conversación; el historial completo sigue guardado
+UMBRAL_RESUMEN_TOKENS = 8000  # por encima de esto la conversación guardada se resume (con el recorte de arriba, el modelo ve 3.000 como máximo)
+MENSAJES_TRAS_RESUMEN = 6  # los últimos mensajes se conservan tal cual; lo anterior queda en un resumen
 MAX_LLAMADAS_POR_TURNO = 4  # tope duro de herramientas por pregunta: una consulta mixta usa 2; más es un modelo que insiste (en un ensayo llegó a 5 y 27.000 tokens)
 FRAGMENTOS_AGENTE = 4  # cada turno reenvía el historial: pocos fragmentos mantienen bajo el costo en tokens
 
@@ -149,6 +151,13 @@ def limitar_historial(request, handler):
     return handler(request.override(messages=recorte or request.messages))  # un solo turno gigante no se recorta a nada
 
 
+@dynamic_prompt
+def con_fecha_de_hoy(request):
+    """El prompt de sistema se arma en cada turno: al texto fijo de `v3_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
+    base = request.system_message.text if request.system_message else ""
+    return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
+
+
 def almacen_de_memoria(ruta: Path | None = None) -> SqliteSaver:
     """Checkpointer en SQLite: guarda cada conversación en disco bajo su `thread_id`."""
     ruta = ruta or RUTA_MEMORIA
@@ -204,7 +213,9 @@ def crear_agente(modelo: str = MODELO_AGENTE, llm=None, checkpointer=None, store
     respaldo = [ModelFallbackMiddleware(obtener_modelo(MODELO_RESPALDO))] if con_respaldo else []
     return create_agent(model=llm, tools=HERRAMIENTAS, system_prompt=leer_prompt("v3_agente.md"), checkpointer=checkpointer, store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
                         context_schema=Contexto,
-                        middleware=[limitar_historial, ToolCallLimitMiddleware(run_limit=MAX_LLAMADAS_POR_TURNO, exit_behavior="continue"), *respaldo])
+                        middleware=[limitar_historial, con_fecha_de_hoy,
+                                    SummarizationMiddleware(model=llm, trigger=("tokens", UMBRAL_RESUMEN_TOKENS), keep=("messages", MENSAJES_TRAS_RESUMEN)),
+                                    ToolCallLimitMiddleware(run_limit=MAX_LLAMADAS_POR_TURNO, exit_behavior="continue"), *respaldo])
 
 
 def _agente(modelo: str):
@@ -265,6 +276,8 @@ def historial_visible(thread_id: str, modelo: str = MODELO_AGENTE, agente=None) 
     mensajes = agente.get_state({"configurable": {"thread_id": thread_id}}).values.get("messages", [])
     visibles, llamadas, fuentes = [], [], []
     for m in mensajes:
+        if m.type == "human" and m.additional_kwargs.get("lc_source") == "summarization":
+            continue  # el resumen de lo anterior es para el modelo, no para la pantalla
         if m.type == "human":
             visibles.append({"rol": "user", "texto": m.text})
             llamadas, fuentes = [], []
