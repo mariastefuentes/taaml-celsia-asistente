@@ -4,7 +4,8 @@
 ![Python 3.12](https://img.shields.io/badge/python-3.12-blue)
 ![uv](https://img.shields.io/badge/gestor-uv-5C2D91)
 ![LangChain](https://img.shields.io/badge/LangChain-1.x-1C3C3C)
-![Streamlit](https://img.shields.io/badge/app-Streamlit-FF4B4B)
+![Streamlit](https://img.shields.io/badge/Taller%201-Streamlit-FF4B4B)
+![React](https://img.shields.io/badge/M%C3%B3dulo%202-React%20%2B%20FastAPI-61DAFB)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-green.svg)](LICENSE)
 
 Base de conocimiento y asistente de preguntas y respuestas (Q&A, resumen y FAQ) sobre **Celsia**, empresa de energía del Valle del Cauca y el Tolima. Responde **solo con información oficial de celsia.com** y dice «no sé» cuando la fuente no lo trae. Taller 1 del curso *Técnicas avanzadas de IA aplicadas en modelos de lenguaje* (Maestría en IA y Ciencias de Datos, UAO, 2026-2S).
@@ -74,7 +75,7 @@ sequenceDiagram
 | Blindaje | Limpieza de caracteres invisibles, reglas del prompt y 11/11 ataques directos y 8/8 indirectos resistidos |
 | Respaldo | `llama3.2` local si Gemini falla |
 
-La app tiene cinco pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes**, **Corpus y scraping** (etapas del pipeline y métricas) y **Agente** (chat con memoria que elige entre datos exactos y búsqueda en el texto).
+La app de Streamlit del Taller 1 tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes** y **Corpus y scraping** (etapas del pipeline y métricas). El agente del Módulo 2 no está en ella: se entrega con la API y el frontend de arriba (`make api` y `make frontend`).
 
 ## Capturas
 
@@ -125,7 +126,7 @@ La API expone `GET /api/salud`, `POST /api/chat` (un turno, por streaming) y `GE
 ```bash
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)
 make modulo1                              # la app del Módulo 1: solo el corpus y las etapas del scraping
-uv run streamlit run app/asistente.py     # la aplicación completa (Q&A, Resumen, FAQ y Corpus)
+uv run streamlit run app/asistente.py     # la app del Taller 1 (Q&A, Resumen, FAQ y Corpus); el agente del Módulo 2 va por API + frontend
 make test                                 # pruebas de componentes, sin Gemini ni Ollama (el CI las corre en cada PR)
 make lint                                 # ruff y lock vigente
 uv run python scripts/16_ensayo_demo.py   # revisa que la demo esté lista, sin gastar cuota
@@ -187,7 +188,9 @@ specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 011: a
 .specify/   memoria del proyecto: memory/constitution.md (verdad central)
 docs/        incluye skillspector-corpus-medallion.md, el reporte de seguridad de la skill
 .github/    plantilla de Pull Request y CI
-app/        aplicaciones Streamlit: asistente.py (completa) y modulo1.py (solo corpus y scraping)
+api/        Módulo 2: API FastAPI del agente (streaming SSE, sesiones, memoria del cliente)
+frontend/   Módulo 2: interfaz React + Vite, separada de la API
+app/        Taller 1: aplicaciones Streamlit, asistente.py (Q&A, Resumen, FAQ y Corpus) y modulo1.py (solo corpus y scraping)
 ```
 
 ## Skills
