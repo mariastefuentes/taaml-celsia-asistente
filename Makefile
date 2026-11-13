@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app api frontend test lint check format clean datos scraping-demo indice recuperacion ensayo evaluar pdf
+.PHONY: help ayuda setup modulo1 app api frontend demo-inyeccion test lint check format clean datos scraping-demo indice recuperacion ensayo evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -20,6 +20,7 @@ ayuda:
 	$(info     make app             App del Taller 1 (Streamlit): Q&A, Resumen, FAQ y Corpus)
 	$(info     make api             MODULO 2: API FastAPI del agente, en http://127.0.0.1:8000)
 	$(info     make frontend        MODULO 2: frontend React, en http://localhost:5173 (en otra terminal, con la API encendida))
+	$(info     make demo-inyeccion  MODULO 2: API con un corpus de demo que trae un documento envenenado (apaga antes la API normal))
 	$(info )
 	$(info   DATOS Y SCRAPING)
 	$(info     make scraping-demo   borra la carpeta de demo y descarga 5 paginas del blog (no toca data/1_bronze ni gasta cuota))
@@ -63,6 +64,9 @@ api:
 
 frontend:
 	cd frontend && npm install && npm run dev
+
+demo-inyeccion:
+	uv run python scripts/23_demo_corpus_envenenado.py --servir
 
 test:
 	uv run python -m pytest
