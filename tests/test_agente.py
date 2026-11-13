@@ -326,3 +326,29 @@ def test_un_cliente_anonimo_no_tiene_memoria_de_largo_plazo():
     assert "anónimo" in guardar_dato_del_cliente.func("Vive en Cali", Corrida)
     assert "No hay datos" in recordar_datos_del_cliente.func(Corrida)
     assert almacen.search(("perfil", "anonimo")) == []  # nada se guardó en un espacio compartido
+
+
+from taaml.agente import etiqueta_herramientas  # noqa: E402
+
+
+def test_etiqueta_sin_herramientas():
+    assert etiqueta_herramientas([]) == "Respondió sin consultar herramientas"
+
+
+def test_etiqueta_de_datos_muestra_tabla_y_filtros():
+    llamadas = [{"herramienta": "consultar_datos", "args": {"tabla": "sedes", "ciudad": "Ibagué", "tipo": ""}}]
+    assert etiqueta_herramientas(llamadas) == "Usó: consultó la tabla sedes (ciudad: Ibagué)"
+
+
+def test_etiqueta_de_texto_y_de_ambas():
+    texto = {"herramienta": "buscar_en_base", "args": {"pregunta": "cancelar"}}
+    datos = {"herramienta": "consultar_datos", "args": {"tabla": "contactos", "tipo": "whatsapp"}}
+    assert etiqueta_herramientas([texto]) == "Usó: buscó en el texto del sitio"
+    assert etiqueta_herramientas([datos, texto]).startswith("Usó: consultó la tabla contactos (tipo: whatsapp); buscó")
+
+
+def test_la_app_streamlit_ya_no_contiene_el_agente():
+    """El agente del Módulo 2 se entrega con API + frontend: Streamlit y Gradio no se aceptan como entrega."""
+    from pathlib import Path
+    fuente = (Path(__file__).resolve().parent.parent / "app" / "asistente.py").read_text(encoding="utf-8")
+    assert "taaml.agente" not in fuente and "Agente" not in fuente

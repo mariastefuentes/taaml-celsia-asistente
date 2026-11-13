@@ -1,15 +1,15 @@
-"""Aplicación Streamlit del asistente de Celsia: Q&A, Resumen, FAQ, Corpus y Agente (con memoria y dos herramientas).
+"""Aplicación Streamlit del asistente de Celsia (Taller 1): Q&A, Resumen, FAQ y Corpus.
+
+El agente del Módulo 2 no vive aquí: se entrega con la API FastAPI (api/) y el frontend React (frontend/).
 
 Uso:  uv run streamlit run app/asistente.py
 """
 import sys
 from pathlib import Path
-from uuid import uuid4
 
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
-from taaml.agente import MODELO_AGENTE, conversar, etiqueta_herramientas, historial_visible  # noqa: E402
 from taaml.base import cargar_documentos  # noqa: E402
 from taaml.corpus import MOTIVOS, RAG, SCRAPING, metricas  # noqa: E402
 from taaml.errores import mensaje_error  # noqa: E402
@@ -90,7 +90,7 @@ with st.sidebar:
                          "«compacta»: solo el inicio de cada documento, sin buscar.\n\n"
                          "«completa»: toda la base en el prompt, como pide el enunciado (~340.000 tokens por pregunta, unas 80 veces más cara que rag; úsala solo para demostrar la diferencia).")
 
-tab_qa, tab_resumen, tab_faq, tab_corpus, tab_agente = st.tabs(["Preguntas y respuestas", "Resumen", "Preguntas frecuentes", "Corpus y scraping", "Agente"])
+tab_qa, tab_resumen, tab_faq, tab_corpus = st.tabs(["Preguntas y respuestas", "Resumen", "Preguntas frecuentes", "Corpus y scraping"])
 
 with tab_qa:
     with st.form("form_pregunta", border=False):
@@ -170,36 +170,3 @@ with tab_corpus:
     with st.expander(f"Documentos descartados en la curaduría (primeros {len(c['descartados_ejemplos'])})"):
         st.dataframe([{"Regla": f["regla"], "Título": f["title"], "Motivo": f["motivo"], "Fuente": f["url"]} for f in c["descartados_ejemplos"]],
                      hide_index=True, use_container_width=True)
-
-with tab_agente:
-    st.caption(f"Conversación con memoria. El agente ({MODELO_AGENTE}) decide si consulta datos exactos (sedes, contactos) o busca en el texto del sitio.")
-    if "agente_hilo" not in st.session_state:  # el hilo va en la dirección (?hilo=...): al recargar la página la conversación se recupera de SQLite
-        hilo = st.query_params.get("hilo") or uuid4().hex
-        try:
-            mensajes = historial_visible(hilo) if "hilo" in st.query_params else []
-        except Exception:  # noqa: BLE001  una memoria ilegible no debe tumbar la app: se empieza en blanco
-            mensajes = []
-        st.session_state.agente_hilo, st.session_state.agente_mensajes = hilo, mensajes
-        st.query_params["hilo"] = hilo
-    if st.button("Nueva conversación"):
-        st.session_state.agente_hilo, st.session_state.agente_mensajes = uuid4().hex, []
-        st.query_params["hilo"] = st.session_state.agente_hilo
-    for mensaje in st.session_state.agente_mensajes:
-        with st.chat_message(mensaje["rol"]):
-            st.markdown(mensaje["texto"])
-            if mensaje.get("usadas"):
-                st.caption(mensaje["usadas"])
-    if (entrada := st.chat_input("Pregunta por sedes, teléfonos, trámites...", max_chars=500)):
-        st.session_state.agente_mensajes.append({"rol": "user", "texto": entrada})
-        with st.chat_message("user"):
-            st.markdown(entrada)
-        with st.chat_message("assistant"):
-            try:
-                with st.spinner("Pensando..."):
-                    respuesta, llamadas = conversar(entrada, st.session_state.agente_hilo)
-            except Exception as e:  # noqa: BLE001
-                mostrar_error(e)
-            else:
-                st.markdown(respuesta)
-                st.caption(etiqueta := etiqueta_herramientas(llamadas))
-                st.session_state.agente_mensajes.append({"rol": "assistant", "texto": respuesta, "usadas": etiqueta})
