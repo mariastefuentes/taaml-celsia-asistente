@@ -16,6 +16,7 @@ from langchain.agents.middleware import ModelFallbackMiddleware, wrap_model_call
 from langchain.tools import ToolRuntime
 from langchain_core.messages.utils import count_tokens_approximately, trim_messages
 from langchain_core.tools import tool
+from pydantic import BaseModel, Field
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.store.base import BaseStore
@@ -49,7 +50,18 @@ def buscar_en_base(pregunta: str) -> str:
     return formatear_contexto(buscar(pregunta, k=FRAGMENTOS_AGENTE))
 
 
-@tool
+class ConsultaDatos(BaseModel):
+    """Esquema de entrada de `consultar_datos`: lo que el modelo puede pedir y lo que se valida antes de tocar los datos."""
+
+    tabla: Literal["sedes", "contactos", "catalogo"] = Field(description="Tabla a consultar: sedes, contactos o catalogo.")
+    ciudad: str = Field("", max_length=80, description="Ciudad de la sede (solo tabla sedes), por ejemplo «Cali».")
+    departamento: str = Field("", max_length=80, description="Departamento de la sede (solo tabla sedes).")
+    tipo: str = Field("", max_length=80, description="Tipo de sede (tabla sedes) o de contacto: teléfono, correo, WhatsApp, enlace (tabla contactos).")
+    tema: str = Field("", max_length=80, description="Para qué sirve el contacto (solo tabla contactos), por ejemplo «pagos».")
+    texto: str = Field("", max_length=120, description="Texto del título de la página (solo tabla catalogo).")
+
+
+@tool(args_schema=ConsultaDatos)
 def consultar_datos(tabla: Literal["sedes", "contactos", "catalogo"], ciudad: str = "", departamento: str = "", tipo: str = "",
                     tema: str = "", texto: str = "") -> str:
     """Consulta datos exactos de Celsia en tablas, sin buscar por significado. Úsala para direcciones, horarios y teléfonos de sedes,

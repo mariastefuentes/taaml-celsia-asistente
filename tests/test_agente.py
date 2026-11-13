@@ -29,6 +29,22 @@ def test_consultar_datos_rechaza_una_tabla_que_no_existe():
         consultar_datos.invoke({"tabla": "facturas"})
 
 
+def test_consultar_datos_tiene_esquema_pydantic_con_campos_descritos():
+    from taaml.agente import ConsultaDatos, consultar_datos
+    assert consultar_datos.args_schema is ConsultaDatos
+    campos = ConsultaDatos.model_fields
+    assert set(campos) == {"tabla", "ciudad", "departamento", "tipo", "tema", "texto"}
+    assert all(c.description for c in campos.values())
+
+
+def test_el_esquema_rechaza_filtros_demasiado_largos():
+    import pytest
+    from pydantic import ValidationError
+    from taaml.agente import ConsultaDatos
+    with pytest.raises(ValidationError):
+        ConsultaDatos(tabla="sedes", ciudad="x" * 500)
+
+
 def test_la_descripcion_orienta_al_modelo_sobre_cuando_usarla():
     from taaml.agente import consultar_datos
     d = consultar_datos.description.lower()
