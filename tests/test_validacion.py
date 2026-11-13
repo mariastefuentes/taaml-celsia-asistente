@@ -19,6 +19,13 @@ def test_correo_y_enlace_inventados_se_marcan():
     assert "pagos@celsia-seguro.example.net" in marcados and "https://celsia-pagos.example.net/pagar" in marcados
 
 
+def test_un_enlace_que_es_solo_el_dominio_de_la_fuente_no_se_marca_pero_una_pagina_inventada_si():
+    fragmentos = [{"texto": "Ingresa a www.celsia.com y entra a Zona Clientes.", "fuente": "https://www.celsia.com/es/pagos"}]
+    assert datos_sin_respaldo("Entra a [celsia.com](https://www.celsia.com)", fragmentos) == []
+    assert datos_sin_respaldo("Mira https://www.celsia.com/es/oferta-falsa", fragmentos) == ["https://www.celsia.com/es/oferta-falsa"]
+    assert datos_sin_respaldo("Mira https://www.otrositio.com", fragmentos) == ["https://www.otrositio.com"]
+
+
 def test_numeros_de_una_cifra_y_enumeraciones_no_cuentan():
     assert datos_sin_respaldo("1. Entre a la página.\n2. Pulse el botón en 3 pasos.", FRAGMENTOS) == []
 
