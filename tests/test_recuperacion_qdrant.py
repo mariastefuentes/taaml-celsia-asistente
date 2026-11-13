@@ -54,3 +54,83 @@ def test_construir_qdrant_reemplaza_la_coleccion(monkeypatch, tmp_path):
     cliente.close()
     recuperacion._cliente_qdrant.cache_clear()
     recuperacion._coleccion.cache_clear()
+
+
+# --- migración blue/green y filtros por payload ---
+META = {"categoria": "x", "region": "y", "fuente": "z"}
+
+
+@pytest.fixture
+def carpeta_temporal(monkeypatch, tmp_path):
+    monkeypatch.setattr(recuperacion, "QDRANT", tmp_path / "qdrant")
+    recuperacion._cliente_qdrant.cache_clear()  # el cliente de la carpeta real queda abierto; este apunta a la carpeta temporal
+    yield recuperacion._cliente_qdrant()
+    recuperacion._cliente_qdrant().close()
+    recuperacion._cliente_qdrant.cache_clear()
+    recuperacion._coleccion.cache_clear()
+
+
+def _alias(cliente):
+    return next(a.collection_name for a in cliente.get_aliases().aliases if a.alias_name == recuperacion.COLECCION)
+
+
+def test_la_migracion_blue_green_mueve_el_alias_y_conserva_solo_la_version_anterior(carpeta_temporal):
+    cliente, vectores = carpeta_temporal, np.eye(3, dtype=np.float32)
+    assert construir_qdrant(["a", "b", "c"], vectores, [META] * 3) == "celsia_v1" and _alias(cliente) == "celsia_v1"
+    assert construir_qdrant(["a", "b"], vectores[:2], [META] * 2) == "celsia_v2" and _alias(cliente) == "celsia_v2"
+    construir_qdrant(["a"], vectores[:1], [META])
+    nombres = {c.name for c in cliente.get_collections().collections}
+    assert nombres == {"celsia_v2", "celsia_v3"} and _alias(cliente) == "celsia_v3"  # v1 se borró; v2 queda para revertir
+    assert cliente.count(recuperacion.COLECCION).count == 1
+
+
+def test_si_la_validacion_falla_el_alias_sigue_en_la_version_anterior(carpeta_temporal):
+    cliente, vectores = carpeta_temporal, np.eye(3, dtype=np.float32)
+    construir_qdrant(["a", "b", "c"], vectores, [META] * 3)
+    with pytest.raises(RuntimeError, match="no pasó la validación"):
+        construir_qdrant(["a", "b", "c"], vectores, [META] * 2)  # llegan 2 puntos de 3: la colección nueva está incompleta
+    assert _alias(cliente) == "celsia_v1" and cliente.count(recuperacion.COLECCION).count == 3
+    assert {c.name for c in cliente.get_collections().collections} == {"celsia_v1"}  # la nueva se borró
+
+
+def test_revertir_vuelve_a_la_version_anterior(carpeta_temporal):
+    cliente, vectores = carpeta_temporal, np.eye(3, dtype=np.float32)
+    construir_qdrant(["a", "b", "c"], vectores, [META] * 3)
+    construir_qdrant(["a"], vectores[:1], [META])
+    assert cliente.count(recuperacion.COLECCION).count == 1
+    assert recuperacion.revertir_qdrant() == "celsia_v1" and cliente.count(recuperacion.COLECCION).count == 3
+    with pytest.raises(RuntimeError, match="anterior"):
+        recuperacion._cliente_qdrant().delete_collection("celsia_v2")
+        recuperacion.revertir_qdrant()
+
+
+def test_un_indice_del_formato_anterior_se_migra_al_primer_alias(carpeta_temporal):
+    from qdrant_client import models
+    cliente = carpeta_temporal
+    cliente.create_collection(recuperacion.COLECCION, vectors_config=models.VectorParams(size=3, distance=models.Distance.COSINE))  # una colección con el nombre del alias
+    construir_qdrant(["a", "b"], np.eye(3, dtype=np.float32)[:2], [META] * 2)
+    assert _alias(cliente) == "celsia_v1" and cliente.count(recuperacion.COLECCION).count == 2
+
+
+def test_el_filtro_por_payload_solo_compara_los_puntos_que_lo_cumplen(carpeta_temporal, monkeypatch):
+    from taaml.recuperacion import _similitudes
+    fragmentos = [{"chunk_id": "a", "categoria": "sedes", "region": "Tolima"}, {"chunk_id": "b", "categoria": "blog", "region": "Tolima"}, {"chunk_id": "c", "categoria": "sedes", "region": "Valle"}]
+    monkeypatch.setattr(recuperacion, "cargar_fragmentos", lambda: fragmentos)
+    construir_qdrant(["a", "b", "c"], np.eye(3, dtype=np.float32), [{k: f[k] for k in ("categoria", "region")} for f in fragmentos])
+    puntajes = _similitudes(np.array([0.0, 1.0, 0.0], dtype=np.float32), {"categoria": "sedes"})
+    assert np.isneginf(puntajes[1]) and np.isfinite(puntajes[[0, 2]]).all()  # «b» (la mejor sin filtro) queda fuera
+    solo_tolima_sedes = _similitudes(np.array([1.0, 0.0, 0.0], dtype=np.float32), {"categoria": "sedes", "region": "Tolima"})
+    assert np.isfinite(solo_tolima_sedes).tolist() == [True, False, False]
+
+
+def test_buscar_con_filtro_devuelve_solo_fragmentos_que_lo_cumplen():
+    resultado = buscar("oficina de atención en Ibagué", 5, "palabras", {"categoria": "sedes"})
+    assert resultado and all(r["categoria"] == "sedes" for r in resultado)
+    sin_filtro = buscar("oficina de atención en Ibagué", 5, "palabras")
+    assert any(r["categoria"] != "sedes" for r in sin_filtro) or resultado == sin_filtro
+
+
+def test_un_filtro_que_nadie_cumple_devuelve_vacio_y_un_campo_desconocido_falla():
+    assert buscar("sedes", 5, "palabras", {"categoria": "no-existe"}) == []
+    with pytest.raises(ValueError, match="No se puede filtrar"):
+        buscar("sedes", 5, "palabras", {"autor": "x"})

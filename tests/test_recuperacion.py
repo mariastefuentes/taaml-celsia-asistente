@@ -82,7 +82,7 @@ def test_si_la_busqueda_falla_se_mide_el_tiempo_y_se_informa_el_error(monkeypatc
 
 
 def test_buscar_sigue_devolviendo_la_lista_y_propagando_errores(monkeypatch):
-    monkeypatch.setattr(recuperacion, "_buscar", lambda pregunta, k, metodo: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(recuperacion, "_buscar", lambda pregunta, k, metodo, filtro=None: (_ for _ in ()).throw(RuntimeError("boom")))
     with pytest.raises(RuntimeError, match="boom"):
         buscar("pregunta", k=3, metodo="auto")
 
@@ -106,7 +106,7 @@ def test_con_indice_vigente_la_recuperacion_automatica_usa_embeddings(monkeypatc
     n = len(cargar_fragmentos())
     monkeypatch.setattr(recuperacion, "_matriz", lambda: np.ones((n, 4), dtype=np.float32))
     monkeypatch.setattr(recuperacion, "embeddings", lambda textos, tipo: np.ones((1, 4), dtype=np.float32))
-    monkeypatch.setattr(recuperacion, "_similitudes", lambda vector: np.arange(n, dtype=float))
+    monkeypatch.setattr(recuperacion, "_similitudes", lambda vector, filtro=None: np.arange(n, dtype=float))
     fragmentos, metricas = recuperar("teléfono de atención al cliente", k=3)
     assert metricas["metodo"] == "embeddings" and metricas["encontrados"] == 3
     assert all(f["metodo"] == "embeddings" for f in fragmentos)

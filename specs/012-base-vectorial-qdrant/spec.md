@@ -17,7 +17,7 @@ Nace de la auditoría del caso 1 de la sustentación del Módulo 2: «el agente 
 - Auditoría de dependencias: sin avisos de `chromadb` (de 62 avisos en 5 paquetes a 44 en 3).
 
 ## Lo que se aprendió
-- El modo local de Qdrant devuelve los puntos de antes si se borra y recrea una colección dentro del mismo proceso: `construir_qdrant` vacía la colección recién creada para que reindexar reemplace de verdad.
+- Reindexar es una migración blue/green: `construir_qdrant` carga `celsia_v<n>`, la valida y mueve el alias `celsia`; conserva la versión anterior (`revertir_qdrant` vuelve a ella) y no reutiliza nombres, lo que evita que el modo local de Qdrant devuelva los puntos de una colección borrada y recreada con el mismo nombre. Se puede filtrar por `categoria` y `region` (payload).
 - Apaga la API antes de correr `07_construir_indice.py`: el modo local bloquea la carpeta.
 
 ## Fuera de alcance

@@ -71,19 +71,59 @@ def _id_punto(chunk_id: str) -> str:
     return str(uuid5(NAMESPACE_URL, chunk_id))
 
 
-def construir_qdrant(ids: list[str], vectores: np.ndarray, metadatos: list[dict]) -> None:
-    """Crea (o reemplaza) la colección de Qdrant con los vectores ya calculados; el texto sigue en chunks.jsonl."""
+def _versiones(cliente: QdrantClient) -> list[int]:
+    """Números de versión de las colecciones `celsia_v<n>` que hay en disco, de menor a mayor."""
+    nombres = [c.name for c in cliente.get_collections().collections]
+    return sorted(int(n.removeprefix(f"{COLECCION}_v")) for n in nombres if n.startswith(f"{COLECCION}_v") and n.removeprefix(f"{COLECCION}_v").isdigit())
+
+
+def _apuntar_alias(cliente: QdrantClient, coleccion: str) -> None:
+    """Cambia el alias `celsia` a `coleccion` en una sola operación: quien consulta ve la versión vieja o la nueva, nunca un estado intermedio."""
+    operaciones: list = []
+    if any(a.alias_name == COLECCION for a in cliente.get_aliases().aliases):
+        operaciones.append(models.DeleteAliasOperation(delete_alias=models.DeleteAlias(alias_name=COLECCION)))
+    operaciones.append(models.CreateAliasOperation(create_alias=models.CreateAlias(collection_name=coleccion, alias_name=COLECCION)))
+    cliente.update_collection_aliases(change_aliases_operations=operaciones)
+
+
+def construir_qdrant(ids: list[str], vectores: np.ndarray, metadatos: list[dict]) -> str:
+    """Migración blue/green: carga una colección nueva (`celsia_v<n>`), la valida y solo entonces mueve el alias `celsia` hacia ella.
+
+    La versión en uso (blue) sigue respondiendo mientras la nueva (green) se carga; si la validación falla, la nueva se borra y el alias no se toca.
+    Se conserva la versión anterior para poder volver atrás con `revertir_qdrant`; las más viejas se borran. Devuelve el nombre de la colección nueva.
+    """
     cliente = _cliente_qdrant()
-    if cliente.collection_exists(COLECCION):
-        cliente.delete_collection(COLECCION)
-    cliente.create_collection(COLECCION, vectors_config=models.VectorParams(size=int(vectores.shape[1]), distance=models.Distance.COSINE))
-    viejos = [p.id for p in cliente.scroll(COLECCION, limit=100_000, with_payload=False, with_vectors=False)[0]]
-    if viejos:  # el modo local de Qdrant devuelve los puntos de antes al recrear una colección en el mismo proceso: se vacía para reemplazar de verdad
-        cliente.delete(COLECCION, points_selector=models.PointIdsList(points=viejos))
+    versiones = _versiones(cliente)
+    nueva = f"{COLECCION}_v{(versiones[-1] if versiones else 0) + 1}"
+    cliente.create_collection(nueva, vectors_config=models.VectorParams(size=int(vectores.shape[1]), distance=models.Distance.COSINE))
     for n in range(0, len(ids), 500):
         lote = zip(ids[n:n + 500], vectores[n:n + 500], metadatos[n:n + 500])
-        cliente.upsert(COLECCION, points=[models.PointStruct(id=_id_punto(i), vector=v.tolist(), payload={"chunk_id": i, **m}) for i, v, m in lote])
+        cliente.upsert(nueva, points=[models.PointStruct(id=_id_punto(i), vector=v.tolist(), payload={"chunk_id": i, **m}) for i, v, m in lote])
+    cuenta = cliente.count(nueva).count
+    mejor = cliente.query_points(nueva, query=vectores[0].tolist(), limit=1, with_payload=False).points[0] if cuenta else None
+    if cuenta != len(ids) or (mejor is not None and abs(mejor.score - 1.0) > 1e-3):  # tiene todos los puntos y un fragmento se encuentra a sí mismo con similitud 1
+        cliente.delete_collection(nueva)
+        raise RuntimeError(f"La colección {nueva} no pasó la validación ({cuenta} de {len(ids)} puntos); el alias {COLECCION} sigue apuntando a la versión anterior.")
+    if COLECCION in [c.name for c in cliente.get_collections().collections]:  # índice del formato anterior: una colección con el nombre del alias, que no puede convivir con él
+        cliente.delete_collection(COLECCION)
+    _apuntar_alias(cliente, nueva)
+    for viejo in versiones[:-1]:  # se queda la inmediata anterior (para revertir) y se borran las más antiguas
+        cliente.delete_collection(f"{COLECCION}_v{viejo}")
     _coleccion.cache_clear()
+    return nueva
+
+
+def revertir_qdrant() -> str:
+    """Vuelve a la versión anterior de la colección (el paso de vuelta de la migración blue/green). Devuelve su nombre."""
+    cliente = _cliente_qdrant()
+    en_uso = next((a.collection_name for a in cliente.get_aliases().aliases if a.alias_name == COLECCION), None)
+    anteriores = [v for v in _versiones(cliente) if f"{COLECCION}_v{v}" != en_uso]
+    if not anteriores:
+        raise RuntimeError("No hay una versión anterior a la que volver.")
+    destino = f"{COLECCION}_v{anteriores[-1]}"
+    _apuntar_alias(cliente, destino)
+    _coleccion.cache_clear()
+    return destino
 
 
 @lru_cache(maxsize=1)
@@ -106,14 +146,35 @@ def almacen_vectorial() -> str:
     return "qdrant" if _coleccion() is not None else "numpy" if _matriz() is not None else "ninguno"
 
 
-def _similitudes(vector: np.ndarray) -> np.ndarray:
-    """Similitud del coseno de la pregunta con cada fragmento, en el orden de chunks.jsonl; usa Qdrant si está vigente y si no la matriz."""
+CAMPOS_FILTRABLES = ("categoria", "region")  # campos del payload por los que se puede filtrar
+
+
+def _mascara(filtro: dict | None) -> np.ndarray | None:
+    """True para los fragmentos que cumplen el filtro (todos los campos pedidos iguales), en el orden de chunks.jsonl; None si no hay filtro."""
+    if not filtro:
+        return None
+    desconocidos = set(filtro) - set(CAMPOS_FILTRABLES)
+    if desconocidos:
+        raise ValueError(f"No se puede filtrar por {sorted(desconocidos)}; los campos son {list(CAMPOS_FILTRABLES)}")
+    return np.array([all(f[campo] == valor for campo, valor in filtro.items()) for f in cargar_fragmentos()])
+
+
+def _similitudes(vector: np.ndarray, filtro: dict | None = None) -> np.ndarray:
+    """Similitud del coseno de la pregunta con cada fragmento, en el orden de chunks.jsonl; usa Qdrant si está vigente y si no la matriz.
+
+    Con `filtro` (por ejemplo {"categoria": "sedes"}) los fragmentos que no lo cumplen quedan en -inf. En Qdrant el filtro se aplica **antes** de comparar
+    (pre-filtrado: solo se comparan los puntos cuyo payload lo cumple), así que `limit` no se gasta en puntos que luego se descartarían.
+    """
+    mascara = _mascara(filtro)
     cliente = _coleccion()
     if cliente is None:
-        return _matriz() @ vector
-    respuesta = cliente.query_points(COLECCION, query=vector.tolist(), limit=cliente.count(COLECCION).count, with_payload=["chunk_id"])
+        puntajes = _matriz() @ vector
+        return puntajes if mascara is None else np.where(mascara, puntajes, -np.inf)
+    condiciones = [models.FieldCondition(key=campo, match=models.MatchValue(value=valor)) for campo, valor in (filtro or {}).items()]
+    cuantos = int(mascara.sum()) if mascara is not None else cliente.count(COLECCION).count
+    respuesta = cliente.query_points(COLECCION, query=vector.tolist(), limit=max(cuantos, 1), with_payload=["chunk_id"], query_filter=models.Filter(must=condiciones) if condiciones else None)
     por_id = {(p.payload or {})["chunk_id"]: p.score for p in respuesta.points}
-    return np.array([por_id[f["chunk_id"]] for f in cargar_fragmentos()])
+    return np.array([por_id.get(f["chunk_id"], -np.inf) for f in cargar_fragmentos()])
 
 
 def _palabras(texto: str) -> list[str]:
@@ -144,34 +205,38 @@ def _por_rango(puntajes: np.ndarray) -> np.ndarray:
     return 1.0 / (60 + rangos)
 
 
-def _buscar(pregunta: str, k: int, metodo: str) -> tuple[list[dict], str]:
+def _buscar(pregunta: str, k: int, metodo: str, filtro: dict | None = None) -> tuple[list[dict], str]:
     """Los k fragmentos más relevantes para la pregunta, del más al menos parecido, con su puntaje, y el método con el que se encontraron.
 
     metodo: «embeddings» (significado), «palabras» (coincidencia de palabras) o «hibrido» (las dos combinadas por posición).
+    filtro: opcional, por campos del payload (`categoria`, `region`); solo se devuelven fragmentos que lo cumplen (pueden ser menos de k).
     «auto» usa embeddings (en la medición superó al híbrido); si no hay índice vigente o Ollama no responde, cae a palabras.
     """
     fragmentos, matriz = cargar_fragmentos(), _matriz()
     pregunta = ampliar_consulta(pregunta)  # agrega el vocabulario del sitio a ciertos temas (ver sinonimos.py)
+    mascara = _mascara(filtro)
     por_palabras = _puntajes_por_palabras(pregunta) if metodo in ("palabras", "hibrido") else None
     try:
         if metodo == "palabras" or matriz is None:
             raise RuntimeError("sin embeddings")
-        por_significado = _similitudes(embeddings([pregunta], "query")[0])
+        por_significado = _similitudes(embeddings([pregunta], "query")[0], filtro)
         if metodo in ("embeddings", "auto"):
             puntajes, metodo = por_significado, "embeddings"
         else:
-            puntajes, metodo = _por_rango(por_significado) + _por_rango(por_palabras if por_palabras is not None else _puntajes_por_palabras(pregunta)), "hibrido"
+            lexico = por_palabras if por_palabras is not None else _puntajes_por_palabras(pregunta)
+            puntajes, metodo = _por_rango(por_significado) + _por_rango(lexico if mascara is None else np.where(mascara, lexico, -np.inf)), "hibrido"
+            puntajes = puntajes if mascara is None else np.where(mascara, puntajes, -np.inf)
     except Exception:  # noqa: BLE001  Ollama apagado, índice desactualizado o método forzado
         if por_palabras is None:
             por_palabras = _puntajes_por_palabras(pregunta)
-        puntajes, metodo = por_palabras, "palabras"
-    orden = np.argsort(-puntajes)[:k]
+        puntajes, metodo = (por_palabras if mascara is None else np.where(mascara, por_palabras, -np.inf)), "palabras"
+    orden = [i for i in np.argsort(-puntajes)[:k] if np.isfinite(puntajes[i])]  # un fragmento filtrado (-inf) nunca se devuelve
     return [{**fragmentos[i], "puntaje": float(puntajes[i]), "metodo": metodo} for i in orden], metodo
 
 
-def buscar(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, metodo: str = "auto") -> list[dict]:
-    """Los k fragmentos más relevantes para la pregunta, del más al menos parecido, con su puntaje."""
-    fragmentos, _ = _buscar(pregunta, k, metodo)
+def buscar(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, metodo: str = "auto", filtro: dict | None = None) -> list[dict]:
+    """Los k fragmentos más relevantes para la pregunta, del más al menos parecido, con su puntaje. `filtro` opcional: {"categoria": ...} y/o {"region": ...}."""
+    fragmentos, _ = _buscar(pregunta, k, metodo, filtro)
     return fragmentos
 
 
