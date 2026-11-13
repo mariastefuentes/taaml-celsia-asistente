@@ -73,7 +73,8 @@ def consultar_datos(tabla: Literal["sedes", "contactos", "catalogo"], ciudad: st
                     tema: str = "", texto: str = "") -> str:
     """Consulta datos exactos de Celsia en tablas, sin buscar por significado. Úsala para direcciones, horarios y teléfonos de sedes,
     tiendas y puntos de pago (tabla «sedes»: ciudad, departamento, tipo), para teléfonos, WhatsApp, correos y enlaces de atención
-    (tabla «contactos»: tipo, tema) y para ubicar páginas del sitio (tabla «catalogo»: texto del título)."""
+    (tabla «contactos»: tipo, tema) y para ubicar páginas del sitio (tabla «catalogo»: texto del título). Cada respuesta termina con «Total: N», que calcula el sistema: para preguntas de «cuántas» o «cuántos»
+    cita ese total; nunca cuentes ni sumes filas por tu cuenta."""
     filtros = {"ciudad": ciudad, "departamento": departamento, "tipo": tipo, "tema": tema, "texto": texto}
     return consultar(tabla, filtros)
 

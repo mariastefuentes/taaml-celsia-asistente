@@ -70,6 +70,7 @@ def consultar(tabla: str, filtros: dict | None = None) -> str:
     if not filas:
         return SIN_RESULTADOS
     lineas = [_linea(nombre, f) for f in filas[:LIMITE]]
-    if len(filas) > LIMITE:
-        lineas.append(f"(Hay {len(filas)} resultados; se muestran {LIMITE}. Afina el filtro.)")
+    # el total lo cuenta el código, no el modelo: así «¿cuántas…?» se responde con una cifra exacta aunque se muestren pocas filas
+    total = f"Total: {len(filas)} {'fila' if len(filas) == 1 else 'filas'}"
+    lineas.append(f"{total} (se muestran {LIMITE}; afina el filtro para ver el resto)." if len(filas) > LIMITE else f"{total}.")
     return "\n".join(lineas)
