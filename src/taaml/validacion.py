@@ -21,6 +21,12 @@ def _url(url: str) -> str:
     return url.rstrip(".,;:").rstrip("/").lower()
 
 
+def _dominio_de_la_fuente(url: str, fuente: str) -> bool:
+    """Un enlace que es solo el dominio (https://www.celsia.com, sin ruta) está respaldado si ese dominio aparece escrito en la fuente: no inventa ninguna página."""
+    sin_esquema = re.sub(r"^https?://", "", _url(url))
+    return "/" not in sin_esquema and sin_esquema in fuente.lower()
+
+
 def _numeros(texto: str) -> set[str]:
     """Cada número del texto, entero y también por partes («01 8000 112 115» y «018000112115» se aceptan)."""
     valores = set()
@@ -40,7 +46,7 @@ def datos_sin_respaldo(respuesta: str, fragmentos: list[dict]) -> list[str]:
     sin_respaldo = []
     urls_fuente = {_url(u) for u in PATRON_URL.findall(fuente)}
     for url in dict.fromkeys(PATRON_URL.findall(sin_enumerar)):
-        if _url(url) not in urls_fuente:
+        if _url(url) not in urls_fuente and not _dominio_de_la_fuente(url, fuente):
             sin_respaldo.append(url.rstrip(".,;:"))
     correos_fuente = {c.lower() for c in PATRON_CORREO.findall(fuente)}
     for correo in dict.fromkeys(PATRON_CORREO.findall(sin_enumerar)):
