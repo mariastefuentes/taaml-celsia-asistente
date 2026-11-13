@@ -27,7 +27,7 @@ PREPARACION = {  # turno previo que sustituye al «contexto_previo» escrito en 
     "R19": "Mi nombre es Ana y vivo en Cali.",
 }
 ALTERNAS = {"R09": {"buscar_en_base"}}  # un enlace de pago puede estar en las tablas o en el texto: cualquiera de las dos vale
-TEXTO_ESPERADO = {"R19": ["Ana", "Cali"], "R20": ["No tengo esa información"], "R21": ["604 326 66 00"], "R22": ["No tengo esa información"]}
+TEXTO_ESPERADO = {"R19": ["Ana", "Cali"], "R20": ["No tengo esa información"], "R21": ["604 326 66 00"], "R22": ["No tengo esa información"], "R26": ["6"], "R27": ["8"], "R28": ["15"]}
 CAMPOS = ["id", "categoria", "herramienta_esperada", "herramientas_usadas", "n_llamadas", "enrutamiento_ok", "parametros_ok", "texto_ok",
           "tokens_entrada", "tokens_salida", "costo_usd", "segundos", "respuesta"]
 
