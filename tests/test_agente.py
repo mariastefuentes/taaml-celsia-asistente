@@ -291,3 +291,16 @@ def test_el_store_en_sqlite_conserva_los_datos_al_reabrir(tmp_path):
     ruta = tmp_path / "largo.sqlite"
     almacen_de_largo_plazo(ruta).put(("perfil", "ana"), "1", {"dato": "Vive en Cali"})
     assert almacen_de_largo_plazo(ruta).get(("perfil", "ana"), "1").value == {"dato": "Vive en Cali"}
+
+
+def test_un_cliente_anonimo_no_tiene_memoria_de_largo_plazo():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import Contexto, guardar_dato_del_cliente, recordar_datos_del_cliente
+    almacen = InMemoryStore()
+
+    class Corrida:
+        store, context = almacen, Contexto()  # sin identificador: anónimo
+    assert "anónimo" in guardar_dato_del_cliente.func("Vive en Cali", Corrida)
+    assert "No hay datos" in recordar_datos_del_cliente.func(Corrida)
+    assert almacen.search(("perfil", "anonimo")) == []  # nada se guardó en un espacio compartido

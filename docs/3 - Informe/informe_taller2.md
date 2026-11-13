@@ -2,9 +2,9 @@
 
 ## Resumen
 
-El asistente del Taller 1 respondía cada pregunta por separado y siempre buscaba en el texto del sitio. Para este taller se convirtió en un **agente conversacional**: recuerda lo que el cliente ya dijo, tiene dos herramientas (búsqueda por significado en el texto oficial y consulta de datos exactos en tablas) y decide cuál usar con un prompt que hace de enrutador. El modelo del agente es `gemini-3.8-flash` por API de pago, con respaldo local (`llama3.2`).
+El asistente del Taller 1 respondía cada pregunta por separado y siempre buscaba en el texto del sitio. Para este taller se convirtió en un **agente conversacional**: recuerda lo que el cliente ya dijo (dentro de la conversación y entre conversaciones), tiene dos herramientas de consulta (búsqueda por significado en el texto oficial y datos exactos en tablas) y dos de memoria, y decide cuál usar con un prompt que hace de enrutador. El modelo del agente es `gemini-3.8-flash` por API de pago, con respaldo local (`llama3.2`). La interfaz es una aplicación React que habla por HTTP, con respuestas en streaming, con una API FastAPI que ejecuta el agente.
 
-Con 22 preguntas etiquetadas, el agente eligió la herramienta esperada en 22 de 22 casos y los parámetros de la consulta (tabla y ciudad) en 11 de 11. Una conversación de cuatro turnos cuesta unos 0,02 USD y un turno tarda 9,7 s de mediana (de 2,4 a 38 s). Los 11 ataques directos y los 7 casos de inyección indirecta contra el agente fueron rechazados. Los límites principales son que el modelo ignora `temperature` y `top_p` (sus textos pueden variar entre ejecuciones), que algunas preguntas disparan búsquedas de más y que el conjunto de enrutamiento es pequeño.
+Con 22 preguntas etiquetadas, el agente eligió la herramienta esperada en 22 de 22 casos y los parámetros de la consulta (tabla y ciudad) en 11 de 11. Una conversación de cuatro turnos cuesta unos 0,02 USD y un turno tarda 8,8 s de mediana (de 2,6 a 28 s). Los 11 ataques directos y los 7 casos de inyección indirecta contra el agente fueron rechazados. Los límites principales son que el modelo ignora `temperature` y `top_p` (sus textos pueden variar entre ejecuciones), que algunas preguntas disparan búsquedas de más y que el conjunto de enrutamiento es pequeño.
 
 ## 1. Problema y objetivo
 
@@ -57,6 +57,8 @@ La memoria guardada en SQLite corresponde a lo que la literatura llama memoria d
 - Pruebas automáticas: persistencia entre dos agentes distintos sobre el mismo archivo, aislamiento entre hilos, que el recorte no borra lo almacenado, un turno que por sí solo supera el límite, y recuperación de la conversación al recargar la aplicación, también cuando el archivo de memoria está dañado.
 - Casos de la matriz: «¿y su teléfono?» tras preguntar por las sedes de Ibagué se resolvió a la sede correcta (608 277 08 22), y «¿Cómo me llamo y dónde vivo?» se respondió desde la conversación, sin herramientas.
 
+**Memoria de largo plazo.** Lo que el cliente cuenta de sí mismo (su nombre, dónde trabaja) se guarda en un Store de LangGraph sobre SQLite, en un espacio propio por cliente, y se recupera en una conversación nueva. El agente tiene dos herramientas para esto: `guardar_dato_del_cliente`, que guarda una frase corta y no acepta duplicados ni más de 20 datos por cliente, y `recordar_datos_del_cliente`, que devuelve lo guardado. El identificador del cliente lo pone la aplicación y no lo ve el modelo, así que un cliente no puede leer lo de otro; sin identificador (cliente anónimo) no hay memoria de largo plazo, para que los anónimos no compartan datos. El prompt prohíbe guardar cédulas, claves, tarjetas, cuentas y datos de salud. El cliente puede ver lo que el agente recuerda y borrarlo desde la aplicación («Lo que recuerdo»). Con Gemini real, «Me llamo Ana y trabajo en Carvajal» en una conversación se recuperó al preguntar «¿Dónde trabajo y cómo me llamo?» en otra distinta.
+
 **Privacidad.** La memoria guarda conversaciones en disco. Los datos personales de clientes caen bajo la Ley 1581 de 2012 (protección de datos personales); el identificador de la conversación es un `uuid4` no adivinable, pero cualquiera que lo conozca ve el hilo. En una operación real habría que definir plazos de retención y borrado.
 
 ## 4. Diseño de herramientas y enrutamiento
@@ -66,15 +68,16 @@ La memoria guardada en SQLite corresponde a lo que la literatura llama memoria d
 | Herramienta | Para qué sirve | Cómo funciona |
 |---|---|---|
 | `consultar_datos` | Dato exacto | Filtra tablas locales: «sedes» (direcciones, horarios y teléfonos de sedes, tiendas y puntos de pago, con ciudad, departamento y tipo), «contactos» (teléfonos, WhatsApp, correos y enlaces) y «catálogo» (páginas del sitio). Sin modelo ni embeddings: la respuesta es idéntica cada vez. |
+| `guardar_dato_del_cliente` y `recordar_datos_del_cliente` | Memoria de largo plazo | Escriben y leen en el Store el dato que el cliente cuenta de sí mismo, en un espacio por cliente. |
 | `buscar_en_base` | Explicación en texto | Busca por significado en 1.690 fragmentos del texto oficial (embeddings `nomic-embed-text-v2-moe` en Chroma) y devuelve 4 fragmentos. Son 4 y no los 12 del Taller 1 porque cada turno reenvía el historial. |
 
-Las herramientas solo leen, no escriben ni ejecutan acciones. Lo que devuelven se trata como datos: el prompt indica ignorar frases que parezcan órdenes dentro de ellos y el texto recuperado se limpia de caracteres invisibles y de etiquetas que podrían cerrar el bloque de contexto.
+Las de consulta solo leen; las de memoria solo escriben o leen el dato que el cliente cuenta de sí mismo, y ninguna ejecuta acciones. Lo que devuelven se trata como datos: el prompt indica ignorar frases que parezcan órdenes dentro de ellos y el texto recuperado se limpia de caracteres invisibles y de etiquetas que podrían cerrar el bloque de contexto.
 
 ### 4.2 Enrutador
 
 ![Enrutamiento: cómo elige el agente la herramienta](diagrama_enrutamiento.svg)
 
-El enrutador no es código sino el **prompt avanzado** (`prompts/v2_agente.md`): describe cada herramienta, da una regla de elección con un ejemplo por caso y fija las excepciones: si `consultar_datos` responde «Sin resultados» se prueba `buscar_en_base` antes de rendirse, y las preguntas cortas se resuelven con el turno anterior sin suponer datos que el cliente no dijo. El prompt conserva la estructura de cinco bloques y las prácticas de instrucción directa, ejemplos y restricciones explícitas recogidas en los estudios de técnicas de prompting (Schulhoff et al., 2024; Bsharat et al., 2023). Se eligió así, y no con un clasificador aparte, porque con dos herramientas el modelo ya decide bien y un clasificador sumaría otra pieza que mantener y medir.
+El enrutador no es código sino el **prompt avanzado** (`prompts/v3_agente.md`): describe cada herramienta, da una regla de elección con un ejemplo por caso y fija las excepciones: si `consultar_datos` responde «Sin resultados» se prueba `buscar_en_base` antes de rendirse, y las preguntas cortas se resuelven con el turno anterior sin suponer datos que el cliente no dijo. El prompt conserva la estructura de cinco bloques y las prácticas de instrucción directa, ejemplos y restricciones explícitas recogidas en los estudios de técnicas de prompting (Schulhoff et al., 2024; Bsharat et al., 2023). Se eligió así, y no con un clasificador aparte, porque con dos herramientas el modelo ya decide bien y un clasificador sumaría otra pieza que mantener y medir.
 
 ## 5. Resultados
 
@@ -86,16 +89,16 @@ Son 22 preguntas con la herramienta esperada escrita antes de correrlas: 6 de se
 |---|---|
 | Herramienta esperada | 22 de 22 |
 | Parámetros correctos (tabla y ciudad) | 11 de 11 donde la matriz los fija |
-| Preguntas con una herramienta de más | 5 de 22 (R04, R08, R09, R13, R22) |
-| Tokens de entrada por turno (mediana) | 2.949 |
-| Tiempo por turno | mediana 9,7 s; de 2,4 s a 38,1 s |
-| Costo de las 22 preguntas | 0,156 USD |
+| Preguntas con una herramienta de más | 6 de 22 (R04, R05, R08, R09, R13, R22) |
+| Tokens de entrada por turno (mediana) | 4.068 |
+| Tiempo por turno | mediana 8,8 s; de 2,6 s a 28,4 s |
+| Costo de las 22 preguntas | 0,173 USD |
 
 **Cómo se calificó.** Una pregunta cuenta como correcta si la herramienta esperada está entre las usadas; usar una herramienta de más no se penaliza (se cuenta aparte). Las de memoria aceptan responder sin herramienta o con una consulta de datos, y la del enlace de pago acepta cualquiera de las dos herramientas. Los parámetros (tabla y ciudad) se comparan sin tildes. Las etiquetas las escribió el equipo antes de correr y dos se corrigieron después de ver los resultados: Medellín sí está en la tabla de sedes, así que no era un caso sin dato, y se agregó Pasto, que no tiene sede, como caso negativo.
 
-Por tipo de pregunta, las de dato exacto y las de texto tardan unos 9 a 10 s, las mixtas 19 s (dos herramientas y más historial) y las de memoria o fuera de dominio entre 2 y 10 s. Cuando una pregunta de datos usó además `buscar_en_base` (por ejemplo, el enlace de pago), la respuesta fue correcta pero más cara y lenta.
+Por tipo de pregunta, las de sedes tardan unos 7 s, las de contactos y las de texto de 9 a 10 s, las mixtas 15 s (dos herramientas y más historial) y las de memoria o fuera de dominio entre 3 y 9 s. Cuando una pregunta de datos usó además `buscar_en_base` (por ejemplo, el enlace de pago), la respuesta fue correcta pero más cara y lenta.
 
-**Caso débil.** «¿Cuánto cuesta reconectar el servicio?» eligió bien la herramienta, pero encadenó búsquedas, gastó 53.397 tokens de entrada (0,043 USD, 38 s) y terminó en «No tengo esa información». No hay una respuesta incorrecta, pero es el patrón a vigilar: una pregunta sin respuesta clara en el corpus puede hacer que el agente busque varias veces. Para una ciudad sin sede (Pasto) el agente consultó la tabla, buscó en el texto y respondió «No tengo esa información» con la línea de atención, sin inventar una dirección.
+**Caso débil.** «¿Cuánto cuesta reconectar el servicio?» eligió bien la herramienta, pero encadenó búsquedas, gastó 36.941 tokens de entrada (0,030 USD, 28 s) y terminó en «No tengo esa información». No hay una respuesta incorrecta, pero es el patrón a vigilar: una pregunta sin respuesta clara en el corpus puede hacer que el agente busque varias veces. Para una ciudad sin sede (Pasto) el agente consultó la tabla, buscó en el texto y respondió «No tengo esa información» con la línea de atención, sin inventar una dirección.
 
 ### 5.2 Cadena frente a agente
 
@@ -104,7 +107,7 @@ Por tipo de pregunta, las de dato exacto y las de texto tardan unos 9 a 10 s, la
 | ¿Quién decide buscar? | Siempre busca (dos pasos fijos) | El modelo decide |
 | Fragmentos al modelo | 12 por pregunta | 4 por búsqueda |
 | Tokens de entrada | 4.615 de media (59 preguntas) | 2.238 a 8.554 por turno según el historial |
-| Tiempo por pregunta | 7,2 s de media | 9,7 s de mediana en la matriz |
+| Tiempo por pregunta | 7,2 s de media | 8,8 s de mediana en la matriz |
 | Memoria | No | Sí |
 
 El agente puede ser más barato cuando no necesita buscar (el turno resuelto desde la memoria costó 0,0022 USD) y más caro cuando encadena herramientas o el historial crece. Los modelos son distintos (`gemini-3.5-flash` en la cadena y `gemini-3.8-flash` en el agente), así que la comparación es orientativa y no un experimento controlado.
@@ -116,6 +119,8 @@ Hay dos pruebas:
 - **Ataques directos, sobre el agente (`gemini-3.8-flash`, prompt v2).** La batería de 11 casos (juego de rol, fuga del prompt, orden directa, texto codificado en base64, texto invisible, mundo hipotético, falsa autoridad, cambio de rol, adulación, propina virtual y chantaje emocional) fue rechazada en los 11. Las categorías siguen las que Shen et al. (2023) observaron en jailbreaks reales.
 - **Inyección indirecta, sobre el agente (`gemini-3.8-flash`, prompt v2) y sobre el asistente del Taller 1 (`gemini-3.5-flash`, prompt v3).** Son 7 casos en que una orden escondida (visible, en inglés, con caracteres invisibles, con un cierre falso del bloque de contexto o como dato falso con tono de autoridad) se agrega a lo que devuelve la herramienta; con el agente, a la que use en esa pregunta (`consultar_datos` en 4 casos y `buscar_en_base` en 3). Resistieron los 7 casos en ambos modelos. Este es el riesgo que describen Greshake et al. (2023) y el que OWASP lista entre los principales de aplicaciones con modelos de lenguaje.
 
+Ambas se midieron con el prompt v2. El prompt vigente es el v3, que agrega la memoria de largo plazo (herramientas que escriben datos del cliente) y no se repitieron con él; la herramienta de escritura es una superficie nueva de ataque, porque una orden escondida podría pedir guardar un dato falso.
+
 Son pruebas escritas por el equipo, con una sola corrida por caso: muestran que estas órdenes no funcionaron, no que el sistema sea inmune.
 
 ### 5.4 Decisiones de recuperación
@@ -126,7 +131,7 @@ Son pruebas escritas por el equipo, con una sola corrida por caso: muestran que 
 
 ## 6. Aplicación
 
-La pestaña «Agente» de la aplicación Streamlit muestra la conversación, qué herramientas usó cada respuesta y permite empezar una conversación nueva; al recargar la página recupera el hilo desde SQLite. El código del agente está en `src/taaml/agente.py`, el prompt en `prompts/v2_agente.md` y las pruebas automáticas cubren la memoria, el recorte, el enrutamiento y la aplicación sin llamar a Gemini ni a Ollama.
+El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al modelo: habla por HTTP con una API FastAPI (`api/main.py`) que ejecuta el agente y responde por streaming (Server-Sent Events). Muestra la conversación a medida que se escribe, qué herramienta usó cada respuesta con sus tokens y costo, maneja errores de red y del modelo con un mensaje que no filtra detalles internos y un botón de reintento, y permite empezar una conversación nueva, ver lo que el agente recuerda y borrarlo. El hilo va en la dirección (`?hilo=`) y al recargar la página se recupera desde SQLite. El código del agente está en `src/taaml/agente.py`, el prompt en `prompts/v3_agente.md` y las pruebas automáticas cubren la memoria, el recorte, el enrutamiento y la aplicación sin llamar a Gemini ni a Ollama.
 
 ## 7. Limitaciones
 

@@ -17,7 +17,7 @@ from uuid import uuid4
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from taaml.agente import MODELO_AGENTE, conversar, costo_usd, crear_agente, uso_del_turno  # noqa: E402
+from taaml.agente import MODELO_AGENTE, conversar, costo_usd, crear_agente, olvidar_cliente, uso_del_turno  # noqa: E402
 
 CARPETA = ROOT / "docs" / "2 - Conjunto de prueba"
 MATRIZ = CARPETA / "matriz_enrutamiento.csv"
@@ -75,11 +75,11 @@ def main() -> None:
         hilo, costo, entrada, salida = uuid4().hex, 0.0, 0, 0
         try:
             if f["id"] in PREPARACION:
-                conversar(PREPARACION[f["id"]], hilo, agente=agente)
+                conversar(PREPARACION[f["id"]], hilo, agente=agente, usuario=hilo)
                 e0, s0 = uso_del_turno(agente, hilo)
                 costo += costo_usd(e0, s0, MODELO_AGENTE) or 0.0
             inicio = time.perf_counter()
-            respuesta, llamadas = conversar(f["pregunta"], hilo, agente=agente)
+            respuesta, llamadas = conversar(f["pregunta"], hilo, agente=agente, usuario=hilo)  # un cliente por pregunta: su memoria de largo plazo no se mezcla con la de otra
             segundos = time.perf_counter() - inicio
             entrada, salida = uso_del_turno(agente, hilo)  # tokens acumulados de este turno (el último mensaje humano)
             costo += costo_usd(entrada, salida, MODELO_AGENTE) or 0.0
@@ -87,6 +87,7 @@ def main() -> None:
             print(f"{f['id']}: ERROR {type(e).__name__}: {e}")
             resultados.append({"id": f["id"], "categoria": f["categoria"], "herramienta_esperada": f["herramienta_esperada"], "respuesta": f"ERROR {type(e).__name__}"})
             continue
+        olvidar_cliente(hilo)  # no deja datos de prueba en el Store
         usadas = {ll["herramienta"] for ll in llamadas}
         ok_ruta = enrutamiento_ok(f["id"], f["herramienta_esperada"], usadas)
         ok_params = parametros_ok(f["parametros_esperados"], llamadas)

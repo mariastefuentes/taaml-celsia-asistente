@@ -18,15 +18,15 @@
 
   <text x="75" y="196" text-anchor="middle" font-weight="600">Cliente</text>
   <text x="75" y="214" text-anchor="middle" font-size="11">pregunta en español</text>
-  <text x="230" y="196" text-anchor="middle" font-weight="600">Streamlit</text>
-  <text x="230" y="214" text-anchor="middle" font-size="11">pestaña Agente · ?hilo=</text>
+  <text x="230" y="196" text-anchor="middle" font-weight="600">React + API</text>
+  <text x="230" y="214" text-anchor="middle" font-size="11">FastAPI · streaming SSE</text>
 
   <text x="455" y="134" text-anchor="middle" font-weight="600">Agente (create_agent)</text>
   <text x="455" y="156" text-anchor="middle" font-size="12">1. limpia caracteres invisibles</text>
   <text x="455" y="176" text-anchor="middle" font-size="12">2. recorta el historial (3.000 tokens)</text>
-  <text x="455" y="196" text-anchor="middle" font-size="12">3. Gemini 3.8 Flash + prompt v2 (router)</text>
+  <text x="455" y="196" text-anchor="middle" font-size="12">3. Gemini 3.8 Flash + prompt v3 (router)</text>
   <text x="455" y="216" text-anchor="middle" font-size="12">4. decide: herramienta o responder</text>
-  <text x="455" y="236" text-anchor="middle" font-size="12">5. guarda el turno en SQLite (hilo)</text>
+  <text x="455" y="236" text-anchor="middle" font-size="12">5. guarda el turno (SQLite) y al cliente (Store)</text>
   <text x="455" y="270" text-anchor="middle" font-size="11" fill="#6b7280">repite 3–4 mientras pida herramientas</text>
 
   <text x="690" y="196" text-anchor="middle" font-weight="600">Respuesta</text>
@@ -57,5 +57,6 @@
   <text x="446" y="322" font-size="11" fill="#6b7280">datos</text>
   <text x="498" y="322" font-size="11" fill="#374151">llama</text>
   <text x="572" y="322" font-size="11" fill="#6b7280">datos</text>
-  <text x="455" y="450" text-anchor="middle" font-size="11" fill="#6b7280">Las herramientas solo leen: devuelven datos, nunca órdenes. El prompt indica ignorar frases que parezcan instrucciones dentro de lo recuperado.</text>
+  <text x="455" y="436" text-anchor="middle" font-size="11" fill="#6b7280">Además: guardar_dato_del_cliente y recordar_datos_del_cliente (memoria de largo plazo, un espacio por cliente en el Store).</text>
+  <text x="455" y="454" text-anchor="middle" font-size="11" fill="#6b7280">Lo que devuelven las herramientas son datos, nunca órdenes: el prompt indica ignorar frases que parezcan instrucciones.</text>
 </svg>

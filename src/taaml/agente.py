@@ -59,10 +59,13 @@ def consultar_datos(tabla: Literal["sedes", "contactos", "catalogo"], ciudad: st
     return consultar(tabla, filtros)
 
 
+ANONIMO = "anonimo"  # sin identificador de cliente no hay memoria de largo plazo: si no, todos los anónimos compartirían lo guardado
+
+
 @dataclass
 class Contexto:
     """Quién conversa: el Store separa lo guardado de cada cliente con este identificador (no lo ve el modelo)."""
-    usuario: str = "anonimo"
+    usuario: str = ANONIMO
 
 
 def _espacio(runtime: ToolRuntime[Contexto]) -> tuple[str, str]:
@@ -79,6 +82,8 @@ def _almacen(runtime: ToolRuntime[Contexto]) -> BaseStore:
 def guardar_dato_del_cliente(dato: str, runtime: ToolRuntime[Contexto]) -> str:
     """Guarda un dato que el cliente contó de sí mismo (nombre, ciudad, empresa, preferencia) para recordarlo en conversaciones futuras.
     Úsala solo cuando el cliente comparta ese dato o pida que lo recuerdes; nunca guardes cédulas, claves, tarjetas ni cuentas."""
+    if runtime.context.usuario == ANONIMO:
+        return "No se guardó: este cliente es anónimo y no hay memoria de largo plazo para él."
     dato = quitar_invisibles(dato).strip()[:300]
     existentes = _almacen(runtime).search(_espacio(runtime), limit=MAX_DATOS_CLIENTE + 1)
     if any(e.value["dato"] == dato for e in existentes):
@@ -173,7 +178,7 @@ def _agente(modelo: str):
     return _AGENTES[modelo]
 
 
-def conversar(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente=None, usuario: str = "anonimo") -> tuple[str, list[dict]]:
+def conversar(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente=None, usuario: str = ANONIMO) -> tuple[str, list[dict]]:
     """Un turno de una conversación: devuelve la respuesta y las herramientas que usó en este turno (nombre y argumentos).
 
     Mismo `thread_id` = misma conversación (el agente ve los turnos anteriores); otro `thread_id` empieza en blanco.
@@ -188,7 +193,7 @@ def conversar(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente
     return mensajes[-1].text.strip(), llamadas
 
 
-def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente=None, usuario: str = "anonimo"):
+def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente=None, usuario: str = ANONIMO):
     """Un turno como flujo de eventos (para el streaming de la API): `herramienta`, `texto` (trozos de la respuesta) y `fin`.
 
     Mismo `thread_id` = misma conversación. El evento `fin` trae los tokens y el costo del turno. Un error del modelo sube como excepción.
