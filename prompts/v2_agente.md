@@ -1,6 +1,6 @@
 ---
 version: v2
-estado: vigente
+estado: reemplazado por v3
 cambios: agrega la herramienta consultar_datos (datos exactos), las reglas para elegir entre las dos herramientas (router) y el uso de la conversación (memoria)
 ---
 # 1. ROL
