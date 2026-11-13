@@ -200,3 +200,31 @@ def test_historial_visible_devuelve_los_turnos_para_pintarlos():
     assert [(v["rol"], v["texto"]) for v in visibles] == [("user", "hola"), ("assistant", "ok"), ("user", "¿y las sedes?"), ("assistant", "ok")]
     assert visibles[1]["usadas"] == "Respondió sin consultar herramientas"
     assert historial_visible("hilo-que-no-existe", agente=agente) == []
+
+
+# --- turno en vivo (streaming) ---
+from langchain_core.language_models.chat_models import BaseChatModel  # noqa: E402
+
+
+class ModeloSinTrozos(ModeloEspia):
+    """El modelo simulado parte las llamadas a herramientas al hacer streaming; este responde de una vez, como hace el agente con un mensaje completo."""
+    _stream = BaseChatModel._stream
+
+
+def test_conversar_en_vivo_emite_herramienta_texto_y_fin():
+    from taaml.agente import conversar_en_vivo
+    llamada = AIMessage(content="", tool_calls=[{"name": "consultar_datos", "args": {"tabla": "sedes", "ciudad": "Ibagué"}, "id": "t1"}])
+    agente = crear_agente(llm=ModeloSinTrozos(messages=iter([llamada, AIMessage(content="Hay sedes en Ibagué")])))
+    eventos = list(conversar_en_vivo("¿Qué sedes hay en Ibagué?", "hilo-vivo", agente=agente))
+    tipos = [e["tipo"] for e in eventos]
+    herramientas = [e for e in eventos if e["tipo"] == "herramienta"]
+    assert [h["herramienta"] for h in herramientas] == ["consultar_datos"] and herramientas[0]["args"]["ciudad"] == "Ibagué"
+    assert "".join(e["texto"] for e in eventos if e["tipo"] == "texto").strip() == "Hay sedes en Ibagué"
+    assert tipos[-1] == "fin" and "consultó la tabla sedes" in eventos[-1]["usadas"]
+
+
+def test_conversar_en_vivo_guarda_el_turno_en_la_memoria():
+    from taaml.agente import conversar_en_vivo, historial_visible
+    agente = crear_agente(llm=ModeloEspia(messages=iter([AIMessage(content="Hola Ana")])))
+    list(conversar_en_vivo("Me llamo Ana", "hilo-vivo-2", agente=agente))
+    assert [m["texto"] for m in historial_visible("hilo-vivo-2", agente=agente)] == ["Me llamo Ana", "Hola Ana"]

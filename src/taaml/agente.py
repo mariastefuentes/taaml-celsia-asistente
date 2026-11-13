@@ -109,6 +109,35 @@ def conversar(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente
     return mensajes[-1].text.strip(), llamadas
 
 
+def conversar_en_vivo(pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente=None):
+    """Un turno como flujo de eventos (para el streaming de la API): `herramienta`, `texto` (trozos de la respuesta) y `fin`.
+
+    Mismo `thread_id` = misma conversación. El evento `fin` trae los tokens y el costo del turno. Un error del modelo sube como excepción.
+    """
+    agente = agente or _agente(modelo)
+    entrada = {"messages": [{"role": "user", "content": quitar_invisibles(pregunta)}]}
+    config = {"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente"]}
+    llamadas: list[dict] = []
+    hubo_texto = False
+    for modo, datos in agente.stream(entrada, config=config, stream_mode=["updates", "messages"]):
+        if modo == "messages":
+            trozo, meta = datos
+            if trozo.type == "AIMessageChunk" and meta.get("langgraph_node") == "model" and trozo.text:
+                hubo_texto = True
+                yield {"tipo": "texto", "texto": trozo.text}
+        else:
+            for actualizacion in datos.values():
+                for m in (actualizacion or {}).get("messages", []):
+                    for ll in getattr(m, "tool_calls", []):
+                        llamadas.append({"herramienta": ll["name"], "args": ll["args"]})
+                        yield {"tipo": "herramienta", "herramienta": ll["name"], "args": ll["args"]}
+    if not hubo_texto:  # un modelo que no emite trozos (o el respaldo) entrega la respuesta completa de una vez
+        yield {"tipo": "texto", "texto": agente.get_state(config).values["messages"][-1].text.strip()}
+    entrada_tokens, salida_tokens = uso_del_turno(agente, thread_id)
+    yield {"tipo": "fin", "usadas": etiqueta_herramientas(llamadas), "tokens_entrada": entrada_tokens, "tokens_salida": salida_tokens,
+           "costo_usd": costo_usd(entrada_tokens, salida_tokens, modelo)}
+
+
 def historial_visible(thread_id: str, modelo: str = MODELO_AGENTE, agente=None) -> list[dict]:
     """La conversación guardada, lista para pintarla en pantalla: `rol`, `texto` y, en las respuestas, qué herramientas usó."""
     agente = agente or _agente(modelo)
