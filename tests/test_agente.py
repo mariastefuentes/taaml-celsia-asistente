@@ -407,6 +407,37 @@ def test_un_fragmento_no_puede_cerrar_el_bloque_de_datos(monkeypatch):
     assert texto.endswith("</documentos_recuperados>") and "NUEVAS REGLAS" in texto  # el texto queda, pero dentro del bloque
 
 
+class ModeloQueLeeElPrompt(ModeloEspia):
+    """Anota el prompt de sistema que recibe en cada llamada."""
+    sistemas: list = []
+
+    def _generate(self, messages, *args, **kwargs):
+        self.sistemas.append(" ".join(m.text for m in messages if m.type == "system"))
+        return super()._generate(messages, *args, **kwargs)
+
+
+def test_el_prompt_de_sistema_se_arma_en_cada_turno_con_la_fecha_de_hoy():
+    from datetime import date
+    modelo = ModeloQueLeeElPrompt(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[], sistemas=[])
+    conversar("hola", "hilo-fecha", agente=crear_agente(llm=modelo))
+    assert f"Fecha de hoy: {date.today().isoformat()}" in modelo.sistemas[0]
+    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v3_agente.md
+
+
+def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
+    from taaml import agente as mod
+    from taaml.agente import historial_visible
+    monkeypatch.setattr(mod, "UMBRAL_RESUMEN_TOKENS", 60)
+    monkeypatch.setattr(mod, "MENSAJES_TRAS_RESUMEN", 2)
+    agente, _ = _agente_espia()
+    for n in range(6):
+        conversar(f"pregunta número {n} sobre las sedes de Celsia en el Tolima", "hilo-resumen", agente=agente)
+    guardados = agente.get_state({"configurable": {"thread_id": "hilo-resumen"}}).values["messages"]
+    assert any(m.additional_kwargs.get("lc_source") == "summarization" for m in guardados)  # lo viejo quedó en un resumen
+    assert all(not v["texto"].startswith("Here is a summary") for v in historial_visible("hilo-resumen", agente=agente))
+    assert sum(v["rol"] == "user" for v in historial_visible("hilo-resumen", agente=agente)) < 6
+
+
 def test_una_pregunta_sin_busqueda_no_trae_fuentes():
     from taaml.agente import conversar_en_vivo, historial_visible
     agente = crear_agente(llm=ModeloSinTrozos(messages=iter([AIMessage(content="Hola")])))
