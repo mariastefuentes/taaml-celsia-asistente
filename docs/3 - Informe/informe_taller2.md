@@ -131,7 +131,43 @@ Son pruebas escritas por el equipo, con una sola corrida por caso: muestran que 
 
 - **Umbral de similitud.** Con este modelo de embeddings los cosenos van de 0,3 a 0,6. Un umbral de 0,5 conserva 26 de 35 respuestas y deja sin contexto a 16 de 24 preguntas negativas; sin umbral se conservan 31 de 35. No se adoptó un umbral duro porque pierde respuestas y el modelo ya se abstiene por instrucción del prompt.
 - **Tamaño de fragmento.** Con 500, 1.000 y 1.500 caracteres, el nDCG@10 con embeddings fue 0,504, 0,535 y 0,549. Se mantuvo 1.000 con solape de 150: la diferencia de 0,014 con 1.500 cae dentro del ruido de 35 preguntas y 500 duplica los fragmentos.
-- **Método de búsqueda.** Con k=10 y 35 preguntas, los embeddings superan al híbrido y a las palabras (nDCG 0,535 frente a 0,427 y 0,290; recall 0,515, 0,414 y 0,254).
+- **Método de búsqueda.** El híbrido combina por posición el orden por significado (embeddings) y el orden por palabras (idf). Con k=10 y 35 preguntas, los embeddings superan al híbrido y a las palabras (nDCG 0,535 frente a 0,427 y 0,290; recall 0,515, 0,414 y 0,254).
+
+### 5.5 Los embeddings del corpus
+
+`scripts/25_explorar_embeddings.py` mide tres cosas sobre los 1.690 vectores del índice y las 35 preguntas del conjunto de prueba (mismo criterio de relevancia que el resto de la evaluación; las preguntas se amplían con el vocabulario del sitio, como en el agente). No usa modelos de pago.
+
+**Tokenización y vectores densos.** Antes de ser vector, el texto se parte en tokens. Los fragmentos tienen unos 1.000 caracteres (unos 250 tokens) y la base completa suma unos 316.800 tokens con el tokenizador `o200k` (unos 341.000 con el de Gemini): el conteo depende del tokenizador, por eso el tamaño en tokens se da como aproximado. Cada fragmento queda como un vector denso de 768 números, de norma 1, y el índice completo ocupa 5,2 MB.
+
+**Medidas de similitud.** Se ordenó el corpus para cada pregunta con coseno, producto punto y distancia L2.
+
+| Medida | precision@10 | recall@10 | nDCG@10 | Top-10 igual al del coseno |
+|---|---|---|---|---|
+| Coseno | 0,271 | 0,515 | 0,535 | 35 de 35 |
+| Producto punto | 0,271 | 0,515 | 0,535 | 35 de 35 |
+| Distancia L2 | 0,271 | 0,515 | 0,535 | 35 de 35 |
+
+Con vectores de norma 1 las tres medidas ordenan igual: el producto punto es el coseno y la distancia al cuadrado es 2 − 2·coseno. Importaría si los vectores no estuvieran normalizados, porque el producto punto favorecería a los de mayor norma. Se usa el coseno.
+
+**Tipo de embedding.** Se usan embeddings de texto densos, multilingües (incluido el español); los léxicos (palabras ponderadas por idf) se usan como respaldo y en la búsqueda híbrida. Los multimodales (imagen y texto en un mismo espacio, como CLIP o SigLIP) no aplican: el corpus es solo texto.
+
+**Matryoshka.** Un modelo entrenado con Matryoshka (Kusupati et al., 2022) concentra lo más importante en las primeras dimensiones, de modo que el vector se puede recortar y volver a normalizar sin reentrenar. Se recortó el vector de este modelo y se midió:
+
+| Dimensiones | precision@10 | recall@10 | nDCG@10 | Tamaño del índice |
+|---|---|---|---|---|
+| 768 | 0,271 | 0,515 | 0,535 | 5,2 MB |
+| 512 | 0,277 | 0,528 | 0,530 | 3,5 MB |
+| 256 | 0,257 | 0,497 | 0,480 | 1,7 MB |
+| 128 | 0,206 | 0,356 | 0,421 | 0,9 MB |
+| 64 | 0,163 | 0,250 | 0,283 | 0,4 MB |
+
+Con 512 dimensiones el nDCG baja 0,005 (dentro del ruido de 35 preguntas) y con 256 baja 0,055; con 128 y 64 la pérdida ya es grande. Con 1.690 vectores el ahorro de espacio no importa, así que se mantienen las 768 dimensiones; el recorte sería útil con un corpus mucho mayor. EmbeddingGemma, un modelo abierto de Google que también admite recorte Matryoshka, es un candidato para comparar con `nomic-embed-text-v2-moe`; no se evaluó.
+
+**Mapa t-SNE.** t-SNE (van der Maaten y Hinton, 2008) proyecta los vectores a dos dimensiones conservando los vecinos. El mapa se calculó con una implementación exacta en NumPy (perplejidad 30, 750 iteraciones) y cada punto se colorea por la categoría del documento; los puntos negros son las 35 preguntas de prueba.
+
+![Mapa t-SNE de los fragmentos del corpus](tsne_corpus.svg)
+
+El mapa conserva los grupos: de los 10 vecinos más cercanos de cada fragmento, el 77,7 % es de su misma categoría, tanto en el mapa de dos dimensiones como en el espacio original, frente a un 18,3 % que habría al azar. t-SNE sirve para explorar, no para medir: las distancias entre grupos lejanos y el tamaño de cada nube no significan nada.
 
 ## 6. Aplicación
 
@@ -166,6 +202,8 @@ No se usaron viaje en el tiempo del estado, pasos de aprobación humana ni un gu
 - Shen, X. et al. (2023). *"Do Anything Now": Characterizing and Evaluating In-The-Wild Jailbreak Prompts on Large Language Models*. arXiv:2308.03825.
 - Muennighoff, N. et al. (2022). *MTEB: Massive Text Embedding Benchmark*. arXiv:2210.07316.
 - Thakur, N. et al. (2021). *BEIR: A Heterogenous Benchmark for Zero-shot Evaluation of Information Retrieval Models*. arXiv:2104.08663.
+- Kusupati, A. et al. (2022). *Matryoshka Representation Learning*. arXiv:2205.13147.
+- van der Maaten, L. y Hinton, G. (2008). *Visualizing Data using t-SNE*. Journal of Machine Learning Research, 9.
 - OWASP. *Top 10 for Large Language Model Applications*.
 - Zaharia, M. et al. (2024). *The Shift from Models to Compound AI Systems*. Berkeley AI Research (BAIR) Blog.
 - LangChain: documentación de `create_agent`, memoria a corto plazo y middleware (docs.langchain.com).
