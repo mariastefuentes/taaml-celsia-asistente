@@ -22,6 +22,8 @@ Las preguntas salen de la matriz de enrutamiento (`docs/2 - Conjunto de prueba/m
 
 **Variante del caso 3: sin evidencia (que no invente).** Escribir «¿Qué dice el corpus sobre la política de teletrabajo?». El corpus no tiene nada sobre teletrabajo (0 fragmentos con esa palabra): el agente debe responder «No tengo esa información» y remitir a la línea 01 8000 112 115, y la pantalla no muestra fragmentos citados porque no hubo evidencia. En el ensayo hizo dos búsquedas, 7.301 tokens y $0,0065. Si el profesor pide otra variación, el patrón es el mismo: si hay texto, cita documento y fragmento; si no, lo dice.
 
+**Variante del caso 4: que no gaste búsquedas de más.** Escribir «Hola» o «Gracias, eso era todo»: el agente responde sin ninguna herramienta (1.500 tokens, 2 s, menos de medio centavo). Cada pregunta puede usar como máximo 4 herramientas, así que aunque una pregunta mixta o sin respuesta insista, el gasto tiene techo; en las mixtas del ensayo pidió entre 3 y 5 (la quinta se bloquea) y tardó de 16 a 23 s.
+
 Dato para decir en voz alta en el caso 4: hace dos búsquedas en el mismo turno y reenvía la conversación completa al modelo.
 
 Evitar «¿Cómo pago mi factura y dónde puedo hacerlo en Cali?»: la tabla de sedes no tiene ninguna fila en Cali. El agente responde bien («Celsia no dispone de tiendas en Cali»), pero en el ensayo hizo 5 consultas, 27.000 tokens y $0,025, y no muestra el enrutamiento mixto.

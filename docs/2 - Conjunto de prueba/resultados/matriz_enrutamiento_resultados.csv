@@ -1,5 +1,5 @@
-﻿"id","categoria","herramienta_esperada","herramientas_usadas","enrutamiento_ok","parametros_ok","texto_ok","tokens_entrada","tokens_salida","costo_usd","segundos","respuesta"
-"R01","sedes","consultar_datos","consultar_datos","True","True","","3446","812","0.00563","8.3","En Ibagué se encuentran los siguientes puntos de atención:
+﻿"id","categoria","herramienta_esperada","herramientas_usadas","n_llamadas","enrutamiento_ok","parametros_ok","texto_ok","tokens_entrada","tokens_salida","costo_usd","segundos","respuesta"
+"R01","sedes","consultar_datos","consultar_datos","","True","True","","3446","812","0.00563","8.3","En Ibagué se encuentran los siguientes puntos de atención:
 
 - **Carrera Quinta / Tienda Celsia / Punto de Recaudo / Internet Celsia:**
   - **Dirección:** Carrera 5 N.° 41-90
@@ -19,7 +19,7 @@
   - **Dirección:** Calle 39 A # 5-15
   - **Teléfono:** 608 277 08 22
   - **Horario:** Lunes a jueves de 7:15 a.m. a 12:00 m. y de 1:30 p.m. a 5:30 p.m.; viernes de 7:15 a.m. a 12:00 m. y de 1:30 p.m. a 4:30 p.m."
-"R02","sedes","consultar_datos","consultar_datos","True","True","","3081","455","0.00402","5.3","En Palmira se encuentran los siguientes puntos de atención:
+"R02","sedes","consultar_datos","consultar_datos","","True","True","","3081","455","0.00402","5.3","En Palmira se encuentran los siguientes puntos de atención:
 
 * **Palmira - Trinidad (Internet Celsia):**
   * **Dirección:** CL 30 No. 22-49 La Trinidad
@@ -32,13 +32,13 @@
 * **Tienda Palmira Recreo (Tiendas Celsia):**
   * **Dirección:** Calle 18 No. 26-40
   * **Horario:** Lunes a jueves de 7:20 a.m. a 12:30 p.m. y de 1:30 p.m. a 4:30 p.m. Viernes de 7:20 a.m. a 12:30 p.m. y de 1:30 p.m. a 3:40 p.m."
-"R03","sedes","consultar_datos","consultar_datos","True","True","","2862","351","0.00346","5.1","Sí, en Planadas atienden los sábados. 
+"R03","sedes","consultar_datos","consultar_datos","","True","True","","2862","351","0.00346","5.1","Sí, en Planadas atienden los sábados. 
 
 El punto de recaudo y pago está ubicado en:
 - **Dirección:** Calle 6 # 6-10
 - **Horario los sábados:** 8:00 a. m. a 12:00 m. y de 1:00 p. m. a 3:00 p. m.  
 *(Lunes a viernes atienden de 8:00 a. m. a 12:30 p. m. y de 1:30 p. m. a 5:00 p. m.)*"
-"R04","sedes","consultar_datos","buscar_en_base+consultar_datos+guardar_dato_del_cliente","True","True","","13473","1035","0.01399","20.6","He guardado que vives en Cali.
+"R04","sedes","consultar_datos","buscar_en_base+consultar_datos+guardar_dato_del_cliente","","True","True","","13473","1035","0.01399","20.6","He guardado que vives en Cali.
 
 En Cali no contamos con oficina de atención directa, pero la sede más cercana está ubicada en **Yumbo**:
 
@@ -46,7 +46,7 @@ En Cali no contamos con oficina de atención directa, pero la sede más cercana 
   - **Dirección:** Calle 15 # 29B-30, Yumbo
   - **Teléfono:** 602 321 00 00
   - **Horario:** Lunes a jueves de 7:00 a.m. a 5:00 p.m.; viernes de 7:00 a.m. a 4:20 p.m."
-"R05","sedes","consultar_datos","buscar_en_base+consultar_datos","True","True","","6402","563","0.00691","11.0","Puedes pagar tu factura en Tuluá en la **Tienda Celsia**:
+"R05","sedes","consultar_datos","buscar_en_base+consultar_datos","","True","True","","6402","563","0.00691","11.0","Puedes pagar tu factura en Tuluá en la **Tienda Celsia**:
 
 * **Dirección:** Cl. 29 #24-27, Tuluá, Valle del Cauca.
 * **Horario de atención:** 
@@ -54,22 +54,22 @@ En Cali no contamos con oficina de atención directa, pero la sede más cercana 
   * Viernes: 7:20 a.m. a 12:30 p.m. y 1:30 p.m. a 3:40 p.m.
 
 También puedes realizar el pago en línea a través del portal web de Celsia."
-"R06","contactos","consultar_datos","consultar_datos","True","True","","2862","217","0.00296","4.2","Los canales de WhatsApp de Celsia son:
+"R06","contactos","consultar_datos","consultar_datos","","True","True","","2862","217","0.00296","4.2","Los canales de WhatsApp de Celsia son:
 
 - **Atención de energía:** +57 310 390 3468
 - **Celsia Internet:** 311 321 0000"
-"R07","contactos","consultar_datos","consultar_datos","True","True","","3058","239","0.00319","4.6","Los canales de atención de Celsia son:
+"R07","contactos","consultar_datos","consultar_datos","","True","True","","3058","239","0.00319","4.6","Los canales de atención de Celsia son:
 
 * **Línea de atención:** 01 8000 112 115
 * **Correo electrónico:** servicioalcliente@celsia.com"
-"R08","contactos","consultar_datos","buscar_en_base+consultar_datos","True","True","","9616","511","0.00913","16.3","La línea de atención al cliente de Celsia (**01 8000 112 115**) está disponible las **24 horas del día, de lunes a domingo** (incluidos los domingos y festivos), por lo que puedes llamar a cualquier hora, gratis desde fijo o celular."
-"R09","contactos","consultar_datos","buscar_en_base+consultar_datos","True","True","","17576","700","0.01581","15.6","Sí, puedes pagar tu factura en línea a través de los siguientes enlaces oficiales:
+"R08","contactos","consultar_datos","buscar_en_base+consultar_datos","","True","True","","9616","511","0.00913","16.3","La línea de atención al cliente de Celsia (**01 8000 112 115**) está disponible las **24 horas del día, de lunes a domingo** (incluidos los domingos y festivos), por lo que puedes llamar a cualquier hora, gratis desde fijo o celular."
+"R09","contactos","consultar_datos","buscar_en_base+consultar_datos","","True","True","","17576","700","0.01581","15.6","Sí, puedes pagar tu factura en línea a través de los siguientes enlaces oficiales:
 
 - **Factura de energía:** [https://clientes.celsia.com/clientes/paga-tus-facturas](https://clientes.celsia.com/clientes/paga-tus-facturas)
 - **Factura de Celsia Internet:** [https://app.celsiainternet.com/components/payments/](https://app.celsiainternet.com/components/payments/)
 
 También puedes ingresar a [www.celsia.com](https://www.celsia.com) en la sección **Zona Clientes** y seleccionar la opción para consultar y pagar con PSE o tarjeta Bancolombia."
-"R10","texto","buscar_en_base","buscar_en_base","True","","","4002","539","0.00502","9.3","Para cancelar definitivamente el servicio de energía, los requisitos según tu departamento son:
+"R10","texto","buscar_en_base","buscar_en_base","","True","","","4002","539","0.00502","9.3","Para cancelar definitivamente el servicio de energía, los requisitos según tu departamento son:
 
 **Tolima:**
 * Estar a paz y salvo en todo concepto.
@@ -82,66 +82,71 @@ También puedes ingresar a [www.celsia.com](https://www.celsia.com) en la secci�
 * Solicitar la revisión técnica para la cancelación de la cuenta.
 
 Puedes realizar el trámite en línea a través de los canales de Celsia buscando la opción: **Energía / Petición / Terminación o corte**."
-"R11","texto","buscar_en_base","buscar_en_base","True","","","3882","381","0.00434","8.4","Para instalar energía solar en tu hogar, debes tener en cuenta los siguientes requisitos:
+"R11","texto","buscar_en_base","buscar_en_base","","True","","","3882","381","0.00434","8.4","Para instalar energía solar en tu hogar, debes tener en cuenta los siguientes requisitos:
 
 1. **Identificar el consumo actual de energía:** para dimensionar adecuadamente el sistema.
 2. **Validar la ubicación:** se requiere buena exposición al sol, libre de árboles u objetos que generen sombras y bloqueen la radiación.
 3. **Contar con techos adecuados:** deben cumplir con las especificaciones y normas técnicas requeridas para soportar la instalación.
 4. **Seleccionar el tipo de instalación:** definir si será un sistema conectado a la red (*on-grid*) o un sistema aislado con baterías (*off-grid*).
 5. **Mantenimiento regular:** contemplar el mantenimiento periódico del sistema fotovoltaico para garantizar su correcto funcionamiento."
-"R12","texto","buscar_en_base","buscar_en_base","True","","","4134","430","0.00471","9.0","El aumento en el valor de tu factura de energía puede deberse a varias causas:
+"R12","texto","buscar_en_base","buscar_en_base","","True","","","4134","430","0.00471","9.0","El aumento en el valor de tu factura de energía puede deberse a varias causas:
 
 1. **Sobrepasaste tu consumo de subsistencia:** El subsidio estatal (para estratos 1, 2 y 3) aplica hasta un límite básico. La energía consumida por encima de ese tope se cobra a tarifa plena.
 2. **Otros cobros o saldos pendientes:** En la factura no solo se cobra el consumo de energía; también se pueden incluir saldos anteriores, cobros por ley (aseo y alumbrado público) o cuotas de financiaciones, seguros y otros servicios.
 3. **Fugas internas o instalaciones dañadas:** Una instalación defectuosa o un medidor en mal estado pueden generar pérdidas de energía que aumentan el consumo registrado.
 4. **Mayor consumo en el hogar:** Cambios en la rutina o hábitos que impliquen mayor uso de electrodomésticos o más tiempo en casa."
-"R13","texto","buscar_en_base","buscar_en_base+consultar_datos","True","","","36941","667","0.03021","28.4","No tengo esa información. Para consultar el valor de la reconexión de tu servicio, por favor comunícate a la línea gratuita de atención al cliente 01 8000 112 115."
-"R14","texto","buscar_en_base","buscar_en_base","True","","","3816","300","0.00399","8.2","La **energía de respaldo** es un sistema o solución diseñado para garantizar el suministro eléctrico continuo ante fallas, apagones, altibajos de voltaje o interrupciones en la red convencional (por causas climáticas, daños, mantenimiento o accidentes).
+"R13","texto","buscar_en_base","buscar_en_base+consultar_datos","5","True","","","23685","504","0.01965","22.6","No tengo esa información. Para consultar el costo de reconexión del servicio, por favor comunícate con la línea de atención 01 8000 112 115."
+"R14","texto","buscar_en_base","buscar_en_base","","True","","","3816","300","0.00399","8.2","La **energía de respaldo** es un sistema o solución diseñado para garantizar el suministro eléctrico continuo ante fallas, apagones, altibajos de voltaje o interrupciones en la red convencional (por causas climáticas, daños, mantenimiento o accidentes).
 
 Su propósito es asegurar el funcionamiento ininterrumpido de los equipos y procesos productivos en empresas, industrias o edificaciones críticas (como hospitales), evitando pérdidas económicas y riesgos operativos."
-"R15","mixta","ambas","buscar_en_base+consultar_datos","True","","","8453","861","0.00957","15.8","Para pagar tu factura de Celsia tienes opciones digitales y puntos presenciales:
+"R15","mixta","ambas","buscar_en_base+consultar_datos","5","True","","","20090","1049","0.01900","22.6","Puedes pagar tu factura de energía Celsia de las siguientes maneras:
 
-### 1. Canales digitales (por internet)
-Ingresa a **[www.celsia.com](https://www.celsia.com)** en la sección **Zona Clientes** (o desde la app Celsia) con tu código de cuenta. Puedes realizar el pago total o abonos a través de:
-* **PSE** (tarjeta débito o crédito)
-* **Bancolombia / Wompi**
-* **Bre-B** (código QR desde la app de tu banco o Nequi)
-* **Nequi** y **Daviplata**
+**Por internet:**
+1. Ingresa a [celsia.com](https://www.celsia.com) en el botón **Zona Clientes** (o «Paga aquí tu factura»).
+2. Digita tu código de cuenta o NIC (lo encuentras en la parte superior de tu factura).
+3. Selecciona la opción de pago (total o abono) y realiza la transacción mediante **Bre-B** (código QR con tu app de banco o Nequi), **PSE**, **Nequi**, **Daviplata** o **Wompi**.
 
----
+**Puntos físicos en Cali:**
+Celsia no dispone de tiendas ni sedes de atención presenciales propias en la ciudad de Cali. Sin embargo, puedes pagar en físico en:
+- Entidades bancarias autorizadas.
+- Puntos **Efecty**, **Baloto** y corresponsales bancarios.  
+*(La lista detallada de entidades y convenios habilitados se encuentra al respaldo de tu factura física).*
 
-### 2. Puntos presenciales en Cali (Valle del Cauca)
-Puedes pagar de forma física en:
-* **Bancos:** Banco de Bogotá y Davivienda.
-* **Corresponsales bancarios:** Bancolombia, Grupo Aval y Davivienda.
-* **Redes de recaudo:** Efecty, Súper Giros, Redebán y Baloto.
-
-*(También puedes consultar los puntos de pago autorizados impresos al respaldo de tu factura).*"
-"R16","mixta","ambas","buscar_en_base+consultar_datos","True","","","10805","745","0.01090","14.1","Para reportar un daño en Ibagué, puedes comunicarte por los siguientes canales:
+Si necesitas más información o asistencia, puedes comunicarte a la línea gratuita de atención **01 8000 112 115**."
+"R16","mixta","ambas","buscar_en_base+consultar_datos","5","True","","","15234","902","0.01481","17.5","Para reportar un daño en el servicio de energía en Ibagué, puedes comunicarte a los siguientes canales:
 
 * **Línea telefónica gratuita:** 01 8000 112 115
 * **WhatsApp:** +57 310 390 3468
 
-**Pasos para reportarlo por WhatsApp:**
-1. Escribe al **310 390 3468** y selecciona la **opción 1** (reportar un daño de energía).
-2. Proporciona el **código de cuenta** que aparece en tu factura.
-3. Confirma la dirección y selecciona el tipo de falla (falla en el sector/barrio, poste caído, variación de voltaje, daño en transformador, etc.).
-4. Ingresa tus datos de contacto (nombre y teléfono) junto con referencias para ubicar el lugar fácilmente."
-"R17","mixta","ambas","buscar_en_base+consultar_datos","True","","","9060","927","0.01027","14.7","En Planadas no hay una tienda Celsia como tal, sino un **Punto de Recaudo y Pago**. 
+---
 
-* **Trámites disponibles:** Principalmente el pago y recaudo de tus facturas del servicio de energía.
+### ¿Qué debes hacer?
+Si realizas el reporte por **WhatsApp (310 390 3468)**:
+1. Escribe al chat y el asistente virtual (Luz I.A.) te atenderá.
+2. Selecciona la **opción 1** para reportar un daño de energía.
+3. Ingresa el **código de cuenta** de tu factura.
+4. Confirma la dirección y selecciona el tipo de falla (por ejemplo: falla en todo el sector o cuadra, variación de voltaje, poste caído, daño en transformador o afectación por ramas de árboles).
+5. Proporciona tus datos de contacto (nombre y teléfono) junto con una referencia o detalle que facilite ubicar el lugar de la falla.
+
+También puedes hacer el reporte directamente llamando a la línea gratuita **01 8000 112 115**."
+"R17","mixta","ambas","buscar_en_base+consultar_datos","3","True","","","9235","902","0.01031","16.0","En Planadas, Celsia cuenta con un **Punto de Recaudo y Pago** (no una tienda comercial completa):
+
 * **Dirección:** Calle 6 # 6-10, Planadas, Tolima.
-* **Horario de atención:** 
+* **Horario:** 
   * Lunes a viernes: 8:00 a.m. a 12:30 p.m. y de 1:30 p.m. a 5:00 p.m.
   * Sábados: 8:00 a.m. a 12:00 m. y de 1:00 p.m. a 3:00 p.m.
+* **Trámites disponibles:** Este punto está destinado al recaudo y pago de tu factura. 
 
-Si necesitas realizar otro tipo de trámites, solicitudes o consultas, puedes comunicarte a la línea gratuita de atención **01 8000 112 115**."
-"R18","memoria","ninguna_o_consultar_datos","consultar_datos","True","","","6436","399","0.01273","8.7","De las sedes en Ibagué, la única con teléfono directo registrado es la **Sede Administrativa (Calle 39 A # 5-15)**:
+Para realizar otros trámites o recibir asesoría comercial, puedes comunicarte a la línea gratuita de atención al cliente **01 8000 112 115**."
+"R18","memoria","ninguna_o_consultar_datos","consultar_datos","","True","","","6436","399","0.01273","8.7","De las sedes en Ibagué, la única con teléfono directo registrado es la **Sede Administrativa (Calle 39 A # 5-15)**:
 * **Teléfono:** 608 277 08 22
 
 Las demás tiendas y puntos de atención no registran teléfono directo. Para atención general o consultas, puedes comunicarte a la línea gratuita nacional:
 * **Línea de servicio al cliente:** 01 8000 112 115"
-"R19","memoria","ninguna","ninguna","True","","True","1612","199","0.00506","2.6","Te llamas Ana y vives en Cali. ¿En qué más te puedo colaborar hoy?"
-"R20","fuera_de_dominio","ninguna","ninguna","True","","True","1325","688","0.00357","6.8","No tengo esa información. Si necesitas asistencia sobre los servicios de Celsia, puedes comunicarte a la línea 01 8000 112 115."
-"R21","sedes","consultar_datos","consultar_datos","True","True","True","2891","168","0.00280","4.3","El teléfono de la sede de Medellín (Santillana) es **604 326 66 00**."
-"R22","sedes_sin_dato","consultar_datos","buscar_en_base+consultar_datos","True","True","True","4979","290","0.00482","8.8","No tengo esa información. Te sugiero comunicarte a la línea de atención 01 8000 112 115."
+"R19","memoria","ninguna","ninguna","","True","","True","1612","199","0.00506","2.6","Te llamas Ana y vives en Cali. ¿En qué más te puedo colaborar hoy?"
+"R20","fuera_de_dominio","ninguna","ninguna","","True","","True","1325","688","0.00357","6.8","No tengo esa información. Si necesitas asistencia sobre los servicios de Celsia, puedes comunicarte a la línea 01 8000 112 115."
+"R21","sedes","consultar_datos","consultar_datos","","True","True","True","2891","168","0.00280","4.3","El teléfono de la sede de Medellín (Santillana) es **604 326 66 00**."
+"R22","sedes_sin_dato","consultar_datos","buscar_en_base+consultar_datos","2","True","True","True","5499","274","0.00515","9.5","No tengo esa información. Para más información puedes comunicarte a la línea 01 8000 112 115."
+"R23","saludo","ninguna","ninguna","0","True","","","1482","81","0.00142","2.7","¡Hola! ¿En qué te puedo ayudar hoy con los servicios de Celsia?"
+"R24","cortesia","ninguna","ninguna","0","True","","","1486","89","0.00145","2.1","¡Con mucho gusto! Si necesitas algo más en el futuro, aquí estaré para ayudarte. ¡Que tengas un excelente día!"
+"R25","trivial","ninguna","ninguna","0","True","","","1490","88","0.00145","2.3","2 + 2 es igual a 4. ¿En qué más te puedo ayudar hoy respecto a los servicios de Celsia?"
