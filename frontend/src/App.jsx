@@ -27,12 +27,13 @@ function sinEvidencia(texto) {
 function Fuentes({ fuentes, texto }) {
   if (!fuentes?.length || sinEvidencia(texto)) return null;
   return (
-    <details className="fuentes">
+    <details className="fuentes" open>
       <summary>Fragmentos consultados ({fuentes.length})</summary>
       <ul>
         {fuentes.map((f) => (
           <li key={f.chunk_id}>
             <strong>{f.documento}</strong>, fragmento {f.fragmento} · <a href={f.fuente} target="_blank" rel="noreferrer">{f.fuente}</a>
+            {f.extracto && <blockquote className="extracto">{f.extracto}</blockquote>}
           </li>
         ))}
       </ul>

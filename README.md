@@ -77,6 +77,8 @@ sequenceDiagram
 | Memoria corta | Checkpointer SQLite con `thread_id` (persiste entre reinicios) |
 | Confianza baja | `buscar_en_base` antepone un aviso del sistema cuando el mejor fragmento tiene coseno < 0,40; el agente responde con cautela y remite a la línea de atención (`scripts/28_confianza_baja.py`) |
 | Memoria en PostgreSQL | Con `DATABASE_URL` definida, el checkpointer y el Store son `PostgresSaver` y `PostgresStore` (probados con un PostgreSQL local, `tests/test_memoria_postgres.py`); sin ella, SQLite |
+| Grafo del agente | `scripts/31_mostrar_grafo.py`: `create_agent` devuelve un StateGraph compilado; el script imprime sus nodos (modelo, herramientas y dos de middleware), sus aristas condicionales y el estado, sin llamar a ningún modelo |
+| Flujo con aprobación humana | `scripts/32_flujo_reclamo.py`: un StateGraph escrito a mano (`src/taaml/flujo_reclamo.py`) con `interrupt`: el reclamo se radica solo si una persona lo aprueba; salida estructurada con Pydantic; sin modelo ni costo (con `--real` usa Gemini) |
 | Viaje en el tiempo | `scripts/27_viaje_en_el_tiempo.py`: historial de puntos de control, replay y fork de un hilo, con un modelo simulado (sin costo) |
 | Memoria larga | Store con espacio `("perfil", usuario)`, máximo 20 datos por cliente, borrable por el cliente |
 | Prompt y resumen | `@dynamic_prompt` (`con_fecha_de_hoy`) arma el prompt en cada turno con la fecha; `trim_messages` recorta lo que ve el modelo; `SummarizationMiddleware` resume la conversación guardada pasados 8.000 tokens |
@@ -135,7 +137,7 @@ make api        # API del agente (necesita GOOGLE_API_KEY en .env y Ollama encen
 make app        # frontend en http://localhost:5173 (alias de make frontend)
 ```
 
-La API expone `GET /api/salud`, `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde SQLite.
+La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen":"qdrant"`), `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde SQLite.
 
 ```bash
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)

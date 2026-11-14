@@ -1,7 +1,7 @@
 """API del agente de Celsia: el frontend habla con esto por HTTP y nunca llama al modelo directamente.
 
 Endpoints:
-  GET  /api/salud                    estado y modelo del agente
+  GET  /api/salud                    estado, modelo del agente y dónde busca por significado (qdrant, numpy o ninguno)
   POST /api/chat                     un turno de conversación; responde por streaming (Server-Sent Events)
   GET  /api/hilos/{hilo}/mensajes    la conversación guardada, para recuperarla al recargar la página
   GET  /api/usuarios/{usuario}/datos    lo que el agente recuerda del cliente (memoria de largo plazo)
@@ -21,6 +21,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from taaml.agente import MODELO_AGENTE, conversar_en_vivo, datos_del_cliente, historial_visible, olvidar_cliente
+from taaml.recuperacion import almacen_vectorial
 
 log = logging.getLogger("taaml.api")
 ORIGENES = ["http://localhost:5173", "http://127.0.0.1:5173"]  # el servidor de desarrollo del frontend
@@ -67,8 +68,8 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
 
 @app.get("/api/salud")
 def salud() -> dict:
-    """Estado de la API y modelo que usa el agente."""
-    return {"estado": "ok", "modelo": MODELO_AGENTE}
+    """Estado de la API, modelo que usa el agente y la base donde busca por significado (para mostrar en la terminal que es Qdrant)."""
+    return {"estado": "ok", "modelo": MODELO_AGENTE, "almacen": almacen_vectorial()}
 
 
 @app.post("/api/chat")

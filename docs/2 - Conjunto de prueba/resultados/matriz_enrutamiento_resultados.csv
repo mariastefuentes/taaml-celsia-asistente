@@ -153,3 +153,6 @@ Las demás tiendas y puntos de atención no registran teléfono directo. Para at
 "R26","conteo","consultar_datos","consultar_datos","1","True","True","True","3914","277","0.00397","5.8","En Ibagué hay un total de 6 sedes."
 "R27","conteo","consultar_datos","consultar_datos","1","True","True","True","3522","287","0.00372","5.9","Celsia tiene un total de 8 teléfonos de contacto registrados."
 "R28","conteo","consultar_datos","consultar_datos","3","True","True","True","10880","468","0.00992","12.2","En el Tolima hay un total de 15 puntos de recaudo y pago."
+"R29","memoria","ninguna","ninguna","0","True","","True","2056","203","0.00661","3.3","Trabajas en Carvajal. ¿En qué más te puedo ayudar hoy?"
+"R30","memoria_largo_plazo","recordar_datos_del_cliente","recordar_datos_del_cliente","1","True","","True","3309","172","0.00313","4.4","Te llamas Ana y trabajas en Carvajal."
+"R31","dato_inexistente","consultar_datos","buscar_en_base","2","False","","True","8954","299","0.00784","20.0","No tengo esa información. Para más detalles, por favor comunícate con la línea de atención 01 8000 112 115."

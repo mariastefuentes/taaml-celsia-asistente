@@ -19,6 +19,7 @@ def _eventos(texto: str) -> list[tuple[str, dict]]:
 def test_salud_dice_el_modelo():
     r = cliente.get("/api/salud")
     assert r.status_code == 200 and r.json()["estado"] == "ok" and "gemini" in r.json()["modelo"]
+    assert r.json()["almacen"] in {"qdrant", "numpy", "ninguno"}
 
 
 def test_chat_transmite_los_eventos_del_agente(monkeypatch):

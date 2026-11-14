@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api frontend demo-inyeccion test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api frontend demo-inyeccion demo-limpiar test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -29,6 +29,7 @@ ayuda:
 	$(info     make indice          construye el indice de vectores con Ollama (sube la busqueda del 54 % al 89 %))
 	$(info )
 	$(info   VERIFICAR ANTES DE LA DEMO)
+	$(info     make demo-limpiar    borra la memoria de largo plazo de los ensayos (antes de la demo))
 	$(info     make ensayo          revisa que la demo este lista, sin gastar cuota)
 	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas a Gemini))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
@@ -69,6 +70,9 @@ api:
 
 frontend:
 	cd frontend && npm install && npm run dev
+
+demo-limpiar:
+	uv run python scripts/30_limpiar_memoria_demo.py --borrar
 
 demo-inyeccion:
 	uv run python scripts/23_demo_corpus_envenenado.py --servir
