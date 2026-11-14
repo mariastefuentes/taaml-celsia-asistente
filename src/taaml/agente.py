@@ -12,7 +12,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import uuid4
 
 from langchain.agents import create_agent
@@ -125,10 +125,42 @@ def fuentes_de(fragmentos: list[dict], pregunta: str = "") -> list[dict]:
     ]
 
 
+# Valores del payload por los que se puede filtrar (los mismos de `recuperacion.CAMPOS_FILTRABLES`); un test comprueba que cubren todo el corpus
+Categoria = Literal[
+    "blog",
+    "noticias",
+    "sostenibilidad",
+    "inversionistas",
+    "empresa",
+    "servicios",
+    "sedes",
+    "activos_y_proyectos",
+    "regulatorio",
+    "internacional",
+    "prensa_y_medios",
+    "atencion",
+    "otros",
+]
+Region = Literal["General", "Valle y Tolima", "Valle del Cauca", "Tolima", "Internacional"]
+
+
 @tool(response_format="content_and_artifact")
-def buscar_en_base(pregunta: str) -> tuple[str, list[dict]]:
-    """Busca en la información oficial de Celsia los fragmentos que responden la pregunta del cliente."""
-    fragmentos = buscar(pregunta, k=FRAGMENTOS_AGENTE)
+def buscar_en_base(
+    pregunta: str,
+    categoria: Annotated[
+        Categoria | None,
+        Field(description="Solo si el cliente pide expresamente una sección del sitio (noticias, sostenibilidad, inversionistas…). Ante la duda, no la uses."),
+    ] = None,
+    region: Annotated[
+        Region | None,
+        Field(description="Solo si el cliente limita la búsqueda a una región (Tolima, Valle del Cauca…). Ante la duda, no la uses."),
+    ] = None,
+) -> tuple[str, list[dict]]:
+    """Busca en la información oficial de Celsia los fragmentos que responden la pregunta del cliente. Opcionalmente filtra por categoría o región del documento."""
+    filtro = {campo: valor for campo, valor in (("categoria", categoria), ("region", region)) if valor}
+    fragmentos = buscar(pregunta, k=FRAGMENTOS_AGENTE, **({"filtro": filtro} if filtro else {}))
+    if filtro and not fragmentos:  # el filtro dejó la búsqueda vacía: se le dice al modelo que repita sin él
+        return "Sin resultados con ese filtro. Repite la búsqueda sin categoria ni region.", []
     texto = delimitar_como_datos(formatear_contexto(fragmentos))
     if confianza_baja(fragmentos):
         texto = AVISO_CONFIANZA_BAJA + "\n\n" + texto
