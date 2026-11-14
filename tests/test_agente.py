@@ -688,3 +688,43 @@ def test_el_extracto_sin_palabras_en_comun_cae_al_comienzo_y_la_cita_lo_trae_sol
     frag = {"documento": "D", "orden": 2, "de": 5, "fuente": "https://x", "chunk_id": "c", "texto": "Texto del fragmento. " * 30}
     assert extracto_de(frag["texto"], "zzzzzz").startswith("Texto del fragmento.")
     assert "extracto" not in fuentes_de([frag])[0] and fuentes_de([frag], "fragmento")[0]["extracto"]
+
+
+def test_los_filtros_de_la_herramienta_cubren_todo_el_corpus():
+    from typing import get_args
+
+    from taaml.agente import Categoria, Region
+    from taaml.recuperacion import cargar_fragmentos
+
+    fragmentos = cargar_fragmentos()
+    assert {f["categoria"] for f in fragmentos} <= set(get_args(Categoria))
+    assert {f["region"] for f in fragmentos} <= set(get_args(Region))
+
+
+def test_la_herramienta_pasa_el_filtro_a_la_busqueda_solo_si_hay_filtro(monkeypatch):
+    recibidos = []
+
+    def falsa(pregunta, k=0, **kw):
+        recibidos.append(kw)
+        return [_FRAGMENTO]
+
+    monkeypatch.setattr("taaml.agente.buscar", falsa)
+    buscar_en_base.invoke({"pregunta": "impuestos"})
+    buscar_en_base.invoke({"pregunta": "impuestos", "categoria": "noticias", "region": "Tolima"})
+    assert recibidos == [{}, {"filtro": {"categoria": "noticias", "region": "Tolima"}}]
+
+
+def test_un_filtro_sin_resultados_le_pide_al_modelo_repetir_sin_filtro(monkeypatch):
+    monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0, **kw: [])
+    mensaje = buscar_en_base.invoke(
+        {"type": "tool_call", "name": "buscar_en_base", "args": {"pregunta": "x", "categoria": "blog"}, "id": "t2"}
+    )
+    assert "Sin resultados con ese filtro" in mensaje.content and mensaje.artifact == []
+
+
+def test_la_herramienta_rechaza_una_categoria_inventada():
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        buscar_en_base.invoke({"pregunta": "x", "categoria": "chismes"})

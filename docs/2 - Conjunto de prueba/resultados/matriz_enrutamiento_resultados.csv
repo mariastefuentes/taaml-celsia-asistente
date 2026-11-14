@@ -156,3 +156,19 @@ Las demás tiendas y puntos de atención no registran teléfono directo. Para at
 "R29","memoria","ninguna","ninguna","0","True","","True","2056","203","0.00661","3.3","Trabajas en Carvajal. ¿En qué más te puedo ayudar hoy?"
 "R30","memoria_largo_plazo","recordar_datos_del_cliente","recordar_datos_del_cliente","1","True","","True","3309","172","0.00313","4.4","Te llamas Ana y trabajas en Carvajal."
 "R31","dato_inexistente","consultar_datos","buscar_en_base","2","False","","True","8954","299","0.00784","20.0","No tengo esa información. Para más detalles, por favor comunícate con la línea de atención 01 8000 112 115."
+"R32","rag_con_filtro","buscar_en_base","buscar_en_base","2","True","True","","9667","774","0.01015","18.1","La noticia oficial de Celsia sobre proyectos solares en el Tolima es:
+
+* **«La Planta Caracolito de Cemex avanza en su transición energética de la mano de Celsia»** (Publicada el 29 de enero de 2026):
+  * **Ubicación:** Veredas Picaleña y Buenos Aires, en Ibagué (Tolima).
+  * **Proyecto:** Suministro de energía solar a la Planta Caracolito de Cemex a través de una de las plantas del **parque El Escobal**, el complejo solar más grande de Celsia en Colombia.
+  * **Capacidad y producción:** Cuenta con una capacidad de 19,9 MWac y proyecta una utilización anual de 42.865 MWh de energía limpia, desarrollada bajo la plataforma C2Energía en alianza con Cubico Sustainable Investments.
+  * **Enlace:** [Leer noticia completa](https://www.celsia.com/es/noticias/la-planta-caracolito-de-cemex-avanza-en-su-transicion-energetica-de-la-mano-de-celsia/)"
+"R33","rag_con_filtro","buscar_en_base","buscar_en_base","1","True","True","","4878","582","0.00584","10.6","En el blog de Celsia se destaca lo siguiente sobre la eficiencia energética en el hogar:
+
+* **¿Qué es?:** Es la práctica orientada a reducir el consumo de energía optimizando su uso (usar lo mismo o menos para realizar las tareas del hogar).
+* **Electrodomésticos de bajo consumo:** Están diseñados para utilizar la mínima energía requerida para funcionar, lo cual contribuye a la conservación de energía y al ahorro de dinero en la factura del servicio.
+* **Etiqueta de eficiencia energética:** 
+  * Clasifica los electrodomésticos desde la letra **A** (muy eficiente) hasta la **G** (menos eficiente). Los aparatos tipo A o B son los que consumen menos energía.
+  * Muestra el **consumo anual de energía (kWh/año)**: entre más bajo sea este valor, menor será el gasto de electricidad.
+  * Informa la **capacidad técnica** (litros o kilos en neveras o lavadoras) para elegir el aparato que mejor se adapte al hogar.
+* **Consejos prácticos:** Invertir a largo plazo en aparatos eficientes, ya que aunque su costo inicial puede ser mayor, el ahorro se compensa en la factura de energía a lo largo del tiempo."
