@@ -1,13 +1,32 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useMatch, useNavigate, useParams } from "react-router-dom";
 import Markdown from "./Markdown.jsx";
-import { cargarDatos, cargarMensajes, enviar, olvidarDatos } from "./api.js";
+import { cargarDatos, cargarMensajes, cargarSalud, enviar, olvidarDatos } from "./api.js";
 
+// Cada tarjeta muestra una capacidad del agente con una pregunta de ejemplo (la misma que enruta a esa herramienta).
 const SUGERENCIAS = [
-  "¿Qué sedes hay en Ibagué?",
-  "¿Cómo cancelo mi servicio?",
-  "Quiero reportar un daño en Ibagué: ¿qué hago y a qué número llamo?",
+  { icono: "📊", titulo: "Datos exactos", pregunta: "¿Qué sedes hay en Ibagué?" },
+  { icono: "📄", titulo: "Documentos oficiales", pregunta: "¿Qué dice el corpus sobre la política de calidad?" },
+  { icono: "🧭", titulo: "Pregunta mixta", pregunta: "Quiero reportar un daño en Ibagué: ¿qué hago y a qué número llamo?" },
+  { icono: "🧠", titulo: "Memoria", pregunta: "Me llamo Ana y trabajo en Carvajal" },
 ];
+
+const ALMACENES = { qdrant: "Qdrant", numpy: "búsqueda local", ninguno: "sin índice" };
+
+// Qué hizo el router en este turno, para el distintivo de la respuesta: una herramienta (con su ícono) o ninguna.
+function tipoDeUso(m) {
+  const nombres = (m.herramientas ?? []).map((h) => h.herramienta);
+  if (nombres.includes("consultar_datos") && nombres.includes("buscar_en_base")) return { icono: "🧭", clase: "mixto" };
+  if (nombres.includes("consultar_datos")) return { icono: "📊", clase: "datos" };
+  if (nombres.includes("buscar_en_base")) return { icono: "📄", clase: "texto" };
+  if (nombres.some((n) => n.includes("dato")) ) return { icono: "🧠", clase: "memoria" };
+  const t = m.usadas ?? "";
+  if (/tabla/i.test(t) && /texto/i.test(t)) return { icono: "🧭", clase: "mixto" };
+  if (/tabla/i.test(t)) return { icono: "📊", clase: "datos" };
+  if (/texto/i.test(t)) return { icono: "📄", clase: "texto" };
+  if (/cliente/i.test(t)) return { icono: "🧠", clase: "memoria" };
+  return { icono: "💬", clase: "directa" };
+}
 
 const HILO_VALIDO = /^[0-9a-f]{32}$/; // los hilos son uuid4 en hexadecimal; cualquier otra cosa en la dirección no es una conversación
 
@@ -62,8 +81,20 @@ export default function App() {
   const [enCurso, setEnCurso] = useState(false);
   const [error, setError] = useState("");
   const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
+  const [salud, setSalud] = useState(null); // null = aún no se sabe; false = la API no responde
   const fin = useRef(null);
   const ultimaPregunta = useRef("");
+
+  useEffect(() => {
+    let vivo = true;
+    const revisar = () => cargarSalud().then((s) => vivo && setSalud(s)).catch(() => vivo && setSalud(false));
+    revisar();
+    const cada = setInterval(revisar, 15000);
+    return () => {
+      vivo = false;
+      clearInterval(cada);
+    };
+  }, []);
 
   useEffect(() => {
     if (!hilo) return;
@@ -71,7 +102,11 @@ export default function App() {
   }, []); // solo al abrir la página: recarga y recupera el hilo desde la memoria del servidor
 
   useEffect(() => {
-    fin.current?.scrollIntoView({ behavior: "smooth" });
+    // Una respuesta que cabe en pantalla se sigue hasta el final; una más larga se ancla en su inicio para que se lea desde arriba.
+    const ultima = fin.current?.previousElementSibling;
+    const ventana = fin.current?.parentElement;
+    if (ultima && ventana && ultima.offsetHeight > ventana.clientHeight - 24) ultima.scrollIntoView({ behavior: "smooth", block: "start" });
+    else fin.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensajes, enCurso]);
 
   function fijarHilo(id) {
@@ -155,6 +190,11 @@ export default function App() {
           </div>
         </div>
         <div className="acciones">
+          {salud !== null && (
+            <span className={`estado ${salud ? "ok" : "caida"}`} role="status" title={salud ? `Modelo ${salud.modelo}` : "La API no responde"}>
+              {salud ? `En línea${salud.almacen ? ` · ${ALMACENES[salud.almacen] ?? salud.almacen}` : ""}` : "Sin conexión"}
+            </span>
+          )}
           <button className="secundario" onClick={verRecuerdos}>Lo que recuerdo</button>
           <button className="secundario" onClick={nueva} disabled={enCurso}>Nueva conversación</button>
         </div>
@@ -176,7 +216,11 @@ export default function App() {
             <p>Pregúntame por sedes, contactos, trámites o tarifas de Celsia.</p>
             <div className="sugerencias">
               {SUGERENCIAS.map((s) => (
-                <button key={s} className="secundario" onClick={() => preguntar(s)}>{s}</button>
+                <button key={s.titulo} className="tarjeta" onClick={() => preguntar(s.pregunta)}>
+                  <span className="icono" aria-hidden="true">{s.icono}</span>
+                  <strong>{s.titulo}</strong>
+                  <span className="ejemplo">{s.pregunta}</span>
+                </button>
               ))}
             </div>
           </section>
@@ -184,7 +228,9 @@ export default function App() {
         {mensajes.map((m, i) => (
           <article key={i} className={`burbuja ${m.rol}`}>
             {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
-              <p className="herramienta">{m.usadas ?? m.herramientas.map(etiqueta).join("; ")}</p>
+              <p className={`herramienta ${tipoDeUso(m).clase}`}>
+                <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ?? m.herramientas.map(etiqueta).join("; ")}
+              </p>
             )}
             <div className="contenido">{m.texto ? <Markdown texto={m.texto} /> : (enCurso && i === mensajes.length - 1 ? <span className="pensando">Pensando<i /><i /><i /></span> : "")}</div>
             {m.rol === "assistant" && m.aviso?.length > 0 && (
