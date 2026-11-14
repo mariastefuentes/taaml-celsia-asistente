@@ -229,7 +229,7 @@ export default function App() {
           <article key={i} className={`burbuja ${m.rol}`}>
             {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
               <p className={`herramienta ${tipoDeUso(m).clase}`}>
-                <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ?? m.herramientas.map(etiqueta).join("; ")}
+                <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ?? [...new Set(m.herramientas.map(etiqueta))].join(" · ")}
               </p>
             )}
             <div className="contenido">{m.texto ? <Markdown texto={m.texto} /> : (enCurso && i === mensajes.length - 1 ? <span className="pensando">Pensando<i /><i /><i /></span> : "")}</div>

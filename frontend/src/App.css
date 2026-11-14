@@ -31,6 +31,7 @@ button.tarjeta:hover:not(:disabled) { border-color: var(--marca); transform: tra
 button.tarjeta .icono { font-size: 1.5rem; line-height: 1; }
 button.tarjeta strong { font-size: .95rem; }
 button.tarjeta .ejemplo { color: var(--suave); font-size: .82rem; line-height: 1.35; }
+@media (max-height: 820px) { .vacio { padding: 4px 0; } .vacio .logo-grande { width: 84px; margin-bottom: 0; } .vacio h2 { font-size: 1.15rem; } .vacio p { margin-bottom: 0; } .sugerencias { gap: 8px; margin-top: 4px; } button.tarjeta { padding: 10px 14px; } button.tarjeta .icono { font-size: 1.2rem; } header { padding: 8px 0; } .marca img { width: 38px; height: 38px; } }
 .estado { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--suave); padding: 4px 10px; border: 1px solid var(--borde); border-radius: 999px; background: var(--tarjeta); }
 .estado::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, .2); }
 .estado.caida::before { background: var(--rojo); box-shadow: 0 0 0 3px rgba(185, 28, 28, .2); }
@@ -48,6 +49,7 @@ button.tarjeta .ejemplo { color: var(--suave); font-size: .82rem; line-height: 1
   .burbuja .herramienta.directa { background: #2b2b2b; color: #bbb; }
 }
 .fuentes li { margin-bottom: 8px; }
+.fuentes a { color: var(--azul); overflow-wrap: anywhere; }
 .burbuja { max-width: 85%; padding: 10px 14px; border-radius: 16px; background: var(--tarjeta); border: 1px solid var(--borde); box-shadow: var(--sombra); animation: aparece .25s ease-out; }
 .burbuja.assistant { align-self: flex-start; border-left: 4px solid var(--marca); border-top-left-radius: 4px; }
 .burbuja.user { align-self: flex-end; background: linear-gradient(135deg, #d9650f, var(--azul)); border-color: transparent; color: #fff; border-bottom-right-radius: 4px; }
