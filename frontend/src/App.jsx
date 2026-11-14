@@ -8,7 +8,7 @@ const SUGERENCIAS = [
   { icono: "📊", titulo: "Datos exactos", pregunta: "¿Qué sedes hay en Ibagué?" },
   { icono: "📄", titulo: "Documentos oficiales", pregunta: "¿Qué dice el corpus sobre la política de calidad?" },
   { icono: "🧭", titulo: "Pregunta mixta", pregunta: "Quiero reportar un daño en Ibagué: ¿qué hago y a qué número llamo?" },
-  { icono: "🧠", titulo: "Memoria", pregunta: "Me llamo Ana y trabajo en Carvajal" },
+  { icono: "🧠", titulo: "Memoria", pregunta: "Me llamo María Stella y estudio en la UAO" },
 ];
 
 const ALMACENES = { qdrant: "Qdrant", numpy: "búsqueda local", ninguno: "sin índice" };

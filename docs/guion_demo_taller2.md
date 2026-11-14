@@ -50,10 +50,10 @@ En la terminal: `uv run python scripts/31_mostrar_grafo.py`. `create_agent` devu
 4. Decir: LangSmith observa y puntúa; no orquesta (eso lo hace `create_agent`).
 
 ## Memoria de largo plazo (1 minuto)
-1. Escribir «Me llamo Ana y trabajo en Carvajal»: el agente lo guarda (etiqueta `guardar_dato_del_cliente`).
-2. En el mismo hilo, preguntar «¿Dónde trabajo?»: responde «Trabajas en Carvajal» **sin etiqueta de herramienta**. Lo sabe por la conversación (memoria de corto plazo, el checkpointer). Medido: R29, 3,3 s y $0,0066 con la preparación.
+1. Escribir «Me llamo María Stella y estudio en la UAO»: el agente lo guarda (etiqueta `guardar_dato_del_cliente`).
+2. En el mismo hilo, preguntar «¿Dónde estudio?»: responde «Estudias en la UAO» **sin etiqueta de herramienta**. Lo sabe por la conversación (memoria de corto plazo, el checkpointer). Medido: R29, 3,3 s y $0,0066 con la preparación.
 3. **Reiniciar el proceso** (esto es lo que la rúbrica llama «el hilo sobrevive al reinicio»): en la terminal de la API, Ctrl+C y `make api`; recargar la página (la dirección `/c/<hilo>` conserva el hilo) y comprobar que la conversación vuelve desde SQLite. Tarda unos 20 segundos.
-4. Pulsar **Nueva conversación** (hilo nuevo) y preguntar «¿Dónde trabajo y cómo me llamo?»: aparece la etiqueta «Recordando lo que sabe del cliente» (`recordar_datos_del_cliente`) y responde Ana y Carvajal. Medido: R30, 4,4 s y $0,0031.
+4. Pulsar **Nueva conversación** (hilo nuevo) y preguntar «¿Dónde estudio y cómo me llamo?»: aparece la etiqueta «Recordando lo que sabe del cliente» (`recordar_datos_del_cliente`) y responde María Stella y la UAO. Medido con el ejemplo del anuncio (Ana y Carvajal): R30, 4,4 s y $0,0031; con estos datos se probó el 13 de noviembre y funciona igual.
 5. Decir en voz alta la diferencia: en el hilo nuevo la conversación está vacía, así que solo puede saberlo por el Store (memoria de largo plazo, un espacio por cliente).
 6. Abrir **Lo que recuerdo** para mostrar lo guardado y que el cliente puede borrarlo.
 
