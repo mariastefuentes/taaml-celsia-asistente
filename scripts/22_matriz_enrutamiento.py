@@ -26,7 +26,10 @@ SALIDA = CARPETA / "resultados" / "matriz_enrutamiento_resultados.csv"
 PREPARACION = {  # turno previo que sustituye al «contexto_previo» escrito en la matriz
     "R18": "¿Qué sedes hay en Ibagué?",
     "R19": "Mi nombre es Ana y vivo en Cali.",
+    "R29": "Me llamo Ana y trabajo en Carvajal.",
 }
+OTRO_HILO = {"R30": "Me llamo Ana y trabajo en Carvajal."}  # el cliente lo cuenta en una conversación y pregunta en otra: lo único compartido es el Store
+CLIENTE_COMPARTIDO = {"R29", "R30"}  # mismo cliente en las dos filas: el dato se cuenta una sola vez y se borra al final
 ALTERNAS = {
     "R09": {"buscar_en_base"}
 }  # un enlace de pago puede estar en las tablas o en el texto: cualquiera de las dos vale
@@ -38,6 +41,9 @@ TEXTO_ESPERADO = {
     "R26": ["6"],
     "R27": ["8"],
     "R28": ["15"],
+    "R29": ["Carvajal"],
+    "R30": ["Ana", "Carvajal"],
+    "R31": ["No tengo esa información"],
 }
 CAMPOS = [
     "id",
@@ -98,23 +104,32 @@ def main() -> None:
     ]
     if seco:
         for f in filas:
-            previo = f" (antes: «{PREPARACION[f['id']]}»)" if f["id"] in PREPARACION else ""
+            previo = f" (antes: «{(PREPARACION | OTRO_HILO)[f['id']]}»)" if f["id"] in PREPARACION | OTRO_HILO else ""
             print(f"{f['id']} [{f['categoria']}] espera {f['herramienta_esperada']}: {f['pregunta']}{previo}")
         print(
-            f"\n{len(filas)} preguntas, {sum(f['id'] in PREPARACION for f in filas)} turnos de preparación. No se llamó a Gemini."
+            f"\n{len(filas)} preguntas, {sum(f['id'] in PREPARACION | OTRO_HILO for f in filas)} turnos de preparación. No se llamó a Gemini."
         )
         return
     agente, resultados, total = crear_agente(), [], 0.0
+    cliente_ana, contado = uuid4().hex, False
     for f in filas:
         hilo, costo, entrada, salida = uuid4().hex, 0.0, 0, 0
+        usuario = cliente_ana if f["id"] in CLIENTE_COMPARTIDO else hilo
         try:
+            if f["id"] in OTRO_HILO and not contado:
+                previo = uuid4().hex  # otra conversación del mismo cliente
+                conversar(OTRO_HILO[f["id"]], previo, agente=agente, usuario=usuario)
+                e0, s0 = uso_del_turno(agente, previo)
+                costo += costo_usd(e0, s0, MODELO_AGENTE) or 0.0
+                contado = True
             if f["id"] in PREPARACION:
-                conversar(PREPARACION[f["id"]], hilo, agente=agente, usuario=hilo)
+                conversar(PREPARACION[f["id"]], hilo, agente=agente, usuario=usuario)
+                contado = contado or f["id"] in CLIENTE_COMPARTIDO
                 e0, s0 = uso_del_turno(agente, hilo)
                 costo += costo_usd(e0, s0, MODELO_AGENTE) or 0.0
             inicio = time.perf_counter()
             respuesta, llamadas = conversar(
-                f["pregunta"], hilo, agente=agente, usuario=hilo
+                f["pregunta"], hilo, agente=agente, usuario=usuario
             )  # un cliente por pregunta: su memoria de largo plazo no se mezcla con la de otra
             segundos = time.perf_counter() - inicio
             entrada, salida = uso_del_turno(agente, hilo)  # tokens acumulados de este turno (el último mensaje humano)
@@ -130,7 +145,8 @@ def main() -> None:
                 }
             )
             continue
-        olvidar_cliente(hilo)  # no deja datos de prueba en el Store
+        if f["id"] not in CLIENTE_COMPARTIDO:
+            olvidar_cliente(hilo)  # no deja datos de prueba en el Store
         usadas = {ll["herramienta"] for ll in llamadas}
         ok_ruta = enrutamiento_ok(f["id"], f["herramienta_esperada"], usadas)
         ok_params = parametros_ok(f["parametros_esperados"], llamadas)
@@ -157,6 +173,7 @@ def main() -> None:
             f"{f['id']} [{f['categoria']}] esperada {f['herramienta_esperada']} | usó {'+'.join(sorted(usadas)) or 'ninguna'} ({len(llamadas)} llamadas) | ruta {'OK' if ok_ruta else 'NO'} | "
             f"params {ok_params} | texto {ok_texto} | {entrada}/{salida} tokens | ${costo:.5f} | {segundos:.1f} s"
         )
+    olvidar_cliente(cliente_ana)  # el cliente de las filas de memoria no deja datos en el Store
     SALIDA.parent.mkdir(parents=True, exist_ok=True)
     if filtro and SALIDA.exists():  # una corrida parcial no borra lo ya medido: reemplaza solo esas filas
         previos = {
