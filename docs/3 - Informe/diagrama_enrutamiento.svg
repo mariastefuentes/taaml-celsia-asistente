@@ -17,7 +17,7 @@
   </g>
 
   <text x="450" y="72" text-anchor="middle" font-weight="600">Pregunta + conversación anterior</text>
-  <text x="450" y="90" text-anchor="middle" font-size="11">el modelo lee el prompt v2</text>
+  <text x="450" y="90" text-anchor="middle" font-size="11">el modelo lee el prompt v3</text>
   <text x="450" y="157" text-anchor="middle" font-weight="600">¿Qué tipo de dato pide?</text>
   <text x="450" y="175" text-anchor="middle" font-size="11">el router es el prompt, no código</text>
 

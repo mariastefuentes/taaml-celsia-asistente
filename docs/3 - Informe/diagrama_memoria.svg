@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="Segoe UI, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#374151"/></marker>
+  </defs>
+  <rect width="900" height="520" fill="#ffffff"/>
+  <text x="450" y="26" text-anchor="middle" font-size="16" font-weight="600" fill="#111827">Memoria: checkpointer (corto plazo) frente a Store (largo plazo)</text>
+
+  <!-- agente -->
+  <rect x="340" y="50" width="220" height="50" rx="8" fill="#fef9c3" stroke="#374151" stroke-width="1.5"/>
+  <text x="450" y="72" text-anchor="middle" font-weight="600">Agente (create_agent)</text>
+  <text x="450" y="90" text-anchor="middle" font-size="11">un turno = una pregunta del cliente</text>
+
+  <!-- columnas -->
+  <g stroke="#374151" stroke-width="1.5">
+    <rect x="30" y="150" width="400" height="250" rx="8" fill="#dbeafe"/>
+    <rect x="470" y="150" width="400" height="250" rx="8" fill="#dcfce7"/>
+  </g>
+  <text x="230" y="176" text-anchor="middle" font-size="14" font-weight="600">Checkpointer: la conversación</text>
+  <text x="670" y="176" text-anchor="middle" font-size="14" font-weight="600">Store: lo que sabemos del cliente</text>
+
+  <g font-size="12">
+    <text x="50" y="204">Llave: <tspan font-weight="600">thread_id</tspan> (un uuid por conversación)</text>
+    <text x="50" y="226">Qué guarda: todos los mensajes del hilo, con las</text>
+    <text x="50" y="243">llamadas a herramientas, paso a paso</text>
+    <text x="50" y="265">Qué ve el modelo: los últimos 3.000 tokens;</text>
+    <text x="50" y="282">si pasa de 8.000 se resume</text>
+    <text x="50" y="304">Para qué: continuar la conversación, replay y fork</text>
+    <text x="50" y="326">Otro hilo empieza en blanco</text>
+    <text x="50" y="352" font-weight="600">SqliteSaver (por defecto) · PostgresSaver</text>
+    <text x="50" y="372" font-size="11" fill="#374151">data/memoria/conversaciones.sqlite</text>
+
+    <text x="490" y="204">Llave: <tspan font-weight="600">namespace ("perfil", usuario)</tspan></text>
+    <text x="490" y="226">Qué guarda: datos cortos que el cliente cuenta de</text>
+    <text x="490" y="243">sí mismo («Se llama Ana», «Trabaja en Carvajal»)</text>
+    <text x="490" y="265">Herramientas: guardar_dato_del_cliente (put) y</text>
+    <text x="490" y="282">recordar_datos_del_cliente (search); máximo 20 datos</text>
+    <text x="490" y="304">Para qué: recordar entre conversaciones; el cliente</text>
+    <text x="490" y="321">puede verlo y borrarlo (panel «Lo que recuerdo»)</text>
+    <text x="490" y="343">Nunca se mezcla con otro cliente</text>
+    <text x="490" y="362" font-weight="600">SqliteStore (por defecto) · PostgresStore</text>
+    <text x="490" y="382" font-size="11" fill="#374151">data/memoria/largo_plazo.sqlite</text>
+  </g>
+
+  <g stroke="#374151" stroke-width="1.6" fill="none" marker-end="url(#flecha)">
+    <path d="M400,100 L230,148"/>
+    <path d="M500,100 L670,148"/>
+  </g>
+  <text x="270" y="118" text-anchor="end" font-size="11" fill="#111827">lee y escribe en cada paso</text>
+  <text x="630" y="118" font-size="11" fill="#111827">solo si el cliente cuenta algo o lo pregunta</text>
+
+  <!-- ejemplo -->
+  <rect x="30" y="420" width="840" height="84" rx="8" fill="#f9fafb" stroke="#374151" stroke-width="1.5"/>
+  <text x="450" y="442" text-anchor="middle" font-weight="600">Ejemplo</text>
+  <text x="450" y="464" text-anchor="middle" font-size="12">Hilo A: «Me llamo Ana y trabajo en Carvajal» → put en ("perfil", ana): «Se llama Ana», «Trabaja en Carvajal».</text>
+  <text x="450" y="484" text-anchor="middle" font-size="12">Hilo B (otra conversación, mismo cliente): «¿Dónde trabajo?» → el checkpointer no sabe nada; search en ("perfil", ana) responde «Carvajal».</text>
+</svg>

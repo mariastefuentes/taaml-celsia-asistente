@@ -18,6 +18,10 @@ El enfoque se apoya en tres ideas. La generación aumentada con recuperación (L
 
 ![Arquitectura del agente: camino de una pregunta](diagrama_arquitectura_agente.svg)
 
+Por dentro, el agente es un grafo de LangGraph: el resumen, el modelo (con sus tres capas), el límite de herramientas y las herramientas, con un ciclo que se repite mientras el modelo pida herramientas.
+
+![Grafo del agente: el ciclo de un turno](diagrama_grafo_agente.svg)
+
 El agente se construye con `create_agent` de LangChain. En cada turno ocurre lo siguiente:
 
 1. La pregunta se limpia de caracteres invisibles (Unicode), que pueden esconder órdenes.
@@ -51,6 +55,8 @@ El Q&A del Taller 1 es una cadena: `RunnablePassthrough.assign` agrega el prompt
 **Si cambia el modelo de embeddings.** Se conserva el texto original, se vuelven a calcular todos los vectores y se reconstruye el índice completo: nunca se mezclan vectores de dos modelos, porque sus distancias no son comparables.
 
 ## 3. Memoria conversacional
+
+![Memoria: checkpointer frente a Store](diagrama_memoria.svg)
 
 **Qué se guarda.** Cada conversación es un hilo identificado por un `uuid4`; el checkpointer de SQLite (`SqliteSaver`) guarda todos los mensajes, incluidas las llamadas a herramientas. La memoria sobrevive a reiniciar la aplicación y, como el identificador va en la dirección (`/c/<hilo>`), al recargar la página la conversación se recupera.
 
@@ -113,6 +119,10 @@ Por tipo de pregunta, las de sedes tardan unos 7 s, las de contactos y las de te
 **Tope de herramientas.** Cada pregunta puede ejecutar como máximo 4 herramientas (`ToolCallLimitMiddleware`): una consulta mixta usa 2 y el reintento tras un «Sin resultados» suma una más. Lo que pase de ahí se bloquea y el modelo responde con lo que ya tiene.
 
 **Preguntas de conteo.** Después de las 25 originales se añadieron tres preguntas numéricas (R26 a R28), para comprobar que el agente cuenta en la tabla y no busca en el texto: «¿Cuántas sedes hay en Ibagué?» (6), «¿Cuántos teléfonos de contacto tiene Celsia?» (8) y «¿Cuántos puntos de pago hay en el Tolima?» (15). Las tres se respondieron bien, con `consultar_datos` y sin `buscar_en_base`, con el «Total» que calcula el sistema; costaron 0,018 USD en total y tardaron de 5,8 a 12,2 s (la tercera hizo tres consultas). Las cifras de arriba y las del experimento de LangSmith son de las 25 originales.
+
+**Trazas en LangSmith.** Cada turno del agente queda registrado en el proyecto `taaml-celsia` (ejecución `agente_celsia`, etiqueta `agente`) con el prompt, las llamadas a herramientas, los tokens y el costo. La figura muestra una traza real: una pregunta de contacto tarda 8,8 s, de los cuales 2,1 s son el modelo decidiendo la herramienta, 0,01 s la consulta a la tabla y 6,6 s el modelo redactando la respuesta.
+
+![Traza real de LangSmith](diagrama_traza_langsmith.svg)
 
 **Evaluación en LangSmith.** Las 25 preguntas de la matriz se subieron como dataset (`celsia-matriz-enrutamiento`) y se evaluaron dos configuraciones del agente, con y sin el tope de herramientas (`scripts/24_evaluar_en_langsmith.py`). Las dos eligieron la herramienta esperada en todas las preguntas que LangSmith puntuó (24 de 25 con tope y 23 de 25 sin tope; no se pudo explicar por qué las demás quedaron sin puntaje). Con tope el agente pidió 1,58 herramientas por pregunta en promedio contra 1,78 sin tope, gastó 174.385 tokens contra 202.694 (0,154 USD contra 0,168 USD) y tardó una mediana de 8,6 s contra 9,5 s. El tope no cambia la calidad del enrutamiento y reduce el gasto cerca de un 8 %. Cada paso del agente (modelo y herramientas) aparece como un nodo de la traza con su latencia.
 
