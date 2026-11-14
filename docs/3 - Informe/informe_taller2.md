@@ -198,7 +198,16 @@ Los embeddings quedan primero en las cuatro medidas, y por eso `buscar_en_base` 
 
 Con vectores de norma 1 las tres medidas ordenan igual: el producto punto es el coseno y la distancia al cuadrado es 2 − 2·coseno. Importaría si los vectores no estuvieran normalizados, porque el producto punto favorecería a los de mayor norma. Se usa el coseno.
 
-**Tipo de embedding.** Se usan embeddings de texto densos, multilingües (incluido el español); los léxicos (palabras ponderadas por idf) se usan como respaldo y en la búsqueda híbrida. Los multimodales (imagen y texto en un mismo espacio, como CLIP o SigLIP) no aplican: el corpus es solo texto.
+**Tipo de embedding.** Una taxonomía corta de lo que existe y de lo que aplica a este corpus, que es solo texto en español:
+
+| Tipo | Qué representa | Ejemplos | ¿Se usa aquí? |
+|---|---|---|---|
+| Denso de texto | Un vector por fragmento, aprendido; fragmentos parecidos en significado quedan cerca | `nomic-embed-text-v2-moe`, EmbeddingGemma | Sí: es la búsqueda por significado (768 dimensiones, multilingüe) |
+| Léxico o disperso | Un peso por palabra (idf); casi todas las posiciones son cero | idf, BM25 | Sí, como respaldo cuando Ollama no responde y en la búsqueda híbrida; en la medición el modo «auto» con embeddings superó al híbrido |
+| Multivector (interacción tardía) | Un vector por token y una comparación token a token | ColBERT | No: multiplica el tamaño del índice y no se evaluó |
+| Multimodal | Imagen y texto en un mismo espacio, de modo que un texto encuentra imágenes | CLIP, SigLIP | No: el corpus no trae imágenes indexables, solo el texto de las páginas |
+
+Cada fila es una decisión y no una carencia: se usa el denso con el léxico de respaldo, y lo que no se usa queda nombrado con la razón. Los ejemplos de las filas que no se usan salen de la literatura y de la documentación de cada modelo; ninguno se probó en este taller.
 
 **Matryoshka.** Un modelo entrenado con Matryoshka (Kusupati et al., 2022) concentra lo más importante en las primeras dimensiones, de modo que el vector se puede recortar y volver a normalizar sin reentrenar. Se recortó el vector de este modelo y se midió:
 
