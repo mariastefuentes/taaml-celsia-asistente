@@ -641,14 +641,28 @@ def test_una_pregunta_sin_busqueda_no_trae_fuentes():
 
 
 def _fragmento(puntaje, metodo="embeddings"):
-    return {"documento": "Doc", "categoria": "c", "region": "r", "fuente": "https://www.celsia.com/x", "texto": "hola", "orden": "1", "de": "2", "chunk_id": "doc-001", "puntaje": puntaje, "metodo": metodo}
+    return {
+        "documento": "Doc",
+        "categoria": "c",
+        "region": "r",
+        "fuente": "https://www.celsia.com/x",
+        "texto": "hola",
+        "orden": "1",
+        "de": "2",
+        "chunk_id": "doc-001",
+        "puntaje": puntaje,
+        "metodo": metodo,
+    }
 
 
 def test_confianza_baja_cuando_el_mejor_fragmento_no_llega_al_umbral():
     from taaml.agente import UMBRAL_CONFIANZA, confianza_baja
+
     assert confianza_baja([_fragmento(UMBRAL_CONFIANZA - 0.01)]) and confianza_baja([])
     assert not confianza_baja([_fragmento(UMBRAL_CONFIANZA)])
-    assert not confianza_baja([_fragmento(0.01, metodo="palabras")])  # un puntaje de palabras no es un coseno: no se compara con el umbral
+    assert not confianza_baja(
+        [_fragmento(0.01, metodo="palabras")]
+    )  # un puntaje de palabras no es un coseno: no se compara con el umbral
 
 
 def test_la_herramienta_avisa_cuando_la_confianza_es_baja_y_no_cuando_es_alta(monkeypatch):
