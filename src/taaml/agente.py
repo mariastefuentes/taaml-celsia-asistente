@@ -278,7 +278,7 @@ def limitar_historial(request: Any, handler: Any) -> Any:
 
 @dynamic_prompt
 def con_fecha_de_hoy(request: Any) -> str:
-    """El prompt de sistema se arma en cada turno: al texto fijo de `v3_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
+    """El prompt de sistema se arma en cada turno: al texto fijo de `v4_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
     base = request.system_message.text if request.system_message else ""
     return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
 
@@ -373,7 +373,7 @@ def crear_agente(
     return create_agent(
         model=llm,
         tools=HERRAMIENTAS,
-        system_prompt=leer_prompt("v3_agente.md"),
+        system_prompt=leer_prompt("v4_agente.md"),
         checkpointer=checkpointer,
         store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
         context_schema=Contexto,
