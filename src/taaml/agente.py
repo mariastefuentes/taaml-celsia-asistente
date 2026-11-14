@@ -90,14 +90,36 @@ def delimitar_como_datos(contenido: str) -> str:
     return f"<documentos_recuperados>\n{AVISO_DATOS}\n\n{limpio}\n</documentos_recuperados>"
 
 
-def fuentes_de(fragmentos: list[dict]) -> list[dict]:
-    """Cita verificable de cada fragmento recuperado: documento, número de fragmento dentro del documento y enlace de origen."""
+_SIN_PESO = {"corpus", "sobre", "dice", "cual", "cuales", "como", "donde", "para", "tiene", "puede", "hacer", "quiero", "celsia"}
+
+
+def extracto_de(texto: str, pregunta: str, ancho: int = 220) -> str:
+    """Trozo del fragmento donde caen más palabras de la pregunta: la pantalla lo muestra para que se vea por qué se citó ese fragmento."""
+    limpio = " ".join(texto.split())
+    minus = limpio.lower()
+    palabras = {p for p in re.findall(r"\w{5,}", pregunta.lower()) if p not in _SIN_PESO}
+    posiciones = sorted((m.start(), p) for p in palabras for m in re.finditer(re.escape(p), minus))
+    if not posiciones:
+        return limpio[:ancho] + ("…" if len(limpio) > ancho else "")
+
+    def puntaje(ancla: tuple[int, str]) -> tuple[int, int, int]:
+        dentro = [(s, p) for s, p in posiciones if ancla[0] <= s < ancla[0] + ancho]
+        return len({p for _, p in dentro}), -(max(s for s, _ in dentro) - ancla[0]), -ancla[0]  # más palabras, más juntas, más al comienzo
+
+    mejor = max(posiciones, key=puntaje)[0]
+    inicio = max(0, mejor - 30)
+    return ("…" if inicio else "") + limpio[inicio : inicio + ancho] + ("…" if inicio + ancho < len(limpio) else "")
+
+
+def fuentes_de(fragmentos: list[dict], pregunta: str = "") -> list[dict]:
+    """Cita verificable de cada fragmento recuperado: documento, número de fragmento dentro del documento, enlace de origen y, si se da la pregunta, un extracto."""
     return [
         {
             "documento": f["documento"],
             "fragmento": f"{f['orden']} de {f['de']}",
             "fuente": f["fuente"],
             "chunk_id": f["chunk_id"],
+            **({"extracto": extracto_de(f["texto"], pregunta)} if pregunta else {}),
         }
         for f in fragmentos
     ]
@@ -110,7 +132,7 @@ def buscar_en_base(pregunta: str) -> tuple[str, list[dict]]:
     texto = delimitar_como_datos(formatear_contexto(fragmentos))
     if confianza_baja(fragmentos):
         texto = AVISO_CONFIANZA_BAJA + "\n\n" + texto
-    return texto, fuentes_de(fragmentos)  # el modelo lee el texto; la pantalla muestra las fuentes (artefacto)
+    return texto, fuentes_de(fragmentos, pregunta)  # el modelo lee el texto; la pantalla muestra las fuentes (artefacto)
 
 
 class ConsultaDatos(BaseModel):
