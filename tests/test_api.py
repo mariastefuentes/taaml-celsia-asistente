@@ -1,4 +1,5 @@
 import json
+import threading
 
 from fastapi.testclient import TestClient
 
@@ -88,3 +89,11 @@ def test_ver_y_borrar_lo_que_el_agente_recuerda(monkeypatch):
     assert cliente.get(f"/api/usuarios/{'c' * 32}/datos").json() == {"datos": ["Vive en Cali"]}
     assert cliente.delete(f"/api/usuarios/{'c' * 32}/datos").json() == {"borrados": 1}
     assert cliente.get("/api/usuarios/no-valido/datos").status_code == 422
+
+
+def test_al_arrancar_la_api_calienta_el_agente_en_segundo_plano(monkeypatch):
+    llamado = threading.Event()
+    monkeypatch.setattr("api.main.calentar", llamado.set)
+    with TestClient(app) as c:
+        assert c.get("/api/salud").status_code == 200
+        assert llamado.wait(timeout=5)

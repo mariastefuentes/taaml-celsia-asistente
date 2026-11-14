@@ -728,3 +728,24 @@ def test_la_herramienta_rechaza_una_categoria_inventada():
 
     with pytest.raises(ValidationError):
         buscar_en_base.invoke({"pregunta": "x", "categoria": "chismes"})
+
+
+def test_calentar_arma_el_agente_y_hace_una_busqueda(monkeypatch):
+    llamadas = []
+    monkeypatch.setattr("taaml.agente._agente", lambda modelo: llamadas.append(("agente", modelo)))
+    monkeypatch.setattr("taaml.agente.buscar", lambda pregunta, k: llamadas.append(("buscar", k)))
+    from taaml.agente import calentar
+
+    calentar("modelo-x")
+    assert llamadas == [("agente", "modelo-x"), ("buscar", 1)]
+
+
+def test_calentar_no_falla_si_ollama_esta_apagado(monkeypatch):
+    def sin_ollama(pregunta, k):
+        raise OSError("Ollama no responde")
+
+    monkeypatch.setattr("taaml.agente._agente", lambda modelo: None)
+    monkeypatch.setattr("taaml.agente.buscar", sin_ollama)
+    from taaml.agente import calentar
+
+    calentar()  # no debe lanzar: la primera pregunta real mostrará el problema

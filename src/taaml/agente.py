@@ -5,6 +5,7 @@ Es el patrón «modelo + herramientas + prompt», con memoria por conversación 
 falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1, pero gemini-3.8-flash los ignora (medido): la respuesta puede variar.
 """
 
+import logging
 import os
 import re
 import sqlite3
@@ -39,6 +40,8 @@ from taaml.recuperacion import buscar, formatear_contexto
 from taaml.sanitizar import quitar_invisibles
 from taaml.validacion import datos_sin_respaldo
 from taaml.tareas import obtener_modelo
+
+log = logging.getLogger("taaml.agente")
 
 MODELO_AGENTE = "gemini-3.8-flash"  # API de pago, el más reciente de la familia Flash (indicación del profesor)
 MODELO_RESPALDO = "ollama:llama3.2"  # 3B local y gratis: solo entra si Gemini falla (cuota, red)
@@ -393,6 +396,18 @@ def _agente(modelo: str) -> Any:
     if modelo not in _AGENTES:
         _AGENTES[modelo] = crear_agente(modelo)
     return _AGENTES[modelo]
+
+
+def calentar(modelo: str = MODELO_AGENTE) -> None:
+    """Prepara lo lento de la primera pregunta: arma el agente (~3 s), abre la base vectorial y carga el modelo de embeddings en Ollama (~7 s en frío).
+
+    No llama al modelo de pago. Si algo falta (Ollama apagado, por ejemplo) no falla: la primera pregunta real lo resolverá o mostrará el error.
+    """
+    try:
+        _agente(modelo)
+        buscar("calentamiento", k=1)
+    except Exception:
+        log.warning("no se pudo calentar el agente; la primera pregunta tardará más", exc_info=True)
 
 
 def conversar(

@@ -12,7 +12,9 @@ Uso:  uv run uvicorn api.main:app --reload --port 8000
 import json
 import logging
 import re
+import threading
 from collections.abc import Iterator
+from contextlib import asynccontextmanager
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
@@ -20,7 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from taaml.agente import MODELO_AGENTE, conversar_en_vivo, datos_del_cliente, historial_visible, olvidar_cliente
+from taaml.agente import MODELO_AGENTE, calentar, conversar_en_vivo, datos_del_cliente, historial_visible, olvidar_cliente
 from taaml.recuperacion import almacen_vectorial
 
 log = logging.getLogger("taaml.api")
@@ -29,7 +31,14 @@ HILO = re.compile(
     r"^[0-9a-f]{32}$"
 )  # los hilos y los clientes son uuid4 en hexadecimal: no se acepta otra cosa como id
 
-app = FastAPI(title="Agente Celsia", version="1.0")
+@asynccontextmanager
+async def _ciclo_de_vida(_: FastAPI):
+    """Al arrancar, calienta el agente y Ollama en segundo plano para que la primera pregunta no tarde ~15 s; la API ya responde mientras tanto."""
+    threading.Thread(target=calentar, name="calentamiento", daemon=True).start()
+    yield
+
+
+app = FastAPI(title="Agente Celsia", version="1.0", lifespan=_ciclo_de_vida)
 app.add_middleware(
     CORSMiddleware, allow_origins=ORIGENES, allow_methods=["GET", "POST"], allow_headers=["Content-Type"]
 )
