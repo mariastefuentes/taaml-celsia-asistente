@@ -5,9 +5,9 @@ Las preguntas salen de la matriz de enrutamiento (`docs/2 - Conjunto de prueba/m
 
 ## Antes de empezar (5 minutos antes)
 1. Ollama encendido (los embeddings lo necesitan) y `GOOGLE_API_KEY` con facturación en `.env`.
-2. Terminal 1: `uv run uvicorn api.main:app --port 8000` (la API). Terminal 2: `cd frontend && npm run dev`. Abrir http://localhost:5173 y hacer una pregunta de calentamiento fuera del guion (por ejemplo «hola»): la primera vez la API carga los modelos.
+2. Terminal 1: `uv run uvicorn api.main:app --port 8000` (la API). Terminal 2: `cd frontend && npm run dev`. Abrir http://localhost:5173 y comprobar en otra terminal `curl http://localhost:8000/api/salud` (debe decir `"almacen":"qdrant"`: es la prueba, en pantalla, de que busca en Qdrant) y hacer una pregunta de calentamiento fuera del guion (por ejemplo «hola»): la primera vez la API carga los modelos.
 3. Pulsar **Nueva conversación** para empezar en blanco y, en «Lo que recuerdo», borrar lo guardado de ensayos anteriores.
-4. Ensayar la secuencia completa una vez y guardar capturas de la pestaña Agente en `docs/capturas` (ya hay cuatro en `docs/capturas/agente_*.jpg`, tomadas en el ensayo del 13 de noviembre) para mostrarlas si falla la red.
+4. Ensayar la secuencia completa una vez y guardar capturas de la pestaña Agente en `docs/capturas` (ya hay cuatro en `docs/capturas/agente_*.jpg`, tomadas en el ensayo del 13 de noviembre) solo como último recurso: la rúbrica pide responder con el sistema, no con una captura.
 
 ## Los cuatro casos
 
@@ -61,7 +61,7 @@ Cada cifra, correo y enlace de la respuesta se busca en lo que devolvieron las h
 ## Si algo falla
 | Falla | Qué hacer |
 |---|---|
-| Gemini no responde (cuota o red) | El agente cae solo al modelo local `llama3.2`; es lento y acierta menos (2 de 4 casos con herramientas). Decirlo y pasar a las capturas del ensayo. |
+| Gemini no responde (cuota o red) | El agente cae solo al modelo local `llama3.2`; es lento y acierta menos (2 de 4 casos con herramientas). Decirlo y seguir en vivo con ese modelo; si no responde, repetir con «Nueva conversación». Las capturas solo si no hay ninguna respuesta posible, diciendo que son del ensayo. |
 | La respuesta sale distinta de lo esperado | Mostrar la etiqueta de herramienta: lo que se evalúa es el enrutamiento y que no invente. Repetir la pregunta con «Nueva conversación». |
 | La API no responde | El frontend muestra «No hay conexión con el servidor» con botón de reintento; relanzar `uvicorn` y reintentar. |
 | Ollama apagado | `buscar_en_base` no tendrá embeddings y cae a búsqueda por palabras; la consulta estructurada sigue funcionando. Encender Ollama y repetir. |

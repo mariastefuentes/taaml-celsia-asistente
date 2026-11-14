@@ -135,7 +135,7 @@ uv run uvicorn api.main:app --port 8000   # API del agente (necesita GOOGLE_API_
 cd frontend && npm install && npm run dev # frontend en http://localhost:5173
 ```
 
-La API expone `GET /api/salud`, `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde SQLite.
+La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen":"qdrant"`), `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde SQLite.
 
 ```bash
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)
