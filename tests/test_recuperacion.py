@@ -152,3 +152,30 @@ def test_el_contexto_no_lleva_ordenes_escondidas_con_caracteres_invisibles():
     contexto = recuperacion.formatear_contexto([fragmento])
     assert "01 8000 112 115." in contexto and "PWNED" not in contexto
     assert not any(0xE0000 <= ord(c) <= 0xE007F or c == "​" for c in contexto) and "</contexto>" not in contexto
+
+
+def test_los_embeddings_piden_a_ollama_mantener_el_modelo_cargado(monkeypatch):
+    import json
+
+    enviado = {}
+
+    class Respuesta:
+        def read(self):
+            return b'{"embeddings": [[3.0, 4.0]]}'
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def falso_urlopen(req, timeout):
+        enviado.update(json.loads(req.data))
+        return Respuesta()
+
+    monkeypatch.setattr("taaml.recuperacion.urllib.request.urlopen", falso_urlopen)
+    from taaml.recuperacion import embeddings
+
+    vector = embeddings(["hola"], "query")
+    assert enviado["keep_alive"] == "30m"
+    assert [round(float(x), 2) for x in vector[0]] == [0.6, 0.8]

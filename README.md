@@ -8,7 +8,7 @@
 ![React](https://img.shields.io/badge/M%C3%B3dulo%202-React%20%2B%20FastAPI-61DAFB)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-green.svg)](LICENSE)
 
-Base de conocimiento y asistente de preguntas y respuestas (Q&A, resumen y FAQ) sobre **Celsia**, empresa de energía del Valle del Cauca y el Tolima. Responde **solo con información oficial de celsia.com** y dice «no sé» cuando la fuente no lo trae. Taller 1 del curso *Técnicas avanzadas de IA aplicadas en modelos de lenguaje* (Maestría en IA y Ciencias de Datos, UAO, 2026-2S).
+Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energía del Valle del Cauca y el Tolima. Responde **solo con información oficial de celsia.com** y dice «no sé» cuando la fuente no lo trae. El Módulo 1 construyó el corpus y el Q&A (resumen y FAQ); el Módulo 2 lo convirtió en un agente con memoria, herramientas, router y blindaje, servido por una API y un frontend propio. Curso *Técnicas avanzadas de IA aplicadas en modelos de lenguaje* (Maestría en IA y Ciencias de Datos, UAO, 2026-2S).
 
 ## Problema y solución
 
@@ -78,6 +78,7 @@ sequenceDiagram
 | Confianza baja | `buscar_en_base` antepone un aviso del sistema cuando el mejor fragmento tiene coseno < 0,40; el agente responde con cautela y remite a la línea de atención (`scripts/28_confianza_baja.py`) |
 | Memoria en PostgreSQL | Con `DATABASE_URL` definida, el checkpointer y el Store son `PostgresSaver` y `PostgresStore` (probados con un PostgreSQL local, `tests/test_memoria_postgres.py`); sin ella, SQLite |
 | Grafo del agente | `scripts/31_mostrar_grafo.py`: `create_agent` devuelve un StateGraph compilado; el script imprime sus nodos (modelo, herramientas y dos de middleware), sus aristas condicionales y el estado, sin llamar a ningún modelo |
+| Traza de LangSmith | `scripts/33_diagrama_traza_langsmith.py`: lee de LangSmith (solo lectura) la traza más reciente de una pregunta y dibuja sus pasos, tiempos, tokens y argumentos de herramienta en `docs/3 - Informe/diagrama_traza_langsmith.svg`; necesita `LANGSMITH_API_KEY`, no llama a ningún modelo |
 | Flujo con aprobación humana | `scripts/32_flujo_reclamo.py`: un StateGraph escrito a mano (`src/taaml/flujo_reclamo.py`) con `interrupt`: el reclamo se radica solo si una persona lo aprueba; salida estructurada con Pydantic; sin modelo ni costo (con `--real` usa Gemini) |
 | Viaje en el tiempo | `scripts/27_viaje_en_el_tiempo.py`: historial de puntos de control, replay y fork de un hilo, con un modelo simulado (sin costo) |
 | Memoria larga | Store con espacio `("perfil", usuario)`, máximo 20 datos por cliente, borrable por el cliente |
@@ -91,7 +92,7 @@ sequenceDiagram
 | Blindaje | Limpieza de caracteres invisibles, reglas del prompt y 11/11 ataques directos y 8/8 indirectos resistidos |
 | Respaldo | `llama3.2` local si Gemini falla |
 
-La app de Streamlit del Taller 1 tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes** y **Corpus y scraping** (etapas del pipeline y métricas). El agente del Módulo 2 no está en ella: se entrega con la API y el frontend de arriba (`make api` y `make frontend`).
+La app de Streamlit del Taller 1 tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes** y **Corpus y scraping** (etapas del pipeline y métricas). El agente del Módulo 2 no está en ella: se entrega con la API y el frontend de arriba (`make api` y `make app`).
 
 ## Capturas
 
@@ -130,11 +131,11 @@ Para reconstruir la base **desde cero** (descargar todo el sitio): `scripts/01_s
 **Agente conversacional (Módulo 2): API y frontend separados.** El frontend (React con Vite, carpeta `frontend/`) no llama al modelo: habla por HTTP con una API FastAPI (`api/`) que ejecuta el agente y le responde por streaming (Server-Sent Events). Se corren en dos terminales:
 
 ```bash
-uv run uvicorn api.main:app --port 8000   # API del agente (necesita GOOGLE_API_KEY en .env y Ollama encendido)
+make api        # API del agente (necesita GOOGLE_API_KEY en .env y Ollama encendido)
 ```
 
 ```bash
-cd frontend && npm install && npm run dev # frontend en http://localhost:5173
+make app        # frontend en http://localhost:5173 (alias de make frontend)
 ```
 
 La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen":"qdrant"`), `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde SQLite.
@@ -142,15 +143,16 @@ La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen"
 ```bash
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)
 make modulo1                              # la app del Módulo 1: solo el corpus y las etapas del scraping
-uv run streamlit run app/asistente.py     # la app del Taller 1 (Q&A, Resumen, FAQ y Corpus); el agente del Módulo 2 va por API + frontend
+make app-taller1                          # la app del Taller 1 (Streamlit); el agente del Módulo 2 va por API + frontend
 make test                                 # pruebas de componentes, sin Gemini ni Ollama (el CI las corre en cada PR)
 make lint                                 # ruff y lock vigente
-uv run python scripts/16_ensayo_demo.py   # revisa que la demo esté lista, sin gastar cuota
+make ensayo                               # revisa que la demo esté lista, sin gastar cuota
+make ensayo-agente                        # conversación real con el agente (GASTA CUOTA: 8 a 12 llamadas)
 ```
 
-`make` muestra el menú de atajos (`setup`, `modulo1`, `app`, `datos`, `indice`, `scraping-demo`, `recuperacion`, `ensayo`, `evaluar`, `pdf`).
+`make` muestra el menú de atajos (`setup`, `modulo1`, `api`, `app`, `datos`, `indice`, `scraping-demo`, `recuperacion`, `ensayo`, `ensayo-agente`, `evaluar`, `pdf`).
 
-**Demo del Módulo 1.** `app/modulo1.py` es la versión que se sustenta en la sesión 8: muestra solo las métricas del corpus y las etapas del scraping (descubrir → extraer → limpiar → deduplicar → enriquecer → curar → fragmentar), sin Q&A, Resumen ni FAQ. La app completa queda en `app/asistente.py` (`make app`). El scraping en vivo se ejecuta con `make scraping-demo`.
+**Demo del Módulo 1.** `app/modulo1.py` es la versión que se sustenta en la sesión 8: muestra solo las métricas del corpus y las etapas del scraping (descubrir → extraer → limpiar → deduplicar → enriquecer → curar → fragmentar), sin Q&A, Resumen ni FAQ. La app completa queda en `app/asistente.py` (`make app-taller1`). El scraping en vivo se ejecuta con `make scraping-demo`.
 
 <details>
 <summary><b>Referencia detallada: cómo se construye la base, pruebas y opciones</b></summary>

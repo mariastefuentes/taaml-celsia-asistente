@@ -710,3 +710,64 @@ def test_el_extracto_sin_palabras_en_comun_cae_al_comienzo_y_la_cita_lo_trae_sol
     }
     assert extracto_de(frag["texto"], "zzzzzz").startswith("Texto del fragmento.")
     assert "extracto" not in fuentes_de([frag])[0] and fuentes_de([frag], "fragmento")[0]["extracto"]
+
+
+def test_los_filtros_de_la_herramienta_cubren_todo_el_corpus():
+    from typing import get_args
+
+    from taaml.agente import Categoria, Region
+    from taaml.recuperacion import cargar_fragmentos
+
+    fragmentos = cargar_fragmentos()
+    assert {f["categoria"] for f in fragmentos} <= set(get_args(Categoria))
+    assert {f["region"] for f in fragmentos} <= set(get_args(Region))
+
+
+def test_la_herramienta_pasa_el_filtro_a_la_busqueda_solo_si_hay_filtro(monkeypatch):
+    recibidos = []
+
+    def falsa(pregunta, k=0, **kw):
+        recibidos.append(kw)
+        return [_FRAGMENTO]
+
+    monkeypatch.setattr("taaml.agente.buscar", falsa)
+    buscar_en_base.invoke({"pregunta": "impuestos"})
+    buscar_en_base.invoke({"pregunta": "impuestos", "categoria": "noticias", "region": "Tolima"})
+    assert recibidos == [{}, {"filtro": {"categoria": "noticias", "region": "Tolima"}}]
+
+
+def test_un_filtro_sin_resultados_le_pide_al_modelo_repetir_sin_filtro(monkeypatch):
+    monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0, **kw: [])
+    mensaje = buscar_en_base.invoke(
+        {"type": "tool_call", "name": "buscar_en_base", "args": {"pregunta": "x", "categoria": "blog"}, "id": "t2"}
+    )
+    assert "Sin resultados con ese filtro" in mensaje.content and mensaje.artifact == []
+
+
+def test_la_herramienta_rechaza_una_categoria_inventada():
+    import pytest
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError):
+        buscar_en_base.invoke({"pregunta": "x", "categoria": "chismes"})
+
+
+def test_calentar_arma_el_agente_y_hace_una_busqueda(monkeypatch):
+    llamadas = []
+    monkeypatch.setattr("taaml.agente._agente", lambda modelo: llamadas.append(("agente", modelo)))
+    monkeypatch.setattr("taaml.agente.buscar", lambda pregunta, k: llamadas.append(("buscar", k)))
+    from taaml.agente import calentar
+
+    calentar("modelo-x")
+    assert llamadas == [("agente", "modelo-x"), ("buscar", 1)]
+
+
+def test_calentar_no_falla_si_ollama_esta_apagado(monkeypatch):
+    def sin_ollama(pregunta, k):
+        raise OSError("Ollama no responde")
+
+    monkeypatch.setattr("taaml.agente._agente", lambda modelo: None)
+    monkeypatch.setattr("taaml.agente.buscar", sin_ollama)
+    from taaml.agente import calentar
+
+    calentar()  # no debe lanzar: la primera pregunta real mostrará el problema

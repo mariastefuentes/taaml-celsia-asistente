@@ -79,16 +79,16 @@ def enrutamiento_ok(id_: str, esperada: str, usadas: set[str]) -> bool:
 
 
 def parametros_ok(esperados: str, llamadas: list[dict]) -> bool | None:
-    """Revisa tabla y ciudad en alguna llamada a consultar_datos. None si la matriz no pide parámetros."""
+    """Revisa tabla, ciudad, tipo, categoría o región en alguna llamada a consultar_datos o buscar_en_base. None si la matriz no pide parámetros."""
     pedidos = dict(
         p.strip().split("=", 1)
         for p in esperados.replace(" + ", ";").split(";")
-        if p.strip().startswith(("tabla=", "ciudad=", "tipo="))
+        if p.strip().startswith(("tabla=", "ciudad=", "tipo=", "categoria=", "region="))
     )
     if not pedidos:
         return None
     for ll in llamadas:
-        if ll["herramienta"] == "consultar_datos" and all(
+        if ll["herramienta"] in ("consultar_datos", "buscar_en_base") and all(
             sin_tildes(v.strip()) in sin_tildes(str(ll["args"].get(k, ""))) for k, v in pedidos.items()
         ):
             return True

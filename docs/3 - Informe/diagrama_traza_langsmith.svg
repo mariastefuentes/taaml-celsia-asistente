@@ -1,58 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="Segoe UI, Arial, sans-serif" font-size="13">
-  <rect width="900" height="400" fill="#ffffff"/>
-  <text x="450" y="26" text-anchor="middle" font-size="16" font-weight="600" fill="#111827">Traza real de LangSmith: «¿Cuál es el WhatsApp de Celsia?»</text>
-  <text x="450" y="44" text-anchor="middle" font-size="11" fill="#6b7280">Proyecto taaml-celsia, ejecución agente_celsia (13 de noviembre de 2026): 8,8 s, 3.683 tokens (3.329 de entrada y 354 de salida), 0,0038 USD</text>
-
-  <!-- eje de tiempo -->
-  <g stroke="#9ca3af" stroke-width="1">
-    <line x1="330" y1="70" x2="330" y2="330"/>
-    <line x1="450" y1="70" x2="450" y2="330" stroke-dasharray="3,4"/>
-    <line x1="571" y1="70" x2="571" y2="330" stroke-dasharray="3,4"/>
-    <line x1="691" y1="70" x2="691" y2="330" stroke-dasharray="3,4"/>
-    <line x1="860" y1="70" x2="860" y2="330"/>
-  </g>
-  <g font-size="10" fill="#6b7280" text-anchor="middle">
-    <text x="330" y="64">0 s</text><text x="450" y="64">2 s</text><text x="571" y="64">4 s</text><text x="691" y="64">6 s</text><text x="860" y="64">8,8 s</text>
-  </g>
-
-  <!-- escala: 60,2 px por segundo -->
-  <g font-size="12">
-    <text x="20" y="92" font-weight="600">agente_celsia</text>
-    <text x="36" y="122">model</text>
-    <text x="52" y="142" fill="#374151">Gemini 3.8 Flash</text>
-    <text x="52" y="156" font-size="10" fill="#6b7280">1.491 tokens de entrada · 115 de salida</text>
-    <text x="36" y="188">ToolCallLimitMiddleware.after_model</text>
-    <text x="36" y="222">tools → consultar_datos</text>
-    <text x="52" y="238" font-size="10" fill="#6b7280">tabla «contactos», tipo «whatsapp»</text>
-    <text x="36" y="268">model</text>
-    <text x="52" y="288" fill="#374151">Gemini 3.8 Flash</text>
-    <text x="52" y="302" font-size="10" fill="#6b7280">1.838 tokens de entrada · 239 de salida</text>
-    <text x="36" y="326">ToolCallLimitMiddleware.after_model</text>
-  </g>
-
-  <g stroke="#374151" stroke-width="1">
-    <rect x="330" y="80" width="530" height="16" rx="3" fill="#e5e7eb"/>
-    <rect x="330" y="110" width="127" height="16" rx="3" fill="#93c5fd"/>
-    <rect x="330" y="130" width="127" height="16" rx="3" fill="#bfdbfe"/>
-    <rect x="330" y="176" width="4" height="16" rx="1" fill="#fde68a"/>
-    <rect x="457" y="210" width="4" height="16" rx="1" fill="#86efac"/>
-    <rect x="461" y="256" width="399" height="16" rx="3" fill="#93c5fd"/>
-    <rect x="461" y="276" width="399" height="16" rx="3" fill="#bfdbfe"/>
-    <rect x="860" y="314" width="4" height="16" rx="1" fill="#fde68a"/>
-  </g>
-  <g font-size="11" fill="#111827">
-    <text x="344" y="93">8,8 s en total</text>
-    <text x="463" y="122">2,1 s</text>
-    <text x="463" y="143">2,1 s</text>
-    <text x="342" y="189">0 s</text>
-    <text x="468" y="223">0,01 s: la tabla local, sin modelo</text>
-    <text x="700" y="269" fill="#111827">6,6 s</text>
-    <text x="700" y="289" fill="#111827">6,6 s</text>
-    <text x="842" y="327" text-anchor="end">0 s</text>
-  </g>
-
-  <rect x="20" y="340" width="860" height="52" rx="8" fill="#f9fafb" stroke="#374151" stroke-width="1.2"/>
-  <text x="450" y="359" text-anchor="middle" font-size="12">El modelo decidió llamar a una herramienta (primer model), la herramienta respondió en 0,01 s</text>
-  <text x="450" y="375" text-anchor="middle" font-size="12">y el segundo model redactó la respuesta, que ocupa casi todo el tiempo.</text>
-  <text x="450" y="388" text-anchor="middle" font-size="10" fill="#6b7280">Cada ejecución queda registrada con el prompt, los tokens, el costo y la etiqueta «agente»; el panel de LangSmith muestra el mismo árbol.</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 434" font-family="Segoe UI, Arial, sans-serif" role="img" aria-label="Traza de LangSmith de una pregunta al agente">
+<rect width="980" height="434" fill="#ffffff"/>
+<text x="24" y="34" font-size="20" font-weight="700" fill="#1f2937">Traza real de LangSmith: agente_celsia</text>
+<text x="24" y="58" font-size="13" fill="#4b5563">«Muéstrame solo las noticias de Celsia sobre proyectos solares en el Tolima.»</text>
+<text x="24" y="80" font-size="12" fill="#6b7280">Proyecto taaml-celsia · traza 01a1d81a-f99f-70f0-97da-7169641ef4f9 · total 18.1 s · 10,441 tokens · generada por scripts/33_diagrama_traza_langsmith.py</text>
+<line x1="250.0" y1="104" x2="250.0" y2="394" stroke="#e5e7eb"/>
+<text x="250.0" y="98" font-size="11" fill="#6b7280" text-anchor="middle">0 s</text>
+<line x1="326.3" y1="104" x2="326.3" y2="394" stroke="#e5e7eb"/>
+<text x="326.3" y="98" font-size="11" fill="#6b7280" text-anchor="middle">2 s</text>
+<line x1="402.7" y1="104" x2="402.7" y2="394" stroke="#e5e7eb"/>
+<text x="402.7" y="98" font-size="11" fill="#6b7280" text-anchor="middle">4 s</text>
+<line x1="479.0" y1="104" x2="479.0" y2="394" stroke="#e5e7eb"/>
+<text x="479.0" y="98" font-size="11" fill="#6b7280" text-anchor="middle">6 s</text>
+<line x1="555.4" y1="104" x2="555.4" y2="394" stroke="#e5e7eb"/>
+<text x="555.4" y="98" font-size="11" fill="#6b7280" text-anchor="middle">8 s</text>
+<line x1="631.7" y1="104" x2="631.7" y2="394" stroke="#e5e7eb"/>
+<text x="631.7" y="98" font-size="11" fill="#6b7280" text-anchor="middle">10 s</text>
+<line x1="708.1" y1="104" x2="708.1" y2="394" stroke="#e5e7eb"/>
+<text x="708.1" y="98" font-size="11" fill="#6b7280" text-anchor="middle">12 s</text>
+<line x1="784.4" y1="104" x2="784.4" y2="394" stroke="#e5e7eb"/>
+<text x="784.4" y="98" font-size="11" fill="#6b7280" text-anchor="middle">14 s</text>
+<line x1="860.7" y1="104" x2="860.7" y2="394" stroke="#e5e7eb"/>
+<text x="860.7" y="98" font-size="11" fill="#6b7280" text-anchor="middle">16 s</text>
+<line x1="937.1" y1="104" x2="937.1" y2="394" stroke="#e5e7eb"/>
+<text x="937.1" y="98" font-size="11" fill="#6b7280" text-anchor="middle">18 s</text>
+<text x="24" y="134" font-size="13" font-weight="600" fill="#1f2937">1. Modelo (Gemini)</text>
+<text x="24" y="151" font-size="11" fill="#6b7280">ChatGoogleGenerativeAI</text>
+<rect x="258.0" y="122" width="143.0" height="22" rx="5" fill="#2563eb"/>
+<text x="407.0" y="138" font-size="12" fill="#1f2937">3.75 s · 1,947 tokens</text>
+<text x="24" y="186" font-size="13" font-weight="600" fill="#1f2937">2. Herramienta</text>
+<text x="24" y="203" font-size="11" fill="#6b7280">buscar_en_base</text>
+<rect x="401.2" y="174" width="121.9" height="22" rx="5" fill="#d9650f"/>
+<text x="529.1" y="190" font-size="12" fill="#1f2937">3.19 s</text>
+<text x="401.2" y="210" font-size="11" fill="#9a3f08" text-anchor="start">categoria=&quot;noticias&quot;, pregunta=&quot;proyectos solares&quot;, region=&quot;Tolima&quot;</text>
+<text x="24" y="238" font-size="13" font-weight="600" fill="#1f2937">3. Modelo (Gemini)</text>
+<text x="24" y="255" font-size="11" fill="#6b7280">ChatGoogleGenerativeAI</text>
+<rect x="523.5" y="226" width="104.1" height="22" rx="5" fill="#2563eb"/>
+<text x="633.6" y="242" font-size="12" fill="#1f2937">2.73 s · 3,326 tokens</text>
+<text x="24" y="290" font-size="13" font-weight="600" fill="#1f2937">4. Herramienta</text>
+<text x="24" y="307" font-size="11" fill="#6b7280">buscar_en_base</text>
+<rect x="627.7" y="278" width="86.6" height="22" rx="5" fill="#d9650f"/>
+<text x="720.3" y="294" font-size="12" fill="#1f2937">2.27 s</text>
+<text x="714.3" y="314" font-size="11" fill="#9a3f08" text-anchor="end">categoria=&quot;noticias&quot;, pregunta=&quot;solar parque granja Tolima&quot;, region=&quot;Tolima&quot;</text>
+<text x="24" y="342" font-size="13" font-weight="600" fill="#1f2937">5. Modelo (Gemini)</text>
+<text x="24" y="359" font-size="11" fill="#6b7280">ChatGoogleGenerativeAI</text>
+<rect x="714.6" y="330" width="224.2" height="22" rx="5" fill="#2563eb"/>
+<text x="708.6" y="346" font-size="12" fill="#1f2937" text-anchor="end">5.87 s · 5,168 tokens</text>
+<text x="24" y="418" font-size="11" fill="#6b7280">Azul: el modelo decide o redacta. Naranja: la herramienta que eligió. Tiempos medidos por LangSmith, no estimados.</text>
 </svg>

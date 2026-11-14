@@ -5,6 +5,7 @@ Es el patrón «modelo + herramientas + prompt», con memoria por conversación 
 falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1, pero gemini-3.8-flash los ignora (medido): la respuesta puede variar.
 """
 
+import logging
 import os
 import re
 import sqlite3
@@ -12,7 +13,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import uuid4
 
 from langchain.agents import create_agent
@@ -39,6 +40,8 @@ from taaml.recuperacion import buscar, formatear_contexto
 from taaml.sanitizar import quitar_invisibles
 from taaml.validacion import datos_sin_respaldo
 from taaml.tareas import obtener_modelo
+
+log = logging.getLogger("taaml.agente")
 
 MODELO_AGENTE = os.environ.get(
     "TAAML_MODELO_AGENTE", "gemini-3.8-flash"
@@ -146,10 +149,46 @@ def fuentes_de(fragmentos: list[dict], pregunta: str = "") -> list[dict]:
     ]
 
 
+# Valores del payload por los que se puede filtrar (los mismos de `recuperacion.CAMPOS_FILTRABLES`); un test comprueba que cubren todo el corpus
+Categoria = Literal[
+    "blog",
+    "noticias",
+    "sostenibilidad",
+    "inversionistas",
+    "empresa",
+    "servicios",
+    "sedes",
+    "activos_y_proyectos",
+    "regulatorio",
+    "internacional",
+    "prensa_y_medios",
+    "atencion",
+    "otros",
+]
+Region = Literal["General", "Valle y Tolima", "Valle del Cauca", "Tolima", "Internacional"]
+
+
 @tool(response_format="content_and_artifact")
-def buscar_en_base(pregunta: str) -> tuple[str, list[dict]]:
-    """Busca en la información oficial de Celsia los fragmentos que responden la pregunta del cliente."""
-    fragmentos = buscar(pregunta, k=FRAGMENTOS_AGENTE)
+def buscar_en_base(
+    pregunta: str,
+    categoria: Annotated[
+        Categoria | None,
+        Field(
+            description="Solo si el cliente pide expresamente una sección del sitio (noticias, sostenibilidad, inversionistas…). Ante la duda, no la uses."
+        ),
+    ] = None,
+    region: Annotated[
+        Region | None,
+        Field(
+            description="Solo si el cliente limita la búsqueda a una región (Tolima, Valle del Cauca…). Ante la duda, no la uses."
+        ),
+    ] = None,
+) -> tuple[str, list[dict]]:
+    """Busca en la información oficial de Celsia los fragmentos que responden la pregunta del cliente. Opcionalmente filtra por categoría o región del documento."""
+    filtro = {campo: valor for campo, valor in (("categoria", categoria), ("region", region)) if valor}
+    fragmentos = buscar(pregunta, k=FRAGMENTOS_AGENTE, **({"filtro": filtro} if filtro else {}))
+    if filtro and not fragmentos:  # el filtro dejó la búsqueda vacía: se le dice al modelo que repita sin él
+        return "Sin resultados con ese filtro. Repite la búsqueda sin categoria ni region.", []
     texto = delimitar_como_datos(formatear_contexto(fragmentos))
     if confianza_baja(fragmentos):
         texto = AVISO_CONFIANZA_BAJA + "\n\n" + texto
@@ -387,6 +426,18 @@ def _agente(modelo: str) -> Any:
     if modelo not in _AGENTES:
         _AGENTES[modelo] = crear_agente(modelo)
     return _AGENTES[modelo]
+
+
+def calentar(modelo: str = MODELO_AGENTE) -> None:
+    """Prepara lo lento de la primera pregunta: arma el agente (~3 s), abre la base vectorial y carga el modelo de embeddings en Ollama (~7 s en frío).
+
+    No llama al modelo de pago. Si algo falta (Ollama apagado, por ejemplo) no falla: la primera pregunta real lo resolverá o mostrará el error.
+    """
+    try:
+        _agente(modelo)
+        buscar("calentamiento", k=1)
+    except Exception:
+        log.warning("no se pudo calentar el agente; la primera pregunta tardará más", exc_info=True)
 
 
 def conversar(

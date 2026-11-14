@@ -9,7 +9,7 @@ _spec.loader.exec_module(ev)
 
 def test_el_dataset_sale_de_la_matriz_con_sus_28_preguntas():
     ejemplos = ev.cargar_ejemplos()
-    assert len(ejemplos) == 31  # las 25 originales, las 3 de conteo (R26 a R28), las 2 de memoria (R29 y R30) y la del ejemplo sin datos (R31)
+    assert len(ejemplos) == 33  # las 25 originales, las 3 de conteo (R26 a R28), las 2 de memoria (R29 y R30), la del ejemplo sin datos (R31) y las 2 con filtro de payload (R32 y R33)
     r01 = ejemplos[0]
     assert r01["inputs"]["id"] == "R01" and r01["outputs"]["herramienta_esperada"] == "consultar_datos"
     assert next(e for e in ejemplos if e["inputs"]["id"] == "R19")["inputs"][

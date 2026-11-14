@@ -22,6 +22,13 @@ export function usuario() {
   }
 }
 
+// Estado de la API (`/api/salud`): modelo en uso y base vectorial que está respondiendo (qdrant, numpy o ninguno).
+export async function cargarSalud() {
+  const r = await fetch("/api/salud");
+  if (!r.ok) throw new Error("La API no está disponible");
+  return r.json();
+}
+
 export async function cargarDatos() {
   const r = await fetch(`/api/usuarios/${usuario()}/datos`);
   if (!r.ok) throw new Error("No se pudieron cargar los datos guardados");
