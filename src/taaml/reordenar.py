@@ -5,6 +5,7 @@ El buscador por significado (recuperacion.py) deja a veces el fragmento correcto
 van al prompt. Cuesta una llamada más por pregunta, así que es opcional y está apagado por defecto.
 Si el modelo falla o responde algo inválido, se devuelve el orden original: reordenar nunca deja sin contexto al asistente.
 """
+
 import json
 import re
 
@@ -18,8 +19,6 @@ MODELO_REORDENADOR_DEEPSEEK = "deepseek-flash"  # el mismo papel cuando el asist
 PROMPT_REORDENADOR = "v1_reordenar.md"  # versionado en prompts/, como los demás
 CANDIDATOS_POR_DEFECTO = 30
 LARGO_VISTA = 400  # caracteres de cada candidato que ve el reordenador
-
-
 
 
 def parsear_orden(texto: str, total: int) -> list[int]:
@@ -43,14 +42,24 @@ def modelo_reordenador(modelo_respuesta: str) -> str:
     return MODELO_REORDENADOR_DEEPSEEK if modelo_respuesta.startswith("deepseek") else MODELO_REORDENADOR
 
 
-def reordenar(pregunta: str, candidatos: list[dict], k: int = FRAGMENTOS_POR_DEFECTO, modelo: str = MODELO_REORDENADOR) -> list[dict]:
+def reordenar(
+    pregunta: str, candidatos: list[dict], k: int = FRAGMENTOS_POR_DEFECTO, modelo: str = MODELO_REORDENADOR
+) -> list[dict]:
     """Los k mejores candidatos según el modelo; si falla, los k primeros en su orden original."""
     from taaml.tareas import obtener_modelo  # import tardío: tareas importa recuperacion, no al revés
 
-    sin_etiquetas = pregunta.replace("</user_input>", "").replace("<user_input>", "")  # la plantilla ya delimita la pregunta con esas etiquetas; la pregunta no puede cerrarlas
+    sin_etiquetas = pregunta.replace("</user_input>", "").replace(
+        "<user_input>", ""
+    )  # la plantilla ya delimita la pregunta con esas etiquetas; la pregunta no puede cerrarlas
     vista = "\n\n".join(f"[{i}] {c['texto'][:LARGO_VISTA]}" for i, c in enumerate(candidatos, 1))
     try:
-        respuesta = obtener_modelo(modelo).invoke([HumanMessage(leer_prompt(PROMPT_REORDENADOR).format(pregunta=sin_etiquetas, k=k, candidatos=vista))]).text  # AIMessage.text: el texto de la respuesta (langchain-core 1.x)
+        respuesta = (
+            obtener_modelo(modelo)
+            .invoke(
+                [HumanMessage(leer_prompt(PROMPT_REORDENADOR).format(pregunta=sin_etiquetas, k=k, candidatos=vista))]
+            )
+            .text
+        )  # AIMessage.text: el texto de la respuesta (langchain-core 1.x)
     except Exception:  # noqa: BLE001  sin red, sin cuota o sin clave: se conserva el orden de la búsqueda
         return candidatos[:k]
     elegidos = parsear_orden(respuesta, len(candidatos))[:k]
@@ -59,14 +68,22 @@ def reordenar(pregunta: str, candidatos: list[dict], k: int = FRAGMENTOS_POR_DEF
     return [candidatos[i] for i in (elegidos + resto)[:k]]
 
 
-def buscar_reordenado(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, candidatos: int = CANDIDATOS_POR_DEFECTO,
-                      modelo: str = MODELO_REORDENADOR) -> list[dict]:
+def buscar_reordenado(
+    pregunta: str,
+    k: int = FRAGMENTOS_POR_DEFECTO,
+    candidatos: int = CANDIDATOS_POR_DEFECTO,
+    modelo: str = MODELO_REORDENADOR,
+) -> list[dict]:
     """Búsqueda en dos pasos: `candidatos` por significado y luego el reordenamiento a k."""
     return buscar_reordenado_con_metricas(pregunta, k, candidatos, modelo)[0]
 
 
-def buscar_reordenado_con_metricas(pregunta: str, k: int = FRAGMENTOS_POR_DEFECTO, candidatos: int = CANDIDATOS_POR_DEFECTO,
-                                  modelo: str = MODELO_REORDENADOR) -> tuple[list[dict], dict]:
+def buscar_reordenado_con_metricas(
+    pregunta: str,
+    k: int = FRAGMENTOS_POR_DEFECTO,
+    candidatos: int = CANDIDATOS_POR_DEFECTO,
+    modelo: str = MODELO_REORDENADOR,
+) -> tuple[list[dict], dict]:
     """Dos pasos con métricas: la recuperación de candidatos mide su tiempo (el reordenamiento no se mide: no es recuperación)."""
     candidatos_encontrados, metricas = recuperar(pregunta, candidatos, "auto")
     return reordenar(pregunta, candidatos_encontrados, k, modelo), metricas

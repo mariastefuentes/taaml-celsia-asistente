@@ -13,6 +13,7 @@ Estrategia:
 Uso:  uv run python scripts/06_construir_chunks.py            (usa los parametros por defecto)
       uv run python scripts/06_construir_chunks.py --tamano 800 --solape 100
 """
+
 import argparse
 import hashlib
 import json
@@ -24,14 +25,25 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 ROOT = Path(__file__).resolve().parent.parent
 CURADURIA = ROOT / "data" / "4_curaduria"
-SALIDA = Path(os.environ.get("TAAML_CURADURIA") or CURADURIA)  # con TAAML_CURADURIA los fragmentos se escriben en otra carpeta; los documentos de entrada se leen siempre de CURADURIA
-TAMANO_POR_DEFECTO = 1000   # caracteres (unos 250 tokens): cabe una respuesta completa sin arrastrar temas ajenos
-SOLAPE_POR_DEFECTO = 150    # caracteres compartidos entre fragmentos vecinos, para no perder lo que queda en el borde
-MINIMO = 200                # un fragmento final mas corto que esto se une al anterior
+SALIDA = Path(
+    os.environ.get("TAAML_CURADURIA") or CURADURIA
+)  # con TAAML_CURADURIA los fragmentos se escriben en otra carpeta; los documentos de entrada se leen siempre de CURADURIA
+TAMANO_POR_DEFECTO = 1000  # caracteres (unos 250 tokens): cabe una respuesta completa sin arrastrar temas ajenos
+SOLAPE_POR_DEFECTO = 150  # caracteres compartidos entre fragmentos vecinos, para no perder lo que queda en el borde
+MINIMO = 200  # un fragmento final mas corto que esto se une al anterior
 
 # datos que siempre deben sobrevivir al fragmentado (verificacion)
-DATOS_CLAVE = ["01 8000 112 115", "310 390 3468", "Servicioalcliente@celsia.com", "Tienda Palmira", "Planadas",
-               "Cambio de estrato", "Cancelación definitiva", "311 321 0000", "celsiainternet.com"]
+DATOS_CLAVE = [
+    "01 8000 112 115",
+    "310 390 3468",
+    "Servicioalcliente@celsia.com",
+    "Tienda Palmira",
+    "Planadas",
+    "Cambio de estrato",
+    "Cancelación definitiva",
+    "311 321 0000",
+    "celsiainternet.com",
+]
 
 
 def identificador(archivo: str) -> str:
@@ -65,22 +77,38 @@ def main() -> None:
     ap.add_argument("--solape", type=int, default=SOLAPE_POR_DEFECTO)
     a = ap.parse_args()
 
-    splitter = RecursiveCharacterTextSplitter(chunk_size=a.tamano, chunk_overlap=a.solape,
-                                              separators=["\n\n", "\n", ". ", " ", ""], length_function=len)
-    docs = [json.loads(ln) for ln in (CURADURIA / "documentos_incluidos.jsonl").read_text(encoding="utf-8").splitlines()]
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=a.tamano, chunk_overlap=a.solape, separators=["\n\n", "\n", ". ", " ", ""], length_function=len
+    )
+    docs = [
+        json.loads(ln) for ln in (CURADURIA / "documentos_incluidos.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
 
     chunks: list[dict] = []
     for d in docs:
         piezas = fragmentar(d, splitter)
         for i, p in enumerate(piezas, 1):
-            fecha = f", publicado {d['fecha_publicacion']}" if d["categoria"] in ("blog", "noticias") and d.get("fecha_publicacion") else ""
+            fecha = (
+                f", publicado {d['fecha_publicacion']}"
+                if d["categoria"] in ("blog", "noticias") and d.get("fecha_publicacion")
+                else ""
+            )
             contexto = f"{d['title']} ({d['categoria']}{fecha})"
             texto = f"{contexto}\n{p['texto']}"
-            chunks.append({
-                "chunk_id": f"{identificador(d['archivo'])}-{i:03d}",
-                "documento": d["title"], "categoria": d["categoria"], "region": d["region"], "fuente": d["url"],
-                "orden": i, "de": len(piezas), "texto": texto, "caracteres": len(texto), "tokens_aprox": len(texto) // 4,
-            })
+            chunks.append(
+                {
+                    "chunk_id": f"{identificador(d['archivo'])}-{i:03d}",
+                    "documento": d["title"],
+                    "categoria": d["categoria"],
+                    "region": d["region"],
+                    "fuente": d["url"],
+                    "orden": i,
+                    "de": len(piezas),
+                    "texto": texto,
+                    "caracteres": len(texto),
+                    "tokens_aprox": len(texto) // 4,
+                }
+            )
     SALIDA.mkdir(parents=True, exist_ok=True)
     with (SALIDA / "chunks.jsonl").open("w", encoding="utf-8") as f:
         for c in chunks:
@@ -98,12 +126,24 @@ def main() -> None:
     excedidos = [c for c in chunks if c["categoria"] != "sedes" and c["caracteres"] > a.tamano + 200 + MINIMO]
     cortos = [c for c in chunks if c["categoria"] != "sedes" and c["orden"] > 1 and c["caracteres"] < MINIMO]
     print(f"{len(docs)} documentos -> {len(chunks)} fragmentos (tamano {a.tamano}, solape {a.solape})")
-    print(f"tamano en caracteres: min {tam[0]} | mediana {tam[len(tam) // 2]} | max {tam[-1]} | promedio {sum(tam) // len(tam)}")
+    print(
+        f"tamano en caracteres: min {tam[0]} | mediana {tam[len(tam) // 2]} | max {tam[-1]} | promedio {sum(tam) // len(tam)}"
+    )
     print("por categoria:", ", ".join(f"{k}={v}" for k, v in sorted(por_cat.items(), key=lambda x: -x[1])))
-    print("OK   todos los documentos tienen fragmentos" if not sin_chunks else f"FALLA documentos sin fragmentos: {sin_chunks[:5]}")
-    print("OK   ningun fragmento se pasa del tamano" if not excedidos else f"FALLA {len(excedidos)} fragmentos se pasan del tamano")
+    print(
+        "OK   todos los documentos tienen fragmentos"
+        if not sin_chunks
+        else f"FALLA documentos sin fragmentos: {sin_chunks[:5]}"
+    )
+    print(
+        "OK   ningun fragmento se pasa del tamano"
+        if not excedidos
+        else f"FALLA {len(excedidos)} fragmentos se pasan del tamano"
+    )
     print("OK   no hay restos cortos sueltos" if not cortos else f"AVISO {len(cortos)} fragmentos muy cortos")
-    print("OK   los datos clave sobreviven al fragmentado" if not perdidos else f"FALLA datos clave perdidos: {perdidos}")
+    print(
+        "OK   los datos clave sobreviven al fragmentado" if not perdidos else f"FALLA datos clave perdidos: {perdidos}"
+    )
 
 
 if __name__ == "__main__":

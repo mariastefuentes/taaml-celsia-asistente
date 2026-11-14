@@ -7,6 +7,7 @@ la aplicación en Streamlit. Así lo que se mide es exactamente lo que se entreg
 Estándar de diseño: cinco bloques (rol, contexto, instrucción, formato, restricciones), instrucciones críticas
 repetidas al final (sandwich) y entrada del cliente delimitada con etiquetas XML.
 """
+
 from datetime import date
 from pathlib import Path
 
@@ -25,7 +26,12 @@ def leer_prompt(nombre: str) -> str:
 
 def construir_prompt_sistema(contexto: str, version: str = VERSION_VIGENTE) -> str:
     """Inserta la base de conocimiento en el prompt de sistema de la versión pedida."""
-    return leer_prompt(f"{version}_asistente.md").replace("{contexto}", contexto).replace("{hoy}", date.today().isoformat()) + "\n"
+    return (
+        leer_prompt(f"{version}_asistente.md")
+        .replace("{contexto}", contexto)
+        .replace("{hoy}", date.today().isoformat())
+        + "\n"
+    )
 
 
 def construir_mensaje_usuario(pregunta: str, version: str = VERSION_VIGENTE) -> str:

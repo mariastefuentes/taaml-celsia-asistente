@@ -2,7 +2,9 @@ from taaml.consulta_datos import SIN_RESULTADOS, catalogo, consultar, contactos,
 
 
 def test_sedes_por_ciudad_ignora_tildes_y_mayusculas():
-    assert sedes(ciudad="IBAGUE") and all("ibague" in f["CITY"].lower().replace("é", "e") for f in sedes(ciudad="Ibagué"))
+    assert sedes(ciudad="IBAGUE") and all(
+        "ibague" in f["CITY"].lower().replace("é", "e") for f in sedes(ciudad="Ibagué")
+    )
 
 
 def test_sedes_por_departamento_y_tipo():
@@ -47,3 +49,21 @@ def test_el_total_lo_calcula_el_codigo_con_pocas_o_muchas_filas():
 def test_con_una_sola_fila_el_total_va_en_singular():
     una = next(f for f in sedes() if len(sedes(ciudad=f["CITY"])) == 1)
     assert consultar("sedes", {"ciudad": una["CITY"]}).splitlines()[-1] == "Total: 1 fila."
+
+
+def test_varias_ciudades_en_un_filtro_se_cuentan_juntas():
+    from taaml.consulta_datos import consultar, sedes
+
+    solas = len(sedes(ciudad="Ibagué")) + len(sedes(ciudad="Cali"))
+    juntas = sedes(ciudad="Ibagué, Cali")
+    assert len(juntas) == solas > 0
+    assert f"Total: {solas} filas" in consultar("sedes", {"ciudad": "Ibagué, Cali"})
+
+
+def test_varios_departamentos_y_tipos_se_combinan_y_un_filtro_vacio_no_filtra():
+    from taaml.consulta_datos import sedes
+
+    assert len(sedes(departamento="Tolima; Valle del Cauca")) == len(sedes(departamento="Tolima")) + len(
+        sedes(departamento="Valle del Cauca")
+    )
+    assert len(sedes(ciudad=" , ")) == len(sedes())

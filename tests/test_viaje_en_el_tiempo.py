@@ -17,7 +17,11 @@ def demo():
 
 def _agente(demo, tmp_path, respuestas):
     from taaml.agente import almacen_de_memoria, crear_agente
-    return crear_agente(llm=demo.ModeloSimulado(messages=iter(AIMessage(content=r) for r in respuestas)), checkpointer=almacen_de_memoria(tmp_path / "m.db"))
+
+    return crear_agente(
+        llm=demo.ModeloSimulado(messages=iter(AIMessage(content=r) for r in respuestas)),
+        checkpointer=almacen_de_memoria(tmp_path / "m.db"),
+    )
 
 
 def test_el_historial_guarda_un_punto_de_control_por_paso(demo, tmp_path):

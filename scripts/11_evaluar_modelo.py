@@ -13,6 +13,7 @@ Ejemplos:
     uv run python scripts/11_evaluar_modelo.py --modelo ollama:llama3.2 --base compacta
     uv run python scripts/11_evaluar_modelo.py --resumen
 """
+
 import argparse
 import csv
 import json
@@ -64,13 +65,15 @@ Responde SOLO un JSON: {{"calificacion": "<etiqueta>", "motivo": "<una frase>"}}
 def http_json(url: str, cuerpo: dict, cabeceras: dict, intentos: int = 5, timeout: int = 600) -> dict:
     """POST con reintentos ante límites de uso (429) y fallas temporales (500/503)."""
     for n in range(intentos):
-        req = urllib.request.Request(url, data=json.dumps(cuerpo).encode("utf-8"), headers={"Content-Type": "application/json", **cabeceras})
+        req = urllib.request.Request(
+            url, data=json.dumps(cuerpo).encode("utf-8"), headers={"Content-Type": "application/json", **cabeceras}
+        )
         try:
             return json.load(urllib.request.urlopen(req, timeout=timeout))
         except urllib.error.HTTPError as e:
             texto = e.read().decode("utf-8", "replace")
             if e.code in (429, 500, 503) and n < intentos - 1:
-                espera = 20 * (2 ** n)
+                espera = 20 * (2**n)
                 m = re.search(r"retry in ([\d\.]+)s", texto)
                 if m:
                     espera = max(espera, float(m.group(1)) + 2)
@@ -86,7 +89,11 @@ def llamar_gemini(modelo: str, sistema: str, pregunta: str, json_salida: bool = 
     cfg = {"temperature": PARAMETROS_MODELO["temperature"], "topP": PARAMETROS_MODELO["top_p"], "maxOutputTokens": 2048}
     if json_salida:
         cfg["responseMimeType"] = "application/json"
-    cuerpo = {"systemInstruction": {"parts": [{"text": sistema}]}, "contents": [{"role": "user", "parts": [{"text": pregunta}]}], "generationConfig": cfg}
+    cuerpo = {
+        "systemInstruction": {"parts": [{"text": sistema}]},
+        "contents": [{"role": "user", "parts": [{"text": pregunta}]}],
+        "generationConfig": cfg,
+    }
     url = f"{GEMINI}/{modelo}:generateContent"
     try:
         r = http_json(url, cuerpo, {"x-goog-api-key": clave})
@@ -105,9 +112,14 @@ def llamar_gemini(modelo: str, sistema: str, pregunta: str, json_salida: bool = 
 
 def llamar_deepseek(modelo: str, sistema: str, pregunta: str, json_salida: bool = False) -> tuple[str, int, int]:
     """DeepSeek (formato OpenAI). Se apaga el modo de razonamiento; su ficha dice que top_p queda fijo en 1.0 y no garantiza temperature."""
-    cuerpo = {"model": modelo, "temperature": PARAMETROS_MODELO["temperature"], "top_p": PARAMETROS_MODELO["top_p"], "max_tokens": 2048,
-              "thinking": {"type": "disabled"},
-              "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": pregunta}]}
+    cuerpo = {
+        "model": modelo,
+        "temperature": PARAMETROS_MODELO["temperature"],
+        "top_p": PARAMETROS_MODELO["top_p"],
+        "max_tokens": 2048,
+        "thinking": {"type": "disabled"},
+        "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": pregunta}],
+    }
     if json_salida:
         cuerpo["response_format"] = {"type": "json_object"}
     r = http_json(DEEPSEEK, cuerpo, {"Authorization": "Bearer " + os.environ["DEEPSEEK_API_KEY"]})
@@ -116,16 +128,30 @@ def llamar_deepseek(modelo: str, sistema: str, pregunta: str, json_salida: bool 
 
 
 def llamar_ollama(modelo: str, sistema: str, pregunta: str, num_ctx: int) -> tuple[str, int, int]:
-    cuerpo = {"model": modelo, "stream": False, "keep_alive": "30m",
-              "options": {"temperature": PARAMETROS_MODELO["temperature"], "top_p": PARAMETROS_MODELO["top_p"], "num_ctx": num_ctx, "num_predict": 600},
-              "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": pregunta}]}
+    cuerpo = {
+        "model": modelo,
+        "stream": False,
+        "keep_alive": "30m",
+        "options": {
+            "temperature": PARAMETROS_MODELO["temperature"],
+            "top_p": PARAMETROS_MODELO["top_p"],
+            "num_ctx": num_ctx,
+            "num_predict": 600,
+        },
+        "messages": [{"role": "system", "content": sistema}, {"role": "user", "content": pregunta}],
+    }
     r = http_json(OLLAMA, cuerpo, {}, timeout=3600)
     return r["message"]["content"].strip(), r.get("prompt_eval_count", 0), r.get("eval_count", 0)
 
 
 def juzgar(juez: str, p: dict, respuesta: str) -> tuple[str, str]:
-    prompt = JUEZ_PROMPT.format(hoy=date.today().isoformat(), tipo=p["tipo_prueba"], pregunta=p["pregunta"], esperada=p["respuesta_esperada"] +
-                                (f" (debe remitir a: {p['debe_remitir_a']})" if p["debe_remitir_a"] else ""), respuesta=respuesta or "(sin respuesta)")
+    prompt = JUEZ_PROMPT.format(
+        hoy=date.today().isoformat(),
+        tipo=p["tipo_prueba"],
+        pregunta=p["pregunta"],
+        esperada=p["respuesta_esperada"] + (f" (debe remitir a: {p['debe_remitir_a']})" if p["debe_remitir_a"] else ""),
+        respuesta=respuesta or "(sin respuesta)",
+    )
     try:
         proveedor, _, nombre = juez.rpartition(":")  # «deepseek:<id>»; sin prefijo es un modelo de Gemini
         llamar = llamar_deepseek if proveedor == "deepseek" else llamar_gemini
@@ -147,29 +173,41 @@ def resumir() -> None:
     corridas: dict[tuple, list] = {}
     for r in filas:
         corridas.setdefault((r["modelo"], r["base"], r.get("prompt") or "v1"), []).append(r)
-    md = ["# Comparación de modelos con el conjunto de prueba", "",
-          "Generado automáticamente por `scripts/11_evaluar_modelo.py --resumen`. Cada fila es una corrida; la calificación la da un modelo juez "
-          "comparando con la respuesta esperada, así que es una **ayuda para revisar**, no un veredicto: conviene que una persona revise las respuestas.", "",
-          "| Modelo | Base | Prompt | Preguntas | Correctas | Parciales | Incorrectas | Reconoce que no sabe | Inventa | Sin calificar | Tiempo mediano (s) | Tokens de entrada (media) |",
-          "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    md = [
+        "# Comparación de modelos con el conjunto de prueba",
+        "",
+        "Generado automáticamente por `scripts/11_evaluar_modelo.py --resumen`. Cada fila es una corrida; la calificación la da un modelo juez "
+        "comparando con la respuesta esperada, así que es una **ayuda para revisar**, no un veredicto: conviene que una persona revise las respuestas.",
+        "",
+        "| Modelo | Base | Prompt | Preguntas | Correctas | Parciales | Incorrectas | Reconoce que no sabe | Inventa | Sin calificar | Tiempo mediano (s) | Tokens de entrada (media) |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+    ]
     for (modelo, base, prompt), rs in sorted(corridas.items()):
         c = lambda k: sum(r["calificacion"] == k for r in rs)  # noqa: E731
         # solo respuestas sin error; mediana (no media) porque las esperas por el límite de uso de la API inflan algunos tiempos
         t = sorted(float(r["segundos"]) for r in rs if r["segundos"] and not r["error"])
         ti = [int(r["tokens_entrada"]) for r in rs if r["tokens_entrada"] and not r["error"]]
         mediana = (t[len(t) // 2] if len(t) % 2 else (t[len(t) // 2 - 1] + t[len(t) // 2]) / 2) if t else 0
-        md.append(f"| {modelo} | {base} | {prompt} | {len(rs)} | {c('correcta')} | {c('parcial')} | {c('incorrecta')} | {c('reconoce_no_sabe')} | {c('inventa')} | "
-                  f"{c('sin_calificar')} | {mediana:.0f} | {sum(ti) // len(ti) if ti else 0:,} |")
-    md += ["", "«Correctas», «parciales» e «incorrectas» se cuentan sobre las preguntas de respuesta; «reconoce que no sabe» e «inventa», sobre las negativas. "
-               "«Sin calificar» incluye las preguntas que fallaron por errores de conexión o por el límite de uso de la API (se pueden repetir). "
-               "El tiempo es la **mediana** de las respuestas sin error: en las corridas por API todavía puede incluir esperas por el límite de uso.", ""]
+        md.append(
+            f"| {modelo} | {base} | {prompt} | {len(rs)} | {c('correcta')} | {c('parcial')} | {c('incorrecta')} | {c('reconoce_no_sabe')} | {c('inventa')} | "
+            f"{c('sin_calificar')} | {mediana:.0f} | {sum(ti) // len(ti) if ti else 0:,} |"
+        )
+    md += [
+        "",
+        "«Correctas», «parciales» e «incorrectas» se cuentan sobre las preguntas de respuesta; «reconoce que no sabe» e «inventa», sobre las negativas. "
+        "«Sin calificar» incluye las preguntas que fallaron por errores de conexión o por el límite de uso de la API (se pueden repetir). "
+        "El tiempo es la **mediana** de las respuestas sin error: en las corridas por API todavía puede incluir esperas por el límite de uso.",
+        "",
+    ]
     (PRUEBA / "comparacion_modelos.md").write_text("\n".join(md), encoding="utf-8")
     print("\n".join(md))
 
 
 def recalificar(juez: str, pausa: float, solo: str = "") -> None:
     """Vuelve a calificar las respuestas ya guardadas con el juez actual, sin llamar al modelo que responde."""
-    preguntas = {p["id"]: p for p in csv.DictReader((PRUEBA / "conjunto_de_prueba.csv").open(encoding="utf-8-sig", newline=""))}
+    preguntas = {
+        p["id"]: p for p in csv.DictReader((PRUEBA / "conjunto_de_prueba.csv").open(encoding="utf-8-sig", newline=""))
+    }
     for archivo in sorted(RESULTADOS.glob("resultados_*.csv")):
         filas = list(csv.DictReader(archivo.open(encoding="utf-8-sig", newline="")))
         campos = list(filas[0].keys()) + [c for c in ("juez", "fecha") if c not in filas[0]]  # quién calificó y cuándo
@@ -183,24 +221,44 @@ def recalificar(juez: str, pausa: float, solo: str = "") -> None:
             print(f"  {r['id']}: {antes} -> {r['calificacion']}", flush=True)
             time.sleep(pausa)
             with archivo.open("w", encoding="utf-8-sig", newline="") as f:
-                w = csv.DictWriter(f, fieldnames=campos, quoting=csv.QUOTE_ALL); w.writeheader(); w.writerows(filas)
+                w = csv.DictWriter(f, fieldnames=campos, quoting=csv.QUOTE_ALL)
+                w.writeheader()
+                w.writerows(filas)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--modelo", help="gemini:<id>, deepseek:<id> u ollama:<nombre>")
-    ap.add_argument("--base", choices=["rag", "completa", "compacta"], default="rag", help="rag: fragmentos relevantes por pregunta")
+    ap.add_argument(
+        "--base", choices=["rag", "completa", "compacta"], default="rag", help="rag: fragmentos relevantes por pregunta"
+    )
     ap.add_argument("--max-por-doc", type=int, default=600, help="caracteres por documento en la base compacta")
     ap.add_argument("--num-ctx", type=int, default=24576, help="ventana de contexto para Ollama")
-    ap.add_argument("--prompt", default=VERSION_VIGENTE, help="version del prompt del asistente en prompts/ (por defecto la vigente)")
-    ap.add_argument("--reordenar", action="store_true", help="rag con reordenamiento: una llamada más por pregunta (src/taaml/reordenar.py)")
-    ap.add_argument("--repetir", action="store_true", help="repite el mensaje del usuario dos veces (prueba de repetición del prompt)")
+    ap.add_argument(
+        "--prompt",
+        default=VERSION_VIGENTE,
+        help="version del prompt del asistente en prompts/ (por defecto la vigente)",
+    )
+    ap.add_argument(
+        "--reordenar",
+        action="store_true",
+        help="rag con reordenamiento: una llamada más por pregunta (src/taaml/reordenar.py)",
+    )
+    ap.add_argument(
+        "--repetir",
+        action="store_true",
+        help="repite el mensaje del usuario dos veces (prueba de repetición del prompt)",
+    )
     ap.add_argument("--solo", default="", help="ids separados por coma (ej. P01,N02)")
     ap.add_argument("--pausa", type=float, default=3.0, help="segundos entre preguntas")
     ap.add_argument("--juez", default=JUEZ_POR_DEFECTO, help="modelo juez: <id de Gemini> o deepseek:<id>")
     ap.add_argument("--sin-juez", action="store_true")
     ap.add_argument("--resumen", action="store_true", help="solo regenera la comparación de todas las corridas")
-    ap.add_argument("--recalificar", action="store_true", help="vuelve a juzgar las respuestas ya guardadas (no llama al modelo que responde)")
+    ap.add_argument(
+        "--recalificar",
+        action="store_true",
+        help="vuelve a juzgar las respuestas ya guardadas (no llama al modelo que responde)",
+    )
     a = ap.parse_args()
     if a.resumen:
         return resumir()
@@ -216,20 +274,48 @@ def main() -> None:
     contexto = "" if a.base == "rag" else cargar_base(a.base, a.max_por_doc)
     sistema = construir_prompt_sistema(contexto, a.prompt)
     proveedor, _, nombre = a.modelo.partition(":")
-    tamano = "fragmentos relevantes por pregunta" if a.base == "rag" else f"{len(contexto):,} caracteres, ~{len(contexto) // 4:,} tokens"
+    tamano = (
+        "fragmentos relevantes por pregunta"
+        if a.base == "rag"
+        else f"{len(contexto):,} caracteres, ~{len(contexto) // 4:,} tokens"
+    )
     print(f"Modelo {a.modelo} | base {a.base} ({tamano}) | {len(preguntas)} preguntas", flush=True)
 
     RESULTADOS.mkdir(exist_ok=True)
-    etiqueta_base = a.base + ("-reordenado" if a.reordenar and a.base == "rag" else "") + ("-repetido" if a.repetir else "")  # estas corridas van aparte
-    destino = RESULTADOS / f"resultados_{re.sub(r'[^A-Za-z0-9._-]+', '-', a.modelo)}_{etiqueta_base}{'' if a.prompt == 'v1' else '_' + a.prompt}.csv"
-    campos = ["modelo", "base", "prompt", "id", "tipo_prueba", "pregunta", "respuesta", "calificacion", "motivo_juez", "segundos", "tokens_entrada", "tokens_salida", "fragmentos", "error", "juez", "fecha"]
+    etiqueta_base = (
+        a.base + ("-reordenado" if a.reordenar and a.base == "rag" else "") + ("-repetido" if a.repetir else "")
+    )  # estas corridas van aparte
+    destino = (
+        RESULTADOS
+        / f"resultados_{re.sub(r'[^A-Za-z0-9._-]+', '-', a.modelo)}_{etiqueta_base}{'' if a.prompt == 'v1' else '_' + a.prompt}.csv"
+    )
+    campos = [
+        "modelo",
+        "base",
+        "prompt",
+        "id",
+        "tipo_prueba",
+        "pregunta",
+        "respuesta",
+        "calificacion",
+        "motivo_juez",
+        "segundos",
+        "tokens_entrada",
+        "tokens_salida",
+        "fragmentos",
+        "error",
+        "juez",
+        "fecha",
+    ]
     previas = {}
     if destino.exists():  # reanudable: no repite lo ya contestado sin error
         previas = {r["id"]: r for r in csv.DictReader(destino.open(encoding="utf-8-sig", newline="")) if not r["error"]}
     filas = []
     for p in preguntas:
         if p["id"] in previas:
-            filas.append(previas[p["id"]]); print(f"  {p['id']}: ya estaba", flush=True); continue
+            filas.append(previas[p["id"]])
+            print(f"  {p['id']}: ya estaba", flush=True)
+            continue
         t0, err, texto, ti, to, ids_fragmentos = time.time(), "", "", 0, 0, ""
         mensaje = construir_mensaje_usuario(p["pregunta"], a.prompt)
         if a.repetir:  # Leviathan et al.: <CONSULTA><CONSULTA>
@@ -237,7 +323,11 @@ def main() -> None:
         try:
             sistema_p = sistema
             if a.base == "rag":  # cada pregunta lleva sus propios fragmentos
-                recuperados = buscar_reordenado(p["pregunta"], modelo=modelo_reordenador(nombre)) if a.reordenar else buscar(p["pregunta"])
+                recuperados = (
+                    buscar_reordenado(p["pregunta"], modelo=modelo_reordenador(nombre))
+                    if a.reordenar
+                    else buscar(p["pregunta"])
+                )
                 ids_fragmentos = " ".join(r["chunk_id"] for r in recuperados)
                 sistema_p = construir_prompt_sistema(formatear_contexto(recuperados), a.prompt)
             if proveedor == "gemini":
@@ -250,15 +340,38 @@ def main() -> None:
             err = str(e)[:300]
         seg = time.time() - t0
         cal, motivo = ("sin_calificar", "") if (a.sin_juez or err) else juzgar(a.juez, p, texto)
-        filas.append({"modelo": a.modelo, "base": etiqueta_base, "prompt": a.prompt, "id": p["id"], "tipo_prueba": p["tipo_prueba"], "pregunta": p["pregunta"], "respuesta": texto,
-                      "calificacion": cal, "motivo_juez": motivo, "segundos": f"{seg:.1f}", "tokens_entrada": ti, "tokens_salida": to, "fragmentos": ids_fragmentos, "error": err,
-                      "juez": "" if (a.sin_juez or err) else a.juez, "fecha": date.today().isoformat()})
+        filas.append(
+            {
+                "modelo": a.modelo,
+                "base": etiqueta_base,
+                "prompt": a.prompt,
+                "id": p["id"],
+                "tipo_prueba": p["tipo_prueba"],
+                "pregunta": p["pregunta"],
+                "respuesta": texto,
+                "calificacion": cal,
+                "motivo_juez": motivo,
+                "segundos": f"{seg:.1f}",
+                "tokens_entrada": ti,
+                "tokens_salida": to,
+                "fragmentos": ids_fragmentos,
+                "error": err,
+                "juez": "" if (a.sin_juez or err) else a.juez,
+                "fecha": date.today().isoformat(),
+            }
+        )
         print(f"  {p['id']}: {cal if not err else 'ERROR ' + err[:80]} ({seg:.0f} s)", flush=True)
         with destino.open("w", encoding="utf-8-sig", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=campos, quoting=csv.QUOTE_ALL); w.writeheader(); w.writerows(filas)
+            w = csv.DictWriter(f, fieldnames=campos, quoting=csv.QUOTE_ALL)
+            w.writeheader()
+            w.writerows(filas)
         time.sleep(a.pausa)
-    with destino.open("w", encoding="utf-8-sig", newline="") as f:  # guarda también las preguntas que ya estaban hechas y quedaron al final
-        w = csv.DictWriter(f, fieldnames=campos, quoting=csv.QUOTE_ALL); w.writeheader(); w.writerows(filas)
+    with destino.open(
+        "w", encoding="utf-8-sig", newline=""
+    ) as f:  # guarda también las preguntas que ya estaban hechas y quedaron al final
+        w = csv.DictWriter(f, fieldnames=campos, quoting=csv.QUOTE_ALL)
+        w.writeheader()
+        w.writerows(filas)
     print("Guardado en", destino)
 
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Navigate, useLocation, useMatch, useNavigate, useParams } from "react-router-dom";
 import Markdown from "./Markdown.jsx";
 import { cargarDatos, cargarMensajes, enviar, olvidarDatos } from "./api.js";
 
@@ -8,16 +9,7 @@ const SUGERENCIAS = [
   "Quiero reportar un daño en Ibagué: ¿qué hago y a qué número llamo?",
 ];
 
-function hiloDeLaDireccion() {
-  return new URLSearchParams(window.location.search).get("hilo");
-}
-
-function fijarHilo(hilo) {
-  const url = new URL(window.location.href);
-  if (hilo) url.searchParams.set("hilo", hilo);
-  else url.searchParams.delete("hilo");
-  window.history.replaceState(null, "", url);
-}
+const HILO_VALIDO = /^[0-9a-f]{32}$/; // los hilos son uuid4 en hexadecimal; cualquier otra cosa en la dirección no es una conversación
 
 function actualizarUltimo(lista, cambio) {
   return [...lista.slice(0, -1), cambio(lista.at(-1))];
@@ -56,7 +48,14 @@ function etiqueta(h) {
 }
 
 export default function App() {
-  const [hilo, setHilo] = useState(hiloDeLaDireccion());
+  const { hilo: hiloDeLaRuta } = useParams();
+  const { search } = useLocation();
+  const navegar = useNavigate();
+  const enInicio = useMatch("/");
+  const enConversacion = useMatch("/c/:hilo");
+  const direccionConocida = enInicio || enConversacion; // los dos hooks se llaman siempre: no se pueden encadenar con ||
+  const hiloViejo = new URLSearchParams(search).get("hilo"); // direcciones antiguas: /?hilo=<id>
+  const [hilo, setHilo] = useState(hiloDeLaRuta ?? hiloViejo);
   const [mensajes, setMensajes] = useState([]);
   const [texto, setTexto] = useState("");
   const [enCurso, setEnCurso] = useState(false);
@@ -73,6 +72,10 @@ export default function App() {
   useEffect(() => {
     fin.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensajes, enCurso]);
+
+  function fijarHilo(id) {
+    navegar(id ? `/c/${id}` : "/", { replace: true }); // la dirección sigue a la conversación sin crear pasos en el historial
+  }
 
   function alEvento(e) {
     if (e.tipo === "hilo") {
@@ -136,6 +139,9 @@ export default function App() {
     setMensajes([]);
     setError("");
   }
+
+  if (!direccionConocida || (hiloDeLaRuta && !HILO_VALIDO.test(hiloDeLaRuta))) return <Navigate to="/" replace />;
+  if (!hiloDeLaRuta && hiloViejo && HILO_VALIDO.test(hiloViejo)) return <Navigate to={`/c/${hiloViejo}`} replace />;
 
   return (
     <div className="app">
