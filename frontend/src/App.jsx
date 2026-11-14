@@ -147,9 +147,12 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <div>
-          <h1>Asistente Celsia</h1>
-          <p>Agente con memoria, datos exactos y búsqueda en el sitio oficial</p>
+        <div className="marca">
+          <img src="/celsia-icono.png" alt="" aria-hidden="true" />
+          <div>
+            <h1>Asistente <span>Celsia</span></h1>
+            <p>Agente con memoria, datos exactos y búsqueda en el sitio oficial</p>
+          </div>
         </div>
         <div className="acciones">
           <button className="secundario" onClick={verRecuerdos}>Lo que recuerdo</button>
@@ -168,6 +171,8 @@ export default function App() {
       <main aria-live="polite">
         {mensajes.length === 0 && (
           <section className="vacio">
+            <img className="logo-grande" src="/celsia-logo.png" alt="Celsia" />
+            <h2>¿En qué te puedo ayudar?</h2>
             <p>Pregúntame por sedes, contactos, trámites o tarifas de Celsia.</p>
             <div className="sugerencias">
               {SUGERENCIAS.map((s) => (
@@ -181,7 +186,7 @@ export default function App() {
             {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
               <p className="herramienta">{m.usadas ?? m.herramientas.map(etiqueta).join("; ")}</p>
             )}
-            <div className="contenido">{m.texto ? <Markdown texto={m.texto} /> : (enCurso && i === mensajes.length - 1 ? "Pensando…" : "")}</div>
+            <div className="contenido">{m.texto ? <Markdown texto={m.texto} /> : (enCurso && i === mensajes.length - 1 ? <span className="pensando">Pensando<i /><i /><i /></span> : "")}</div>
             {m.rol === "assistant" && m.aviso?.length > 0 && (
               <p className="aviso">Verifica antes de usar: estos datos de la respuesta no aparecen en lo que el asistente consultó ({m.aviso.join(", ")}).</p>
             )}
