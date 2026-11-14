@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app api frontend demo-inyeccion test lint check format clean datos scraping-demo indice recuperacion ensayo evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api frontend demo-inyeccion test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -9,17 +9,18 @@ help: ayuda
 # $(info) imprime desde make, no desde el shell: el menú se ve igual en cmd, PowerShell o sh.
 ayuda:
 	$(info )
-	$(info   Asistente Celsia - Taller 1 (UAO))
-	$(info   =================================)
+	$(info   Asistente Celsia - Taller 1 y Modulo 2 (UAO))
+	$(info   ===========================================)
 	$(info )
 	$(info   PREPARAR EL EQUIPO)
 	$(info     make setup           uv sync + crea .env (si falta) + descarga el modelo de embeddings)
 	$(info )
 	$(info   EJECUTAR LA APLICACION)
-	$(info     make modulo1         App del Modulo 1: solo el corpus y las etapas del scraping  [la de la sustentacion])
-	$(info     make app             App del Taller 1 (Streamlit): Q&A, Resumen, FAQ y Corpus)
+	$(info     make modulo1         App del Modulo 1: solo el corpus y las etapas del scraping)
 	$(info     make api             MODULO 2: API FastAPI del agente, en http://127.0.0.1:8000)
-	$(info     make frontend        MODULO 2: frontend React, en http://localhost:5173 (en otra terminal, con la API encendida))
+	$(info     make app             MODULO 2: frontend React, en http://localhost:5173 (igual que make frontend))
+	$(info     make frontend        instala las dependencias del frontend si faltan y lo enciende)
+	$(info     make app-taller1     Taller 1 (Streamlit): Q&A, Resumen, FAQ y Corpus  [historico])
 	$(info     make demo-inyeccion  MODULO 2: API con un corpus de demo que trae un documento envenenado (apaga antes la API normal))
 	$(info )
 	$(info   DATOS Y SCRAPING)
@@ -29,6 +30,7 @@ ayuda:
 	$(info )
 	$(info   VERIFICAR ANTES DE LA DEMO)
 	$(info     make ensayo          revisa que la demo este lista, sin gastar cuota)
+	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas a Gemini))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
 	$(info     make lint            errores de codigo con ruff y lock vigente)
 	$(info     make check           lint + pruebas: lo que corre el CI; correrlo antes de subir)
@@ -56,7 +58,10 @@ setup:
 modulo1:
 	uv run streamlit run app/modulo1.py
 
-app:
+# La entrega vigente del Modulo 2 es el frontend React; la app Streamlit del Taller 1 queda como historica.
+app: frontend
+
+app-taller1:
 	uv run streamlit run app/asistente.py
 
 api:
@@ -103,6 +108,10 @@ recuperacion:
 
 ensayo:
 	uv run python scripts/16_ensayo_demo.py
+
+# Prueba real del agente: memoria, router y modelo. Gasta cuota (una conversacion de 4 turnos).
+ensayo-agente:
+	uv run python scripts/18_ensayo_agente.py
 
 evaluar:
 	uv run python scripts/11_evaluar_modelo.py --modelo gemini:gemini-3.5-flash
