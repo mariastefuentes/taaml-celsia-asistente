@@ -50,6 +50,21 @@ El Q&A del Taller 1 es una cadena: `RunnablePassthrough.assign` agrega el prompt
 
 **Si cambia el modelo de embeddings.** Se conserva el texto original, se vuelven a calcular todos los vectores y se reconstruye el índice completo: nunca se mezclan vectores de dos modelos, porque sus distancias no son comparables.
 
+### 2.2 Comparación de orquestadores y criterio de elección
+
+Se compararon las opciones por lo que cada una resuelve y por lo que este agente necesita: cuatro herramientas, memoria por conversación, un solo ciclo de decisión y una demo de pocos minutos. Las descripciones salen de la documentación y las páginas oficiales de cada proyecto; ninguna se probó en este taller, así que la elección se argumenta y no se midió.
+
+| Opción | Qué resuelve | Cuándo conviene | Por qué no aquí |
+|---|---|---|---|
+| **LangChain `create_agent`** (elegida) | Ciclo modelo → herramientas → modelo, con middleware (recorte, resumen, tope de llamadas, respaldo de modelo) | Agente de herramientas que se ensambla con pocas piezas | Es lo que se usa: cubre las cuatro herramientas y la memoria sin código propio |
+| **LangGraph `StateGraph` a mano** | Grafos con ramas, pasos obligatorios, aprobación humana | Flujos con ramas explícitas o pausas antes de una acción | Hay un solo ciclo de decisión; `create_agent` ya corre sobre LangGraph y usa su checkpointer y su Store |
+| **LlamaIndex** | Indexar y consultar documentos (recuperación híbrida, reordenamiento); sus agentes envuelven esa capa en un ciclo ReAct | Cuando el centro del sistema es el índice | Aquí el índice es Qdrant con filtros propios y el centro es el agente; cambiar de marco obligaba a reescribir el Taller 1 |
+| **Agno** (antes Phidata) | Agentes, equipos y flujos con memoria y conocimiento integrados, y un servidor de producción (AgentOS) | Sistemas de varios agentes que se reparten el trabajo | No hay varios agentes que coordinar; no ofrecía ventaja para cuatro herramientas |
+| **DSPy** | Programas con firmas y módulos, y optimizadores que compilan los prompts contra una métrica | Cuando hay una métrica y un conjunto grande con el que optimizar el prompt | Cada optimización multiplica las llamadas de pago, y el conjunto de 28 preguntas es chico para optimizar sin sobreajustar |
+| **Deep Agents** (LangChain) | `create_agent` más planificación (`write_todos`), sistema de archivos virtual y subagentes (`task`) | Tareas largas de investigación o de código que necesitan plan, archivos de trabajo y delegación | Una consulta de atención se resuelve en uno o dos pasos; planificar y delegar solo añadiría llamadas y latencia |
+
+Criterio de elección: se sube un escalón solo cuando la tarea lo pide. Un agente de herramientas (`create_agent`) alcanza mientras el flujo sea un ciclo; se pasa a un grafo propio si aparecen ramas o aprobaciones; a Deep Agents si la tarea exige planificar en varios pasos o repartir en subagentes; a varios agentes (Agno u otro) si hay roles que coordinar; y DSPy cuando exista una métrica y datos suficientes para optimizar. La documentación de LangChain presenta `create_agent` y Deep Agents como capas de la misma pila, de modo que subir de una a otra no obliga a rehacer lo anterior.
+
 ## 3. Memoria conversacional
 
 **Qué se guarda.** Cada conversación es un hilo identificado por un `uuid4`; el checkpointer de SQLite (`SqliteSaver`) guarda todos los mensajes, incluidas las llamadas a herramientas. La memoria sobrevive a reiniciar la aplicación y, como el identificador va en la dirección (`?hilo=`), al recargar la página la conversación se recupera.
@@ -230,7 +245,17 @@ El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al mo
 
 ### Técnicas consideradas y no adoptadas
 
-Tampoco se adoptaron la autoconsistencia (varias respuestas por pregunta), la optimización automática de prompts (DSPy) ni la repetición del prompt: multiplican las llamadas y el costo con un modelo que ya razona, y no hay evidencia propia de que mejoren. La idea de una «wiki» que el propio modelo mantiene como base de conocimiento tampoco se usó: la base sigue siendo el texto oficial indexado, que se puede auditar contra el sitio.
+Tampoco se adoptaron la autoconsistencia (varias respuestas por pregunta), la optimización automática de prompts (DSPy) ni la repetición del prompt: multiplican las llamadas y el costo con un modelo que ya razona, y no hay evidencia propia de que mejoren. **LLM Wiki y Open Knowledge Format (OKF), como paradigma alternativo de conocimiento.** La idea de la «LLM Wiki», atribuida a Andrej Karpathy, es que el propio modelo escriba y mantenga la base de conocimiento: en vez de buscar fragmentos en cada pregunta, compila lo que lee en páginas enlazadas que va actualizando. En junio de 2026 Google Cloud publicó el Open Knowledge Format (versión 0.1), una especificación para esas bases: un directorio de archivos Markdown con encabezados YAML que cualquier agente puede leer sin SDK. Frente a este agente se diferencia así:
+
+| | RAG sobre Qdrant (lo entregado) | LLM Wiki / OKF |
+|---|---|---|
+| Qué se consulta | Fragmentos del texto oficial, recuperados por similitud en cada pregunta | Páginas resumidas y enlazadas, escritas por un modelo |
+| Quién escribe el conocimiento | El sitio de Celsia; el equipo solo lo indexa | Un modelo; hay que revisar lo que escribió |
+| Auditoría | Cada fragmento se compara con el sitio y trae enlace | Hay que verificar que el resumen no distorsionó la fuente |
+| Costo de actualizar | Reindexar (barato, sin modelo de pago) | Una llamada de pago por cada documento nuevo |
+| Dónde brilla | Datos que cambian y respuestas que deben citar la fuente | Conocimiento estable que se consulta muchas veces o se comparte entre agentes |
+
+No se adoptó: la base sigue siendo el texto oficial indexado, que se puede auditar contra el sitio, y un resumen escrito por el modelo añadiría un paso donde puede introducir errores en sedes, teléfonos y tarifas. Sí tomaría valor como capa posterior, por ejemplo páginas de preguntas frecuentes escritas por el modelo y revisadas por una persona, que el agente consultaría antes de buscar en el corpus. No se probó en este taller. Las fuentes son la publicación de Google Cloud sobre OKF y comentarios técnicos posteriores; la especificación es nueva y puede cambiar.
 
 No se usaron pasos de aprobación humana ni un guardrail externo (Llama Guard, NeMo): el índice es pequeño, las herramientas de consulta solo leen, la única que escribe guarda lo que el cliente cuenta de sí mismo (máximo 20 datos, con la instrucción de no guardar cédulas, claves ni tarjetas, y borrables por él) y las defensas del prompt, del delimitador y de la validación resistieron las pruebas. Si se agregara una herramienta que escriba (por ejemplo, abrir un reclamo), la aprobación humana y la memoria persistente ya existente permitirían pausar el agente antes de la acción. El filtro por región (Valle o Tolima) existe en la recuperación, pero el agente no lo usa todavía: solo 5 de las 35 preguntas del conjunto permiten medirlo.
 
@@ -238,6 +263,9 @@ No se usaron pasos de aprobación humana ni un guardrail externo (Llama Guard, N
 
 - Yao, S. et al. (2022). *ReAct: Synergizing Reasoning and Acting in Language Models*. arXiv:2210.03629.
 - Lewis, P. et al. (2020). *Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks*. arXiv:2005.11401.
+- Khattab, O. et al. (2023). *DSPy: Compiling Declarative Language Model Calls into Self-Improving Pipelines*. arXiv:2310.03714.
+- LangChain: documentación de Deep Agents y de `create_agent` (docs.langchain.com).
+- Google Cloud (2026). *How the Open Knowledge Format can improve data sharing* (cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing).
 - Wu, Y. et al. (2025). *From Human Memory to AI Memory: A Survey on Memory Mechanisms in the Era of LLMs*. arXiv:2504.15965.
 - Greshake, K. et al. (2023). *Not what you've signed up for: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection*. arXiv:2302.12173.
 - Schick, T. et al. (2023). *Toolformer: Language Models Can Teach Themselves to Use Tools*. arXiv:2302.04761.

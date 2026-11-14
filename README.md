@@ -191,7 +191,7 @@ data/        0_manual/ 1_bronze/ 2_silver/ 3_gold/ 4_curaduria/ 5_extraccion/
 src/taaml/   código del asistente (base.py, recuperacion.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, consulta_datos.py, prompts.py, tareas.py)
 prompts/     prompts versionados (asistente v3 vigente, v4 y v5 descartados; resumen y FAQ v2; agente v2 vigente; extracción v1)
 tests/       pruebas automáticas de componentes (make test)
-specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 011: asistente, validación y agente, continuidad de la demo, base vectorial, evidencia de Resumen y FAQ, pestaña Corpus, prueba del scraper, etapa Descubrir, organización de la entrega y agente con memoria y router
+specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 012: asistente, validación y agente, continuidad de la demo, base vectorial, evidencia de Resumen y FAQ, pestaña Corpus, prueba del scraper, etapa Descubrir, organización de la entrega, agente con memoria y router, y Qdrant; las decisiones de arquitectura están en `docs/decisiones.md`
 .specify/   memoria del proyecto: memory/constitution.md (verdad central)
 docs/        incluye skillspector-corpus-medallion.md, el reporte de seguridad de la skill
 .github/    plantilla de Pull Request y CI
