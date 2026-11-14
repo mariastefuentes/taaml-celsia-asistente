@@ -14,6 +14,7 @@ Uso:
     uv run python scripts/01_scrape_celsia.py --sections noticias --filtro "tarifa|factura|estafa"
     uv run python scripts/01_scrape_celsia.py --sections page --limit 5 --salida data/_demo_scraping   # demo, no toca data/1_bronze
 """
+
 import argparse
 import json
 import re
@@ -55,8 +56,20 @@ def completar_hash() -> int:
 
 
 def registrar(indice, slug: str, url: str, section: str, http: int, **extra) -> None:
-    indice.write(json.dumps({"slug": slug, "url": url, "section": section, "http": http,
-                             "fetched_at": datetime.now(timezone.utc).isoformat(), **extra}, ensure_ascii=False) + "\n")
+    indice.write(
+        json.dumps(
+            {
+                "slug": slug,
+                "url": url,
+                "section": section,
+                "http": http,
+                "fetched_at": datetime.now(timezone.utc).isoformat(),
+                **extra,
+            },
+            ensure_ascii=False,
+        )
+        + "\n"
+    )
 
 
 def slugify(url: str) -> str:
@@ -77,9 +90,17 @@ def main() -> None:
     ap.add_argument("--sections", default="page", help="sitemaps separados por coma: page,blog-celsia")
     ap.add_argument("--limit", type=int, default=0, help="max paginas por seccion (0 = todas)")
     ap.add_argument("--delay", type=float, default=1.0, help="segundos entre peticiones")
-    ap.add_argument("--solo-completar", action="store_true", help="solo agrega el hash al indice existente, sin descargar nada")
-    ap.add_argument("--filtro", default="", help="expresion regular: solo descarga las URLs que la cumplan (ej. noticias)")
-    ap.add_argument("--salida", default="", help="carpeta donde guardar el HTML y el indice en lugar de data/1_bronze (para demostraciones)")
+    ap.add_argument(
+        "--solo-completar", action="store_true", help="solo agrega el hash al indice existente, sin descargar nada"
+    )
+    ap.add_argument(
+        "--filtro", default="", help="expresion regular: solo descarga las URLs que la cumplan (ej. noticias)"
+    )
+    ap.add_argument(
+        "--salida",
+        default="",
+        help="carpeta donde guardar el HTML y el indice en lugar de data/1_bronze (para demostraciones)",
+    )
     args = ap.parse_args()
     if args.salida:
         global BRONZE, INDICE
@@ -128,7 +149,9 @@ def main() -> None:
                 registrar(indice, slug, url, section, resp.status_code, sha1=sha1_archivo(destino))
                 guardadas += 1
                 time.sleep(args.delay)
-    print(f"Listo: {guardadas} descargadas, {omitidas} ya existian, {bloqueadas} bloqueadas por robots.txt, {errores} con error")
+    print(
+        f"Listo: {guardadas} descargadas, {omitidas} ya existian, {bloqueadas} bloqueadas por robots.txt, {errores} con error"
+    )
 
 
 if __name__ == "__main__":

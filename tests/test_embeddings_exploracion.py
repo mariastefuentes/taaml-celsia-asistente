@@ -24,7 +24,9 @@ def test_con_vectores_de_norma_uno_coseno_producto_punto_y_l2_ordenan_igual():
 def test_con_vectores_sin_normalizar_el_producto_punto_ya_no_coincide_con_el_coseno():
     v = _vectores() * np.linspace(0.2, 5, 40)[:, None]  # normas muy distintas
     q = _vectores(1, semilla=1)[0]
-    assert np.argsort(-ex.puntajes("coseno", v, q)).tolist() != np.argsort(-ex.puntajes("producto_punto", v, q)).tolist()
+    assert (
+        np.argsort(-ex.puntajes("coseno", v, q)).tolist() != np.argsort(-ex.puntajes("producto_punto", v, q)).tolist()
+    )
 
 
 def test_recortar_deja_las_primeras_dimensiones_con_norma_uno():

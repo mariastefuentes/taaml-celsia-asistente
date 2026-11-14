@@ -22,13 +22,18 @@ def test_fragmentos_sin_vacios_ni_duplicados_y_de_tamano_acotado():
 
 
 def test_los_datos_clave_sobreviven_al_fragmentado():
-    texto = " ".join(json.loads(ln)["texto"] for ln in (CURADURIA / "chunks.jsonl").read_text(encoding="utf-8").splitlines())
+    texto = " ".join(
+        json.loads(ln)["texto"] for ln in (CURADURIA / "chunks.jsonl").read_text(encoding="utf-8").splitlines()
+    )
     for dato in _cargar_script("06_construir_chunks").DATOS_CLAVE:
         assert dato in texto, dato
 
 
 def test_fragmentar_una_sede_da_un_fragmento_por_linea():
     m = _cargar_script("06_construir_chunks")
-    doc = {"text": "## Valle del Cauca\n- **Tienda A** (Cali) horario 8-5\n- **Tienda B** (Tuluá) horario 9-6", "categoria": "sedes"}
+    doc = {
+        "text": "## Valle del Cauca\n- **Tienda A** (Cali) horario 8-5\n- **Tienda B** (Tuluá) horario 9-6",
+        "categoria": "sedes",
+    }
     partes = m.fragmentar(doc, splitter=None)
     assert len(partes) == 2 and partes[0]["texto"].startswith("Valle del Cauca. ")

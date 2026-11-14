@@ -1,4 +1,5 @@
 """Las cifras de la pestaña «Corpus y scraping» salen de los archivos de data/ y cada etapa conserva la cuenta."""
+
 from taaml import corpus
 from taaml.corpus import metricas
 
@@ -22,7 +23,12 @@ def test_las_etapas_se_encadenan():
 
 
 def test_las_cifras_coinciden_con_las_del_informe():
-    assert (M["paginas_descargadas"], M["paginas_en_silver"], M["documentos"], M["fragmentos"]) == (1272, 1100, 393, 1690)
+    assert (M["paginas_descargadas"], M["paginas_en_silver"], M["documentos"], M["fragmentos"]) == (
+        1272,
+        1100,
+        393,
+        1690,
+    )
     assert sum(M["por_categoria"].values()) == M["documentos"]
 
 
@@ -35,7 +41,9 @@ def test_los_tokens_son_los_del_corpus(monkeypatch):
 
     monkeypatch.setattr(tiktoken, "get_encoding", sin_red)
     estimado = corpus.metricas()
-    assert not estimado["tokens_con_o200k"] and 280_000 < estimado["tokens"] < 360_000  # respaldo: caracteres/4, cerca del valor exacto
+    assert (
+        not estimado["tokens_con_o200k"] and 280_000 < estimado["tokens"] < 360_000
+    )  # respaldo: caracteres/4, cerca del valor exacto
     monkeypatch.setattr(corpus, "_tokens", lambda incluidos: (1, False))
     assert corpus.metricas()["tokens"] == 1
 
@@ -62,11 +70,18 @@ def test_resumen_del_descubrimiento_cuenta_cada_estado():
     assert spec is not None and spec.loader is not None
     modulo = util.module_from_spec(spec)
     spec.loader.exec_module(modulo)
-    filas = [{"section": "page"}, {"section": "page", "error": "bloqueada por robots.txt"},
-             {"section": "noticias", "error": "500 Server Error"}, {"section": "noticias"}]
+    filas = [
+        {"section": "page"},
+        {"section": "page", "error": "bloqueada por robots.txt"},
+        {"section": "noticias", "error": "500 Server Error"},
+        {"section": "noticias"},
+    ]
     r = modulo.resumen_descubrimiento(filas)
     assert (r["descubiertas"], r["descargadas"], r["bloqueadas"], r["con_error"]) == (4, 2, 1, 1)
-    assert r["por_seccion"] == {"page": {"descubiertas": 2, "descargadas": 1}, "noticias": {"descubiertas": 2, "descargadas": 1}}
+    assert r["por_seccion"] == {
+        "page": {"descubiertas": 2, "descargadas": 1},
+        "noticias": {"descubiertas": 2, "descargadas": 1},
+    }
 
 
 def test_las_primeras_cinco_etapas_son_las_del_scraping():

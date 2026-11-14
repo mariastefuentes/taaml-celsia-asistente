@@ -11,6 +11,7 @@ La calidad se mide como recall@10 frente a la búsqueda exacta (cuántos de los 
 Uso:  uv run python scripts/26_explorar_ann_y_filtros.py
 Resultado: docs/2 - Conjunto de prueba/resultados/ann_y_filtros.csv
 """
+
 import csv
 import sys
 import time
@@ -73,14 +74,16 @@ class PQ:
         self.V, self.m, self.d = V, m, V.shape[1] // m
         self.libros, codigos = [], np.empty((len(V), m), dtype=np.uint8)
         for j in range(m):
-            libro, asignacion = kmeans(V[:, j * self.d:(j + 1) * self.d], centroides_por_trozo, iteraciones=15, semilla=j)
+            libro, asignacion = kmeans(
+                V[:, j * self.d : (j + 1) * self.d], centroides_por_trozo, iteraciones=15, semilla=j
+            )
             self.libros.append(libro)
             codigos[:, j] = asignacion
         self.codigos = codigos
 
     def puntajes(self, q: np.ndarray) -> np.ndarray:
         """Producto punto aproximado (ADC): una tabla de q contra los centroides de cada trozo y una suma por vector."""
-        tablas = [self.libros[j] @ q[j * self.d:(j + 1) * self.d] for j in range(self.m)]
+        tablas = [self.libros[j] @ q[j * self.d : (j + 1) * self.d] for j in range(self.m)]
         return sum(tablas[j][self.codigos[:, j]] for j in range(self.m))
 
     def buscar(self, q: np.ndarray, k: int = K, rerank: int = 0) -> list[int]:
@@ -97,7 +100,11 @@ def main() -> None:
     if list(z["ids"]) != [f["chunk_id"] for f in corpus]:
         sys.exit("El índice de vectores no corresponde a chunks.jsonl: regenéralo con `make indice`.")
     V = z["vectores"].astype(np.float64)
-    preguntas = [p["pregunta"] for p in csv.DictReader(PRUEBA.open(encoding="utf-8-sig", newline="")) if p["tipo_prueba"] == "respuesta"]
+    preguntas = [
+        p["pregunta"]
+        for p in csv.DictReader(PRUEBA.open(encoding="utf-8-sig", newline=""))
+        if p["tipo_prueba"] == "respuesta"
+    ]
     Q = np.array(embeddings([ampliar_consulta(p) for p in preguntas], "query"), dtype=np.float64)
     exactos = [top_exacto(V, q) for q in Q]
     filas = []
@@ -107,8 +114,19 @@ def main() -> None:
     for q in Q:
         top_exacto(V, q)
     t_exacto = (time.perf_counter() - t0) / len(Q) * 1e6
-    print(f"Búsqueda exacta: {len(V)} vectores de {V.shape[1]} dimensiones, {mb_completo:.1f} MB, {t_exacto:.0f} µs por pregunta, recall 1,000 (es la referencia).\n")
-    filas.append({"experimento": "exacta", "variante": "fuerza bruta", "recall10": 1.0, "fraccion_comparada": 1.0, "microsegundos": round(t_exacto), "megabytes": round(mb_completo, 2)})
+    print(
+        f"Búsqueda exacta: {len(V)} vectores de {V.shape[1]} dimensiones, {mb_completo:.1f} MB, {t_exacto:.0f} µs por pregunta, recall 1,000 (es la referencia).\n"
+    )
+    filas.append(
+        {
+            "experimento": "exacta",
+            "variante": "fuerza bruta",
+            "recall10": 1.0,
+            "fraccion_comparada": 1.0,
+            "microsegundos": round(t_exacto),
+            "megabytes": round(mb_completo, 2),
+        }
+    )
 
     print("1. IVF (nlist = 41, unos √N)")
     print(f"{'nprobe':<8} | recall@10 | % de vectores comparados | µs por pregunta")
@@ -120,8 +138,16 @@ def main() -> None:
         r = float(np.mean([recall(res[0], ex) for res, ex in zip(resultados, exactos)]))
         frac = float(np.mean([res[1] for res in resultados])) / len(V)
         print(f"{nprobe:<8} | {r:>9.3f} | {frac:>24.1%} | {micro:>8.0f}")
-        filas.append({"experimento": "ivf", "variante": f"nlist=41 nprobe={nprobe}", "recall10": round(r, 3), "fraccion_comparada": round(frac, 3), "microsegundos": round(micro),
-                      "megabytes": round(mb_completo + ivf.centroides.size * 4 / 1e6, 2)})
+        filas.append(
+            {
+                "experimento": "ivf",
+                "variante": f"nlist=41 nprobe={nprobe}",
+                "recall10": round(r, 3),
+                "fraccion_comparada": round(frac, 3),
+                "microsegundos": round(micro),
+                "megabytes": round(mb_completo + ivf.centroides.size * 4 / 1e6, 2),
+            }
+        )
 
     print("\n2. PQ (8 trozos de 96 dimensiones, 256 centroides por trozo)")
     print(f"{'variante':<26} | recall@10 | MB (vectores + libros)")
@@ -147,12 +173,35 @@ def main() -> None:
             devueltos = float(np.mean([len(p) for p in post]))
             r = float(np.mean([recall(p, e) for p, e in zip(post, pre)]))
             celdas.append(f"{devueltos:>4.1f} de {min(K, por_categoria[cat])} / {r:.3f}")
-            filas.append({"experimento": "filtro", "variante": f"{cat} post K'={kp}", "recall10": round(r, 3), "fraccion_comparada": round(por_categoria[cat] / len(V), 3),
-                          "resultados_devueltos": round(devueltos, 1)})
+            filas.append(
+                {
+                    "experimento": "filtro",
+                    "variante": f"{cat} post K'={kp}",
+                    "recall10": round(r, 3),
+                    "fraccion_comparada": round(por_categoria[cat] / len(V), 3),
+                    "resultados_devueltos": round(devueltos, 1),
+                }
+            )
         print(f"{cat:<20} | {por_categoria[cat]:>3} ({por_categoria[cat] / len(V):>5.1%}) | " + " | ".join(celdas))
-        filas.append({"experimento": "filtro", "variante": f"{cat} pre-filtrado", "recall10": 1.0, "fraccion_comparada": round(por_categoria[cat] / len(V), 3), "resultados_devueltos": float(min(K, por_categoria[cat]))})
+        filas.append(
+            {
+                "experimento": "filtro",
+                "variante": f"{cat} pre-filtrado",
+                "recall10": 1.0,
+                "fraccion_comparada": round(por_categoria[cat] / len(V), 3),
+                "resultados_devueltos": float(min(K, por_categoria[cat])),
+            }
+        )
 
-    campos = ["experimento", "variante", "recall10", "fraccion_comparada", "microsegundos", "megabytes", "resultados_devueltos"]
+    campos = [
+        "experimento",
+        "variante",
+        "recall10",
+        "fraccion_comparada",
+        "microsegundos",
+        "megabytes",
+        "resultados_devueltos",
+    ]
     with SALIDA.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=campos, quoting=csv.QUOTE_ALL, restval="")
         w.writeheader()

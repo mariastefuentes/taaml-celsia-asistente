@@ -2,7 +2,9 @@ from taaml.consulta_datos import SIN_RESULTADOS, catalogo, consultar, contactos,
 
 
 def test_sedes_por_ciudad_ignora_tildes_y_mayusculas():
-    assert sedes(ciudad="IBAGUE") and all("ibague" in f["CITY"].lower().replace("é", "e") for f in sedes(ciudad="Ibagué"))
+    assert sedes(ciudad="IBAGUE") and all(
+        "ibague" in f["CITY"].lower().replace("é", "e") for f in sedes(ciudad="Ibagué")
+    )
 
 
 def test_sedes_por_departamento_y_tipo():

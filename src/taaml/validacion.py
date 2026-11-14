@@ -3,6 +3,7 @@
 No llama a ningún modelo y no cambia la respuesta: solo devuelve lo que no tiene respaldo, para avisar a quien lee.
 Es una revisión de texto (¿aparece escrito?), no de significado: un número correcto usado en otro contexto pasa la prueba.
 """
+
 import re
 
 from taaml.prompts import construir_prompt_sistema
@@ -52,7 +53,9 @@ def datos_sin_respaldo(respuesta: str, fragmentos: list[dict]) -> list[str]:
     for correo in dict.fromkeys(PATRON_CORREO.findall(sin_enumerar)):
         if correo.lower() not in correos_fuente:
             sin_respaldo.append(correo)
-    sin_urls = PATRON_CORREO.sub("", PATRON_URL.sub("", sin_enumerar))  # los números de un enlace ya se revisaron con el enlace
+    sin_urls = PATRON_CORREO.sub(
+        "", PATRON_URL.sub("", sin_enumerar)
+    )  # los números de un enlace ya se revisaron con el enlace
     numeros_fuente = _numeros(fuente)
     vistos = set()
     for numero in PATRON_NUMERO.findall(sin_urls):

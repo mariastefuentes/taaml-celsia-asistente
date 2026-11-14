@@ -1,4 +1,5 @@
 """Pruebas de las reglas del pipeline de datos (curaduría, limpieza del HTML y fragmentado) con datos de ejemplo, sin tocar data/."""
+
 from datetime import timedelta
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -14,7 +15,14 @@ chunks = _cargar_script("06_construir_chunks")
 
 
 def _doc(**cambios):
-    return {"idioma": "es", "caracteres": 5000, "categoria": "servicios", "title": "Pagar la factura", "fecha_publicacion": "", **cambios}
+    return {
+        "idioma": "es",
+        "caracteres": 5000,
+        "categoria": "servicios",
+        "title": "Pagar la factura",
+        "fecha_publicacion": "",
+        **cambios,
+    }
 
 
 def _divisor(tamano=1000, solape=150):
@@ -22,6 +30,7 @@ def _divisor(tamano=1000, solape=150):
 
 
 # --- curaduría: decidir ---
+
 
 def test_curaduria_excluye_ingles_y_paginas_sin_texto():
     assert curar.decidir(_doc(idioma="en"))[:2] == (False, "R1")
@@ -43,7 +52,10 @@ def test_curaduria_noticia_vieja_o_sin_fecha_se_excluye_y_la_reciente_se_incluye
 
 def test_curaduria_noticia_atemporal_se_incluye_aunque_sea_vieja():
     for titulo in ("Cuidado con la suplantación de Celsia", "Cómo entender la tarifa de energía"):
-        assert curar.decidir(_doc(categoria="noticias", title=titulo, fecha_publicacion="2019-01-01"))[:2] == (True, "R7")
+        assert curar.decidir(_doc(categoria="noticias", title=titulo, fecha_publicacion="2019-01-01"))[:2] == (
+            True,
+            "R7",
+        )
 
 
 # --- limpieza del HTML: extraer ---
@@ -79,6 +91,7 @@ def test_extraer_lee_la_fecha_de_publicacion():
 
 # --- fragmentado ---
 
+
 def test_fragmentar_respeta_el_tamano_y_no_pierde_texto():
     texto = " ".join(f"Oración número {n} sobre el servicio de energía." for n in range(120))
     partes = chunks.fragmentar({"text": texto, "categoria": "servicios"}, _divisor())
@@ -95,7 +108,10 @@ def test_fragmentar_pega_el_resto_corto_al_fragmento_anterior():
 
 
 def test_fragmentar_un_texto_corto_da_un_solo_fragmento():
-    assert len(chunks.fragmentar({"text": "Línea de atención 01 8000 112 115.", "categoria": "servicios"}, _divisor())) == 1
+    assert (
+        len(chunks.fragmentar({"text": "Línea de atención 01 8000 112 115.", "categoria": "servicios"}, _divisor()))
+        == 1
+    )
 
 
 def test_identificador_es_estable_unico_y_acotado():
@@ -111,24 +127,47 @@ def _bronze_de_ejemplo(carpeta, paginas):
     bronze.mkdir()
     filas = []
     for slug, (url, texto) in paginas.items():
-        (bronze / f"{slug}.html").write_text(f"<html><head><title>{slug}</title></head><body><main><p>{texto}</p></main></body></html>", encoding="utf-8")
-        filas.append(json.dumps({"slug": slug, "url": url, "section": "page", "http": 200, "fetched_at": "2026-10-17T00:00:00+00:00", "sha1": slug}))
+        (bronze / f"{slug}.html").write_text(
+            f"<html><head><title>{slug}</title></head><body><main><p>{texto}</p></main></body></html>", encoding="utf-8"
+        )
+        filas.append(
+            json.dumps(
+                {
+                    "slug": slug,
+                    "url": url,
+                    "section": "page",
+                    "http": 200,
+                    "fetched_at": "2026-10-17T00:00:00+00:00",
+                    "sha1": slug,
+                }
+            )
+        )
     (bronze / "_indice.jsonl").write_text(chr(10).join(filas), encoding="utf-8")
     return bronze, silver_dir
 
 
 def test_silver_descarta_paginas_casi_vacias_y_duplicados_exactos(tmp_path, monkeypatch):
     largo = "Información de servicio al cliente de Celsia. " * 12
-    bronze, silver_dir = _bronze_de_ejemplo(tmp_path, {
-        "es-nosotros": ("https://www.celsia.com/es/nosotros/", largo),
-        "es-about-us": ("https://www.celsia.com/es/about-us/", largo),
-        "es-vacia": ("https://www.celsia.com/es/vacia/", "Hola"),
-    })
+    bronze, silver_dir = _bronze_de_ejemplo(
+        tmp_path,
+        {
+            "es-nosotros": ("https://www.celsia.com/es/nosotros/", largo),
+            "es-about-us": ("https://www.celsia.com/es/about-us/", largo),
+            "es-vacia": ("https://www.celsia.com/es/vacia/", "Hola"),
+        },
+    )
     monkeypatch.setattr(silver, "BRONZE", bronze)
     monkeypatch.setattr(silver, "SILVER", silver_dir)
     silver.main()
-    resultado = {fila.split(",")[0]: fila.split(",")[2] for fila in (silver_dir / "_registro.csv").read_text(encoding="utf-8").splitlines()[1:]}
-    assert resultado == {"es-nosotros": "conservada", "es-about-us": "duplicado_exacto", "es-vacia": "descartada_muy_corta"}  # entre duplicados se queda la URL sin ruta en inglés
+    resultado = {
+        fila.split(",")[0]: fila.split(",")[2]
+        for fila in (silver_dir / "_registro.csv").read_text(encoding="utf-8").splitlines()[1:]
+    }
+    assert resultado == {
+        "es-nosotros": "conservada",
+        "es-about-us": "duplicado_exacto",
+        "es-vacia": "descartada_muy_corta",
+    }  # entre duplicados se queda la URL sin ruta en inglés
     assert [f.name for f in silver_dir.glob("*.md")] == ["es-nosotros.md"]
 
 
@@ -141,6 +180,8 @@ def test_silver_avisa_si_falta_el_html_crudo(tmp_path, monkeypatch):
 
 
 def test_gold_conserva_la_seccion_del_sitemap():
-    corpus = [json.loads(ln) for ln in (RAIZ / "data" / "3_gold" / "corpus.jsonl").read_text(encoding="utf-8").splitlines()]
+    corpus = [
+        json.loads(ln) for ln in (RAIZ / "data" / "3_gold" / "corpus.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
     assert all(d.get("section") for d in corpus)
     assert {d["section"] for d in corpus} >= {"page", "blog-celsia", "noticias"}

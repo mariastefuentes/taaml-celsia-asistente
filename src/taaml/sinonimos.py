@@ -10,20 +10,21 @@ Es un parche deliberado: solo cubre los temas escritos aquí y no generaliza a p
 vocabulario del propio sitio (se verificaron en la base de conocimiento); no se agrega ningún dato nuevo.
 Si se edita un grupo, hay que volver a ejecutar scripts/07_construir_indice.py (solo recalcula los fragmentos afectados).
 """
+
 import re
 
 GRUPOS = [
-    {   # qué pasa si no pago a tiempo (C8)
+    {  # qué pasa si no pago a tiempo (C8)
         "pregunta": r"atras|\bmora\b|no (he |puedo )?pag|vencid|deuda|me (cortan|suspenden)|corte por (falta de )?pago",
         "fragmento": r"intereses de mora|costos asociados a la suspensi[oó]n del servicio|acuerdo de pago",
         "terminos": "qué pasa si no pago a tiempo la factura: intereses de mora, suspensión del servicio, reconexión, acuerdo de pago",
     },
-    {   # cultura y valores (G10)
+    {  # cultura y valores (G10)
         "pregunta": r"\bvalores\b|principios|\bcultura\b|prop[oó]sito|c[oó]mo es (la empresa|trabajar)",
         "fragmento": r"cultura de principios y valores|\bun ADN\b|cultura naranja|Cultura Celsia",
         "terminos": "valores de Celsia, Cultura Celsia, cultura de principios y valores, el respeto es la base, nuestro ADN",
     },
-    {   # historia y nombre anterior (G3)
+    {  # historia y nombre anterior (G3)
         "pregunta": r"desde cu[aá]ndo|historia|fundad|fundaci[oó]n|antes se llamaba|c[oó]mo naci[oó]|nombre anterior",
         "fragmento": r"Colinversiones|Hitos estrat[eé]gicos",
         "terminos": "historia de Celsia, hitos estratégicos, Colinversiones, cambio de nombre, desde cuándo existe",

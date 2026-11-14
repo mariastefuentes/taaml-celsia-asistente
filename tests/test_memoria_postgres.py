@@ -1,4 +1,5 @@
 """Memoria con PostgreSQL real (PostgresSaver y PostgresStore). Levanta un Postgres local con `pgserver`; si no está disponible, se omiten."""
+
 import pytest
 from langchain_core.messages import AIMessage
 
@@ -25,7 +26,11 @@ def _agente(url, respuestas):
         def bind_tools(self, *a, **k):
             return self
 
-    return crear_agente(llm=Modelo(messages=iter(AIMessage(content=r) for r in respuestas)), checkpointer=almacen_de_memoria(url=url), store=almacen_de_largo_plazo(url=url))
+    return crear_agente(
+        llm=Modelo(messages=iter(AIMessage(content=r) for r in respuestas)),
+        checkpointer=almacen_de_memoria(url=url),
+        store=almacen_de_largo_plazo(url=url),
+    )
 
 
 def test_se_usa_postgres_cuando_hay_database_url(url, monkeypatch):
@@ -33,19 +38,25 @@ def test_se_usa_postgres_cuando_hay_database_url(url, monkeypatch):
     from langgraph.store.postgres import PostgresStore
 
     from taaml.agente import almacen_de_largo_plazo, almacen_de_memoria
+
     monkeypatch.setenv("DATABASE_URL", url)
     assert isinstance(almacen_de_memoria(), PostgresSaver) and isinstance(almacen_de_largo_plazo(), PostgresStore)
 
 
 def test_la_conversacion_sobrevive_a_un_agente_nuevo(url):
     from taaml.agente import conversar
+
     conversar("Me llamo Ana", "pg-hilo", agente=_agente(url, ["Mucho gusto, Ana."]))
     nuevo = _agente(url, ["Te llamas Ana."])  # otro agente, otra conexión: lo único compartido es la base
-    assert [m.text for m in nuevo.get_state({"configurable": {"thread_id": "pg-hilo"}}).values["messages"]] == ["Me llamo Ana", "Mucho gusto, Ana."]
+    assert [m.text for m in nuevo.get_state({"configurable": {"thread_id": "pg-hilo"}}).values["messages"]] == [
+        "Me llamo Ana",
+        "Mucho gusto, Ana.",
+    ]
 
 
 def test_el_viaje_en_el_tiempo_funciona_en_postgres(url):
     from taaml.agente import conversar
+
     agente = _agente(url, ["Primera.", "Segunda."])
     conversar("Hola", "pg-viaje", agente=agente)
     config = {"configurable": {"thread_id": "pg-viaje"}}
@@ -56,8 +67,13 @@ def test_el_viaje_en_el_tiempo_funciona_en_postgres(url):
 
 def test_el_store_separa_a_los_clientes_por_namespace(url):
     from taaml.agente import almacen_de_largo_plazo, datos_del_cliente, olvidar_cliente
+
     almacen = almacen_de_largo_plazo(url=url)
     almacen.put(("perfil", "ana-pg"), "1", {"dato": "Vive en Cali"})
     almacen.put(("perfil", "luis-pg"), "1", {"dato": "Vive en Ibagué"})
     assert datos_del_cliente("ana-pg", almacen) == ["Vive en Cali"]
-    assert olvidar_cliente("ana-pg", almacen) == 1 and datos_del_cliente("ana-pg", almacen) == [] and datos_del_cliente("luis-pg", almacen) == ["Vive en Ibagué"]
+    assert (
+        olvidar_cliente("ana-pg", almacen) == 1
+        and datos_del_cliente("ana-pg", almacen) == []
+        and datos_del_cliente("luis-pg", almacen) == ["Vive en Ibagué"]
+    )
