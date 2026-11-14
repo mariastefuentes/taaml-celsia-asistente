@@ -9,6 +9,7 @@ import urllib.request
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 from langchain_core.language_models import BaseChatModel
@@ -105,7 +106,7 @@ def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
                                   top_p=PARAMETROS_MODELO["top_p"], max_output_tokens=MAX_TOKENS_SALIDA, max_retries=2)
 
 
-def _estructurado(modelo: str, esquema: type[BaseModel]):
+def _estructurado(modelo: str, esquema: type[BaseModel]) -> Any:
     """Modelo con salida estructurada; DeepSeek y Ollama no usan el modo json_schema de Gemini, así que usan llamada a función."""
     llm = obtener_modelo(modelo)
     return llm.with_structured_output(esquema, method="function_calling") if modelo.startswith(("deepseek", "ollama:")) else llm.with_structured_output(esquema)

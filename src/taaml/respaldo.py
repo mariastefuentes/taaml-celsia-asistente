@@ -7,7 +7,9 @@ import csv
 import os
 import re
 import unicodedata
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from taaml.recuperacion import cargar_fragmentos
 
@@ -41,7 +43,7 @@ def cadena_de_modelos(elegido: str) -> list[str]:
     return cadena + [MODELO_LOCAL]
 
 
-def con_respaldo(funcion, elegido: str):
+def con_respaldo(funcion: Callable, elegido: str) -> Any:
     """Llama `funcion(modelo)` con cada modelo de la cadena hasta que uno responde.
 
     Devuelve `(resultado, modelo_usado, avisos)`. Si falla por algo que no es del proveedor, el error se propaga; si fallan todos, se propaga el último.
