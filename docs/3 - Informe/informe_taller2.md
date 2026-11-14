@@ -37,7 +37,7 @@ Si Gemini falla (cuota o red), un respaldo cambia al modelo local `llama3.2`. En
 
 El Q&A del Taller 1 es una cadena: `RunnablePassthrough.assign` agrega el prompt de sistema y la pregunta delimitada, `ChatPromptTemplate` los coloca como mensajes y el resultado pasa por el modelo y `StrOutputParser`.
 
-`create_agent` corre sobre LangGraph: el ciclo modelo → herramientas → modelo es un grafo con estado (los mensajes), y el checkpointer y el Store son de LangGraph. No se armó un `StateGraph` propio porque el flujo es un solo ciclo de decisión, sin ramas ni pasos obligatorios; hacerlo a mano daría más control con más código que mantener. Se justificaría con ramas explícitas, por ejemplo una aprobación humana antes de abrir un reclamo. Deep Agents (opcional) está pensado para tareas largas con planificación y subagentes; una consulta de atención al cliente se resuelve en uno o dos pasos, así que no se usó.
+`create_agent` corre sobre LangGraph: el ciclo modelo → herramientas → modelo es un grafo con estado (los mensajes), y el checkpointer y el Store son de LangGraph. `create_agent` devuelve un `StateGraph` compilado (seis nodos y siete aristas, que imprime `scripts/31_mostrar_grafo.py`). No se armó un `StateGraph` propio porque el flujo es un solo ciclo de decisión, sin ramas ni pasos obligatorios; hacerlo a mano daría más control con más código que mantener. Se justificaría con ramas explícitas, por ejemplo una aprobación humana antes de abrir un reclamo. Deep Agents (opcional) está pensado para tareas largas con planificación y subagentes; una consulta de atención al cliente se resuelve en uno o dos pasos, así que no se usó.
 
 ### 2.1 Decisiones de tecnología
 
