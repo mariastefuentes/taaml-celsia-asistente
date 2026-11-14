@@ -479,14 +479,15 @@ def test_la_herramienta_entrega_la_cita_como_artefacto(monkeypatch):
     mensaje = buscar_en_base.invoke(
         {"type": "tool_call", "name": "buscar_en_base", "args": {"pregunta": "impuestos"}, "id": "t1"}
     )
-    assert mensaje.artifact == [
-        {
-            "documento": "Gobierno corporativo",
-            "fragmento": "18 de 29",
-            "fuente": _FRAGMENTO["fuente"],
-            "chunk_id": "gobierno-018",
-        }
-    ]
+    assert len(mensaje.artifact) == 1
+    cita = mensaje.artifact[0]
+    assert {k: cita[k] for k in ("documento", "fragmento", "fuente", "chunk_id")} == {
+        "documento": "Gobierno corporativo",
+        "fragmento": "18 de 29",
+        "fuente": _FRAGMENTO["fuente"],
+        "chunk_id": "gobierno-018",
+    }
+    assert "impuestos" in cita["extracto"].lower()
     assert "Política de impuestos" in mensaje.content
 
 
@@ -670,3 +671,20 @@ def test_la_herramienta_avisa_cuando_la_confianza_es_baja_y_no_cuando_es_alta(mo
     assert buscar_en_base.invoke({"pregunta": "algo"}).startswith("CONFIANZA BAJA")
     monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0: [_fragmento(0.70)])
     assert "CONFIANZA BAJA" not in buscar_en_base.invoke({"pregunta": "algo"})
+
+
+def test_el_extracto_muestra_el_trozo_donde_esta_la_politica_y_no_el_encabezado():
+    from taaml.agente import extracto_de
+
+    texto = ("Gobierno corporativo (empresa)\nPolítica de impuestos\nEstablecer la política de manejo fiscal. " * 2
+             + "Política de calidad\nPrestar servicios de energía con oportunidad, disponibilidad y confiabilidad para mantener a nuestros clientes satisfechos.")
+    extracto = extracto_de(texto, "¿Qué dice el corpus sobre la política de calidad?")
+    assert "Prestar servicios" in extracto and len(extracto) <= 230 and "\n" not in extracto
+
+
+def test_el_extracto_sin_palabras_en_comun_cae_al_comienzo_y_la_cita_lo_trae_solo_con_pregunta():
+    from taaml.agente import extracto_de, fuentes_de
+
+    frag = {"documento": "D", "orden": 2, "de": 5, "fuente": "https://x", "chunk_id": "c", "texto": "Texto del fragmento. " * 30}
+    assert extracto_de(frag["texto"], "zzzzzz").startswith("Texto del fragmento.")
+    assert "extracto" not in fuentes_de([frag])[0] and fuentes_de([frag], "fragmento")[0]["extracto"]

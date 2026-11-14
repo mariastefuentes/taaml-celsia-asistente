@@ -264,6 +264,8 @@ Cuanto más selectivo es el filtro, más candidatos hay que pedir para que sobre
 
 ## 6. Aplicación
 
+La cita de cada respuesta de texto aparece abierta bajo ella («Fragmentos consultados»), con el documento, el número de fragmento, el enlace de origen y un extracto: el trozo del fragmento donde caen más palabras de la pregunta (`extracto_de`). Así se ve cuál fragmento contiene la política buscada aunque la búsqueda por significado lo ponga segundo.
+
 El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al modelo: habla por HTTP con una API FastAPI (`api/main.py`) que ejecuta el agente y responde por streaming (Server-Sent Events). Muestra la conversación a medida que se escribe, qué herramienta usó cada respuesta con sus tokens y costo, maneja errores de red y del modelo con un mensaje que no filtra detalles internos y un botón de reintento, y permite empezar una conversación nueva, ver lo que el agente recuerda y borrarlo. El hilo va en la dirección (`/c/<hilo>`) y al recargar la página se recupera desde SQLite. El frontend tiene dos rutas (`react-router`): `/` para una conversación nueva y `/c/<hilo>` para una guardada; una dirección antigua `?hilo=…` se convierte a la nueva y cualquier otra dirección vuelve a `/`. El código del agente está en `src/taaml/agente.py`, el prompt en `prompts/v3_agente.md` y las pruebas automáticas cubren la memoria, el recorte, el enrutamiento y la aplicación sin llamar a Gemini ni a Ollama.
 
 ## 7. Limitaciones
