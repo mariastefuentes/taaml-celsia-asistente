@@ -52,7 +52,7 @@ El Q&A del Taller 1 es una cadena: `RunnablePassthrough.assign` agrega el prompt
 
 ## 3. Memoria conversacional
 
-**Qué se guarda.** Cada conversación es un hilo identificado por un `uuid4`; el checkpointer de SQLite (`SqliteSaver`) guarda todos los mensajes, incluidas las llamadas a herramientas. La memoria sobrevive a reiniciar la aplicación y, como el identificador va en la dirección (`?hilo=`), al recargar la página la conversación se recupera.
+**Qué se guarda.** Cada conversación es un hilo identificado por un `uuid4`; el checkpointer de SQLite (`SqliteSaver`) guarda todos los mensajes, incluidas las llamadas a herramientas. La memoria sobrevive a reiniciar la aplicación y, como el identificador va en la dirección (`/c/<hilo>`), al recargar la página la conversación se recupera.
 
 **Qué ve el modelo.** Solo los últimos ~3.000 tokens. Sin este recorte, la entrada crece en cada turno porque el historial se reenvía completo: en el ensayo de cuatro turnos pasó de 2.238 a 8.554 tokens. El recorte controla el costo sin borrar nada de lo guardado.
 
@@ -219,7 +219,7 @@ Cuanto más selectivo es el filtro, más candidatos hay que pedir para que sobre
 
 ## 6. Aplicación
 
-El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al modelo: habla por HTTP con una API FastAPI (`api/main.py`) que ejecuta el agente y responde por streaming (Server-Sent Events). Muestra la conversación a medida que se escribe, qué herramienta usó cada respuesta con sus tokens y costo, maneja errores de red y del modelo con un mensaje que no filtra detalles internos y un botón de reintento, y permite empezar una conversación nueva, ver lo que el agente recuerda y borrarlo. El hilo va en la dirección (`?hilo=`) y al recargar la página se recupera desde SQLite. El código del agente está en `src/taaml/agente.py`, el prompt en `prompts/v3_agente.md` y las pruebas automáticas cubren la memoria, el recorte, el enrutamiento y la aplicación sin llamar a Gemini ni a Ollama.
+El frontend es una aplicación React (Vite) en `frontend/` que nunca llama al modelo: habla por HTTP con una API FastAPI (`api/main.py`) que ejecuta el agente y responde por streaming (Server-Sent Events). Muestra la conversación a medida que se escribe, qué herramienta usó cada respuesta con sus tokens y costo, maneja errores de red y del modelo con un mensaje que no filtra detalles internos y un botón de reintento, y permite empezar una conversación nueva, ver lo que el agente recuerda y borrarlo. El hilo va en la dirección (`/c/<hilo>`) y al recargar la página se recupera desde SQLite. El frontend tiene dos rutas (`react-router`): `/` para una conversación nueva y `/c/<hilo>` para una guardada; una dirección antigua `?hilo=…` se convierte a la nueva y cualquier otra dirección vuelve a `/`. El código del agente está en `src/taaml/agente.py`, el prompt en `prompts/v3_agente.md` y las pruebas automáticas cubren la memoria, el recorte, el enrutamiento y la aplicación sin llamar a Gemini ni a Ollama.
 
 ## 7. Limitaciones
 
