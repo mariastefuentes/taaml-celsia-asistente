@@ -4,6 +4,7 @@ Es el patrón «modelo + herramientas + prompt», con memoria por conversación 
 (texto, reutiliza `recuperacion.buscar`) y `consultar_datos` (datos exactos). Usa Gemini de pago (indicación del profesor) y, si
 falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1, pero gemini-3.8-flash los ignora (medido): la respuesta puede variar.
 """
+import os
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -174,15 +175,39 @@ def con_fecha_de_hoy(request):
     return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
 
 
-def almacen_de_memoria(ruta: Path | None = None) -> SqliteSaver:
-    """Checkpointer en SQLite: guarda cada conversación en disco bajo su `thread_id`."""
+def _url_postgres() -> str | None:
+    """Dirección de PostgreSQL (variable `DATABASE_URL`); sin ella la memoria se guarda en archivos SQLite."""
+    return os.environ.get("DATABASE_URL") or None
+
+
+def _conexion_postgres(url: str):
+    """Conexión como la piden PostgresSaver y PostgresStore: sin transacción abierta y con filas como diccionarios."""
+    from psycopg import Connection
+    from psycopg.rows import dict_row
+    return Connection.connect(url, autocommit=True, prepare_threshold=0, row_factory=dict_row)  # ty: ignore[invalid-argument-type]
+
+
+def almacen_de_memoria(ruta: Path | None = None, url: str | None = None):
+    """Checkpointer: guarda cada conversación bajo su `thread_id`. PostgresSaver si hay `DATABASE_URL` (o `url`); si no, SQLite en disco (`ruta`)."""
+    url = url or (None if ruta else _url_postgres())
+    if url:
+        from langgraph.checkpoint.postgres import PostgresSaver
+        guardador = PostgresSaver(_conexion_postgres(url))
+        guardador.setup()
+        return guardador
     ruta = ruta or RUTA_MEMORIA
     ruta.parent.mkdir(parents=True, exist_ok=True)
     return SqliteSaver(sqlite3.connect(ruta, check_same_thread=False))  # Streamlit atiende cada usuario en un hilo distinto
 
 
-def almacen_de_largo_plazo(ruta: Path | None = None) -> SqliteStore:
-    """Store en SQLite: lo que cada cliente contó de sí mismo, guardado por namespace y compartido entre conversaciones."""
+def almacen_de_largo_plazo(ruta: Path | None = None, url: str | None = None):
+    """Store: lo que cada cliente contó de sí mismo, por namespace y compartido entre conversaciones. PostgresStore si hay `DATABASE_URL` (o `url`); si no, SQLite."""
+    url = url or (None if ruta else _url_postgres())
+    if url:
+        from langgraph.store.postgres import PostgresStore
+        almacen = PostgresStore(_conexion_postgres(url))
+        almacen.setup()
+        return almacen
     ruta = ruta or RUTA_MEMORIA_LARGA
     ruta.parent.mkdir(parents=True, exist_ok=True)
     almacen = SqliteStore(sqlite3.connect(ruta, check_same_thread=False, isolation_level=None))
@@ -190,10 +215,10 @@ def almacen_de_largo_plazo(ruta: Path | None = None) -> SqliteStore:
     return almacen
 
 
-_ALMACEN_LARGO: list[SqliteStore] = []  # uno solo por proceso: la API y el agente deben ver los mismos datos
+_ALMACEN_LARGO: list = []  # uno solo por proceso: la API y el agente deben ver los mismos datos
 
 
-def almacen_compartido() -> SqliteStore:
+def almacen_compartido():
     if not _ALMACEN_LARGO:
         _ALMACEN_LARGO.append(almacen_de_largo_plazo())
     return _ALMACEN_LARGO[0]
