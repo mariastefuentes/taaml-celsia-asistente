@@ -40,7 +40,10 @@ from taaml.sanitizar import quitar_invisibles
 from taaml.validacion import datos_sin_respaldo
 from taaml.tareas import obtener_modelo
 
-MODELO_AGENTE = "gemini-3.8-flash"  # API de pago, el más reciente de la familia Flash (indicación del profesor)
+MODELO_AGENTE = os.environ.get(
+    "TAAML_MODELO_AGENTE", "gemini-3.8-flash"
+)  # API de pago, el más reciente de la familia Flash (indicación del profesor); TAAML_MODELO_AGENTE permite cambiarlo sin tocar código
+MODELO_RESPALDO_GEMINI = "gemini-3.5-flash"  # si el 3.8 está saturado (503), se intenta este antes del modelo local
 MODELO_RESPALDO = "ollama:llama3.2"  # 3B local y gratis: solo entra si Gemini falla (cuota, red)
 RUTA_MEMORIA = (
     Path(__file__).resolve().parents[2] / "data" / "memoria" / "conversaciones.sqlite"
@@ -90,7 +93,21 @@ def delimitar_como_datos(contenido: str) -> str:
     return f"<documentos_recuperados>\n{AVISO_DATOS}\n\n{limpio}\n</documentos_recuperados>"
 
 
-_SIN_PESO = {"corpus", "sobre", "dice", "cual", "cuales", "como", "donde", "para", "tiene", "puede", "hacer", "quiero", "celsia"}
+_SIN_PESO = {
+    "corpus",
+    "sobre",
+    "dice",
+    "cual",
+    "cuales",
+    "como",
+    "donde",
+    "para",
+    "tiene",
+    "puede",
+    "hacer",
+    "quiero",
+    "celsia",
+}
 
 
 def extracto_de(texto: str, pregunta: str, ancho: int = 220) -> str:
@@ -104,7 +121,11 @@ def extracto_de(texto: str, pregunta: str, ancho: int = 220) -> str:
 
     def puntaje(ancla: tuple[int, str]) -> tuple[int, int, int]:
         dentro = [(s, p) for s, p in posiciones if ancla[0] <= s < ancla[0] + ancho]
-        return len({p for _, p in dentro}), -(max(s for s, _ in dentro) - ancla[0]), -ancla[0]  # más palabras, más juntas, más al comienzo
+        return (
+            len({p for _, p in dentro}),
+            -(max(s for s, _ in dentro) - ancla[0]),
+            -ancla[0],
+        )  # más palabras, más juntas, más al comienzo
 
     mejor = max(posiciones, key=puntaje)[0]
     inicio = max(0, mejor - 30)
@@ -132,7 +153,9 @@ def buscar_en_base(pregunta: str) -> tuple[str, list[dict]]:
     texto = delimitar_como_datos(formatear_contexto(fragmentos))
     if confianza_baja(fragmentos):
         texto = AVISO_CONFIANZA_BAJA + "\n\n" + texto
-    return texto, fuentes_de(fragmentos, pregunta)  # el modelo lee el texto; la pantalla muestra las fuentes (artefacto)
+    return texto, fuentes_de(
+        fragmentos, pregunta
+    )  # el modelo lee el texto; la pantalla muestra las fuentes (artefacto)
 
 
 class ConsultaDatos(BaseModel):
@@ -337,7 +360,10 @@ def crear_agente(
     llm = llm or obtener_modelo(modelo)
     checkpointer = checkpointer or (almacen_de_memoria() if es_real else InMemorySaver())
     store = store or (almacen_compartido() if es_real else InMemoryStore())
-    respaldo = [ModelFallbackMiddleware(obtener_modelo(MODELO_RESPALDO))] if con_respaldo else []
+    respaldo = []
+    if con_respaldo:
+        alternos = [] if modelo == MODELO_RESPALDO_GEMINI else [obtener_modelo(MODELO_RESPALDO_GEMINI)]
+        respaldo = [ModelFallbackMiddleware(*alternos, obtener_modelo(MODELO_RESPALDO))]
     return create_agent(
         model=llm,
         tools=HERRAMIENTAS,
