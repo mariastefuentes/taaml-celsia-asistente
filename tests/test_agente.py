@@ -165,9 +165,10 @@ def test_conversar_informa_la_herramienta_usada_solo_en_este_turno():
 
 # --- modelo del agente ---
 def test_el_agente_usa_gemini_de_pago_y_ollama_de_respaldo():
-    from taaml.agente import MODELO_AGENTE, MODELO_RESPALDO
+    from taaml.agente import MODELO_AGENTE, MODELO_RESPALDO, MODELO_RESPALDO_GEMINI
 
     assert MODELO_AGENTE == "gemini-3.8-flash" and MODELO_RESPALDO.startswith("ollama:")
+    assert MODELO_RESPALDO_GEMINI == "gemini-3.5-flash"  # si el 3.8 está saturado, se prueba este antes del local
 
 
 def test_crear_agente_pide_el_modelo_a_obtener_modelo_y_arma_el_respaldo(monkeypatch, tmp_path):
@@ -179,7 +180,19 @@ def test_crear_agente_pide_el_modelo_a_obtener_modelo_y_arma_el_respaldo(monkeyp
         mod, "obtener_modelo", lambda nombre: pedidos.append(nombre) or ModeloEspia(messages=iter([]), vistos=[])
     )
     mod.crear_agente()
-    assert pedidos == [mod.MODELO_AGENTE, mod.MODELO_RESPALDO]
+    assert pedidos == [mod.MODELO_AGENTE, mod.MODELO_RESPALDO_GEMINI, mod.MODELO_RESPALDO]
+
+
+def test_crear_agente_con_el_modelo_alterno_no_lo_repite(monkeypatch, tmp_path):
+    from taaml import agente as mod
+
+    monkeypatch.setattr(mod, "RUTA_MEMORIA", tmp_path / "memoria.sqlite")
+    pedidos = []
+    monkeypatch.setattr(
+        mod, "obtener_modelo", lambda nombre: pedidos.append(nombre) or ModeloEspia(messages=iter([]), vistos=[])
+    )
+    mod.crear_agente(mod.MODELO_RESPALDO_GEMINI)
+    assert pedidos == [mod.MODELO_RESPALDO_GEMINI, mod.MODELO_RESPALDO]
 
 
 def test_el_modelo_de_respaldo_no_se_respalda_a_si_mismo(monkeypatch, tmp_path):
@@ -676,8 +689,10 @@ def test_la_herramienta_avisa_cuando_la_confianza_es_baja_y_no_cuando_es_alta(mo
 def test_el_extracto_muestra_el_trozo_donde_esta_la_politica_y_no_el_encabezado():
     from taaml.agente import extracto_de
 
-    texto = ("Gobierno corporativo (empresa)\nPolítica de impuestos\nEstablecer la política de manejo fiscal. " * 2
-             + "Política de calidad\nPrestar servicios de energía con oportunidad, disponibilidad y confiabilidad para mantener a nuestros clientes satisfechos.")
+    texto = (
+        "Gobierno corporativo (empresa)\nPolítica de impuestos\nEstablecer la política de manejo fiscal. " * 2
+        + "Política de calidad\nPrestar servicios de energía con oportunidad, disponibilidad y confiabilidad para mantener a nuestros clientes satisfechos."
+    )
     extracto = extracto_de(texto, "¿Qué dice el corpus sobre la política de calidad?")
     assert "Prestar servicios" in extracto and len(extracto) <= 230 and "\n" not in extracto
 
@@ -685,7 +700,14 @@ def test_el_extracto_muestra_el_trozo_donde_esta_la_politica_y_no_el_encabezado(
 def test_el_extracto_sin_palabras_en_comun_cae_al_comienzo_y_la_cita_lo_trae_solo_con_pregunta():
     from taaml.agente import extracto_de, fuentes_de
 
-    frag = {"documento": "D", "orden": 2, "de": 5, "fuente": "https://x", "chunk_id": "c", "texto": "Texto del fragmento. " * 30}
+    frag = {
+        "documento": "D",
+        "orden": 2,
+        "de": 5,
+        "fuente": "https://x",
+        "chunk_id": "c",
+        "texto": "Texto del fragmento. " * 30,
+    }
     assert extracto_de(frag["texto"], "zzzzzz").startswith("Texto del fragmento.")
     assert "extracto" not in fuentes_de([frag])[0] and fuentes_de([frag], "fragmento")[0]["extracto"]
 

@@ -42,6 +42,7 @@ OLLAMA_TAGS = (
 )
 MAX_TOKENS_SALIDA = 8192  # el "pensamiento" del modelo cuenta aquí: con 2048 el FAQ se cortó (gastó 1.967 pensando)
 TIEMPO_MAXIMO_LOCAL = 300  # segundos: el modelo local corre en CPU y con 12 fragmentos puede tardar minutos; mejor un error claro que una demo colgada
+TIEMPO_MAXIMO_GEMINI = 60  # segundos por intento: si el proveedor no responde, se libera el turno y entra el respaldo
 VENTANA_CONTEXTO_LOCAL = 8192  # Ollama usa 4096 por defecto y recortaría el prompt (12 fragmentos son ~4.400 tokens)
 MAX_CARACTERES_DOCUMENTO = 12_000  # Resumen y FAQ reciben como máximo esto de un documento (los hay de más de 30.000)
 
@@ -127,7 +128,8 @@ def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
         temperature=PARAMETROS_MODELO["temperature"],
         top_p=PARAMETROS_MODELO["top_p"],
         max_output_tokens=MAX_TOKENS_SALIDA,
-        max_retries=2,
+        max_retries=0,  # un 503 del proveedor debe caer al respaldo, no dejar la demo en «Pensando...»
+        timeout=TIEMPO_MAXIMO_GEMINI,
     )
 
 
