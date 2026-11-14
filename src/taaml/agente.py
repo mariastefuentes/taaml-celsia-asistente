@@ -119,8 +119,16 @@ class ConsultaDatos(BaseModel):
     tabla: Literal["sedes", "contactos", "catalogo"] = Field(
         description="Tabla a consultar: sedes, contactos o catalogo."
     )
-    ciudad: str = Field("", max_length=80, description="Ciudad de la sede (solo tabla sedes), por ejemplo «Cali».")
-    departamento: str = Field("", max_length=80, description="Departamento de la sede (solo tabla sedes).")
+    ciudad: str = Field(
+        "",
+        max_length=80,
+        description="Ciudad de la sede (solo tabla sedes), por ejemplo «Cali». Para varias, sepáralas con comas («Ibagué, Cali»): el total las cuenta juntas.",
+    )
+    departamento: str = Field(
+        "",
+        max_length=80,
+        description="Departamento de la sede (solo tabla sedes). Admite varios separados por comas («Tolima, Valle del Cauca»).",
+    )
     tipo: str = Field(
         "",
         max_length=80,
@@ -144,7 +152,7 @@ def consultar_datos(
     """Consulta datos exactos de Celsia en tablas, sin buscar por significado. Úsala para direcciones, horarios y teléfonos de sedes,
     tiendas y puntos de pago (tabla «sedes»: ciudad, departamento, tipo), para teléfonos, WhatsApp, correos y enlaces de atención
     (tabla «contactos»: tipo, tema) y para ubicar páginas del sitio (tabla «catalogo»: texto del título). Cada respuesta termina con «Total: N», que calcula el sistema: para preguntas de «cuántas» o «cuántos»
-    cita ese total; nunca cuentes ni sumes filas por tu cuenta."""
+    cita ese total; nunca cuentes ni sumes filas por tu cuenta. Si hay que contar varias ciudades, departamentos o tipos juntos, pásalos en una sola consulta separados por comas: el Total ya los suma."""
     filtros = {"ciudad": ciudad, "departamento": departamento, "tipo": tipo, "tema": tema, "texto": texto}
     return delimitar_como_datos(consultar(tabla, filtros))
 
