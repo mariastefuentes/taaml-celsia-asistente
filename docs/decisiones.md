@@ -54,7 +54,8 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 
 ## D8. Modelo de pago principal y respaldo local
 - **Decisión.** `gemini-3.8-flash` (indicación del profesor: API de pago y modelo reciente), con `llama3.2` en Ollama como respaldo. Ollama también calcula los embeddings.
-- **Límite declarado.** Gemini ignora `temperature` y `top_p`; el texto varía y se compensa con las herramientas, la validación y el «No tengo esa información».
+- **Respaldo en cadena (PR 73).** Si el 3.8 falla (503 por alta demanda, cuota o más de 60 s sin respuesta), el agente prueba `gemini-3.5-flash` y después `llama3.2` local. Gemini ya no reintenta (`max_retries=0`): un reintento dejaba la demo en «Pensando…». `TAAML_MODELO_AGENTE` en `.env` cambia el modelo principal sin tocar código; `/api/salud` informa el principal, no el que respondió.
+- **Límite declarado.** Gemini ignora `temperature` y `top_p`; el texto varía y se compensa con las herramientas, la validación y el «No tengo esa información». La matriz de enrutamiento se midió con el 3.8: el 3.5 como respaldo no se midió allí.
 - **Evidencia.** `specs/011-agente-memoria-y-router`, informe 7.
 
 ## D9. Gatekeeper System One (Jev): abierta
