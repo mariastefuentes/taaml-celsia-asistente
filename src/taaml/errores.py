@@ -1,6 +1,8 @@
 """Mensajes de error claros para el usuario: sin claves, tokens ni valores de las variables de entorno."""
 
-MENSAJE_CUOTA = "Se agotó la cuota del modelo y no hubo otro disponible. Intenta más tarde o cambia de modelo en la barra lateral."
+MENSAJE_CUOTA = (
+    "Se agotó la cuota del modelo y no hubo otro disponible. Intenta más tarde o cambia de modelo en la barra lateral."
+)
 MENSAJE_API_KEY = "Falta la clave de la API en la configuración (variable de entorno sin valor). Revisa el archivo .env y elige otro modelo en la barra lateral."
 
 

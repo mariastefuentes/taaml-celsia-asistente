@@ -7,6 +7,7 @@ Uso:  uv run python scripts/28_confianza_baja.py            (solo parte 1)
       uv run python scripts/28_confianza_baja.py --agente   (también parte 2)
 Resultado: docs/2 - Conjunto de prueba/resultados/confianza_baja.csv
 """
+
 import csv
 import sys
 from pathlib import Path
@@ -36,8 +37,18 @@ def main() -> None:
     print(f"{'umbral':>6} | preguntas con respuesta marcadas | preguntas sin respuesta marcadas")
     for t in UMBRALES:
         a, b = sum(m[2] < t for m in con), sum(m[2] < t for m in sin)
-        print(f"{t:>6} | {a:>2} de {len(con)} ({a / len(con):.0%})              | {b:>2} de {len(sin)} ({b / len(sin):.0%})")
-        filas.append({"umbral": t, "con_respuesta_marcadas": a, "con_respuesta": len(con), "sin_respuesta_marcadas": b, "sin_respuesta": len(sin)})
+        print(
+            f"{t:>6} | {a:>2} de {len(con)} ({a / len(con):.0%})              | {b:>2} de {len(sin)} ({b / len(sin):.0%})"
+        )
+        filas.append(
+            {
+                "umbral": t,
+                "con_respuesta_marcadas": a,
+                "con_respuesta": len(con),
+                "sin_respuesta_marcadas": b,
+                "sin_respuesta": len(sin),
+            }
+        )
     with SALIDA.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(filas[0]), quoting=csv.QUOTE_ALL)
         w.writeheader()
@@ -45,9 +56,11 @@ def main() -> None:
     print(f"Guardado en {SALIDA.relative_to(ROOT)} (umbral en uso: {UMBRAL_CONFIANZA})")
     if "--agente" not in sys.argv:
         return
-    elegidas = [("sin respuesta, marcada", min((m for m in sin if m[2] < UMBRAL_CONFIANZA), key=lambda m: m[2])),
-                ("con respuesta, marcada (falsa alarma)", min((m for m in con if m[2] < UMBRAL_CONFIANZA), key=lambda m: m[2])),
-                ("con respuesta, no marcada (control)", max((m for m in con if m[2] >= UMBRAL_CONFIANZA), key=lambda m: m[2]))]
+    elegidas = [
+        ("sin respuesta, marcada", min((m for m in sin if m[2] < UMBRAL_CONFIANZA), key=lambda m: m[2])),
+        ("con respuesta, marcada (falsa alarma)", min((m for m in con if m[2] < UMBRAL_CONFIANZA), key=lambda m: m[2])),
+        ("con respuesta, no marcada (control)", max((m for m in con if m[2] >= UMBRAL_CONFIANZA), key=lambda m: m[2])),
+    ]
     agente = crear_agente()
     for rotulo, (_, pregunta, puntaje) in elegidas:
         respuesta, _ = conversar(pregunta, f"confianza-{uuid4().hex[:8]}", agente=agente)

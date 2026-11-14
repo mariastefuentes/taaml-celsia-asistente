@@ -4,7 +4,10 @@ import pytest
 from taaml import recuperacion
 from taaml.recuperacion import almacen_vectorial, buscar, cargar_fragmentos, construir_qdrant, _coleccion, _matriz
 
-hay_qdrant = pytest.mark.skipif(almacen_vectorial() != "qdrant", reason="falta data/4_curaduria/qdrant o la carpeta está abierta por otro proceso (se crea con scripts/07_construir_indice.py)")
+hay_qdrant = pytest.mark.skipif(
+    almacen_vectorial() != "qdrant",
+    reason="falta data/4_curaduria/qdrant o la carpeta está abierta por otro proceso (se crea con scripts/07_construir_indice.py)",
+)
 
 
 @hay_qdrant
@@ -15,7 +18,9 @@ def test_qdrant_ordena_igual_que_la_matriz():
     for i in (0, 123, 777, 1500):
         vector = matriz[i]  # la consulta es el vector de un fragmento: él mismo debe quedar primero
         por_matriz = [ids[j] for j in np.argsort(-(matriz @ vector))[:12]]
-        puntos = cliente.query_points(recuperacion.COLECCION, query=vector.tolist(), limit=12, with_payload=["chunk_id"]).points
+        puntos = cliente.query_points(
+            recuperacion.COLECCION, query=vector.tolist(), limit=12, with_payload=["chunk_id"]
+        ).points
         de_qdrant = [p.payload["chunk_id"] for p in puntos]
         assert de_qdrant[0] == ids[i] == por_matriz[0]
         assert len(set(de_qdrant) & set(por_matriz)) >= 11  # empates de puntaje pueden cambiar un vecino del final
@@ -31,7 +36,10 @@ def test_las_similitudes_de_qdrant_coinciden_con_las_de_la_matriz():
 
 
 def test_la_misma_pregunta_devuelve_los_mismos_fragmentos_en_el_mismo_orden():
-    corridas = [[(r["chunk_id"], r["puntaje"]) for r in buscar("¿Cuál es el teléfono de atención al cliente?", 12, "palabras")] for _ in range(3)]
+    corridas = [
+        [(r["chunk_id"], r["puntaje"]) for r in buscar("¿Cuál es el teléfono de atención al cliente?", 12, "palabras")]
+        for _ in range(3)
+    ]
     assert corridas[0] == corridas[1] == corridas[2] and len(corridas[0]) == 12
 
 
@@ -46,10 +54,14 @@ def test_construir_qdrant_reemplaza_la_coleccion(monkeypatch, tmp_path):
     ids = ["a", "b", "c"]
     vectores = np.eye(3, dtype=np.float32)
     construir_qdrant(ids, vectores, [{"categoria": "x", "region": "y", "fuente": "z"}] * 3)
-    construir_qdrant(ids[:2], vectores[:2], [{"categoria": "x", "region": "y", "fuente": "z"}] * 2)  # reconstruir no duplica
+    construir_qdrant(
+        ids[:2], vectores[:2], [{"categoria": "x", "region": "y", "fuente": "z"}] * 2
+    )  # reconstruir no duplica
     cliente = recuperacion._cliente_qdrant()
     assert cliente.count(recuperacion.COLECCION).count == 2
-    mejor = cliente.query_points(recuperacion.COLECCION, query=[1.0, 0.0, 0.0], limit=1, with_payload=["chunk_id"]).points[0]
+    mejor = cliente.query_points(
+        recuperacion.COLECCION, query=[1.0, 0.0, 0.0], limit=1, with_payload=["chunk_id"]
+    ).points[0]
     assert mejor.payload["chunk_id"] == "a"
     cliente.close()
     recuperacion._cliente_qdrant.cache_clear()
@@ -80,7 +92,9 @@ def test_la_migracion_blue_green_mueve_el_alias_y_conserva_solo_la_version_anter
     assert construir_qdrant(["a", "b"], vectores[:2], [META] * 2) == "celsia_v2" and _alias(cliente) == "celsia_v2"
     construir_qdrant(["a"], vectores[:1], [META])
     nombres = {c.name for c in cliente.get_collections().collections}
-    assert nombres == {"celsia_v2", "celsia_v3"} and _alias(cliente) == "celsia_v3"  # v1 se borró; v2 queda para revertir
+    assert (
+        nombres == {"celsia_v2", "celsia_v3"} and _alias(cliente) == "celsia_v3"
+    )  # v1 se borró; v2 queda para revertir
     assert cliente.count(recuperacion.COLECCION).count == 1
 
 
@@ -88,7 +102,9 @@ def test_si_la_validacion_falla_el_alias_sigue_en_la_version_anterior(carpeta_te
     cliente, vectores = carpeta_temporal, np.eye(3, dtype=np.float32)
     construir_qdrant(["a", "b", "c"], vectores, [META] * 3)
     with pytest.raises(RuntimeError, match="no pasó la validación"):
-        construir_qdrant(["a", "b", "c"], vectores, [META] * 2)  # llegan 2 puntos de 3: la colección nueva está incompleta
+        construir_qdrant(
+            ["a", "b", "c"], vectores, [META] * 2
+        )  # llegan 2 puntos de 3: la colección nueva está incompleta
     assert _alias(cliente) == "celsia_v1" and cliente.count(recuperacion.COLECCION).count == 3
     assert {c.name for c in cliente.get_collections().collections} == {"celsia_v1"}  # la nueva se borró
 
@@ -106,20 +122,32 @@ def test_revertir_vuelve_a_la_version_anterior(carpeta_temporal):
 
 def test_un_indice_del_formato_anterior_se_migra_al_primer_alias(carpeta_temporal):
     from qdrant_client import models
+
     cliente = carpeta_temporal
-    cliente.create_collection(recuperacion.COLECCION, vectors_config=models.VectorParams(size=3, distance=models.Distance.COSINE))  # una colección con el nombre del alias
+    cliente.create_collection(
+        recuperacion.COLECCION, vectors_config=models.VectorParams(size=3, distance=models.Distance.COSINE)
+    )  # una colección con el nombre del alias
     construir_qdrant(["a", "b"], np.eye(3, dtype=np.float32)[:2], [META] * 2)
     assert _alias(cliente) == "celsia_v1" and cliente.count(recuperacion.COLECCION).count == 2
 
 
 def test_el_filtro_por_payload_solo_compara_los_puntos_que_lo_cumplen(carpeta_temporal, monkeypatch):
     from taaml.recuperacion import _similitudes
-    fragmentos = [{"chunk_id": "a", "categoria": "sedes", "region": "Tolima"}, {"chunk_id": "b", "categoria": "blog", "region": "Tolima"}, {"chunk_id": "c", "categoria": "sedes", "region": "Valle"}]
+
+    fragmentos = [
+        {"chunk_id": "a", "categoria": "sedes", "region": "Tolima"},
+        {"chunk_id": "b", "categoria": "blog", "region": "Tolima"},
+        {"chunk_id": "c", "categoria": "sedes", "region": "Valle"},
+    ]
     monkeypatch.setattr(recuperacion, "cargar_fragmentos", lambda: fragmentos)
-    construir_qdrant(["a", "b", "c"], np.eye(3, dtype=np.float32), [{k: f[k] for k in ("categoria", "region")} for f in fragmentos])
+    construir_qdrant(
+        ["a", "b", "c"], np.eye(3, dtype=np.float32), [{k: f[k] for k in ("categoria", "region")} for f in fragmentos]
+    )
     puntajes = _similitudes(np.array([0.0, 1.0, 0.0], dtype=np.float32), {"categoria": "sedes"})
     assert np.isneginf(puntajes[1]) and np.isfinite(puntajes[[0, 2]]).all()  # «b» (la mejor sin filtro) queda fuera
-    solo_tolima_sedes = _similitudes(np.array([1.0, 0.0, 0.0], dtype=np.float32), {"categoria": "sedes", "region": "Tolima"})
+    solo_tolima_sedes = _similitudes(
+        np.array([1.0, 0.0, 0.0], dtype=np.float32), {"categoria": "sedes", "region": "Tolima"}
+    )
     assert np.isfinite(solo_tolima_sedes).tolist() == [True, False, False]
 
 

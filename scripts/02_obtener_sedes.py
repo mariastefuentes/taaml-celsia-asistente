@@ -7,6 +7,7 @@ El formato legible se genera en Silver (03_construir_silver.py).
 
 Uso:  uv run python scripts/02_obtener_sedes.py
 """
+
 import json
 from pathlib import Path
 

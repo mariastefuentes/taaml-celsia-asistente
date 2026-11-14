@@ -5,6 +5,7 @@ Hay caracteres que el ojo no ve pero el tokenizer sí: espacios de ancho cero, c
 (una pregunta del usuario o una página scrapeada) y, sin mala intención, ensucian el corpus (una palabra partida por
 U+200B no coincide al buscar). Se eliminan en las dos puertas: la entrada del usuario y la construcción del corpus.
 """
+
 import unicodedata
 
 CONSERVAR = {"\n", "\t", "\r"}  # los únicos controles legítimos en un texto

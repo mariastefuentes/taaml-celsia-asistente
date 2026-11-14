@@ -36,7 +36,9 @@ def test_la_cadena_del_qa_coloca_el_prompt_de_sistema_y_la_pregunta_delimitada(m
     salida = tareas.cadena_qa().invoke({"contexto": "TEXTO {con llaves}", "pregunta": "¿cuánto cuesta?"})
     assert salida == "  respuesta de prueba  "
     sistema, usuario = modelo.recibidos[0]
-    assert sistema.type == "system" and "TEXTO {con llaves}" in sistema.content  # las llaves del contenido no rompen la plantilla
+    assert (
+        sistema.type == "system" and "TEXTO {con llaves}" in sistema.content
+    )  # las llaves del contenido no rompen la plantilla
     assert usuario.type == "human" and "<user_input>\n¿cuánto cuesta?\n</user_input>" in usuario.content
 
 
@@ -50,7 +52,9 @@ def test_si_la_recuperacion_falla_se_propaga_el_error_para_el_respaldo(monkeypat
 
 
 def test_con_base_que_no_busca_no_toma_metricas_de_recuperacion(monkeypatch):
-    monkeypatch.setattr(tareas, "recuperar", lambda *a, **k: (_ for _ in ()).throw(AssertionError("no debe recuperarse")))
+    monkeypatch.setattr(
+        tareas, "recuperar", lambda *a, **k: (_ for _ in ()).throw(AssertionError("no debe recuperarse"))
+    )
     monkeypatch.setattr(tareas, "cargar_base", lambda tipo, max_por_doc=600: "base")
     monkeypatch.setattr(tareas, "obtener_modelo", lambda nombre: _ModeloFalso())
     respuesta, fragmentos, metricas = tareas.responder_con_fuentes("pregunta", "compacta", "gemini-3.5-flash")

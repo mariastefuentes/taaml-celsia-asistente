@@ -3,6 +3,7 @@ aparecen escritos en los fragmentos que el asistente recibió (columna `fragment
 Uso:  uv run python scripts/14_validar_respuestas.py [archivo.csv ...]   (por defecto, las corridas rag con prompt v3)
 Resultado: docs/2 - Conjunto de prueba/resultados/validacion_datos.csv
 """
+
 import csv
 import sys
 from pathlib import Path
@@ -21,14 +22,25 @@ def main() -> None:
     por_id = {f["chunk_id"]: f for f in cargar_fragmentos()}
     filas = []
     for archivo in archivos:
-        respuestas = [r for r in csv.DictReader(archivo.open(encoding="utf-8-sig", newline="")) if r["respuesta"] and not r["error"]]
+        respuestas = [
+            r
+            for r in csv.DictReader(archivo.open(encoding="utf-8-sig", newline=""))
+            if r["respuesta"] and not r["error"]
+        ]
         con_datos = 0
         for r in respuestas:
             fragmentos = [por_id[i] for i in r["fragmentos"].split() if i in por_id]
             dudosos = datos_sin_respaldo(r["respuesta"], fragmentos)
             con_datos += bool(dudosos)
             if dudosos:
-                filas.append({"corrida": archivo.stem, "id": r["id"], "calificacion": r["calificacion"], "sin_respaldo": " | ".join(dudosos)})
+                filas.append(
+                    {
+                        "corrida": archivo.stem,
+                        "id": r["id"],
+                        "calificacion": r["calificacion"],
+                        "sin_respaldo": " | ".join(dudosos),
+                    }
+                )
         print(f"{archivo.stem}: {con_datos} de {len(respuestas)} respuestas con datos sin respaldo")
     destino = RESULTADOS / "validacion_datos.csv"
     with destino.open("w", encoding="utf-8-sig", newline="") as f:

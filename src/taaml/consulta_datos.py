@@ -3,11 +3,12 @@
 No usa embeddings ni modelos: filtra los archivos versionados en data/. La herramienta del agente (`consultar_datos`) solo envuelve
 estas funciones, así se prueban sin Gemini ni Ollama.
 """
+
 import csv
 import json
 import unicodedata
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 DATOS = Path(__file__).resolve().parents[2] / "data"
 SEDES = DATOS / "3_gold" / "sedes.json"
@@ -29,11 +30,25 @@ def _contiene(valor: Any, buscado: Any) -> bool:
     return not buscado or _norm(buscado) in _norm(valor)
 
 
+def _contiene_alguno(valor: Any, buscado: Any) -> bool:
+    """Como `_contiene`, pero `buscado` puede traer varias opciones separadas por comas o «;» («Ibagué, Cali»): basta con que el valor contenga una."""
+    opciones = [o for o in str(buscado or "").replace(";", ",").split(",") if o.strip()]
+    return not opciones or any(_norm(o) in _norm(valor) for o in opciones)
+
+
 def sedes(ciudad: str = "", departamento: str = "", tipo: str = "") -> list[dict]:
-    """Sedes, tiendas y puntos de pago cuyos campos contienen el texto de cada filtro (sin tildes ni mayúsculas); sin filtros, todas."""
+    """Sedes, tiendas y puntos de pago cuyos campos contienen el texto de cada filtro (sin tildes ni mayúsculas); sin filtros, todas.
+
+    Cada filtro admite varias opciones separadas por comas («Ibagué, Cali»): la fila entra si cumple cualquiera, y el total las cuenta juntas.
+    """
     filas = json.loads(SEDES.read_text(encoding="utf-8"))
-    return [f for f in filas
-            if _contiene(f["CITY"], ciudad) and _contiene(f["DEPARTMENT"], departamento) and _contiene(f["HQ_TYPE"], tipo)]
+    return [
+        f
+        for f in filas
+        if _contiene_alguno(f["CITY"], ciudad)
+        and _contiene_alguno(f["DEPARTMENT"], departamento)
+        and _contiene_alguno(f["HQ_TYPE"], tipo)
+    ]
 
 
 def contactos(tipo: str = "", tema: str = "") -> list[dict]:
@@ -41,7 +56,7 @@ def contactos(tipo: str = "", tema: str = "") -> list[dict]:
     salida = []
     for linea in CONTACTOS.read_text(encoding="utf-8").splitlines():
         for c in json.loads(linea)["contactos"]:
-            if _contiene(c["tipo"], tipo) and _contiene(c["para_que_sirve"], tema):
+            if _contiene_alguno(c["tipo"], tipo) and _contiene_alguno(c["para_que_sirve"], tema):
                 salida.append(c)
     return salida
 
@@ -50,8 +65,11 @@ def catalogo(seccion: str = "", categoria: str = "", texto: str = "") -> list[di
     """Páginas del sitio cuyos campos (sección, categoría, título) contienen el texto de cada filtro."""
     with CATALOGO.open(encoding="utf-8-sig", newline="") as f:
         filas = list(csv.DictReader(f))
-    return [r for r in filas
-            if _contiene(r["section"], seccion) and _contiene(r["categoria"], categoria) and _contiene(r["title"], texto)]
+    return [
+        r
+        for r in filas
+        if _contiene(r["section"], seccion) and _contiene(r["categoria"], categoria) and _contiene(r["title"], texto)
+    ]
 
 
 def _linea(tabla: str, fila: dict) -> str:
@@ -68,12 +86,14 @@ def consultar(tabla: str, filtros: dict | None = None) -> str:
     nombre = _norm(tabla)
     if nombre not in funciones:
         return f"Tabla desconocida: {tabla}. Las disponibles son: {', '.join(TABLAS)}."
-    permitidos = funciones[nombre].__code__.co_varnames[:funciones[nombre].__code__.co_argcount]
+    permitidos = funciones[nombre].__code__.co_varnames[: funciones[nombre].__code__.co_argcount]
     filas = funciones[nombre](**{k: v for k, v in (filtros or {}).items() if k in permitidos and v})
     if not filas:
         return SIN_RESULTADOS
     lineas = [_linea(nombre, f) for f in filas[:LIMITE]]
     # el total lo cuenta el código, no el modelo: así «¿cuántas…?» se responde con una cifra exacta aunque se muestren pocas filas
     total = f"Total: {len(filas)} {'fila' if len(filas) == 1 else 'filas'}"
-    lineas.append(f"{total} (se muestran {LIMITE}; afina el filtro para ver el resto)." if len(filas) > LIMITE else f"{total}.")
+    lineas.append(
+        f"{total} (se muestran {LIMITE}; afina el filtro para ver el resto)." if len(filas) > LIMITE else f"{total}."
+    )
     return "\n".join(lineas)

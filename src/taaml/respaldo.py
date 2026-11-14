@@ -3,6 +3,7 @@
 No cambia lo que dice ningún modelo. Solo decide a quién llamar cuando hay una falla del proveedor (cuota, límite, servidor caído o falta de clave)
 y dice siempre qué pasó, para que una respuesta de respaldo nunca parezca una respuesta nueva.
 """
+
 import csv
 import os
 import re
@@ -59,7 +60,9 @@ def con_respaldo(funcion: Callable, elegido: str) -> Any:
             ultimo = e
             continue
         if avisos:
-            avisos.append(f"se usó {modelo}" + (" (modelo local: más lento y menos preciso)" if modelo == MODELO_LOCAL else ""))
+            avisos.append(
+                f"se usó {modelo}" + (" (modelo local: más lento y menos preciso)" if modelo == MODELO_LOCAL else "")
+            )
         return resultado, modelo, avisos
     raise ultimo or RuntimeError("la cadena de modelos está vacía")
 
@@ -73,7 +76,11 @@ def preguntas_guardadas() -> list[str]:
     """Las preguntas del conjunto de prueba que tienen respuesta guardada."""
     if not RESULTADOS.exists():
         return []
-    return [f["pregunta"] for f in csv.DictReader(RESULTADOS.open(encoding="utf-8-sig", newline="")) if f["respuesta"] and not f["error"]]
+    return [
+        f["pregunta"]
+        for f in csv.DictReader(RESULTADOS.open(encoding="utf-8-sig", newline=""))
+        if f["respuesta"] and not f["error"]
+    ]
 
 
 def respuesta_guardada(pregunta: str) -> tuple[str, list[dict]] | None:

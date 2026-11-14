@@ -3,6 +3,7 @@
 Usa Gemini de pago (gemini-3.8-flash, necesita GOOGLE_API_KEY con facturación) y cae a Ollama si falla.
 Uso:  uv run python scripts/15_probar_agente.py ["pregunta"]   (sin argumento, hace tres preguntas de ejemplo; en CPU cada una tarda varios minutos)
 """
+
 import sys
 from pathlib import Path
 
@@ -13,7 +14,11 @@ from taaml.agente import FRAGMENTOS_AGENTE, preguntar  # noqa: E402
 from taaml.recuperacion import buscar  # noqa: E402
 from taaml.validacion import datos_sin_respaldo  # noqa: E402
 
-EJEMPLOS = ["¿Cuál es el teléfono de atención al cliente de Celsia?", "¿Cómo puedo pagar mi factura de energía?", "¿Cuánto cuesta un viaje a Cartagena?"]
+EJEMPLOS = [
+    "¿Cuál es el teléfono de atención al cliente de Celsia?",
+    "¿Cómo puedo pagar mi factura de energía?",
+    "¿Cuánto cuesta un viaje a Cartagena?",
+]
 
 
 def main() -> None:

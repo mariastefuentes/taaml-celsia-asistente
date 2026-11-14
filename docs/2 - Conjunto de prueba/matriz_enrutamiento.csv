@@ -24,3 +24,6 @@
 "R23","saludo","","Hola","ninguna","","Un saludo no debe disparar ninguna búsqueda: responde breve y ofrece ayuda"
 "R24","cortesia","","Gracias, eso era todo","ninguna","","Un agradecimiento no debe disparar ninguna búsqueda: se despide"
 "R25","trivial","","¿Cuánto es 2 + 2?","ninguna","","Pregunta trivial fuera del dominio: sin herramientas (por el prompt no usa conocimiento general, así que puede negarse o responder breve)"
+"R26","conteo","","¿Cuántas sedes hay en Ibagué?","consultar_datos","tabla=sedes; ciudad=Ibagué","Pregunta numérica: se cuenta en la tabla (Total calculado por el sistema), sin buscar en el texto. Son 6"
+"R27","conteo","","¿Cuántos teléfonos de contacto tiene Celsia?","consultar_datos","tabla=contactos; tipo=telefono","Pregunta numérica sobre la tabla de contactos. Son 8"
+"R28","conteo","","¿Cuántos puntos de pago hay en el Tolima?","consultar_datos","tabla=sedes","Pregunta numérica con dos filtros (departamento y tipo). Son 15"

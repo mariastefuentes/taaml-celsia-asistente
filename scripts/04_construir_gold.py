@@ -13,6 +13,7 @@ Salida:
 
 Uso:  uv run python scripts/04_construir_gold.py
 """
+
 import csv
 import json
 import re
@@ -30,17 +31,26 @@ BRONZE, SILVER, GOLD = DATA / "1_bronze", DATA / "2_silver", DATA / "3_gold"
 # categoria segun el primer segmento de la URL (despues de /es/)
 CATEGORIAS = [
     (r"^(inversionistas|investors)", "inversionistas"),
-    (r"^(sostenibilidad|nuestros-de-temas-de-materialidad|test-sostenibilidad|esg|reports|responsabilidad-social|bonos-verdes|"
-     r"anexos-reporte|historico_esgdatabook|dimensions|protocolos)", "sostenibilidad"),
+    (
+        r"^(sostenibilidad|nuestros-de-temas-de-materialidad|test-sostenibilidad|esg|reports|responsabilidad-social|bonos-verdes|"
+        r"anexos-reporte|historico_esgdatabook|dimensions|protocolos)",
+        "sostenibilidad",
+    ),
     (r"^noticias$", "noticias"),
     (r"^(noticias|sala-de-prensa|revista|libros|podcast|mapa-del-sitio|jorge-mario)", "prensa_y_medios"),
-    (r"(salvajina|calima|pacifico|centrales|granjas|generacion|embalse|fauna|franja|reverdec|licenciamiento|avanza|"
-     r"laboratorio-de-medidores|transferencias)", "activos_y_proyectos"),
+    (
+        r"(salvajina|calima|pacifico|centrales|granjas|generacion|embalse|fauna|franja|reverdec|licenciamiento|avanza|"
+        r"laboratorio-de-medidores|transferencias)",
+        "activos_y_proyectos",
+    ),
     (r"^(productos-hechos|portafolio|formulario-soluciones|energiasolarparaempresas|homes)", "servicios"),
     (r"^(mitos-y-verdades|mas-personal|celsia-formulario)", "atencion"),
     (r"^(tolima|inicio)", "empresa"),
     (r"^(quienes-somos|about-us|la-nueva-era|se-parte-de-nuestro-equipo|nuestra-historia)", "empresa"),
-    (r"^(informacion-regulatoria|ley-de-transparencia|linea-de-transparencia|notificaciones-judiciales)", "regulatorio"),
+    (
+        r"^(informacion-regulatoria|ley-de-transparencia|linea-de-transparencia|notificaciones-judiciales)",
+        "regulatorio",
+    ),
     (r"^(panama|honduras|costa-rica|peru|centroamerica)", "internacional"),
     (r"^(zona-clientes|encuentranos|pqr|mantenimientos|hogares-)", "atencion"),
     (r"^(soluciones|celsiapymes|companies|internet|energia-solar|hogares|pymes|empresas|tienda|cargador)", "servicios"),
@@ -49,9 +59,15 @@ BLOG_UTIL = re.compile(
     r"factura|pqr|tr[aá]mite|solicitud|requisito|cambio de|estrato|siniestro|ahorr|cargador|panel|solar|reporta|servicio de energ|"
     r"hogar|pymes|tarifa|medidor|seguridad|consumo|internet|recibo|cobros?|canal de atenci|whatsapp|conecta con celsia|luz i\.?a|"
     r"asistente virtual|accidente|riesgo|electrodom|etiqueta de eficiencia|puntos digitales|filas|acceso seguro|zona clientes|"
-    r"desviaci|costo de la energ|precio de la energ|precio de la luz|tienda celsia|financiad|subsidio|emcali|respaldo", re.I)
-PALABRAS_ES = set("de la el los las que para con una por del su al se es un como más muy sus tu tus nuestro nuestra nuestros desde sobre".split())
-PALABRAS_EN = set("the and of for with your our you to is are that from this on by as at be it can we their which will".split())
+    r"desviaci|costo de la energ|precio de la energ|precio de la luz|tienda celsia|financiad|subsidio|emcali|respaldo",
+    re.I,
+)
+PALABRAS_ES = set(
+    "de la el los las que para con una por del su al se es un como más muy sus tu tus nuestro nuestra nuestros desde sobre".split()
+)
+PALABRAS_EN = set(
+    "the and of for with your our you to is are that from this on by as at be it can we their which will".split()
+)
 
 
 def leer_md(path: Path) -> tuple[dict, str]:
@@ -142,9 +158,20 @@ def main() -> None:
         rel, motivo = relevancia_de(cat, meta, idioma)
         fecha = fechas.get(meta["url"], "")
         enc = {
-            "url": meta["url"], "title": meta["title"], "fuente": "celsia.com (sitio oficial)",
-            "fecha_extraccion": fecha, "fecha_publicacion": meta.get("fecha_publicacion", ""), "section": meta["section"], "categoria": cat, "region": region, "idioma": idioma,
-            "caracteres": len(texto), "tokens": len(CODIFICADOR.encode(texto)), "hash": meta["hash"], "relevancia_propuesta": rel, "motivo": motivo,
+            "url": meta["url"],
+            "title": meta["title"],
+            "fuente": "celsia.com (sitio oficial)",
+            "fecha_extraccion": fecha,
+            "fecha_publicacion": meta.get("fecha_publicacion", ""),
+            "section": meta["section"],
+            "categoria": cat,
+            "region": region,
+            "idioma": idioma,
+            "caracteres": len(texto),
+            "tokens": len(CODIFICADOR.encode(texto)),
+            "hash": meta["hash"],
+            "relevancia_propuesta": rel,
+            "motivo": motivo,
         }
         cabecera = "\n".join(f"{k}: {v}" for k, v in enc.items())
         (GOLD / md.name).write_text(f"---\n{cabecera}\n---\n\n# {meta['title']}\n\n{texto}\n", encoding="utf-8")
@@ -155,9 +182,26 @@ def main() -> None:
         for d in corpus:
             f.write(json.dumps(d, ensure_ascii=False) + "\n")
     with (GOLD / "_catalogo.csv").open("w", encoding="utf-8-sig", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["archivo", "title", "section", "categoria", "region", "idioma", "caracteres", "tokens",
-                                          "relevancia_propuesta", "motivo", "url", "fecha_publicacion", "fecha_extraccion",
-                                          "hash", "fuente"])
+        w = csv.DictWriter(
+            f,
+            fieldnames=[
+                "archivo",
+                "title",
+                "section",
+                "categoria",
+                "region",
+                "idioma",
+                "caracteres",
+                "tokens",
+                "relevancia_propuesta",
+                "motivo",
+                "url",
+                "fecha_publicacion",
+                "fecha_extraccion",
+                "hash",
+                "fuente",
+            ],
+        )
         w.writeheader()
         w.writerows(filas)
     if sedes_json.exists():
@@ -170,7 +214,10 @@ def main() -> None:
             c = cuenta.setdefault(d[clave], [0, 0])
             c[0] += 1
             c[1] += d["caracteres"]
-        print(f"  por {clave}: " + "; ".join(f"{k}={v[0]} ({v[1]:,} car.)" for k, v in sorted(cuenta.items(), key=lambda x: -x[1][1])))
+        print(
+            f"  por {clave}: "
+            + "; ".join(f"{k}={v[0]} ({v[1]:,} car.)" for k, v in sorted(cuenta.items(), key=lambda x: -x[1][1]))
+        )
 
 
 if __name__ == "__main__":

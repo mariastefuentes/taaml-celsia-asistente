@@ -1,4 +1,5 @@
 """Pruebas de componentes (nivel de componentes): deterministas, sin Gemini y sin Ollama."""
+
 import os
 import sys
 from pathlib import Path
