@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" font-family="Segoe UI, Arial, sans-serif" font-size="13">
+  <rect width="900" height="400" fill="#ffffff"/>
+  <text x="450" y="26" text-anchor="middle" font-size="16" font-weight="600" fill="#111827">Traza real de LangSmith: «¿Cuál es el WhatsApp de Celsia?»</text>
+  <text x="450" y="44" text-anchor="middle" font-size="11" fill="#6b7280">Proyecto taaml-celsia, ejecución agente_celsia (13 de noviembre de 2026): 8,8 s, 3.683 tokens (3.329 de entrada y 354 de salida), 0,0038 USD</text>
+
+  <!-- eje de tiempo -->
+  <g stroke="#9ca3af" stroke-width="1">
+    <line x1="330" y1="70" x2="330" y2="330"/>
+    <line x1="450" y1="70" x2="450" y2="330" stroke-dasharray="3,4"/>
+    <line x1="571" y1="70" x2="571" y2="330" stroke-dasharray="3,4"/>
+    <line x1="691" y1="70" x2="691" y2="330" stroke-dasharray="3,4"/>
+    <line x1="860" y1="70" x2="860" y2="330"/>
+  </g>
+  <g font-size="10" fill="#6b7280" text-anchor="middle">
+    <text x="330" y="64">0 s</text><text x="450" y="64">2 s</text><text x="571" y="64">4 s</text><text x="691" y="64">6 s</text><text x="860" y="64">8,8 s</text>
+  </g>
+
+  <!-- escala: 60,2 px por segundo -->
+  <g font-size="12">
+    <text x="20" y="92" font-weight="600">agente_celsia</text>
+    <text x="36" y="122">model</text>
+    <text x="52" y="142" fill="#374151">Gemini 3.8 Flash</text>
+    <text x="52" y="156" font-size="10" fill="#6b7280">1.491 tokens de entrada · 115 de salida</text>
+    <text x="36" y="188">ToolCallLimitMiddleware.after_model</text>
+    <text x="36" y="222">tools → consultar_datos</text>
+    <text x="52" y="238" font-size="10" fill="#6b7280">tabla «contactos», tipo «whatsapp»</text>
+    <text x="36" y="268">model</text>
+    <text x="52" y="288" fill="#374151">Gemini 3.8 Flash</text>
+    <text x="52" y="302" font-size="10" fill="#6b7280">1.838 tokens de entrada · 239 de salida</text>
+    <text x="36" y="326">ToolCallLimitMiddleware.after_model</text>
+  </g>
+
+  <g stroke="#374151" stroke-width="1">
+    <rect x="330" y="80" width="530" height="16" rx="3" fill="#e5e7eb"/>
+    <rect x="330" y="110" width="127" height="16" rx="3" fill="#93c5fd"/>
+    <rect x="330" y="130" width="127" height="16" rx="3" fill="#bfdbfe"/>
+    <rect x="330" y="176" width="4" height="16" rx="1" fill="#fde68a"/>
+    <rect x="457" y="210" width="4" height="16" rx="1" fill="#86efac"/>
+    <rect x="461" y="256" width="399" height="16" rx="3" fill="#93c5fd"/>
+    <rect x="461" y="276" width="399" height="16" rx="3" fill="#bfdbfe"/>
+    <rect x="860" y="314" width="4" height="16" rx="1" fill="#fde68a"/>
+  </g>
+  <g font-size="11" fill="#111827">
+    <text x="344" y="93">8,8 s en total</text>
+    <text x="463" y="122">2,1 s</text>
+    <text x="463" y="143">2,1 s</text>
+    <text x="342" y="189">0 s</text>
+    <text x="468" y="223">0,01 s: la tabla local, sin modelo</text>
+    <text x="700" y="269" fill="#111827">6,6 s</text>
+    <text x="700" y="289" fill="#111827">6,6 s</text>
+    <text x="842" y="327" text-anchor="end">0 s</text>
+  </g>
+
+  <rect x="20" y="340" width="860" height="52" rx="8" fill="#f9fafb" stroke="#374151" stroke-width="1.2"/>
+  <text x="450" y="359" text-anchor="middle" font-size="12">El modelo decidió llamar a una herramienta (primer model), la herramienta respondió en 0,01 s</text>
+  <text x="450" y="375" text-anchor="middle" font-size="12">y el segundo model redactó la respuesta, que ocupa casi todo el tiempo.</text>
+  <text x="450" y="388" text-anchor="middle" font-size="10" fill="#6b7280">Cada ejecución queda registrada con el prompt, los tokens, el costo y la etiqueta «agente»; el panel de LangSmith muestra el mismo árbol.</text>
+</svg>

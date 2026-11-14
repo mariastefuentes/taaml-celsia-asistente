@@ -44,6 +44,12 @@ El agente (`create_agent` de LangChain) decide en cada turno qué herramienta us
 
 ![Enrutamiento por herramienta](docs/3%20-%20Informe/diagrama_enrutamiento.svg)
 
+![Grafo del agente](docs/3%20-%20Informe/diagrama_grafo_agente.svg)
+
+![Memoria: checkpointer frente a Store](docs/3%20-%20Informe/diagrama_memoria.svg)
+
+![Traza real de LangSmith](docs/3%20-%20Informe/diagrama_traza_langsmith.svg)
+
 ```mermaid
 sequenceDiagram
     participant C as Frontend React
