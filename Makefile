@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app api frontend demo-inyeccion test lint check format clean datos scraping-demo indice recuperacion ensayo evaluar pdf
+.PHONY: help ayuda setup modulo1 app api frontend demo-inyeccion demo-limpiar test lint check format clean datos scraping-demo indice recuperacion ensayo evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -64,6 +64,9 @@ api:
 
 frontend:
 	cd frontend && npm install && npm run dev
+
+demo-limpiar:
+	uv run python scripts/30_limpiar_memoria_demo.py --borrar
 
 demo-inyeccion:
 	uv run python scripts/23_demo_corpus_envenenado.py --servir
