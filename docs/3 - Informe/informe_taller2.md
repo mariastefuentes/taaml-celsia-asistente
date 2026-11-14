@@ -137,6 +137,16 @@ Son pruebas escritas por el equipo, con una sola corrida por caso: muestran que 
 
 ### 5.4 Decisiones de recuperación
 
+**Cómo se mide.** El conjunto de prueba tiene 35 preguntas con respuesta en el sitio y 24 sin respuesta (para comprobar que el agente se abstiene). Cada pregunta con respuesta apunta a una intención del inventario, y esa intención tiene una expresión regular de cobertura escrita por el equipo: un fragmento es relevante si su texto la cumple (`scripts/21_metricas_ranking.py`). De cada pregunta se recuperan los 10 mejores fragmentos y se calculan hit@10 (si hay al menos un relevante), precision@10, recall@10 (frente a todos los relevantes del corpus) y nDCG@10 (premia que los relevantes estén arriba). Resultado, promedio de las 35 preguntas:
+
+| Método | hit@10 | precision@10 | recall@10 | nDCG@10 |
+|---|---|---|---|---|
+| Palabras (idf) | 0,543 | 0,174 | 0,254 | 0,290 |
+| Híbrido (palabras y significado) | 0,714 | 0,260 | 0,414 | 0,427 |
+| Embeddings (significado) | 0,829 | 0,271 | 0,515 | 0,535 |
+
+Los embeddings quedan primero en las cuatro medidas, y por eso `buscar_en_base` usa búsqueda por significado. Límites: la relevancia la decide una expresión regular y no una persona leyendo cada fragmento, así que puede contar como relevante un fragmento que menciona el tema sin responder, o dejar fuera uno que responde con otras palabras; y con 35 preguntas una diferencia de unos pocos centésimos no es concluyente (el desglose por pregunta está en `ranking_k10.csv`). No se usó Ragas ni LangSmith para la recuperación: LangSmith se usa para las trazas y para evaluar el enrutamiento (sección 5.1).
+
 - **Umbral de similitud.** Con este modelo de embeddings los cosenos van de 0,3 a 0,6. Un umbral de 0,5 conserva 26 de 35 respuestas y deja sin contexto a 16 de 24 preguntas negativas; sin umbral se conservan 31 de 35. No se adoptó un umbral duro porque pierde respuestas y el modelo ya se abstiene por instrucción del prompt.
 - **Tamaño de fragmento.** Con 500, 1.000 y 1.500 caracteres, el nDCG@10 con embeddings fue 0,504, 0,535 y 0,549. Se mantuvo 1.000 con solape de 150: la diferencia de 0,014 con 1.500 cae dentro del ruido de 35 preguntas y 500 duplica los fragmentos.
 - **Método de búsqueda.** El híbrido combina por posición el orden por significado (embeddings) y el orden por palabras (idf). Con k=10 y 35 preguntas, los embeddings superan al híbrido y a las palabras (nDCG 0,535 frente a 0,427 y 0,290; recall 0,515, 0,414 y 0,254).
