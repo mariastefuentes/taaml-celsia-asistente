@@ -478,7 +478,7 @@ def test_confianza_baja_cuando_el_mejor_fragmento_no_llega_al_umbral():
 
 
 def test_la_herramienta_avisa_cuando_la_confianza_es_baja_y_no_cuando_es_alta(monkeypatch):
-    monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0: [_fragmento(0.40)])
+    monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0: [_fragmento(0.30)])
     assert buscar_en_base.invoke({"pregunta": "algo"}).startswith("CONFIANZA BAJA")
     monkeypatch.setattr("taaml.agente.buscar", lambda p, k=0: [_fragmento(0.70)])
     assert "CONFIANZA BAJA" not in buscar_en_base.invoke({"pregunta": "algo"})
