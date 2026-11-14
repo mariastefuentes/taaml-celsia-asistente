@@ -43,7 +43,8 @@ FRAGMENTOS_POR_DEFECTO = (
 
 def embeddings(textos: list[str], tipo: str, timeout: int = 300) -> np.ndarray:
     """Embeddings normalizados. `tipo` es «document» o «query»: el modelo espera ese prefijo."""
-    cuerpo = {"model": MODELO_EMBEDDINGS, "input": [f"search_{tipo}: {t}" for t in textos]}
+    # keep_alive: Ollama descarga el modelo si pasan 5 minutos sin usarlo y la siguiente búsqueda tarda ~7 s en cargarlo; así queda en memoria
+    cuerpo = {"model": MODELO_EMBEDDINGS, "input": [f"search_{tipo}: {t}" for t in textos], "keep_alive": "30m"}
     req = urllib.request.Request(
         OLLAMA_EMBED, data=json.dumps(cuerpo).encode("utf-8"), headers={"Content-Type": "application/json"}
     )
