@@ -18,7 +18,8 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Contexto.** El flujo es un solo ciclo de decisión: modelo, herramienta, modelo.
 - **Decisión.** Usar `create_agent` de LangChain 1.x, que corre sobre LangGraph y trae el checkpointer, el Store y el middleware (recorte de historial, resumen, tope de llamadas, respaldo de modelo).
 - **Descartado.** Un grafo a mano (más control con más código que mantener), Deep Agents, Agno, LlamaIndex y DSPy (tabla de la sección 2.2 del informe).
-- **Cuándo se revisa.** Si aparecen ramas explícitas o una aprobación humana antes de una acción, como abrir un reclamo.
+- **Excepción.** Donde sí hay ramas y una pausa obligatoria (radicar un reclamo solo con aprobación humana) se escribió un `StateGraph` a mano, aparte del agente: `src/taaml/flujo_reclamo.py`. Conectarlo al agente queda como trabajo posterior.
+- **Cuándo se revisa.** Si el agente necesita ramas explícitas o una aprobación humana antes de una acción.
 - **Evidencia.** `src/taaml/agente.py`; informe, secciones 2 y 2.2.
 
 ## D2. El router es el modelo con herramientas bien descritas
