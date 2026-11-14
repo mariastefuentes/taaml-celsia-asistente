@@ -17,5 +17,7 @@ def test_el_agente_es_un_stategraph_con_el_ciclo_modelo_herramientas():
     nodos = set(agente.get_graph().nodes)
     assert {"model", "tools", "__start__", "__end__"} <= nodos
     aristas = modulo.aristas_del_grafo(agente)
-    assert any(o == "tools" and c for o, _, c in aristas)  # tras las herramientas se decide si el modelo vuelve a correr
+    assert any(
+        o == "tools" and c for o, _, c in aristas
+    )  # tras las herramientas se decide si el modelo vuelve a correr
     assert any(d == "tools" and c for _, d, c in aristas)  # y tras el modelo, si se llaman herramientas

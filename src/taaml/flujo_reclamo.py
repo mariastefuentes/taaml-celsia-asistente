@@ -56,7 +56,9 @@ def construir_flujo(
         return {"reclamo": extractor(estado["mensaje"]).model_dump()}
 
     def pedir_aprobacion(estado: Estado) -> Estado:
-        decision = interrupt({"pregunta": "¿Radico este reclamo?", "reclamo": estado["reclamo"]})  # pausa hasta que una persona responda
+        decision = interrupt(
+            {"pregunta": "¿Radico este reclamo?", "reclamo": estado["reclamo"]}
+        )  # pausa hasta que una persona responda
         return {"aprobado": bool(decision)}
 
     def radicar(estado: Estado) -> Estado:
@@ -85,7 +87,9 @@ def construir_flujo(
     ):
         grafo.add_node(nombre, nodo)
     grafo.add_edge(START, "extraer")
-    grafo.add_conditional_edges("extraer", tras_extraer, {"pedir_aprobacion": "pedir_aprobacion", "incompleto": "incompleto"})
+    grafo.add_conditional_edges(
+        "extraer", tras_extraer, {"pedir_aprobacion": "pedir_aprobacion", "incompleto": "incompleto"}
+    )
     grafo.add_conditional_edges("pedir_aprobacion", tras_aprobar, {"radicar": "radicar", "cancelar": "cancelar"})
     for final in ("radicar", "cancelar", "incompleto"):
         grafo.add_edge(final, END)

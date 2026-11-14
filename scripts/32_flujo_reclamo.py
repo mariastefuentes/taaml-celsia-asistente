@@ -42,7 +42,10 @@ def main() -> None:
     flujo = construir_flujo(extractor_con_modelo() if real else falso)
     grafo = flujo.get_graph()
     print("Nodos: " + ", ".join(grafo.nodes))
-    print("Aristas: " + "; ".join(f"{e.source}->{e.target}{' (condicional)' if e.conditional else ''}" for e in grafo.edges))
+    print(
+        "Aristas: "
+        + "; ".join(f"{e.source}->{e.target}{' (condicional)' if e.conditional else ''}" for e in grafo.edges)
+    )
     if real:
         correr(flujo, sys.argv[sys.argv.index("--real") + 1], True, "real")
         return
