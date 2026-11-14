@@ -7,9 +7,9 @@ ev = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(ev)
 
 
-def test_el_dataset_sale_de_la_matriz_con_las_25_preguntas():
+def test_el_dataset_sale_de_la_matriz_con_sus_28_preguntas():
     ejemplos = ev.cargar_ejemplos()
-    assert len(ejemplos) == 25
+    assert len(ejemplos) == 28  # las 25 originales y las 3 de conteo (R26 a R28)
     r01 = ejemplos[0]
     assert r01["inputs"]["id"] == "R01" and r01["outputs"]["herramienta_esperada"] == "consultar_datos"
     assert next(e for e in ejemplos if e["inputs"]["id"] == "R19")["inputs"][

@@ -150,3 +150,6 @@ Las demás tiendas y puntos de atención no registran teléfono directo. Para at
 "R23","saludo","ninguna","ninguna","0","True","","","1482","81","0.00142","2.7","¡Hola! ¿En qué te puedo ayudar hoy con los servicios de Celsia?"
 "R24","cortesia","ninguna","ninguna","0","True","","","1486","89","0.00145","2.1","¡Con mucho gusto! Si necesitas algo más en el futuro, aquí estaré para ayudarte. ¡Que tengas un excelente día!"
 "R25","trivial","ninguna","ninguna","0","True","","","1490","88","0.00145","2.3","2 + 2 es igual a 4. ¿En qué más te puedo ayudar hoy respecto a los servicios de Celsia?"
+"R26","conteo","consultar_datos","consultar_datos","1","True","True","True","3914","277","0.00397","5.8","En Ibagué hay un total de 6 sedes."
+"R27","conteo","consultar_datos","consultar_datos","1","True","True","True","3522","287","0.00372","5.9","Celsia tiene un total de 8 teléfonos de contacto registrados."
+"R28","conteo","consultar_datos","consultar_datos","3","True","True","True","10880","468","0.00992","12.2","En el Tolima hay un total de 15 puntos de recaudo y pago."

@@ -35,6 +35,9 @@ TEXTO_ESPERADO = {
     "R20": ["No tengo esa información"],
     "R21": ["604 326 66 00"],
     "R22": ["No tengo esa información"],
+    "R26": ["6"],
+    "R27": ["8"],
+    "R28": ["15"],
 }
 CAMPOS = [
     "id",
