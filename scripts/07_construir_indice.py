@@ -9,6 +9,7 @@ Requisitos: Ollama encendido y el modelo descargado (`ollama pull nomic-embed-te
 
 Uso:  uv run python scripts/07_construir_indice.py
 """
+
 import hashlib
 import sys
 import time
@@ -45,13 +46,19 @@ def main() -> None:
     fragmentos = cargar_fragmentos()
     previos = cargar_vectores_previos()
     # el embedding de cada fragmento lleva sus etiquetas de sinónimos (src/taaml/sinonimos.py); el texto que lee el modelo no cambia
-    textos = [f["texto"] + (f"\nTemas relacionados: {e}" if (e := etiquetas_fragmento(f["texto"])) else "") for f in fragmentos]
+    textos = [
+        f["texto"] + (f"\nTemas relacionados: {e}" if (e := etiquetas_fragmento(f["texto"])) else "")
+        for f in fragmentos
+    ]
     huellas = [huella(t) for t in textos]
     pendientes = [i for i, h in enumerate(huellas) if h not in previos]
-    print(f"{len(fragmentos)} fragmentos: {len(fragmentos) - len(pendientes)} ya tienen vector, {len(pendientes)} por calcular", flush=True)
+    print(
+        f"{len(fragmentos)} fragmentos: {len(fragmentos) - len(pendientes)} ya tienen vector, {len(pendientes)} por calcular",
+        flush=True,
+    )
     t0 = time.time()
     for n in range(0, len(pendientes), TANDA):
-        lote = pendientes[n:n + TANDA]
+        lote = pendientes[n : n + TANDA]
         vecs = embeddings([textos[i] for i in lote], "document")
         for i, v in zip(lote, vecs):
             previos[huellas[i]] = v
@@ -62,9 +69,14 @@ def main() -> None:
             guardar(PARCIAL, list(previos), [""] * len(previos), list(previos.values()))
     guardar(INDICE, huellas, [f["chunk_id"] for f in fragmentos], [previos[h] for h in huellas])
     PARCIAL.unlink(missing_ok=True)
-    construir_qdrant([f["chunk_id"] for f in fragmentos], np.array([previos[h] for h in huellas], dtype=np.float32),
-                     [{"categoria": f["categoria"], "region": f["region"], "fuente": f["fuente"]} for f in fragmentos])
-    print(f"Listo: {INDICE.name} con {len(fragmentos)} vectores de {len(previos[huellas[0]])} dimensiones en {(time.time() - t0) / 60:.1f} min")
+    construir_qdrant(
+        [f["chunk_id"] for f in fragmentos],
+        np.array([previos[h] for h in huellas], dtype=np.float32),
+        [{"categoria": f["categoria"], "region": f["region"], "fuente": f["fuente"]} for f in fragmentos],
+    )
+    print(
+        f"Listo: {INDICE.name} con {len(fragmentos)} vectores de {len(previos[huellas[0]])} dimensiones en {(time.time() - t0) / 60:.1f} min"
+    )
 
 
 if __name__ == "__main__":

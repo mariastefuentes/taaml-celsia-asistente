@@ -6,6 +6,7 @@ Para cada τ mide dos cosas con el conjunto de prueba:
 Uso:  uv run python scripts/20_umbral_similitud.py
 Resultado: docs/2 - Conjunto de prueba/resultados/umbral_similitud.csv
 """
+
 import csv
 import re
 import sys
@@ -33,7 +34,9 @@ def main() -> None:
             sys.exit("Ollama no respondió: sin embeddings no hay coseno que medir.")
         if p["tipo_prueba"] == "respuesta":
             patron = re.compile(inventario[p["intencion_id"]]["regex_cobertura"], re.I)
-            puntaje = next((r["puntaje"] for r in recuperados if patron.search(r["texto"])), None)  # el del primer fragmento que sí responde
+            puntaje = next(
+                (r["puntaje"] for r in recuperados if patron.search(r["texto"])), None
+            )  # el del primer fragmento que sí responde
             con_respuesta.append((puntaje, recuperados[0]["puntaje"]))
         else:
             negativas.append(recuperados[0]["puntaje"])
@@ -42,8 +45,18 @@ def main() -> None:
     for tau in UMBRALES:
         conservadas = sum(1 for p, _ in con_respuesta if p is not None and p >= tau)
         sin_contexto = sum(1 for m in negativas if m < tau)
-        filas.append({"tau": tau, "respuesta_conservada": conservadas, "de_respuesta": len(con_respuesta), "negativas_sin_contexto": sin_contexto, "de_negativas": len(negativas)})
-        print(f"{tau:>5} | {conservadas:>2} de {len(con_respuesta)} ({conservadas / len(con_respuesta):.0%})     | {sin_contexto:>2} de {len(negativas)} ({sin_contexto / len(negativas):.0%})       ")
+        filas.append(
+            {
+                "tau": tau,
+                "respuesta_conservada": conservadas,
+                "de_respuesta": len(con_respuesta),
+                "negativas_sin_contexto": sin_contexto,
+                "de_negativas": len(negativas),
+            }
+        )
+        print(
+            f"{tau:>5} | {conservadas:>2} de {len(con_respuesta)} ({conservadas / len(con_respuesta):.0%})     | {sin_contexto:>2} de {len(negativas)} ({sin_contexto / len(negativas):.0%})       "
+        )
     with SALIDA.open("w", encoding="utf-8-sig", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(filas[0]), quoting=csv.QUOTE_ALL)
         w.writeheader()

@@ -6,6 +6,7 @@ Cada página es una llamada al modelo (gasta cuota o saldo): por defecto son 3.
 Uso:  uv run python scripts/13_extraer_contactos.py [--archivos a.md,b.md]
 Resultado: data/5_extraccion/contactos.jsonl
 """
+
 import argparse
 import json
 import re
@@ -24,7 +25,11 @@ from taaml.tareas import MODELO_POR_DEFECTO, obtener_modelo  # noqa: E402
 
 DOCUMENTOS = ROOT / "data" / "4_curaduria" / "documentos_incluidos.jsonl"
 SALIDA = ROOT / "data" / "5_extraccion" / "contactos.jsonl"
-PAGINAS_POR_DEFECTO = ["canales_atencion.md", "datos_complementarios.md", "es-internet-home-internet-contactenos-internet-celsia.md"]
+PAGINAS_POR_DEFECTO = [
+    "canales_atencion.md",
+    "datos_complementarios.md",
+    "es-internet-home-internet-contactenos-internet-celsia.md",
+]
 
 
 class Contacto(BaseModel):
@@ -55,14 +60,26 @@ def main() -> None:
     with SALIDA.open("w", encoding="utf-8") as salida:
         for nombre in a.archivos.split(","):
             doc = corpus[nombre.strip()]
-            ficha = modelo.invoke([HumanMessage(leer_prompt("v1_extraccion.md").replace("{documento}", doc["text"]))],
-                                  config={"run_name": "extraer_contactos", "tags": ["extraccion"]})
+            ficha = modelo.invoke(
+                [HumanMessage(leer_prompt("v1_extraccion.md").replace("{documento}", doc["text"]))],
+                config={"run_name": "extraer_contactos", "tags": ["extraccion"]},
+            )
             assert isinstance(ficha, FichaContactos)
             texto = normalizar(doc["text"])
             no_verificados = [c.valor for c in ficha.contactos if normalizar(c.valor) not in texto]
             total, verificados = total + len(ficha.contactos), verificados + len(ficha.contactos) - len(no_verificados)
-            salida.write(json.dumps({"archivo": nombre, "url": doc.get("url", ""), "contactos": [c.model_dump() for c in ficha.contactos],
-                                     "no_verificados": no_verificados}, ensure_ascii=False) + "\n")
+            salida.write(
+                json.dumps(
+                    {
+                        "archivo": nombre,
+                        "url": doc.get("url", ""),
+                        "contactos": [c.model_dump() for c in ficha.contactos],
+                        "no_verificados": no_verificados,
+                    },
+                    ensure_ascii=False,
+                )
+                + "\n"
+            )
             print(f"{nombre}: {len(ficha.contactos)} contactos, {len(no_verificados)} sin verificar")
     print(f"{verificados} de {total} valores aparecen escritos en su página. Guardado en {SALIDA.relative_to(ROOT)}")
 

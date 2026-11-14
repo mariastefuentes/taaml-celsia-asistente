@@ -9,6 +9,7 @@ Salida: data/2_silver/*.md  y  data/2_silver/_registro.csv (que se hizo con cada
 
 Uso:  uv run python scripts/03_construir_silver.py
 """
+
 import csv
 import hashlib
 import json
@@ -31,7 +32,9 @@ PREFERENCIA_EN = re.compile(r"/(investors|about-us|companies|reports|relevant-in
 
 def fecha_publicacion(html: str, soup: BeautifulSoup) -> str:
     """Fecha de publicación (AAAA-MM-DD) si la página la trae; vacía si no."""
-    m = re.search(r'article:published_time"\s+content="(\d{4}-\d{2}-\d{2})', html) or re.search(r'"datePublished":"(\d{4}-\d{2}-\d{2})', html)
+    m = re.search(r'article:published_time"\s+content="(\d{4}-\d{2}-\d{2})', html) or re.search(
+        r'"datePublished":"(\d{4}-\d{2}-\d{2})', html
+    )
     if m:
         return m.group(1)
     t = re.search(r"(\d{2})\s*·\s*(\d{2})\s*·\s*(\d{4})", soup.get_text(" "))
@@ -62,6 +65,7 @@ def extraer(html: str) -> tuple[str, str, str]:
 
 def resumen_descubrimiento(filas: list[dict]) -> dict:
     """Cuenta lo que el scraper encontró en los sitemaps: URLs descubiertas, descargadas, bloqueadas por robots.txt y con error HTTP, y el detalle por sección."""
+
     def estado(r: dict) -> str:
         if "error" not in r:
             return "descargadas"
@@ -79,7 +83,9 @@ def resumen_descubrimiento(filas: list[dict]) -> dict:
 
 def main() -> None:
     if not any(BRONZE.glob("*.html")):
-        raise SystemExit("Falta el HTML crudo en data/1_bronze/ (no se sube a GitHub: pesa unos 250 MB). Descárgalo con scripts/01_scrape_celsia.py; Silver, Gold y la curaduría ya vienen versionados.")
+        raise SystemExit(
+            "Falta el HTML crudo en data/1_bronze/ (no se sube a GitHub: pesa unos 250 MB). Descárgalo con scripts/01_scrape_celsia.py; Silver, Gold y la curaduría ya vienen versionados."
+        )
     indice = {}
     filas = [json.loads(ln) for ln in (BRONZE / "_indice.jsonl").read_text(encoding="utf-8").splitlines()]
     for r in filas:
@@ -102,7 +108,9 @@ def main() -> None:
         if len(texto) < MIN_CHARS:
             registro.append((slug, meta["url"], "descartada_muy_corta", f"{len(texto)} caracteres"))
             continue
-        candidatos.append((slug, meta["url"], meta["section"], titulo, texto, hashlib.sha1(texto.encode("utf-8")).hexdigest(), fecha))
+        candidatos.append(
+            (slug, meta["url"], meta["section"], titulo, texto, hashlib.sha1(texto.encode("utf-8")).hexdigest(), fecha)
+        )
 
     por_hash: dict[str, list] = {}
     for c in candidatos:
@@ -122,7 +130,9 @@ def main() -> None:
         for dup in grupo[1:]:
             registro.append((dup[0], dup[1], "duplicado_exacto", f"igual a {slug}"))
 
-    (SILVER / "_descubrimiento.json").write_text(json.dumps(resumen_descubrimiento(filas), ensure_ascii=False, indent=2) + chr(10), encoding="utf-8")
+    (SILVER / "_descubrimiento.json").write_text(
+        json.dumps(resumen_descubrimiento(filas), ensure_ascii=False, indent=2) + chr(10), encoding="utf-8"
+    )
     with (SILVER / "_registro.csv").open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         w.writerow(["archivo_bronze", "url", "resultado", "detalle"])
@@ -145,7 +155,18 @@ def sedes_silver() -> None:
     crudo = BRONZE / "sedes_raw.json"
     if not crudo.exists():
         return
-    campos = ["COUNTRY", "DEPARTMENT", "CITY", "NAME", "HQ_TYPE", "ADDRESS", "PHONE", "SHEDULE", "LATITUDE", "LONGITUDE"]
+    campos = [
+        "COUNTRY",
+        "DEPARTMENT",
+        "CITY",
+        "NAME",
+        "HQ_TYPE",
+        "ADDRESS",
+        "PHONE",
+        "SHEDULE",
+        "LATITUDE",
+        "LONGITUDE",
+    ]
     sedes = [f["attributes"] for f in json.loads(crudo.read_text(encoding="utf-8"))["features"]]
     sedes = [{c: s.get(c) if c in ("LATITUDE", "LONGITUDE") else limpiar(s.get(c)) for c in campos} for s in sedes]
     sedes.sort(key=lambda s: (s["COUNTRY"], s["DEPARTMENT"], s["CITY"], s["NAME"]))
@@ -157,8 +178,11 @@ def sedes_silver() -> None:
         if zona != actual:
             actual = zona
             lineas += ["", f"## {zona}", ""]
-        partes = [f"**{s['NAME']}** ({s['CITY']}) - {s['HQ_TYPE']}", f"Dirección: {s['ADDRESS'] or 'no disponible'}",
-                  f"Horario: {s['SHEDULE'] or 'no disponible'}"]
+        partes = [
+            f"**{s['NAME']}** ({s['CITY']}) - {s['HQ_TYPE']}",
+            f"Dirección: {s['ADDRESS'] or 'no disponible'}",
+            f"Horario: {s['SHEDULE'] or 'no disponible'}",
+        ]
         if s["PHONE"]:
             partes.append(f"Teléfono: {s['PHONE']}")
         lineas.append("- " + ". ".join(partes))
