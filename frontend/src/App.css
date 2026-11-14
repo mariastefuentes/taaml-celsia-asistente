@@ -86,3 +86,4 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @keyframes salto { 0%, 80%, 100% { transform: translateY(0); opacity: .5; } 40% { transform: translateY(-4px); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 @media (max-width: 480px) { .sugerencias { grid-template-columns: 1fr; } .burbuja.assistant { margin-left: 0; } .burbuja.assistant::before { display: none; } .burbuja { max-width: 95%; } header { flex-direction: column; align-items: flex-start; } .vacio .logo-grande { width: 120px; } }
+.vacio .pensando { margin-left: 4px; }
