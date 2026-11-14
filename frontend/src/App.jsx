@@ -77,6 +77,7 @@ export default function App() {
   const hiloViejo = new URLSearchParams(search).get("hilo"); // direcciones antiguas: /?hilo=<id>
   const [hilo, setHilo] = useState(hiloDeLaRuta ?? hiloViejo);
   const [mensajes, setMensajes] = useState([]);
+  const [recuperando, setRecuperando] = useState(HILO_VALIDO.test(hiloDeLaRuta ?? hiloViejo ?? "")); // al abrir una conversación guardada no se muestra la bienvenida mientras llega
   const [texto, setTexto] = useState("");
   const [enCurso, setEnCurso] = useState(false);
   const [error, setError] = useState("");
@@ -98,7 +99,10 @@ export default function App() {
 
   useEffect(() => {
     if (!hilo) return;
-    cargarMensajes(hilo).then(setMensajes).catch(() => setError("No se pudo recuperar la conversación guardada."));
+    cargarMensajes(hilo)
+      .then(setMensajes)
+      .catch(() => setError("No se pudo recuperar la conversación guardada."))
+      .finally(() => setRecuperando(false));
   }, []); // solo al abrir la página: recarga y recupera el hilo desde la memoria del servidor
 
   useEffect(() => {
@@ -209,7 +213,8 @@ export default function App() {
       )}
 
       <main aria-live="polite">
-        {mensajes.length === 0 && (
+        {recuperando && <p className="vacio" role="status">Recuperando la conversación<span className="pensando"><i /><i /><i /></span></p>}
+        {!recuperando && mensajes.length === 0 && (
           <section className="vacio">
             <img className="logo-grande" src="/celsia-logo.png" alt="Celsia" />
             <h2>¿En qué te puedo ayudar?</h2>
@@ -229,7 +234,7 @@ export default function App() {
           <article key={i} className={`burbuja ${m.rol}`}>
             {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
               <p className={`herramienta ${tipoDeUso(m).clase}`}>
-                <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ?? [...new Set(m.herramientas.map(etiqueta))].join(" · ")}
+                <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ? [...new Set(m.usadas.split("; "))].join("; ") : [...new Set(m.herramientas.map(etiqueta))].join(" · ")}
               </p>
             )}
             <div className="contenido">{m.texto ? <Markdown texto={m.texto} /> : (enCurso && i === mensajes.length - 1 ? <span className="pensando">Pensando<i /><i /><i /></span> : "")}</div>
