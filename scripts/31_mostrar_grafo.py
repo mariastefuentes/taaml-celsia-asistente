@@ -4,6 +4,7 @@ Los nodos son el modelo, las herramientas y dos nodos de middleware (el resumen 
 tras el modelo, el tope de llamadas decide si sigue a las herramientas o termina.
 Uso:  uv run python scripts/31_mostrar_grafo.py
 """
+
 import os
 import sys
 from pathlib import Path
@@ -33,11 +34,16 @@ def aristas_del_grafo(agente) -> list[tuple[str, str, bool]]:
 def main() -> None:
     agente = crear_agente(llm=ModeloSimulado(messages=iter([AIMessage(content="ok")])))
     grafo = agente.get_graph()
-    print(f"{type(agente).__name__}: {len(grafo.nodes)} nodos y {len(grafo.edges)} aristas\n\nNodos: " + ", ".join(grafo.nodes))
+    print(
+        f"{type(agente).__name__}: {len(grafo.nodes)} nodos y {len(grafo.edges)} aristas\n\nNodos: "
+        + ", ".join(grafo.nodes)
+    )
     print("\nAristas:")
     for origen, destino, condicional in aristas_del_grafo(agente):
         print(f"  {origen} -> {destino}" + ("   (condicional)" if condicional else ""))
-    print("\nEstado: los mensajes (reductor add_messages), guardados por el checkpointer bajo el thread_id; la memoria de largo plazo va aparte, en el Store.")
+    print(
+        "\nEstado: los mensajes (reductor add_messages), guardados por el checkpointer bajo el thread_id; la memoria de largo plazo va aparte, en el Store."
+    )
 
 
 if __name__ == "__main__":
