@@ -24,7 +24,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 
 ## D2. El router es el modelo con herramientas bien descritas
 - **Contexto.** Cada pregunta debe ir a datos exactos, a texto del corpus, a ambos o a ninguno.
-- **Decisión.** Que el modelo elija entre `consultar_datos`, `buscar_en_base` y la respuesta directa a partir de las descripciones de las herramientas y de `prompts/v3_agente.md`.
+- **Decisión.** Que el modelo elija entre `consultar_datos`, `buscar_en_base` y la respuesta directa a partir de las descripciones de las herramientas y de `prompts/v4_agente.md`.
 - **Descartado.** Un clasificador previo (más llamadas y un punto de fallo extra).
 - **Consecuencia.** El enrutamiento se mide, no se asume: matriz de 28 preguntas con la herramienta esperada, y las preguntas de conteo y de varias ciudades ya cuentan con su caso.
 - **Evidencia.** `docs/2 - Conjunto de prueba/matriz_enrutamiento.csv`, `scripts/22_matriz_enrutamiento.py`, informe 4.2 y 5.1.

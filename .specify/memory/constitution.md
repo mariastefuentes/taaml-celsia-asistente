@@ -73,7 +73,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | 7. Pestaña Corpus y scraping (specs 007) | ✅ Hecha | `app/asistente.py`, `app/modulo1.py` |
 | 8. Prueba del scraper (specs 008) | ✅ Hecha | `tests/test_scraper.py` |
 | 9. Etapa Descubrir (specs 009) | ✅ Hecha | `data/2_silver/_descubrimiento.json` |
-| 11. Agente con memoria y router (specs 011) | ✅ Hecha (falta el PR) | `src/taaml/agente.py`, `consulta_datos.py`, `prompts/v2_agente.md`, pestaña Agente |
+| 11. Agente con memoria y router (specs 011) | ✅ Hecha (falta el PR) | `src/taaml/agente.py`, `consulta_datos.py`, `prompts/v4_agente.md`, pestaña Agente |
 
 ## 3. Stack técnico
 
@@ -231,6 +231,7 @@ git push -u origin feat/mi-cambio
 | 2026-11-08 | Router por prompt (`prompts/v2_agente.md`): el agente elige entre `buscar_en_base` y `consultar_datos` | Más simple que un clasificador aparte y coincide con el RAG Agent de la Clase 9 |
 | 2026-11-08 | Tag `taller-1` sobre el `main` sustentado | Conservar el estado exacto de la primera entrega |
 | 2026-11-08 | Mantener `gemini-3.8-flash` en el agente aunque ignora `temperature` y `top_p` | El profesor pidió un modelo reciente de pago; el 3.5 sí los respeta pero va de baja. Las defensas contra datos inventados no dependen de la temperatura |
+| 2026-11-14 | Prompt del agente v4 (`prompts/v4_agente.md`): respuesta solo en texto plano y rechazo amable de JSON, XML, YAML, HTML, CSV, SQL y tablas | El cliente debe recibir palabras normales, no formatos de programación |
 
 ## 10. Notas y tareas pendientes
 
