@@ -164,11 +164,11 @@ def test_conversar_informa_la_herramienta_usada_solo_en_este_turno():
 
 
 # --- modelo del agente ---
-def test_el_agente_usa_gemini_de_pago_y_ollama_de_respaldo():
-    from taaml.agente import MODELO_AGENTE, MODELO_RESPALDO, MODELO_RESPALDO_GEMINI
+def test_el_agente_usa_deepseek_de_pago_y_ollama_de_respaldo():
+    from taaml.agente import MODELO_AGENTE_POR_DEFECTO, MODELO_RESPALDO, MODELO_RESPALDO_GEMINI
 
-    assert MODELO_AGENTE == "gemini-3.8-flash" and MODELO_RESPALDO.startswith("ollama:")
-    assert MODELO_RESPALDO_GEMINI == "gemini-3.5-flash"  # si el 3.8 está saturado, se prueba este antes del local
+    assert MODELO_AGENTE_POR_DEFECTO == "deepseek-flash" and MODELO_RESPALDO.startswith("ollama:")
+    assert MODELO_RESPALDO_GEMINI == "gemini-3.5-flash"  # respaldo intermedio si DeepSeek falla
 
 
 def test_crear_agente_pide_el_modelo_a_obtener_modelo_y_arma_el_respaldo(monkeypatch, tmp_path):
@@ -180,7 +180,10 @@ def test_crear_agente_pide_el_modelo_a_obtener_modelo_y_arma_el_respaldo(monkeyp
         mod, "obtener_modelo", lambda nombre: pedidos.append(nombre) or ModeloEspia(messages=iter([]), vistos=[])
     )
     mod.crear_agente()
-    assert pedidos == [mod.MODELO_AGENTE, mod.MODELO_RESPALDO_GEMINI, mod.MODELO_RESPALDO]
+    esperado = [mod.MODELO_AGENTE, mod.MODELO_RESPALDO]
+    if mod.MODELO_AGENTE != mod.MODELO_RESPALDO_GEMINI:
+        esperado.insert(1, mod.MODELO_RESPALDO_GEMINI)
+    assert pedidos == esperado
 
 
 def test_crear_agente_con_el_modelo_alterno_no_lo_repite(monkeypatch, tmp_path):
@@ -235,6 +238,8 @@ def test_el_costo_usa_la_tarifa_vigente_y_cambia_en_2027():
 
     assert costo_usd(1_000_000, 1_000_000, "gemini-3.8-flash", hoy=date(2026, 11, 8)) == 0.75 + 3.75
     assert costo_usd(1_000_000, 1_000_000, "gemini-3.8-flash", hoy=date(2027, 1, 1)) == 1.50 + 7.50
+    assert costo_usd(1_000_000, 1_000_000, "deepseek-flash", hoy=date(2026, 11, 8)) == 0.15 + 0.60
+    assert costo_usd(1_000_000, 1_000_000, "deepseek-flash", hoy=date(2027, 1, 1)) == 0.15 + 0.60
 
 
 def test_el_costo_de_un_modelo_local_es_cero_y_sin_precio_es_desconocido():

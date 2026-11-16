@@ -55,7 +55,7 @@ sequenceDiagram
     participant C as Frontend React
     participant A as API FastAPI
     participant G as Agente
-    participant M as Gemini 3.8 Flash
+    participant M as DeepSeek V4.1 Flash
     participant T as Herramientas
     participant S as SQLite (checkpointer y Store)
     C->>A: POST /api/chat {mensaje, hilo, usuario}
@@ -79,7 +79,7 @@ sequenceDiagram
 | Memoria en PostgreSQL | Con `DATABASE_URL` definida, el checkpointer y el Store son `PostgresSaver` y `PostgresStore` (probados con un PostgreSQL local, `tests/test_memoria_postgres.py`); sin ella, SQLite |
 | Grafo del agente | `scripts/31_mostrar_grafo.py`: `create_agent` devuelve un StateGraph compilado; el script imprime sus nodos (modelo, herramientas y dos de middleware), sus aristas condicionales y el estado, sin llamar a ningún modelo |
 | Traza de LangSmith | `scripts/33_diagrama_traza_langsmith.py`: lee de LangSmith (solo lectura) la traza más reciente de una pregunta y dibuja sus pasos, tiempos, tokens y argumentos de herramienta en `docs/3 - Informe/diagrama_traza_langsmith.svg`; necesita `LANGSMITH_API_KEY`, no llama a ningún modelo |
-| Flujo con aprobación humana | `scripts/32_flujo_reclamo.py`: un StateGraph escrito a mano (`src/taaml/flujo_reclamo.py`) con `interrupt`: el reclamo se radica solo si una persona lo aprueba; salida estructurada con Pydantic; sin modelo ni costo (con `--real` usa Gemini) |
+| Flujo con aprobación humana | `scripts/32_flujo_reclamo.py`: un StateGraph escrito a mano (`src/taaml/flujo_reclamo.py`) con `interrupt`: el reclamo se radica solo si una persona lo aprueba; salida estructurada con Pydantic; sin modelo ni costo (con `--real` usa DeepSeek) |
 | Viaje en el tiempo | `scripts/27_viaje_en_el_tiempo.py`: historial de puntos de control, replay y fork de un hilo, con un modelo simulado (sin costo) |
 | Memoria larga | Store con espacio `("perfil", usuario)`, máximo 20 datos por cliente, borrable por el cliente |
 | Prompt y resumen | `@dynamic_prompt` (`con_fecha_de_hoy`) arma el prompt en cada turno con la fecha; `trim_messages` recorta lo que ve el modelo; `SummarizationMiddleware` resume la conversación guardada pasados 8.000 tokens |
@@ -90,7 +90,7 @@ sequenceDiagram
 | Exploración de embeddings | `scripts/25_explorar_embeddings.py`: coseno, producto punto y L2 (mismo orden con vectores de norma 1), recorte Matryoshka (512 dimensiones casi no pierde calidad) y mapa t-SNE en `docs/3 - Informe/tsne_corpus.svg` |
 | Validación de la respuesta | `datos_dudosos` revisa que cada cifra, correo o enlace de la respuesta aparezca en lo que devolvieron las herramientas, lo que dijo el cliente o la fecha de hoy; si no, el frontend avisa «Verifica antes de usar» |
 | Blindaje | Limpieza de caracteres invisibles, reglas del prompt y 11/11 ataques directos y 8/8 indirectos resistidos |
-| Respaldo | `llama3.2` local si Gemini falla |
+| Respaldo | `llama3.2` local si DeepSeek falla |
 
 La app de Streamlit del Taller 1 tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes** y **Corpus y scraping** (etapas del pipeline y métricas). El agente del Módulo 2 no está en ella: se entrega con la API y el frontend de arriba (`make api` y `make app`).
 
@@ -102,7 +102,7 @@ La app de Streamlit del Taller 1 tiene cuatro pestañas: **Preguntas y respuesta
 
 ## Instalación
 
-Requisitos: [uv](https://docs.astral.sh/uv/) (regla del curso: solo `uv`, sin `pip` ni `requirements.txt`), Python 3.12 y [Ollama](https://ollama.com/) con el modelo `nomic-embed-text-v2-moe` para los embeddings de las preguntas. Opcional: `llama3.2:3b`, el respaldo local que responde cuando no hay `GOOGLE_API_KEY` o se agota la cuota.
+Requisitos: [uv](https://docs.astral.sh/uv/) (regla del curso: solo `uv`, sin `pip` ni `requirements.txt`), Python 3.12 y [Ollama](https://ollama.com/) con el modelo `nomic-embed-text-v2-moe` para los embeddings de las preguntas. Opcional: `llama3.2:3b`, el respaldo local que responde cuando no hay `DEEPSEEK_API_KEY` ni `GOOGLE_API_KEY` o se agota la cuota.
 
 ```bash
 git clone https://github.com/mariastefuentes/taaml-celsia-asistente.git
@@ -110,7 +110,7 @@ cd taaml-celsia-asistente
 make setup               # uv sync + .env + modelos de Ollama (nomic y llama3.2:3b)
 # o paso a paso:
 # uv sync
-# cp .env.example .env   # completa GOOGLE_API_KEY (Gemini); sin ella responde el modelo local
+# cp .env.example .env   # completa DEEPSEEK_API_KEY (agente) y GOOGLE_API_KEY (tareas); sin ellas responde el modelo local
 # ollama pull nomic-embed-text-v2-moe
 # ollama pull llama3.2:3b
 make indice              # construye el índice de vectores con Ollama (el repositorio no versiona el .npz ni Qdrant)
@@ -170,7 +170,7 @@ Los datos pasan por tres capas (patrón Medallion): cada script hace una sola et
 | 4c. Indexar (embeddings) | `uv run python scripts/07_construir_indice.py` (necesita Ollama y `nomic-embed-text-v2-moe`) | `data/4_curaduria/indice_embeddings.npz` (un vector por fragmento, caché) y la base vectorial Qdrant `data/4_curaduria/qdrant` (no se sube a Git; sin ella la app usa el `.npz`) |
 | 5. Verificar alcance | `uv run python scripts/08_inventario_intenciones.py` | cobertura de las intenciones del cliente |
 | 6. Validar la prueba | `uv run python scripts/09_conjunto_de_prueba.py` | comprueba los criterios del conjunto de prueba (59 preguntas) |
-| 7. Evaluar un modelo | `uv run python scripts/11_evaluar_modelo.py --modelo gemini:gemini-3.5-flash` | respuestas y calificaciones en `docs/2 - Conjunto de prueba/resultados/` |
+| 7. Evaluar un modelo | `uv run python scripts/11_evaluar_modelo.py --modelo deepseek:deepseek-flash --juez deepseek:deepseek-v4-pro` | respuestas y calificaciones en `docs/2 - Conjunto de prueba/resultados/` |
 
 Archivos binarios: el repositorio no versiona PDF ni la matriz de vectores (`indice_embeddings.npz`). Los PDF se generan con `make pdf` y el índice con `make indice` (necesita Ollama con `nomic-embed-text-v2-moe`); sin índice la búsqueda cae a palabras.
 
@@ -184,11 +184,11 @@ Los datos que el sitio muestra solo como enlaces (WhatsApp, PQR, pagos) están e
 ### Opciones que se activan a propósito
 - **Post-validación.** La app avisa si una cifra, un correo o un enlace de la respuesta no aparece en las fuentes consultadas (`src/taaml/validacion.py`); `scripts/14_validar_respuestas.py` lo mide sobre las respuestas guardadas, sin modelo.
 - **Continuidad de la demo.** Si el modelo elegido falla por cuota o conexión, la app prueba `deepseek-flash` (si hay clave) y luego `ollama:llama3.2` (local), y si ninguno responde muestra la respuesta ya evaluada (v3) de esa pregunta, marcada como guardada (`src/taaml/respaldo.py`). `uv run python scripts/16_ensayo_demo.py` revisa que todo esté listo sin gastar; con `--llamar` hace una llamada corta por proveedor.
-- **Agente con memoria y router (spec 011).** `src/taaml/agente.py` arma un agente `create_agent` con `gemini-3.8-flash` (respaldo `ollama:llama3.2`), memoria por conversación (`thread_id`) guardada en SQLite (`data/memoria/`, no se versiona: al recargar la página, el hilo viaja en la dirección `/c/<hilo>` y la conversación vuelve), un recorte del historial que ve el modelo (3.000 tokens aproximados; lo guardado y lo que se ve en pantalla siguen completos) y dos herramientas: `buscar_en_base` (texto del sitio) y `consultar_datos` (sedes, contactos y catálogo con filtros exactos, `src/taaml/consulta_datos.py`). El prompt `prompts/v4_agente.md` fija cuándo usar cada una y que la respuesta sea solo texto plano. Está en la pestaña **Agente**; `uv run python scripts/18_ensayo_agente.py` hace una conversación de cuatro preguntas (gasta unas 8 a 12 llamadas a Gemini) y `scripts/15_probar_agente.py` hace preguntas sueltas.
+- **Agente con memoria y router (spec 011).** `src/taaml/agente.py` arma un agente `create_agent` con `deepseek-flash` (DeepSeek-V4.1-Flash-1017, respaldo `ollama:llama3.2`), memoria por conversación (`thread_id`) guardada en SQLite (`data/memoria/`, no se versiona: al recargar la página, el hilo viaja en la dirección `/c/<hilo>` y la conversación vuelve), un recorte del historial que ve el modelo (3.000 tokens aproximados; lo guardado y lo que se ve en pantalla siguen completos) y dos herramientas: `buscar_en_base` (texto del sitio) y `consultar_datos` (sedes, contactos y catálogo con filtros exactos, `src/taaml/consulta_datos.py`). El prompt `prompts/v4_agente.md` fija cuándo usar cada una y que la respuesta sea solo texto plano. Está en la pestaña **Agente**; `uv run python scripts/18_ensayo_agente.py` hace una conversación de cuatro preguntas (gasta unas 8 a 12 llamadas a Gemini) y `scripts/15_probar_agente.py` hace preguntas sueltas.
 - **Extracción a JSONL.** `uv run python scripts/13_extraer_contactos.py` (3 llamadas a Gemini) escribe `data/5_extraccion/contactos.jsonl`.
 - **Trazabilidad (LangSmith).** Si el `.env` tiene `LANGSMITH_API_KEY`, la app y las tareas registran cada ejecución (pregunta, fragmentos, prompt, respuesta, tokens y tiempo) en el proyecto `taaml-celsia` de smith.langchain.com. Sin la clave no se envía nada. La evaluación (`11_evaluar_modelo.py`) llama a la API directamente y no se traza. En el agente, cada paso (modelo y herramientas) es un nodo de la traza con su latencia, y un error en los argumentos de una herramienta aparece como error de ese nodo. `scripts/24_evaluar_en_langsmith.py` sube la matriz de enrutamiento como dataset (`celsia-matriz-enrutamiento`) y la evalúa con `evaluate`, con dos configuraciones del agente (con y sin tope de herramientas) que se comparan en LangSmith. LangSmith observa; no orquesta.
-- **Reordenamiento de fragmentos.** `responder_con_fuentes(..., reordenar=True)` o `--reordenar` en los scripts 10 y 11: recupera 30 candidatos y `gemini-3.5-flash-lite` elige los 12 mejores. Cuesta una llamada más por pregunta y está apagado por defecto.
-- **DeepSeek en lugar de Gemini.** Con `DEEPSEEK_API_KEY` en el `.env`, escribir `deepseek-flash` (o `deepseek-v4-pro`) en el campo «Modelo» de la app, o pasar `modelo="deepseek-flash"` a las tareas, usa DeepSeek con el razonamiento apagado; el reordenador también cambia a `deepseek-flash`. En la evaluación: `--modelo deepseek:deepseek-flash --juez deepseek:deepseek-v4-pro`. DeepSeek respeta `temperature 0.0`, pero deja `top_p` fijo en 1,0.
+- **Reordenamiento de fragmentos.** `responder_con_fuentes(..., reordenar=True)` o `--reordenar` en los scripts 10 y 11: recupera 30 candidatos y un modelo barato elige los 12 mejores (`deepseek-flash`; `gemini-3.5-flash-lite` si el que responde es de Gemini). Cuesta una llamada más por pregunta y está apagado por defecto.
+- **DeepSeek (modelo por defecto).** Con `DEEPSEEK_API_KEY` en el `.env`, `deepseek-flash` (DeepSeek-V4.1-Flash-1017) es el modelo por defecto del agente y de las tareas; también se puede escribir `deepseek-flash` (o `deepseek-v4-pro`) en el campo «Modelo» de la app, o pasar `modelo="deepseek-flash"` a las tareas, con el razonamiento apagado; el reordenador también cambia a `deepseek-flash`. En la evaluación: `--modelo deepseek:deepseek-flash --juez deepseek:deepseek-v4-pro`. DeepSeek respeta `temperature 0.0`, pero deja `top_p` fijo en 1,0.
 
 </details>
 

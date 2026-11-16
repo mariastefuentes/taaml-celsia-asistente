@@ -1,6 +1,6 @@
 """Las tres tareas del asistente con LangChain: Resumen, FAQ y Q&A.
 
-Las tres usan el mismo modelo (Gemini por defecto, temperature 0.0 y top_p 0.1; DeepSeek si el nombre empieza por «deepseek» u Ollama local si empieza por «ollama:») y prompts versionados en prompts/.
+Las tres usan el mismo modelo (DeepSeek por defecto, temperature 0.0 y top_p 0.1; Ollama local si el nombre empieza por «ollama:» y Gemini con cualquier otro nombre) y prompts versionados en prompts/.
 Resumen y FAQ devuelven salida estructurada (Pydantic); Q&A devuelve texto.
 """
 
@@ -33,7 +33,7 @@ if os.environ.get("LANGSMITH_API_KEY") or os.environ.get("LANGCHAIN_API_KEY"):
         os.environ.setdefault(_variable, "true")
     os.environ.setdefault("LANGSMITH_PROJECT", "taaml-celsia")
     os.environ.setdefault("LANGCHAIN_PROJECT", "taaml-celsia")
-MODELO_POR_DEFECTO = "gemini-3.5-flash"  # el que se evaluó; el 3.6 ignora temperature y top_p (regla del proyecto)
+MODELO_POR_DEFECTO = "deepseek-flash"  # DeepSeek-V4.1-Flash-1017, el mismo modelo con el que trabaja el agente
 URL_DEEPSEEK = (
     "https://api.deepseek.com"  # formato OpenAI; el modelo se elige por nombre: «deepseek-flash», «deepseek-v4-pro»
 )
@@ -94,7 +94,7 @@ def clave_faltante(modelo: str = MODELO_POR_DEFECTO) -> str | None:
 
 @lru_cache(maxsize=4)
 def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
-    """Gemini por defecto; si el nombre empieza por «deepseek» usa DeepSeek con el razonamiento apagado.
+    """DeepSeek por defecto (con el razonamiento apagado); «ollama:» usa el modelo local y el resto se trata como Gemini.
 
     DeepSeek solo respeta temperature con el razonamiento apagado y deja top_p fijo en 1,0 (lo dice su documentación).
     """

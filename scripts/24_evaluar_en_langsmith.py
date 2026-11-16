@@ -1,5 +1,5 @@
 """EVALUACIÓN EN LANGSMITH (Taller 2): la matriz de enrutamiento como dataset y dos configuraciones del agente comparables en la misma pantalla.
-GASTA CUOTA de Gemini (una llamada de agente por pregunta, 25 preguntas por configuración, más 2 de preparación) y necesita una clave de LangSmith
+GASTA CUOTA del modelo de pago (una llamada de agente por pregunta, 25 preguntas por configuración, más 2 de preparación) y necesita una clave de LangSmith
 con permiso para crear datasets (LANGSMITH_API_KEY en el .env; la de «solo trazas» da 403).
 
 Qué hace:
@@ -112,7 +112,7 @@ def main() -> None:
             print(
                 f"  experimento «agente-{c}»: tope de {CONFIGURACIONES[c]} herramientas por pregunta, {len(ejemplos)} preguntas"
             )
-        print("No se llamó a LangSmith ni a Gemini.")
+        print("No se llamó a LangSmith ni al modelo.")
         return
     from langsmith import Client
 

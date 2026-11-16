@@ -11,7 +11,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 | D5 | Qdrant local con alias, búsqueda exacta | vigente |
 | D6 | Contexto recuperado como datos pasivos, con delimitador y validación | vigente |
 | D7 | Interfaz: API FastAPI con SSE y frontend React desacoplado | vigente |
-| D8 | Gemini de pago como modelo principal y Ollama como respaldo | vigente |
+| D8 | DeepSeek de pago como modelo principal y Ollama como respaldo | vigente |
 | D9 | Sin gatekeeper externo (System One) mientras no haya clave | abierta |
 
 ## D1. Agente `create_agent`, sin `StateGraph` propio
@@ -53,10 +53,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Evidencia.** `api/main.py`, `frontend/src/App.jsx`, `tests/test_api.py`, informe 6.
 
 ## D8. Modelo de pago principal y respaldo local
-- **Decisión.** `gemini-3.8-flash` (indicación del profesor: API de pago y modelo reciente), con `llama3.2` en Ollama como respaldo. Ollama también calcula los embeddings.
-- **Respaldo en cadena (PR 73).** Si el 3.8 falla (503 por alta demanda, cuota o más de 60 s sin respuesta), el agente prueba `gemini-3.5-flash` y después `llama3.2` local. Gemini ya no reintenta (`max_retries=0`): un reintento dejaba la demo en «Pensando…». `TAAML_MODELO_AGENTE` en `.env` cambia el modelo principal sin tocar código; `/api/salud` informa el principal, no el que respondió.
-- **Límite declarado.** Gemini ignora `temperature` y `top_p`; el texto varía y se compensa con las herramientas, la validación y el «No tengo esa información». La matriz de enrutamiento se midió con el 3.8: el 3.5 como respaldo no se midió allí.
-- **Evidencia.** `specs/011-agente-memoria-y-router`, informe 7.
+- **Decisión.** `deepseek-flash` (DeepSeek-V4.1-Flash-1017, API de pago) en el agente y en Q&A, Resumen, FAQ y el flujo de reclamo, con `llama3.2` en Ollama como respaldo. Ollama también calcula los embeddings.
+- **Respaldo en cadena (PR 73).** Si DeepSeek falla (cuota, red o más de 60 s sin respuesta), el agente prueba `gemini-3.5-flash` y después `llama3.2` local. `TAAML_MODELO_AGENTE` en `.env` cambia el modelo principal sin tocar código; `/api/salud` informa el principal, no el que respondió.
+- **Límite declarado.** DeepSeek respeta `temperature` con el razonamiento apagado, pero deja `top_p` fijo en 1,0; el respaldo Gemini 3.5 ignora ambos. Se compensa con las herramientas, la validación y el «No tengo esa información».
+- **Evidencia.** `src/taaml/agente.py`, `tests/test_agente.py`, informe 7.
 
 ## D9. Gatekeeper System One (Jev): abierta
 - **Contexto.** El enunciado lo pide solo «si está disponible». Es una API comercial y requiere una clave.

@@ -8,7 +8,7 @@ Con `--directas` mide tres jailbreaks más: juego de rol tipo DAN dentro de una 
 el «respóndeme en JSON» del caso Rappi. Aquí la orden viene en la pregunta, no en el documento.
 
 Cada caso es una llamada al modelo (gasta cuota o saldo): hay 7 casos indirectos y 3 directos. Se califica con reglas, sin juez.
-Con `--agente` los 7 casos indirectos se miden contra el agente (gemini-3.8-flash, prompt v2): la orden se agrega al resultado de la
+Con `--agente` los 7 casos indirectos se miden contra el agente (deepseek-flash): la orden se agrega al resultado de la
 herramienta que el agente use (buscar_en_base o consultar_datos), y se anota cuál usó. Gasta una llamada de agente por caso.
 Uso:  uv run python scripts/12_probar_inyeccion_indirecta.py [--directas | --agente]
 Resultado: docs/2 - Conjunto de prueba/resultados/inyeccion_indirecta_<modelo>_<prompt>.csv (o inyeccion_directa_extra_...)

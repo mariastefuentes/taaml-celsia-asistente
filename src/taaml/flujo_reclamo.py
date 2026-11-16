@@ -34,7 +34,7 @@ class Estado(TypedDict, total=False):
     resultado: str
 
 
-def extractor_con_modelo(modelo: str = "gemini-3.8-flash") -> Callable[[str], Reclamo]:
+def extractor_con_modelo(modelo: str = "deepseek-flash") -> Callable[[str], Reclamo]:
     """Extractor real: el modelo devuelve un `Reclamo` con `with_structured_output` (GASTA cuota; las pruebas usan uno falso)."""
     from taaml.tareas import _estructurado
 

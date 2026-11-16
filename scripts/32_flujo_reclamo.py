@@ -1,7 +1,7 @@
 """FLUJO CON APROBACIÓN HUMANA (StateGraph a mano): radicar un reclamo solo si una persona lo aprueba. Sin modelos ni costo: el extractor es determinista.
 
 Muestra los nodos y las aristas del grafo, y tres corridas: aprobada, rechazada e incompleta (sin ciudad). La pausa es un `interrupt` y se retoma con `Command(resume=...)`.
-Con `--real` el extractor es el modelo (`with_structured_output` con el esquema Pydantic `Reclamo`) y SÍ GASTA CUOTA de Gemini.
+Con `--real` el extractor es el modelo (`with_structured_output` con el esquema Pydantic `Reclamo`) y SÍ GASTA CUOTA del modelo de pago (DeepSeek).
 Uso:  uv run python scripts/32_flujo_reclamo.py
       uv run python scripts/32_flujo_reclamo.py --real "Se fue la luz en Ibagué desde las 8 y nadie responde"
 """

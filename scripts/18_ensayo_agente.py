@@ -1,4 +1,4 @@
-"""ENSAYO DEL AGENTE (spec 011): una conversación de cuatro preguntas con memoria y router. GASTA CUOTA de Gemini (unas 8 a 12 llamadas).
+"""ENSAYO DEL AGENTE (spec 011): una conversación de cuatro preguntas con memoria y router. GASTA CUOTA del modelo de pago (unas 8 a 12 llamadas).
 
 Comprueba que el agente elija la herramienta correcta, que recuerde el turno anterior y que no invente datos. Muestra además qué
 modelo respondió, para notar si entró el respaldo local. Necesita GOOGLE_API_KEY con facturación y Ollama encendido (embeddings).

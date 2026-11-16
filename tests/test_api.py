@@ -4,6 +4,7 @@ import threading
 from fastapi.testclient import TestClient
 
 from api.main import app
+from taaml.agente import MODELO_AGENTE
 
 cliente = TestClient(app)
 HILO = "a" * 32
@@ -19,7 +20,7 @@ def _eventos(texto: str) -> list[tuple[str, dict]]:
 
 def test_salud_dice_el_modelo():
     r = cliente.get("/api/salud")
-    assert r.status_code == 200 and r.json()["estado"] == "ok" and "gemini" in r.json()["modelo"]
+    assert r.status_code == 200 and r.json()["estado"] == "ok" and r.json()["modelo"] == MODELO_AGENTE
     assert r.json()["almacen"] in {"qdrant", "numpy", "ninguno"}
 
 
