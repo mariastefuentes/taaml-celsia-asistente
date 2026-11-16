@@ -1,9 +1,9 @@
-"""MATRIZ DE ENRUTAMIENTO (Taller 2): ¿el agente elige la herramienta correcta? GASTA CUOTA de Gemini (una llamada de agente por pregunta, más 2 de preparación).
+"""MATRIZ DE ENRUTAMIENTO (Taller 2): ¿el agente elige la herramienta correcta? GASTA CUOTA del modelo de pago (una llamada de agente por pregunta, más 2 de preparación).
 
 Lee docs/2 - Conjunto de prueba/matriz_enrutamiento.csv, hace cada pregunta en una conversación nueva (las de memoria llevan antes un turno de preparación)
 y compara las herramientas usadas con las esperadas. Mide además tokens, costo y segundos por turno. Necesita GOOGLE_API_KEY con facturación y Ollama encendido.
 Uso:  uv run python scripts/22_matriz_enrutamiento.py          (corre todo)
-      uv run python scripts/22_matriz_enrutamiento.py --seco   (solo muestra el plan, no llama a Gemini)
+      uv run python scripts/22_matriz_enrutamiento.py --seco   (solo muestra el plan, no llama al modelo)
       uv run python scripts/22_matriz_enrutamiento.py R01 R15  (solo esas)
 Resultado: docs/2 - Conjunto de prueba/resultados/matriz_enrutamiento_resultados.csv
 """
@@ -107,7 +107,7 @@ def main() -> None:
             previo = f" (antes: «{(PREPARACION | OTRO_HILO)[f['id']]}»)" if f["id"] in PREPARACION | OTRO_HILO else ""
             print(f"{f['id']} [{f['categoria']}] espera {f['herramienta_esperada']}: {f['pregunta']}{previo}")
         print(
-            f"\n{len(filas)} preguntas, {sum(f['id'] in PREPARACION | OTRO_HILO for f in filas)} turnos de preparación. No se llamó a Gemini."
+            f"\n{len(filas)} preguntas, {sum(f['id'] in PREPARACION | OTRO_HILO for f in filas)} turnos de preparación. No se llamó al modelo."
         )
         return
     agente, resultados, total = crear_agente(), [], 0.0

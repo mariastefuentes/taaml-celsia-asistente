@@ -67,7 +67,7 @@ def main() -> None:
     ap.add_argument(
         "--reordenar",
         action="store_true",
-        help="agrega la medición con reordenamiento (una llamada a Gemini por pregunta: gasta cuota)",
+        help="agrega la medición con reordenamiento (una llamada al modelo reordenador por pregunta: gasta cuota)",
     )
     ap.add_argument(
         "--solo-tabla",

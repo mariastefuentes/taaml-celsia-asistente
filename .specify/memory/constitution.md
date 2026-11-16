@@ -84,12 +84,12 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Build backend** | `uv_build` (src-layout, paquete `taaml`) |
 | **HTTP y scraping** | `requests` + `beautifulsoup4` + `lxml` |
 | **Orquestación de LLM** | LangChain (`langchain`, `langchain-google-genai`, `langchain-openai`, `langchain-ollama`) |
-| **Modelo por defecto** | `gemini-3.5-flash` (Q&A, Resumen y FAQ); respaldo `deepseek-flash` y `ollama:llama3.2` |
-| **Modelo del agente** | `gemini-3.8-flash` (API de pago); respaldo `ollama:llama3.2` |
+| **Modelo por defecto** | `deepseek-flash` (Q&A, Resumen y FAQ); respaldo `ollama:llama3.2` |
+| **Modelo del agente** | `deepseek-flash` (DeepSeek-V4.1-Flash-1017, API de pago); respaldo `ollama:llama3.2` |
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
 | **Base vectorial** | Qdrant en modo local (persistente, sin servidor), similitud del coseno |
-| **Interfaz** | Streamlit (`app/asistente.py`, `app/modulo1.py`) |
-| **Testing** | `pytest` (133 pruebas, sin Gemini ni Ollama) |
+| **Interfaz** | API FastAPI + frontend React (`api/`, `frontend/`, Módulo 2); Streamlit solo para el Taller 1 (`app/`) |
+| **Testing** | `pytest` (228 pruebas, sin modelos ni red) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
 | **CI/CD** | GitHub Actions (`.github/workflows/ci.yml`) |
 
@@ -110,7 +110,7 @@ taaml-celsia-asistente/
 │   ├── reordenar.py          # reordenamiento opcional de candidatos
 │   ├── validacion.py         # cifras, correos y enlaces sin respaldo
 │   ├── respaldo.py           # cadena de modelos y respuestas guardadas
-│   ├── agente.py             # agente con memoria, dos herramientas y router (Gemini 3.8)
+│   ├── agente.py             # agente con memoria, dos herramientas y router (DeepSeek)
 │   ├── consulta_datos.py     # sedes, contactos y catálogo con filtros exactos
 │   ├── prompts.py            # armado del prompt (5 bloques + XML)
 │   ├── corpus.py             # métricas del pipeline para la app
@@ -130,7 +130,9 @@ taaml-celsia-asistente/
 ├── tests/                    # pruebas automáticas de componentes
 ├── .specify/memory/          # este archivo — verdad central
 ├── .github/                  # plantillas de PR e issues, CI, Dependabot y etiquetas
-├── app/                      # aplicaciones Streamlit (puntos de entrada, no librería)
+├── api/                      # API FastAPI del agente (Módulo 2)
+├── frontend/                 # interfaz React + Vite (Módulo 2)
+├── app/                      # aplicaciones Streamlit del Taller 1 (puntos de entrada, no librería)
 │   ├── asistente.py          # app completa: Q&A, Resumen, FAQ y Corpus
 │   └── modulo1.py            # app del Módulo 1: solo corpus y scraping
 ├── CONSTITUTION.md           # puntero a este archivo (el estándar del curso la pide en la raíz)
@@ -150,7 +152,7 @@ taaml-celsia-asistente/
 - **Estilo:** PEP 8 y PEP 257, con Ruff (`line-length = 100`).
 - **Nomenclatura:** `snake_case` (funciones/variables), `PascalCase` (clases),
   `UPPER_CASE` (constantes). Los nombres de archivos, variables y constantes **nunca**
-  llevan tildes; el texto para personas y el código de `src/` y `app/` sí.
+  llevan tildes; el texto para personas y el código de `src/`, `app/` y `frontend/` sí.
 - **Idioma:** UI, documentación, prompts y commits en español; identificadores en inglés
   cuando el dominio lo pide (p. ej. `chunk`, `hash`).
 - **Docstrings** en módulos, clases y funciones públicas.
@@ -159,7 +161,7 @@ taaml-celsia-asistente/
   - `data/0_manual/` es el único lugar de datos escritos a mano, siempre con su fuente.
   - Un cambio de prompt es una **versión nueva** (`prompts/vN_*.md`), no una edición.
   - Toda cifra, teléfono o enlace que responda el asistente debe existir en la base.
-  - `temperature = 0.0` y `top_p = 0.1` en RAG y agentes. **Excepción:** el agente (`gemini-3.8-flash`) los ignora (medido el 2026-11-08: 5 frases distintas en 5 intentos con 0,0 y 0,1, igual que con 2,0 y 1,0); sus respuestas pueden variar entre ejecuciones y se protege con las herramientas, la validación de datos sin respaldo y el «No tengo esa información».
+  - `temperature = 0.0` y `top_p = 0.1` en RAG y agentes. **Excepción:** DeepSeek (`deepseek-flash`, en el agente y en las tareas) respeta `temperature` con el razonamiento apagado, pero deja `top_p` fijo en 1,0; se compensa con las herramientas, la validación de datos sin respaldo y el «No tengo esa información».
 
 ## 6. Calidad y automatización
 
@@ -232,6 +234,7 @@ git push -u origin feat/mi-cambio
 | 2026-11-08 | Tag `taller-1` sobre el `main` sustentado | Conservar el estado exacto de la primera entrega |
 | 2026-11-08 | Mantener `gemini-3.8-flash` en el agente aunque ignora `temperature` y `top_p` | El profesor pidió un modelo reciente de pago; el 3.5 sí los respeta pero va de baja. Las defensas contra datos inventados no dependen de la temperatura |
 | 2026-11-14 | Prompt del agente v4 (`prompts/v4_agente.md`): respuesta solo en texto plano y rechazo amable de JSON, XML, YAML, HTML, CSV, SQL y tablas | El cliente debe recibir palabras normales, no formatos de programación |
+| 2026-11-15 | `deepseek-flash` (DeepSeek-V4.1-Flash-1017, API de pago) en el agente y en las tres tareas del Taller 1 (Q&A, Resumen y FAQ), además del flujo de reclamo; respaldo `ollama:llama3.2` | DeepSeek respeta `temperature` con el razonamiento apagado y su API es OpenAI-compatible; `deepseek-flash` es el ID vigente de la versión V4.1 Flash 1017 |
 
 ## 10. Notas y tareas pendientes
 

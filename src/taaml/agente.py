@@ -1,8 +1,8 @@
 """Agente con herramienta: `create_agent` de LangChain 1.x con una herramienta que consulta la base de Celsia.
 
 Es el patrón «modelo + herramientas + prompt», con memoria por conversación (`thread_id`) y dos herramientas: `buscar_en_base`
-(texto, reutiliza `recuperacion.buscar`) y `consultar_datos` (datos exactos). Usa Gemini de pago (indicación del profesor) y, si
-falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1, pero gemini-3.8-flash los ignora (medido): la respuesta puede variar.
+(texto, reutiliza `recuperacion.buscar`) y `consultar_datos` (datos exactos). Usa DeepSeek de pago y, si
+falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1; DeepSeek respeta temperature con el razonamiento apagado, pero deja top_p fijo en 1,0.
 """
 
 import logging
@@ -43,11 +43,10 @@ from taaml.tareas import obtener_modelo
 
 log = logging.getLogger("taaml.agente")
 
-MODELO_AGENTE = os.environ.get(
-    "TAAML_MODELO_AGENTE", "gemini-3.8-flash"
-)  # API de pago, el más reciente de la familia Flash (indicación del profesor); TAAML_MODELO_AGENTE permite cambiarlo sin tocar código
-MODELO_RESPALDO_GEMINI = "gemini-3.5-flash"  # si el 3.8 está saturado (503), se intenta este antes del modelo local
-MODELO_RESPALDO = "ollama:llama3.2"  # 3B local y gratis: solo entra si Gemini falla (cuota, red)
+MODELO_AGENTE_POR_DEFECTO = "deepseek-flash"  # DeepSeek-V4.1-Flash-1017 con API de pago
+MODELO_AGENTE = os.environ.get("TAAML_MODELO_AGENTE") or MODELO_AGENTE_POR_DEFECTO  # TAAML_MODELO_AGENTE permite cambiarlo sin tocar código
+MODELO_RESPALDO_GEMINI = "gemini-3.5-flash"  # si DeepSeek falla (cuota, red), se intenta este antes del local; requiere GOOGLE_API_KEY
+MODELO_RESPALDO = "ollama:llama3.2"  # 3B local y gratis: solo entra si los de pago fallan
 RUTA_MEMORIA = (
     Path(__file__).resolve().parents[2] / "data" / "memoria" / "conversaciones.sqlite"
 )  # las conversaciones sobreviven a reiniciar la app
@@ -62,9 +61,10 @@ MAX_LLAMADAS_POR_TURNO = 4  # tope duro de herramientas por pregunta: una consul
 FRAGMENTOS_AGENTE = 4  # cada turno reenvía el historial: pocos fragmentos mantienen bajo el costo en tokens
 
 
-# USD por millón de tokens (entrada, salida con "pensamiento" incluido), página oficial de precios de Gemini; la tarifa de 2026 es introductoria
-PRECIOS_USD = {"gemini-3.8-flash": (0.75, 3.75)}
-PRECIOS_USD_2027 = {"gemini-3.8-flash": (1.50, 7.50)}  # desde el 1 de enero de 2027
+# USD por millón de tokens (entrada sin caché, salida con "pensamiento" incluido), páginas oficiales de precios.
+# DeepSeek cobra la mitad en hora valle (la tarifa de abajo) y el doble en pico; Gemini tiene tarifa introductoria de 2026 y otra desde 2027.
+PRECIOS_USD = {"gemini-3.8-flash": (0.75, 3.75), "deepseek-flash": (0.15, 0.60)}
+PRECIOS_USD_2027 = {"gemini-3.8-flash": (1.50, 7.50), "deepseek-flash": (0.15, 0.60)}
 INICIO_2027 = date(2027, 1, 1)
 
 

@@ -47,10 +47,10 @@ def main() -> None:
 
     print("Sin llamadas a modelos:")
     print(
-        f"  {marca(bool(os.environ.get('GOOGLE_API_KEY')))} clave de Gemini (GOOGLE_API_KEY); sin ella responde el modelo local"
+        f"  {marca(bool(os.environ.get('DEEPSEEK_API_KEY')))} clave de DeepSeek (DEEPSEEK_API_KEY); sin ella responde el modelo local"
     )
     print(
-        f"  {marca(bool(os.environ.get('DEEPSEEK_API_KEY')))} clave de DeepSeek (DEEPSEEK_API_KEY), respaldo opcional"
+        f"  {marca(bool(os.environ.get('GOOGLE_API_KEY')))} clave de Gemini (GOOGLE_API_KEY), solo si se elige un modelo de Gemini"
     )
     print(f"  {marca(INDICE.exists())} índice de embeddings ({INDICE.name})")
     try:

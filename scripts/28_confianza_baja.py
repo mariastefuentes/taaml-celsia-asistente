@@ -1,7 +1,7 @@
 """SEÑAL DE CONFIANZA BAJA (Taller 2, enrutador): mide el umbral y prueba cómo responde el agente cuando la recuperación es poco segura.
 
 Parte 1 (sin costo, necesita Ollama): puntaje del mejor fragmento (coseno) en las 35 preguntas con respuesta y las 24 sin respuesta del conjunto de prueba, y cuántas quedarían marcadas con cada umbral.
-Parte 2 (GASTA CUOTA de Gemini, solo con --agente): 3 preguntas, cada una en una conversación nueva (unas 2 llamadas al modelo por pregunta):
+Parte 2 (GASTA CUOTA del modelo de pago, solo con --agente): 3 preguntas, cada una en una conversación nueva (unas 2 llamadas al modelo por pregunta):
   una sin respuesta en el corpus y marcada, una con respuesta y marcada (falsa alarma), una con respuesta y no marcada (control).
 Uso:  uv run python scripts/28_confianza_baja.py            (solo parte 1)
       uv run python scripts/28_confianza_baja.py --agente   (también parte 2)

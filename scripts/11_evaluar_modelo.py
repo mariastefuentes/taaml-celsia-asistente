@@ -41,7 +41,7 @@ RESULTADOS = PRUEBA / "resultados"
 GEMINI = "https://generativelanguage.googleapis.com/v1beta/models"
 OLLAMA = "http://localhost:11434/api/chat"
 DEEPSEEK = "https://api.deepseek.com/chat/completions"
-JUEZ_POR_DEFECTO = "gemini-3.8-flash"  # distinto del modelo que responde (3.5); el juez no responde a clientes, así que no aplica la regla de top_p
+JUEZ_POR_DEFECTO = "gemini-3.8-flash"  # por defecto juzga Gemini; para DeepSeek conviene --juez deepseek:deepseek-v4-pro. El juez no responde a clientes, así que no aplica la regla de top_p
 CALIFICACIONES = ["correcta", "parcial", "incorrecta", "reconoce_no_sabe", "inventa"]
 
 # El prompt del juez no se cambia (ni se le añaden etiquetas): sus datos no son entrada de un cliente y así las corridas siguen siendo comparables.

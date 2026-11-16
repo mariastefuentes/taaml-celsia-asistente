@@ -89,7 +89,7 @@ def responder_o_mostrar_guardada(pregunta: str, base: str, modelo: str):
 
 with st.sidebar:
     st.header("Ajustes")
-    modelo = st.text_input("Modelo (Gemini o «deepseek-flash»)", MODELO_POR_DEFECTO)
+    modelo = st.text_input("Modelo («deepseek-flash» o un modelo de Gemini)", MODELO_POR_DEFECTO)
     base = st.radio(
         "Contexto del asistente",
         ["rag", "compacta", "completa"],

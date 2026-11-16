@@ -1,4 +1,4 @@
-"""Pruebas de componentes (nivel de componentes): deterministas, sin Gemini y sin Ollama."""
+"""Pruebas de componentes (nivel de componentes): deterministas, sin modelos ni red."""
 
 import os
 import sys
