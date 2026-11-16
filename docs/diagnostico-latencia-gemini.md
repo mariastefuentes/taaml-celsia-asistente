@@ -55,3 +55,5 @@ except Exception as e:
 ## Estado
 
 Diagnóstico cerrado; no se cambió código todavía. Pendiente decidir modelo y activar facturación.
+
+**Actualización (2026-11-16).** Decidido: el agente y las tareas usan `deepseek-flash` (PR #75) y el agente conserva `gemini-3.5-flash` como respaldo antes de `ollama:llama3.2`. Este documento queda como registro histórico de la medición; la facturación de Gemini sigue sin activarse.
