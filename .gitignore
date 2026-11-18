@@ -26,3 +26,6 @@ data/4_curaduria/indice_parcial.npz
 node_modules/
 frontend/dist/
 frontend/.vite/
+# Análisis de conversaciones (Ruta Transversal A): la base local y los vectores se regeneran
+data/analisis/postgres/
+data/analisis/embeddings.npy

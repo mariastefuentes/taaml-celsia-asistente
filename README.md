@@ -196,6 +196,16 @@ Los datos que el sitio muestra solo como enlaces (WhatsApp, PQR, pagos) están e
 
 </details>
 
+## Análisis de conversaciones con t-SNE (Ruta Transversal A)
+
+La API ya guarda cada conversación completa en PostgreSQL (el checkpointer, bajo un hash del teléfono). `taaml.conversaciones` las lee, marca cuáles terminaron mal y arma el texto de cada una; el cuaderno `notebooks/analisis_conversaciones.ipynb` las convierte en vectores, las proyecta con t-SNE (2D y 3D), las agrupa y analiza dónde falla el asistente. **Los datos del cuaderno son simulados** (114 conversaciones escritas por el equipo y pasadas por el agente real), no clientes de Celsia.
+
+```
+uv sync --group analisis
+uv run python scripts/35_simular_conversaciones.py   # simula con el agente real (gasta cuota) y exporta a data/analisis/
+uv run python scripts/36_construir_notebook_tsne.py  # construye y ejecuta el cuaderno (necesita Ollama la primera vez)
+```
+
 ## Estructura
 Equivalencias de datos: `data/1_bronze/` es el crudo (raw), `data/2_silver/` el procesado (processed) y `data/3_gold/` el corpus con metadatos (gold). Cada documento de Gold lleva `url`, `title`, `categoria` (la sección del sitio), `fecha_extraccion` (captura), `fecha_publicacion`, `section` (el sitemap de origen) y `hash`; Silver conserva `url`, `title`, `section`, `fecha_publicacion` y `hash`.
 
