@@ -24,7 +24,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 
 ## D2. El router es el modelo con herramientas bien descritas
 - **Contexto.** Cada pregunta debe ir a datos exactos, a texto del corpus, a ambos o a ninguno.
-- **Decisión.** Que el modelo elija entre `consultar_datos`, `buscar_en_base` y la respuesta directa mediante function calling: recibe las herramientas con su esquema Pydantic y responde con una llamada estructurada (nombre y argumentos validados), guiado por sus descripciones y por el prompt vigente. No se interpreta texto libre. La validación estricta la hace Pydantic de nuestro lado; no se usa el modo `strict` del proveedor.
+- **Decisión.** Que el modelo elija entre `consultar_datos`, `buscar_en_base` y la respuesta directa mediante function calling: recibe las herramientas con su esquema Pydantic y responde con una llamada estructurada (nombre y argumentos validados), guiado por sus descripciones y por el prompt vigente. No se interpreta texto libre. La validación estricta la hace Pydantic de nuestro lado; no se usa el modo `strict` del proveedor. La búsqueda en el texto del sitio admite dos modos (`RAG_MODO`): el agente decide cuándo llamar a `buscar_en_base` (por defecto) o un `dynamic_prompt` inserta los fragmentos recuperados en cada llamada (RAG en cadena).
 - **Descartado.** Un clasificador previo (más llamadas y un punto de fallo extra).
 - **Consecuencia.** El enrutamiento se mide, no se asume: matriz de 28 preguntas con la herramienta esperada, y las preguntas de conteo y de varias ciudades ya cuentan con su caso.
 - **Evidencia.** `docs/2 - Conjunto de prueba/matriz_enrutamiento.csv`, `scripts/22_matriz_enrutamiento.py`, informe 4.2 y 5.1.
