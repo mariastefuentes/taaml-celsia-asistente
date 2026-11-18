@@ -95,8 +95,13 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
 
 @app.get("/api/salud")
 def salud() -> dict:
-    """Estado de la API, modelo que usa el agente y la base donde busca por significado (para mostrar en la terminal que es Qdrant)."""
-    return {"estado": "ok", "modelo": MODELO_AGENTE, "almacen": almacen_vectorial()}
+    """Estado de la API, modelo que usa el agente, la base donde busca por significado (Qdrant) y la de la memoria (PostgreSQL o SQLite)."""
+    return {
+        "estado": "ok",
+        "modelo": MODELO_AGENTE,
+        "almacen": almacen_vectorial(),
+        "memoria": "postgresql" if os.environ.get("DATABASE_URL") else "sqlite",
+    }
 
 
 @app.post("/api/chat")

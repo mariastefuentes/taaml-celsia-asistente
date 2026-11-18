@@ -65,8 +65,13 @@ app: frontend
 app-taller1:
 	uv run streamlit run app/asistente.py
 
+# La API usa PostgreSQL (PostgresSaver y PostgresStore): si DATABASE_URL ya está definida la respeta; si no, levanta un PostgreSQL local sin Docker.
 api:
-	uv run uvicorn api.main:app --port 8000
+	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run uvicorn api.main:app --port 8000
+
+# La misma API con la memoria en archivos SQLite (sin servidor de base de datos).
+api-sqlite:
+	DATABASE_URL= uv run uvicorn api.main:app --port 8000
 
 frontend:
 	cd frontend && npm install && npm run dev
@@ -76,9 +81,6 @@ db-up:
 
 db-down:
 	uv run python scripts/34_postgres_local.py --detener
-
-api-pg:
-	DATABASE_URL=$$(uv run python scripts/34_postgres_local.py) uv run uvicorn api.main:app --port 8000
 
 demo-limpiar:
 	uv run python scripts/30_limpiar_memoria_demo.py --borrar

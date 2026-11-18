@@ -24,6 +24,15 @@ def test_salud_dice_el_modelo():
     assert r.json()["almacen"] in {"qdrant", "numpy", "ninguno"}
 
 
+def test_salud_dice_que_memoria_usa_la_api(monkeypatch):
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    assert cliente.get("/api/salud").json()["memoria"] == "sqlite"
+    monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@localhost/x")
+    assert cliente.get("/api/salud").json()["memoria"] == "postgresql"
+    monkeypatch.setenv("DATABASE_URL", "")  # lo que hace `make api-sqlite`: vacía, no cuenta
+    assert cliente.get("/api/salud").json()["memoria"] == "sqlite"
+
+
 def test_chat_transmite_los_eventos_del_agente(monkeypatch):
     def falso(mensaje, hilo, usuario):
         yield {"tipo": "herramienta", "herramienta": "consultar_datos", "args": {"tabla": "sedes"}}
