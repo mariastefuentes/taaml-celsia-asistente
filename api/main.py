@@ -4,6 +4,7 @@ Endpoints:
   GET  /api/salud                    estado, modelo del agente y dónde busca por significado (qdrant, numpy o ninguno)
   POST /api/chat                     un turno de conversación; responde por streaming (Server-Sent Events)
   POST /chat                         un turno por teléfono; responde un JSON (para WhatsApp, N8N o cualquier servicio externo)
+  GET/POST /webhook/whatsapp         WhatsApp (Meta): verificación del webhook y mensajes entrantes (se responde por WhatsApp en segundo plano)
   POST /aprobar                      una persona aprueba o rechaza lo que el agente dejó pendiente (necesita el encabezado X-Aprobador)
   GET  /api/hilos/{hilo}/mensajes    la conversación guardada, para recuperarla al recargar la página
   GET  /api/usuarios/{usuario}/datos    lo que el agente recuerda del cliente (memoria de largo plazo)
@@ -23,9 +24,9 @@ from contextlib import asynccontextmanager
 from typing import Literal
 from uuid import uuid4
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import PlainTextResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from taaml.agente import (
@@ -40,6 +41,7 @@ from taaml.agente import (
     resolver_aprobacion,
 )
 from taaml.recuperacion import almacen_vectorial
+from taaml.whatsapp import TEXTO_NO_SOPORTADO, enviar_texto, firma_valida, mensajes_entrantes
 
 log = logging.getLogger("taaml.api")
 ORIGENES = ["http://localhost:5173", "http://127.0.0.1:5173"]  # el servidor de desarrollo del frontend
@@ -149,9 +151,14 @@ def chat_por_telefono(entrada: MensajeEntrante) -> RespuestaDelAgente:
     Si el modelo o una herramienta fallan responde con un mensaje cortés (`ok` en falso) en vez de un error, porque quien llama
     (WhatsApp) tiene que poder reenviar algo al cliente.
     """
-    hilo, usuario = ids_del_telefono(entrada.telefono)
+    return responder_a_telefono(entrada.telefono, entrada.mensaje)
+
+
+def responder_a_telefono(telefono: str, mensaje: str) -> RespuestaDelAgente:
+    """Un turno del agente para ese teléfono (lo usan POST /chat y el webhook de WhatsApp); un fallo sale como mensaje cortés."""
+    hilo, usuario = ids_del_telefono(telefono)
     try:
-        texto, llamadas = conversar(entrada.mensaje, hilo, usuario=usuario)
+        texto, llamadas = conversar(mensaje, hilo, usuario=usuario)
     except Exception:  # el detalle va al registro; al cliente no se le filtra nada interno
         log.exception("falló el turno del hilo %s", hilo)
         return RespuestaDelAgente(respuesta=MENSAJE_DE_FALLO, herramientas=[], ok=False)
@@ -184,7 +191,8 @@ def aprobar(decision: Decision, x_aprobador: str | None = Header(default=None)) 
     if not pendiente_de_aprobacion(hilo):
         raise HTTPException(status_code=404, detail="No hay nada pendiente de aprobación para ese teléfono")
     texto, _ = resolver_aprobacion(hilo, decision.decision, usuario=usuario)
-    return {"decision": decision.decision, "respuesta": texto}
+    avisado = enviar_texto(decision.telefono, texto)  # el cliente se entera por WhatsApp (si está configurado)
+    return {"decision": decision.decision, "respuesta": texto, "avisado_por_whatsapp": avisado}
 
 
 @app.get("/api/hilos/{hilo}/mensajes")
@@ -212,3 +220,71 @@ def datos(usuario: str) -> dict:
 def borrar_datos(usuario: str) -> dict:
     """Borra todo lo que el agente recuerda del cliente y dice cuántos datos eran."""
     return {"borrados": olvidar_cliente(_usuario_valido(usuario))}
+
+
+# --- WhatsApp (API Cloud de Meta) ---
+MAX_AVISOS_VISTOS = 2000
+_AVISOS_VISTOS: dict[str, None] = {}  # Meta reintenta si no recibe 200 y puede repetir avisos: cada mensaje se atiende una sola vez
+
+
+def _ya_atendido(id_mensaje: str) -> bool:
+    """Marca el mensaje como visto; True si ya se había atendido. Guarda solo los últimos MAX_AVISOS_VISTOS."""
+    if id_mensaje in _AVISOS_VISTOS:
+        return True
+    _AVISOS_VISTOS[id_mensaje] = None
+    while len(_AVISOS_VISTOS) > MAX_AVISOS_VISTOS:
+        _AVISOS_VISTOS.pop(next(iter(_AVISOS_VISTOS)))
+    return False
+
+
+def atender_mensaje_de_whatsapp(telefono: str, tipo: str, texto: str) -> None:
+    """Responde un mensaje de WhatsApp: pregunta al agente y envía su respuesta. Corre en segundo plano, después de contestarle 200 a Meta."""
+    try:
+        if tipo != "text" or not texto.strip():
+            enviar_texto(telefono, TEXTO_NO_SOPORTADO)
+            return
+        respuesta = responder_a_telefono(telefono, texto.strip()[:1000])
+        enviar_texto(telefono, respuesta.respuesta)
+    except Exception:  # un fallo aquí no puede perderse en silencio ni tumbar al servidor
+        log.exception("falló la atención de un mensaje de WhatsApp")
+
+
+@app.get("/webhook/whatsapp", response_class=PlainTextResponse)
+def verificar_webhook_de_whatsapp(
+    modo: str | None = Query(default=None, alias="hub.mode"),
+    token: str | None = Query(default=None, alias="hub.verify_token"),
+    desafio: str | None = Query(default=None, alias="hub.challenge"),
+) -> str:
+    """Meta comprueba que el servidor es nuestro: si el token coincide, devuelve el desafío tal cual."""
+    esperado = os.environ.get("WHATSAPP_VERIFY_TOKEN")
+    if not esperado:
+        raise HTTPException(status_code=503, detail="El webhook de WhatsApp no está habilitado en este servidor")
+    if modo != "subscribe" or desafio is None or not secrets.compare_digest((token or "").encode(), esperado.encode()):
+        raise HTTPException(status_code=403, detail="Verificación rechazada")
+    return desafio
+
+
+@app.post("/webhook/whatsapp")
+async def recibir_de_whatsapp(peticion: Request, segundo_plano: BackgroundTasks) -> dict:
+    """Avisos de Meta: comprueba la firma, atiende cada mensaje nuevo en segundo plano y responde 200 enseguida.
+
+    El agente tarda de 5 a 25 s; si el 200 esperara a la respuesta, Meta reintentaría el aviso. Los reintentos repetidos se
+    descartan por el id del mensaje. Sin `WHATSAPP_APP_SECRET` queda deshabilitado, para no aceptar avisos sin firma.
+    """
+    secreto = os.environ.get("WHATSAPP_APP_SECRET")
+    if not secreto:
+        raise HTTPException(status_code=503, detail="El webhook de WhatsApp no está habilitado en este servidor")
+    cuerpo = await peticion.body()
+    if not firma_valida(cuerpo, peticion.headers.get("X-Hub-Signature-256"), secreto):
+        raise HTTPException(status_code=401, detail="Firma inválida")
+    try:
+        carga = json.loads(cuerpo)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Cuerpo inválido") from None
+    nuevos = 0
+    for m in mensajes_entrantes(carga if isinstance(carga, dict) else {}):
+        if _ya_atendido(m["id"]):
+            continue
+        nuevos += 1
+        segundo_plano.add_task(atender_mensaje_de_whatsapp, m["telefono"], m["tipo"], m["texto"])
+    return {"ok": True, "mensajes": nuevos}

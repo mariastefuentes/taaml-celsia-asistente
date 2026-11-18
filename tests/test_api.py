@@ -170,7 +170,18 @@ def test_aprobar_decide_lo_pendiente_o_dice_que_no_hay_nada(monkeypatch):
     monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: {"herramienta": "radicar_reclamo", "args": {}})
     monkeypatch.setattr("api.main.resolver_aprobacion", falso)
     r = cliente.post("/aprobar", json=cuerpo, headers=cabecera)
-    assert r.json() == {"decision": "rechazar", "respuesta": "No se radicó."}
+    assert r.json() == {"decision": "rechazar", "respuesta": "No se radicó.", "avisado_por_whatsapp": False}
     assert recibido["decision"] == "rechazar" and "573001234567" not in recibido["hilo"] + recibido["usuario"]
     assert cliente.post("/aprobar", json={"telefono": "abc", "decision": "aprobar"}, headers=cabecera).status_code == 422
     assert cliente.post("/aprobar", json={**cuerpo, "decision": "tal vez"}, headers=cabecera).status_code == 422
+
+
+def test_aprobar_avisa_al_cliente_por_whatsapp(monkeypatch):
+    monkeypatch.setenv("APROBADOR_TOKEN", "secreto-largo")
+    enviados = []
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: {"herramienta": "radicar_reclamo", "args": {}})
+    monkeypatch.setattr("api.main.resolver_aprobacion", lambda hilo, decision, usuario: ("Reclamo radicado.", []))
+    monkeypatch.setattr("api.main.enviar_texto", lambda tel, texto: enviados.append((tel, texto)) or True)
+    cuerpo = {"telefono": "573001234567", "decision": "aprobar"}
+    r = cliente.post("/aprobar", json=cuerpo, headers={"X-Aprobador": "secreto-largo"})
+    assert r.json()["avisado_por_whatsapp"] is True and enviados == [("573001234567", "Reclamo radicado.")]
