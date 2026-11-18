@@ -3,6 +3,7 @@ import json
 import pytest
 from langchain_openai import ChatOpenAI
 
+from taaml import tareas
 from taaml.reordenar import MODELO_REORDENADOR, modelo_reordenador
 from taaml.tareas import _tag_instalado, obtener_modelo
 
@@ -76,3 +77,23 @@ def test_el_error_de_configuracion_no_incluye_el_valor_de_la_clave(monkeypatch):
 def test_el_reordenador_es_de_la_misma_familia():
     assert modelo_reordenador("deepseek-flash") == "deepseek-flash"
     assert modelo_reordenador("gemini-3.5-flash") == MODELO_REORDENADOR
+
+
+def test_los_tres_modelos_se_crean_con_init_chat_model(monkeypatch):
+    """El enunciado del Módulo 3 exige `init_chat_model`: se espía y se comprueba qué proveedor pide cada nombre."""
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "clave-de-prueba")
+    monkeypatch.setenv("GOOGLE_API_KEY", "clave-de-prueba")
+    pedidos = []
+    real = tareas.init_chat_model
+
+    def espia(modelo, **kwargs):
+        pedidos.append((modelo, kwargs["model_provider"]))
+        return real(modelo, **kwargs)
+
+    monkeypatch.setattr(tareas, "init_chat_model", espia)
+    monkeypatch.setattr(tareas, "_tag_instalado", lambda nombre: nombre)
+    tareas.obtener_modelo.cache_clear()
+    modelos = [tareas.obtener_modelo(n) for n in ("deepseek-flash", "gemini-3.5-flash", "ollama:llama3.2")]
+    tareas.obtener_modelo.cache_clear()
+    assert pedidos == [("deepseek-flash", "openai"), ("gemini-3.5-flash", "google_genai"), ("llama3.2", "ollama")]
+    assert [type(m).__name__ for m in modelos] == ["ChatOpenAI", "ChatGoogleGenerativeAI", "ChatOllama"]
