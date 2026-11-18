@@ -85,7 +85,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **HTTP y scraping** | `requests` + `beautifulsoup4` + `lxml` |
 | **Orquestación de LLM** | LangChain (`langchain`, `langchain-google-genai`, `langchain-openai`, `langchain-ollama`) |
 | **Modelo por defecto** | `deepseek-flash` (Q&A, Resumen y FAQ); respaldo `ollama:llama3.2` |
-| **Modelo del agente** | `deepseek-flash` (DeepSeek-V4.1-Flash-1017, API de pago); respaldo `gemini-3.5-flash` y `ollama:llama3.2` |
+| **Modelo del agente** | `deepseek-flash` (DeepSeek-V4.1-Flash-1017, API de pago); respaldo `gemini-3.8-flash` y `ollama:llama3.2` |
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
 | **Base vectorial** | Qdrant en modo local (persistente, sin servidor), similitud del coseno |
 | **Interfaz** | API FastAPI + frontend React (`api/`, `frontend/`, Módulo 2); Streamlit solo para el Taller 1 (`app/`) |

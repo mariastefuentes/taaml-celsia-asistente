@@ -168,7 +168,7 @@ def test_el_agente_usa_deepseek_de_pago_y_ollama_de_respaldo():
     from taaml.agente import MODELO_AGENTE_POR_DEFECTO, MODELO_RESPALDO, MODELO_RESPALDO_GEMINI
 
     assert MODELO_AGENTE_POR_DEFECTO == "deepseek-flash" and MODELO_RESPALDO.startswith("ollama:")
-    assert MODELO_RESPALDO_GEMINI == "gemini-3.5-flash"  # respaldo intermedio si DeepSeek falla
+    assert MODELO_RESPALDO_GEMINI == "gemini-3.8-flash"  # respaldo intermedio si DeepSeek falla
 
 
 def test_crear_agente_pide_el_modelo_a_obtener_modelo_y_arma_el_respaldo(monkeypatch, tmp_path):

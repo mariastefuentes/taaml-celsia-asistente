@@ -45,7 +45,7 @@ log = logging.getLogger("taaml.agente")
 
 MODELO_AGENTE_POR_DEFECTO = "deepseek-flash"  # DeepSeek-V4.1-Flash-1017 con API de pago
 MODELO_AGENTE = os.environ.get("TAAML_MODELO_AGENTE") or MODELO_AGENTE_POR_DEFECTO  # TAAML_MODELO_AGENTE permite cambiarlo sin tocar código
-MODELO_RESPALDO_GEMINI = "gemini-3.5-flash"  # si DeepSeek falla (cuota, red), se intenta este antes del local; requiere GOOGLE_API_KEY
+MODELO_RESPALDO_GEMINI = "gemini-3.8-flash"  # si DeepSeek falla (cuota, red), se intenta este antes del local; requiere GOOGLE_API_KEY
 MODELO_RESPALDO = "ollama:llama3.2"  # 3B local y gratis: solo entra si los de pago fallan
 RUTA_MEMORIA = (
     Path(__file__).resolve().parents[2] / "data" / "memoria" / "conversaciones.sqlite"
