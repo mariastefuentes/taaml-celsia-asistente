@@ -69,9 +69,10 @@ def test_chat_por_telefono_responde_json_y_mantiene_la_conversacion(monkeypatch)
         return "Hola", [{"herramienta": "consultar_datos", "args": {"tabla": "sedes"}}]
 
     monkeypatch.setattr("api.main.conversar", falso)
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
     r = cliente.post("/chat", json={"mensaje": "hola", "telefono": "573001234567"})
     assert r.status_code == 200
-    assert r.json() == {"respuesta": "Hola", "herramientas": ["consultar_datos"], "ok": True}
+    assert r.json() == {"respuesta": "Hola", "herramientas": ["consultar_datos"], "ok": True, "pendiente": None}
     cliente.post("/chat", json={"mensaje": "y su teléfono?", "telefono": "+573001234567"})
     cliente.post("/chat", json={"mensaje": "hola", "telefono": "573009999999"})
     assert recibido[0][1:] == recibido[1][1:]  # el mismo número, con o sin +, vuelve a la misma conversación y memoria
@@ -132,3 +133,44 @@ def test_al_arrancar_la_api_calienta_el_agente_en_segundo_plano(monkeypatch):
     with TestClient(app) as c:
         assert c.get("/api/salud").status_code == 200
         assert llamado.wait(timeout=5)
+
+
+# --- aprobación humana ---
+def test_chat_por_telefono_informa_lo_que_queda_pendiente_de_aprobacion(monkeypatch):
+    pendiente = {"herramienta": "radicar_reclamo", "args": {"ciudad": "Ibagué"}}
+    monkeypatch.setattr("api.main.conversar", lambda m, h, usuario: ("En revisión", []))
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: pendiente)
+    r = cliente.post("/chat", json={"mensaje": "radica mi reclamo", "telefono": "573001234567"})
+    assert r.json()["pendiente"] == pendiente and r.json()["ok"] is True
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
+    assert cliente.post("/chat", json={"mensaje": "hola", "telefono": "573001234567"}).json()["pendiente"] is None
+
+
+def test_aprobar_esta_deshabilitado_sin_clave_y_rechaza_una_equivocada(monkeypatch):
+    cuerpo = {"telefono": "573001234567", "decision": "aprobar"}
+    monkeypatch.delenv("APROBADOR_TOKEN", raising=False)
+    assert cliente.post("/aprobar", json=cuerpo, headers={"X-Aprobador": "x"}).status_code == 503
+    monkeypatch.setenv("APROBADOR_TOKEN", "secreto-largo")
+    assert cliente.post("/aprobar", json=cuerpo).status_code == 401
+    assert cliente.post("/aprobar", json=cuerpo, headers={"X-Aprobador": "otro"}).status_code == 401
+
+
+def test_aprobar_decide_lo_pendiente_o_dice_que_no_hay_nada(monkeypatch):
+    monkeypatch.setenv("APROBADOR_TOKEN", "secreto-largo")
+    cabecera = {"X-Aprobador": "secreto-largo"}
+    cuerpo = {"telefono": "573001234567", "decision": "rechazar"}
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
+    assert cliente.post("/aprobar", json=cuerpo, headers=cabecera).status_code == 404
+    recibido = {}
+
+    def falso(hilo, decision, usuario):
+        recibido.update(hilo=hilo, decision=decision, usuario=usuario)
+        return "No se radicó.", []
+
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: {"herramienta": "radicar_reclamo", "args": {}})
+    monkeypatch.setattr("api.main.resolver_aprobacion", falso)
+    r = cliente.post("/aprobar", json=cuerpo, headers=cabecera)
+    assert r.json() == {"decision": "rechazar", "respuesta": "No se radicó."}
+    assert recibido["decision"] == "rechazar" and "573001234567" not in recibido["hilo"] + recibido["usuario"]
+    assert cliente.post("/aprobar", json={"telefono": "abc", "decision": "aprobar"}, headers=cabecera).status_code == 422
+    assert cliente.post("/aprobar", json={**cuerpo, "decision": "tal vez"}, headers=cabecera).status_code == 422

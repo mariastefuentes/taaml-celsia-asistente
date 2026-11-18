@@ -92,6 +92,7 @@ def test_el_agente_tiene_las_herramientas():
         "consultar_datos",
         "guardar_dato_del_cliente",
         "recordar_datos_del_cliente",
+        "radicar_reclamo",
     ]
 
 
@@ -592,7 +593,7 @@ def test_el_prompt_de_sistema_se_arma_en_cada_turno_con_la_fecha_de_hoy():
     modelo = ModeloQueLeeElPrompt(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[], sistemas=[])
     conversar("hola", "hilo-fecha", agente=crear_agente(llm=modelo))
     assert f"Fecha de hoy: {date.today().isoformat()}" in modelo.sistemas[0]
-    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v4_agente.md
+    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v5_agente.md
 
 
 def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
@@ -776,3 +777,70 @@ def test_calentar_no_falla_si_ollama_esta_apagado(monkeypatch):
     from taaml.agente import calentar
 
     calentar()  # no debe lanzar: la primera pregunta real mostrará el problema
+
+
+# --- aprobación humana (HumanInTheLoopMiddleware): radicar un reclamo espera a una persona ---
+def _agente_con_reclamo(respuesta_final="Listo.", clase=ModeloEspia):
+    from langgraph.store.memory import InMemoryStore
+
+    llamada = AIMessage(
+        content="",
+        tool_calls=[
+            {
+                "name": "radicar_reclamo",
+                "args": {"tipo": "falla_de_servicio", "ciudad": "Ibagué", "descripcion": "Sin luz desde las 8"},
+                "id": "r1",
+            }
+        ],
+    )
+    modelo = clase(messages=iter([llamada, AIMessage(content=respuesta_final)]), vistos=[])
+    almacen = InMemoryStore()
+    return crear_agente(llm=modelo, store=almacen), modelo, almacen
+
+
+def test_radicar_un_reclamo_pausa_al_agente_hasta_que_una_persona_decide():
+    from taaml.agente import MENSAJE_EN_REVISION, pendiente_de_aprobacion
+
+    agente, _, almacen = _agente_con_reclamo()
+    respuesta, usadas = conversar("Quiero radicar un reclamo, no hay luz en Ibagué", "h1", agente=agente, usuario="c1")
+    assert respuesta == MENSAJE_EN_REVISION and [u["herramienta"] for u in usadas] == ["radicar_reclamo"]
+    assert pendiente_de_aprobacion("h1", agente=agente)["args"]["ciudad"] == "Ibagué"
+    assert almacen.search(("reclamos", "c1")) == []  # nada se radicó todavía
+
+
+def test_al_aprobar_se_radica_y_al_rechazar_no():
+    from taaml.agente import pendiente_de_aprobacion, resolver_aprobacion
+
+    agente, _, almacen = _agente_con_reclamo("Tu reclamo quedó radicado.")
+    conversar("Radica mi reclamo", "h2", agente=agente, usuario="c2")
+    texto, _ = resolver_aprobacion("h2", "aprobar", usuario="c2", agente=agente)
+    guardados = almacen.search(("reclamos", "c2"))
+    assert texto == "Tu reclamo quedó radicado." and len(guardados) == 1
+    assert guardados[0].key.startswith("REC-") and guardados[0].value["ciudad"] == "Ibagué"
+    assert pendiente_de_aprobacion("h2", agente=agente) is None
+
+    agente, _, almacen = _agente_con_reclamo("No se radicó.")
+    conversar("Radica mi reclamo", "h3", agente=agente, usuario="c3")
+    resolver_aprobacion("h3", "rechazar", usuario="c3", agente=agente)
+    assert almacen.search(("reclamos", "c3")) == [] and pendiente_de_aprobacion("h3", agente=agente) is None
+
+
+def test_mientras_espera_aprobacion_el_modelo_no_vuelve_a_correr():
+    from taaml.agente import MENSAJE_EN_REVISION
+
+    agente, modelo, _ = _agente_con_reclamo()
+    conversar("Radica mi reclamo", "h4", agente=agente, usuario="c4")
+    llamadas_al_modelo = len(modelo.vistos)
+    assert conversar("¿ya está?", "h4", agente=agente, usuario="c4") == (MENSAJE_EN_REVISION, [])
+    assert len(modelo.vistos) == llamadas_al_modelo
+
+
+def test_en_vivo_avisa_que_hay_un_reclamo_pendiente():
+    from taaml.agente import MENSAJE_EN_REVISION, conversar_en_vivo
+
+    agente, _, _ = _agente_con_reclamo(clase=ModeloSinTrozos)
+    eventos = list(conversar_en_vivo("Radica mi reclamo", "h5", agente=agente, usuario="c5"))
+    tipos = [e["tipo"] for e in eventos]
+    assert "pendiente" in tipos and tipos[-1] == "fin"
+    assert "".join(e["texto"] for e in eventos if e["tipo"] == "texto") == MENSAJE_EN_REVISION
+    assert next(e for e in eventos if e["tipo"] == "pendiente")["herramienta"] == "radicar_reclamo"

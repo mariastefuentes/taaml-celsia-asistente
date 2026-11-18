@@ -1,6 +1,6 @@
 ---
 version: v4
-estado: vigente
+estado: reemplazado por v5
 cambios: v3 + formato de solo texto plano (prohíbe JSON, XML, YAML, HTML, CSV, código y tablas) y rechazo amable cuando el cliente pide otro formato; el resto es igual a v3
 ---
 # 1. ROL
