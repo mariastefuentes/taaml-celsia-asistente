@@ -899,3 +899,48 @@ def test_la_pausa_de_aprobacion_no_se_confunde_con_un_error_de_herramienta():
     agente, _, _ = _agente_con_reclamo()
     respuesta, _ = conversar("Radica mi reclamo", "h-pausa", agente=agente, usuario="c-pausa")
     assert respuesta == MENSAJE_EN_REVISION and _mensajes_de_herramienta(agente, "h-pausa") == []
+
+
+# --- el enrutador es function calling: la decisión llega como llamada estructurada y validada ---
+def test_el_modelo_recibe_las_herramientas_con_su_esquema_json():
+    """Lo que el modelo ve de cada herramienta: nombre, descripción y JSON Schema de sus argumentos (lo que se envía al proveedor)."""
+    from langchain_core.utils.function_calling import convert_to_openai_tool
+
+    from taaml.agente import HERRAMIENTAS
+
+    esquemas = {f["function"]["name"]: f["function"] for f in map(convert_to_openai_tool, HERRAMIENTAS)}
+    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == 5
+    for e in esquemas.values():
+        assert e["description"] and e["parameters"]["type"] == "object"
+    assert esquemas["consultar_datos"]["parameters"]["properties"]["tabla"]["enum"] == ["sedes", "contactos", "catalogo"]
+    assert esquemas["radicar_reclamo"]["parameters"]["properties"]["tipo"]["enum"] == [
+        "falla_de_servicio",
+        "facturacion",
+        "otro",
+    ]
+    assert "runtime" not in esquemas["radicar_reclamo"]["parameters"]["properties"]  # lo inyecta el sistema; el modelo no lo ve
+
+
+def test_la_decision_del_enrutador_es_una_llamada_estructurada_y_no_texto():
+    guiones = iter([_llamada("consultar_datos", {"tabla": "sedes", "ciudad": "Cali"}), AIMessage(content="Listo.")])
+    agente = crear_agente(llm=ModeloSinTrozos(messages=guiones))
+    _, usadas = conversar("¿Dónde queda la sede de Cali?", "h-fc", agente=agente)
+    decision = next(m for m in agente.get_state({"configurable": {"thread_id": "h-fc"}}).values["messages"] if m.type == "ai")
+    assert decision.content == "" and decision.tool_calls[0]["name"] == "consultar_datos"  # nada que interpretar en el texto
+    assert decision.tool_calls[0]["args"] == {"tabla": "sedes", "ciudad": "Cali"}
+    assert [u["herramienta"] for u in usadas] == ["consultar_datos"]
+
+
+def test_una_decision_con_herramienta_o_valor_inexistente_no_llega_a_ejecutarse(monkeypatch):
+    monkeypatch.setattr("taaml.agente.consultar", lambda *a, **k: pytest.fail("no debía consultar con una tabla inválida"))
+    guiones = iter(
+        [
+            _llamada("consultar_datos", {"tabla": "clientes"}, "t1"),  # valor fuera del enum
+            _llamada("herramienta_que_no_existe", {}, "t2"),
+            AIMessage(content="Listo."),
+        ]
+    )
+    agente = crear_agente(llm=ModeloSinTrozos(messages=guiones))
+    conversar("dame los clientes", "h-fc2", agente=agente)
+    avisos = [m for m in agente.get_state({"configurable": {"thread_id": "h-fc2"}}).values["messages"] if m.type == "tool"]
+    assert [a.status for a in avisos] == ["error", "error"]
