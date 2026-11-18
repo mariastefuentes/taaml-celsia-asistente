@@ -1017,3 +1017,57 @@ def test_el_contexto_recuperado_llega_delimitado_como_datos_y_con_el_aviso_de_ba
     monkeypatch.setattr("taaml.agente.confianza_baja", lambda f: True)
     contexto = _contexto_recuperado("pregunta rara")
     assert contexto.startswith(AVISO_CONFIANZA_BAJA) and contexto.count("</contexto>") <= 1  # el fragmento no puede cerrar el bloque
+
+
+# --- cada herramienta tiene un esquema Pydantic estricto (JSON Schema que ve el modelo) ---
+def test_cada_herramienta_tiene_un_esquema_pydantic_que_rechaza_campos_extra():
+    from pydantic import BaseModel
+
+    from taaml.agente import HERRAMIENTAS
+
+    for herramienta in HERRAMIENTAS:
+        esquema = herramienta.args_schema
+        assert isinstance(esquema, type) and issubclass(esquema, BaseModel), herramienta.name
+        assert esquema.model_config.get("extra") == "forbid", herramienta.name
+
+
+def test_el_json_schema_que_ve_el_modelo_trae_solo_los_argumentos_de_cada_herramienta():
+    from langchain_core.utils.function_calling import convert_to_openai_tool
+
+    from taaml.agente import HERRAMIENTAS
+
+    vistos = {t.name: convert_to_openai_tool(t)["function"]["parameters"] for t in HERRAMIENTAS}
+    assert set(vistos["guardar_dato_del_cliente"]["properties"]) == {"dato"}
+    assert set(vistos["radicar_reclamo"]["properties"]) == {"tipo", "ciudad", "descripcion"}
+    assert vistos["recordar_datos_del_cliente"]["properties"] == {}  # no pide nada al modelo
+    assert set(vistos["buscar_en_base"]["properties"]) == {"pregunta", "categoria", "region"}
+    assert vistos["radicar_reclamo"]["required"] == ["tipo", "ciudad", "descripcion"]
+    assert all("runtime" not in v["properties"] for v in vistos.values())  # lo inyecta el sistema, el modelo no lo ve
+
+
+def test_los_esquemas_de_memoria_validan_antes_de_ejecutar():
+    guiones = iter(
+        [
+            _llamada("guardar_dato_del_cliente", {"dato": ""}, "t1"),  # vacío
+            _llamada("guardar_dato_del_cliente", {"dato": "x" * 301}, "t2"),  # demasiado largo
+            _llamada("recordar_datos_del_cliente", {"inventado": 1}, "t3"),  # campo que no existe
+            AIMessage(content="Listo."),
+        ]
+    )
+    agente = crear_agente(llm=ModeloSinTrozos(messages=guiones))
+    conversar("hola", "h-esq", agente=agente, usuario="c-esq")
+    avisos = _mensajes_de_herramienta(agente, "h-esq")
+    assert [a.status for a in avisos] == ["error"] * 3
+
+
+def test_el_esquema_del_reclamo_rechaza_tipo_invalido_y_valores_fuera_de_rango():
+    from pydantic import ValidationError
+
+    from taaml.agente import radicar_reclamo
+
+    esquema = radicar_reclamo.tool_call_schema  # lo que valida lo que el modelo envía (sin el `runtime` del sistema)
+    bueno = {"tipo": "falla_de_servicio", "ciudad": "Cali", "descripcion": "Sin luz"}
+    assert esquema(**bueno).tipo == "falla_de_servicio"
+    for malo in ({"tipo": "queja"}, {"descripcion": ""}, {"ciudad": "x" * 81}):  # los campos extra los rechaza `args_schema` (prueba anterior)
+        with pytest.raises(ValidationError):
+            esquema(**{**bueno, **malo})
