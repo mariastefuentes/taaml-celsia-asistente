@@ -1,6 +1,6 @@
 ---
 version: v5
-estado: vigente
+estado: reemplazado por v6
 cambios: v4 + herramienta `radicar_reclamo` con aprobación humana (cómo y cuándo usarla, y no prometer el radicado antes de la aprobación); v4 = v3 + formato de solo texto plano (prohíbe JSON, XML, YAML, HTML, CSV, código y tablas) y rechazo amable cuando el cliente pide otro formato; el resto es igual a v3
 ---
 # 1. ROL

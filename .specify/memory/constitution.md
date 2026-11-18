@@ -236,6 +236,7 @@ git push -u origin feat/mi-cambio
 | 2026-11-14 | Prompt del agente v4 (`prompts/v4_agente.md`): respuesta solo en texto plano y rechazo amable de JSON, XML, YAML, HTML, CSV, SQL y tablas | El cliente debe recibir palabras normales, no formatos de programación |
 | 2026-11-15 | `deepseek-flash` (DeepSeek-V4.1-Flash-1017, API de pago) en el agente y en las tres tareas del Taller 1 (Q&A, Resumen y FAQ), además del flujo de reclamo; respaldo `ollama:llama3.2` | DeepSeek respeta `temperature` con el razonamiento apagado y su API es OpenAI-compatible; `deepseek-flash` es el ID vigente de la versión V4.1 Flash 1017 |
 | 2026-11-18 | Prompt del agente v5 (`prompts/v5_agente.md`) y aprobación humana: `radicar_reclamo` se pausa con `HumanInTheLoopMiddleware` hasta que una persona decide en `POST /aprobar` | Radicar un reclamo cambia algo fuera de la conversación; el agente prepara la acción y un humano la aprueba. Matriz de enrutamiento con el prompt v5: 32 de 33 |
+| 2026-11-18 | Prompt del agente v6 (`prompts/v6_agente.md`): las preguntas ajenas a Celsia no se responden, aunque sean sencillas | Con v5 el agente contestaba trivias con su conocimiento propio (3 de 10 preguntas ajenas: una capital, una suma). Con v6 se rechazaron 10 de 10, en los dos modos de RAG, y 8 de 8 preguntas de Celsia, saludos y despedidas siguieron bien. Matriz de enrutamiento con v6: 32 de 33 (igual que con v5) |
 
 ## 10. Notas y tareas pendientes
 
