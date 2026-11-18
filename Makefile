@@ -71,6 +71,15 @@ api:
 frontend:
 	cd frontend && npm install && npm run dev
 
+db-up:
+	uv run python scripts/32_postgres_local.py
+
+db-down:
+	uv run python scripts/32_postgres_local.py --detener
+
+api-pg:
+	DATABASE_URL=$$(uv run python scripts/32_postgres_local.py) uv run uvicorn api.main:app --port 8000
+
 demo-limpiar:
 	uv run python scripts/30_limpiar_memoria_demo.py --borrar
 

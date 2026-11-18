@@ -353,11 +353,22 @@ def _url_postgres() -> str | None:
 
 
 def _conexion_postgres(url: str):
-    """Conexión como la piden PostgresSaver y PostgresStore: sin transacción abierta y con filas como diccionarios."""
-    from psycopg import Connection
-    from psycopg.rows import dict_row
+    """Grupo de conexiones para PostgresSaver y PostgresStore: sin transacción abierta y con filas como diccionarios.
 
-    return Connection.connect(url, autocommit=True, prepare_threshold=0, row_factory=dict_row)  # ty: ignore[invalid-argument-type]
+    Es un grupo y no una sola conexión porque la API atiende varias conversaciones a la vez (cada petición corre en su hilo)
+    y porque revisa cada conexión antes de prestarla: si PostgreSQL se reinicia, la siguiente petición se reconecta sola.
+    """
+    from psycopg.rows import dict_row
+    from psycopg_pool import ConnectionPool
+
+    return ConnectionPool(
+        url,
+        min_size=1,
+        max_size=10,
+        kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
+        check=ConnectionPool.check_connection,
+        open=True,
+    )
 
 
 def almacen_de_memoria(ruta: Path | None = None, url: str | None = None):

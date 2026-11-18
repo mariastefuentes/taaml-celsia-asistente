@@ -50,6 +50,8 @@ dev = [
 testpaths = ["tests"]
 pythonpath = ["."]  # para importar api/ (src/ ya lo instala uv como paquete)
 addopts = "-q -p no:cacheprovider"  # sin carpeta de caché: el proyecto vive en OneDrive
+# Las pruebas de PostgreSQL abren un grupo de conexiones por agente y no lo cierran; en producción hay un solo grupo por proceso
+filterwarnings = ["ignore:Exception ignored in.*ConnectionPool.__del__:pytest.PytestUnraisableExceptionWarning"]
 
 [tool.ruff]
 line-length = 120
