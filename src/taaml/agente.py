@@ -24,11 +24,15 @@ from langchain.agents.middleware import (
     ToolCallLimitMiddleware,
     dynamic_prompt,
     wrap_model_call,
+    wrap_tool_call,
 )
+from langchain.messages import ToolMessage
 from langchain.tools import ToolRuntime
 from langchain_core.messages.utils import count_tokens_approximately, trim_messages
 from langchain_core.tools import tool
-from pydantic import BaseModel, Field
+from langgraph.errors import GraphBubbleUp
+from langgraph.prebuilt.tool_node import ToolInvocationError
+from pydantic import BaseModel, ConfigDict, Field
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.store.base import BaseStore
@@ -171,21 +175,29 @@ Categoria = Literal[
 Region = Literal["General", "Valle y Tolima", "Valle del Cauca", "Tolima", "Internacional"]
 
 
-@tool(response_format="content_and_artifact")
+class EsquemaEstricto(BaseModel):
+    """Base de los esquemas de entrada de las herramientas: rechaza argumentos que no existen y recorta espacios sobrantes."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+
+class BusquedaEnBase(EsquemaEstricto):
+    """Esquema de entrada de `buscar_en_base`."""
+
+    pregunta: str = Field(min_length=1, max_length=500, description="La pregunta del cliente, con sus propias palabras.")
+    categoria: Categoria | None = Field(
+        None,
+        description="Solo si el cliente pide expresamente una sección del sitio (noticias, sostenibilidad, inversionistas…). Ante la duda, no la uses.",
+    )
+    region: Region | None = Field(
+        None,
+        description="Solo si el cliente limita la búsqueda a una región (Tolima, Valle del Cauca…). Ante la duda, no la uses.",
+    )
+
+
+@tool(args_schema=BusquedaEnBase, response_format="content_and_artifact")
 def buscar_en_base(
-    pregunta: str,
-    categoria: Annotated[
-        Categoria | None,
-        Field(
-            description="Solo si el cliente pide expresamente una sección del sitio (noticias, sostenibilidad, inversionistas…). Ante la duda, no la uses."
-        ),
-    ] = None,
-    region: Annotated[
-        Region | None,
-        Field(
-            description="Solo si el cliente limita la búsqueda a una región (Tolima, Valle del Cauca…). Ante la duda, no la uses."
-        ),
-    ] = None,
+    pregunta: str, categoria: Categoria | None = None, region: Region | None = None
 ) -> tuple[str, list[dict]]:
     """Busca en la información oficial de Celsia los fragmentos que responden la pregunta del cliente. Opcionalmente filtra por categoría o región del documento."""
     filtro = {campo: valor for campo, valor in (("categoria", categoria), ("region", region)) if valor}
@@ -200,7 +212,7 @@ def buscar_en_base(
     )  # el modelo lee el texto; la pantalla muestra las fuentes (artefacto)
 
 
-class ConsultaDatos(BaseModel):
+class ConsultaDatos(EsquemaEstricto):
     """Esquema de entrada de `consultar_datos`: lo que el modelo puede pedir y lo que se valida antes de tocar los datos."""
 
     tabla: Literal["sedes", "contactos", "catalogo"] = Field(
@@ -264,8 +276,13 @@ def _almacen(runtime: ToolRuntime[Contexto]) -> BaseStore:
     return runtime.store
 
 
+# Las herramientas que reciben `runtime` declaran sus límites en la firma (Annotated + Field): con `args_schema` aparte, LangChain no
+# inyecta el `runtime` y la llamada falla.
 @tool
-def guardar_dato_del_cliente(dato: str, runtime: ToolRuntime[Contexto]) -> str:
+def guardar_dato_del_cliente(
+    dato: Annotated[str, Field(min_length=1, max_length=300, description="Lo que el cliente contó, en una frase corta.")],
+    runtime: ToolRuntime[Contexto],
+) -> str:
     """Guarda un dato que el cliente contó de sí mismo (nombre, ciudad, empresa, preferencia) para recordarlo en conversaciones futuras.
     Úsala solo cuando el cliente comparta ese dato o pida que lo recuerdes; nunca guardes cédulas, claves, tarjetas ni cuentas."""
     if runtime.context.usuario == ANONIMO:
@@ -292,7 +309,10 @@ def recordar_datos_del_cliente(runtime: ToolRuntime[Contexto]) -> str:
 
 @tool
 def radicar_reclamo(
-    tipo: Literal["falla_de_servicio", "facturacion", "otro"], ciudad: str, descripcion: str, runtime: ToolRuntime[Contexto]
+    tipo: Annotated[Literal["falla_de_servicio", "facturacion", "otro"], Field(description="Clase de reclamo.")],
+    ciudad: Annotated[str, Field(max_length=80, description="Ciudad donde ocurre el problema.")],
+    descripcion: Annotated[str, Field(min_length=1, max_length=500, description="Qué pasó, con las palabras del cliente.")],
+    runtime: ToolRuntime[Contexto],
 ) -> str:
     """Radica un reclamo del cliente: una falla del servicio (por ejemplo, sin luz), un problema de facturación u otro.
     Úsala solo cuando el cliente pida radicar o poner un reclamo, y después de tener la ciudad y qué pasó (si falta la ciudad,
@@ -322,6 +342,34 @@ MENSAJE_EN_REVISION = (
     "Cuando lo haga, te daremos el número de radicado."
 )
 MENSAJE_RECHAZADO = "Una persona de Celsia revisó el reclamo y no lo aprobó, así que no se radicó. Puedes llamar a la línea 01 8000 112 115."
+
+
+MENSAJE_HERRAMIENTA_CAIDA = (
+    "La herramienta «{herramienta}» no está disponible en este momento. No inventes la respuesta: dile al cliente, con cortesía, "
+    "que no pudiste consultarlo ahora, que intente de nuevo en unos minutos o que llame a la línea 01 8000 112 115."
+)
+
+
+@wrap_tool_call
+def errores_amables(request: Any, handler: Any) -> Any:
+    """Si una herramienta falla, el modelo recibe el aviso en lugar de que se caiga el turno entero.
+
+    Argumentos inválidos: se le dice qué corregir para que reintente. Cualquier otro fallo (base caída, Ollama apagado…): se
+    registra completo y el modelo recibe un mensaje sin detalles internos para que le explique al cliente con cortesía.
+    Las pausas de aprobación humana (`GraphBubbleUp`) no son errores y pasan intactas.
+    """
+    nombre, id_llamada = request.tool_call["name"], request.tool_call["id"]
+    try:
+        return handler(request)
+    except GraphBubbleUp:
+        raise
+    except ToolInvocationError as e:
+        campos = ", ".join(str(".".join(map(str, d["loc"]))) for d in (e.filtered_errors or []) if d.get("loc"))
+        contenido = f"Argumentos inválidos para «{nombre}» ({campos or 'revisa los campos'}). Corrígelos y vuelve a intentarlo."
+    except Exception:
+        log.exception("falló la herramienta %s", nombre)
+        contenido = MENSAJE_HERRAMIENTA_CAIDA.format(herramienta=nombre)
+    return ToolMessage(content=contenido, tool_call_id=id_llamada, name=nombre, status="error")
 
 
 @wrap_model_call
@@ -458,6 +506,7 @@ def crear_agente(
         middleware=[
             limitar_historial,
             con_fecha_de_hoy,
+            errores_amables,
             SummarizationMiddleware(
                 model=llm, trigger=("tokens", UMBRAL_RESUMEN_TOKENS), keep=("messages", MENSAJES_TRAS_RESUMEN)
             ),

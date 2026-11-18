@@ -99,6 +99,7 @@ def test_el_agente_tiene_las_herramientas():
 # --- memoria conversacional (modelo simulado: no llama a Gemini ni a Ollama) ---
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel  # noqa: E402
 from langchain_core.messages import AIMessage  # noqa: E402
+import pytest  # noqa: E402
 
 from taaml.agente import conversar, crear_agente  # noqa: E402
 
@@ -844,3 +845,57 @@ def test_en_vivo_avisa_que_hay_un_reclamo_pendiente():
     assert "pendiente" in tipos and tipos[-1] == "fin"
     assert "".join(e["texto"] for e in eventos if e["tipo"] == "texto") == MENSAJE_EN_REVISION
     assert next(e for e in eventos if e["tipo"] == "pendiente")["herramienta"] == "radicar_reclamo"
+
+
+# --- herramientas estrictas y errores corteses ---
+def _mensajes_de_herramienta(agente, hilo):
+    return [m for m in agente.get_state({"configurable": {"thread_id": hilo}}).values["messages"] if m.type == "tool"]
+
+
+def test_si_una_herramienta_falla_el_turno_sigue_con_un_aviso_cortes(monkeypatch):
+    def caida(*a, **k):
+        raise ConnectionError("Ollama apagado en 127.0.0.1:11434")
+
+    monkeypatch.setattr("taaml.agente.buscar", caida)
+    guiones = iter([_llamada("buscar_en_base", {"pregunta": "¿Qué es Celsia?"}), AIMessage(content="No pude consultarlo ahora.")])
+    agente = crear_agente(llm=ModeloSinTrozos(messages=guiones))
+    respuesta, _ = conversar("¿Qué es Celsia?", "h-caida", agente=agente)
+    (aviso,) = _mensajes_de_herramienta(agente, "h-caida")
+    assert respuesta == "No pude consultarlo ahora." and aviso.status == "error"
+    assert "01 8000 112 115" in aviso.content and "Ollama" not in aviso.content and "11434" not in aviso.content
+
+
+def test_argumentos_inventados_o_fuera_de_rango_se_rechazan_sin_tocar_los_datos(monkeypatch):
+    monkeypatch.setattr("taaml.agente.buscar", lambda *a, **k: pytest.fail("no debía buscar con argumentos inválidos"))
+    guiones = iter(
+        [
+            _llamada("buscar_en_base", {"pregunta": "tarifas", "campo_inventado": 1}, "t1"),
+            _llamada("buscar_en_base", {"pregunta": ""}, "t2"),
+            AIMessage(content="Listo."),
+        ]
+    )
+    agente = crear_agente(llm=ModeloSinTrozos(messages=guiones))
+    conversar("tarifas", "h-estricto", agente=agente)
+    avisos = _mensajes_de_herramienta(agente, "h-estricto")
+    assert [a.status for a in avisos] == ["error", "error"]
+
+
+def test_los_esquemas_de_las_herramientas_no_aceptan_campos_extra():
+    from pydantic import ValidationError
+
+    from taaml.agente import BusquedaEnBase, ConsultaDatos
+
+    with pytest.raises(ValidationError):
+        BusquedaEnBase(pregunta="hola", otro="x")
+    with pytest.raises(ValidationError):
+        ConsultaDatos(tabla="sedes", otro="x")
+    with pytest.raises(ValidationError):
+        ConsultaDatos(tabla="no_existe")
+
+
+def test_la_pausa_de_aprobacion_no_se_confunde_con_un_error_de_herramienta():
+    from taaml.agente import MENSAJE_EN_REVISION
+
+    agente, _, _ = _agente_con_reclamo()
+    respuesta, _ = conversar("Radica mi reclamo", "h-pausa", agente=agente, usuario="c-pausa")
+    assert respuesta == MENSAJE_EN_REVISION and _mensajes_de_herramienta(agente, "h-pausa") == []
