@@ -1,8 +1,8 @@
 """PostgreSQL local para la memoria del agente (checkpointer y Store), sin Docker ni instalación aparte.
 
 Usa `pgserver` (ya en las dependencias de desarrollo). Los datos quedan en `data/memoria/postgres/` y sobreviven entre arranques.
-  uv run python scripts/32_postgres_local.py            # arranca (o reutiliza) el servidor y escribe su DATABASE_URL en la salida
-  uv run python scripts/32_postgres_local.py --detener  # lo apaga
+  uv run python scripts/34_postgres_local.py            # arranca (o reutiliza) el servidor y escribe su DATABASE_URL en la salida
+  uv run python scripts/34_postgres_local.py --detener  # lo apaga
 
 El puerto lo elige pgserver y puede cambiar en cada arranque, por eso `make api-pg` toma la dirección de aquí en vez de fijarla en el `.env`.
 """
