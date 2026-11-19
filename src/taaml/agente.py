@@ -356,8 +356,8 @@ HERRAMIENTAS = [buscar_en_base, consultar_datos, guardar_dato_del_cliente, recor
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
 APROBACION_HUMANA = {
     "radicar_reclamo": {
-        "allowed_decisions": ["approve", "edit", "reject"],
-        "description": "Un cliente pidió radicar este reclamo: apruébalo, edítalo o recházalo.",
+        "allowed_decisions": ["approve", "edit", "reject", "respond"],
+        "description": "Un cliente pidió radicar este reclamo: apruébalo, edítalo, recházalo o responde por la herramienta (por ejemplo, para pedir más datos).",
     }
 }
 MENSAJE_EN_REVISION = (
@@ -690,11 +690,27 @@ def pendiente_de_aprobacion(thread_id: str, modelo: str = MODELO_AGENTE, agente:
 
 
 def resolver_aprobacion(
-    thread_id: str, decision: Literal["aprobar", "rechazar"], usuario: str = ANONIMO, modelo: str = MODELO_AGENTE, agente: Any = None
+    thread_id: str,
+    decision: Literal["aprobar", "rechazar", "responder"],
+    usuario: str = ANONIMO,
+    modelo: str = MODELO_AGENTE,
+    agente: Any = None,
+    mensaje: str | None = None,
 ) -> tuple[str, list[dict]]:
-    """Una persona decide lo que estaba pausado: el agente sigue (si aprueba corre la herramienta, si rechaza no) y devuelve el mensaje final."""
+    """Una persona decide lo que estaba pausado: el agente sigue (si aprueba corre la herramienta, si rechaza no) y devuelve el mensaje final.
+
+    Con `responder` la persona contesta en lugar de la herramienta: no se radica nada y el agente le transmite `mensaje` al cliente
+    (por ejemplo, «falta la dirección del predio»). Es la decisión `respond` de `HumanInTheLoopMiddleware`.
+    """
     agente = agente or _agente(modelo)
-    respuesta = {"type": "approve"} if decision == "aprobar" else {"type": "reject", "message": MENSAJE_RECHAZADO}
+    if decision == "responder":
+        if not (mensaje or "").strip():
+            raise ValueError("responder necesita un mensaje")
+        respuesta = {"type": "respond", "message": mensaje.strip()}
+    elif decision == "aprobar":
+        respuesta = {"type": "approve"}
+    else:
+        respuesta = {"type": "reject", "message": MENSAJE_RECHAZADO}
     resultado = agente.invoke(
         Command(resume={"decisions": [respuesta]}),
         config={"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente", "aprobacion"]},

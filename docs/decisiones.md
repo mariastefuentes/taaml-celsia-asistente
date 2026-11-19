@@ -19,6 +19,8 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 | D13 | Límite de mensajes por teléfono en memoria | vigente |
 | D14 | Prompt del agente versionado: v7 vigente | vigente |
 | D15 | Análisis de conversaciones sobre el checkpointer, con t-SNE y KNN | vigente |
+| D16 | Aprobación humana con tres salidas: aprobar, rechazar o responder | vigente |
+| D17 | Mejoras de la Clase 9 que no se adoptaron (Jev, formato OKF) | vigente |
 
 ## D1. Agente `create_agent`, sin `StateGraph` propio
 - **Contexto.** El flujo es un solo ciclo de decisión: modelo, herramienta, modelo.
@@ -112,3 +114,16 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Decisión.** (b): una tabla aparte duplicaría datos y obligaría a decidir qué hacer con el teléfono; el checkpointer ya guarda cada conversación completa bajo un hash del teléfono. `taaml.conversaciones` las lee y marca las fallidas; el cuaderno usa los embeddings del propio agente, t-SNE en 2D y 3D, K-means y una comparación con KNN en el espacio original (t-SNE sirve para mirar, KNN para buscar vecinos).
 - **Límites declarados.** Los datos son 114 conversaciones simuladas, no clientes reales; la marca de «fallida» es una regla de palabras que mezcla rechazos correctos con fallos reales (de 20 marcadas, 5 lo eran).
 - **Evidencia.** `src/taaml/conversaciones.py`, `scripts/35_simular_conversaciones.py`, `scripts/36_construir_notebook_tsne.py`, `notebooks/analisis_conversaciones.ipynb`.
+
+## D16. Aprobación humana con tres salidas: aprobar, rechazar o responder
+- **Contexto.** La Clase 9 muestra cuatro decisiones del revisor en `HumanInTheLoopMiddleware`: `approve`, `edit`, `reject` y `respond`. Con solo aprobar o rechazar, una persona que ve un reclamo incompleto no tiene cómo pedirle más datos al cliente.
+- **Alternativas consideradas.** (a) Dejar aprobar y rechazar; (b) agregar `edit` en la API; (c) agregar `respond`.
+- **Decisión.** (c): `POST /aprobar` acepta `decision: "responder"` con un `mensaje` (obligatorio, hasta 500 caracteres). La herramienta no corre, no se radica nada y el agente recibe lo que dijo la persona para transmitírselo al cliente por WhatsApp. `edit` ya está permitido en el middleware, pero la API no lo expone todavía.
+- **Por qué.** Es el único caso en que el humano aporta información en vez de solo un sí o un no, y no cuesta infraestructura nueva: viaja por el mismo checkpointer.
+- **Qué no se hizo.** El predicado `when` que muestra la clase (pausar solo algunas llamadas de una herramienta) no existe en la versión instalada de LangChain; `radicar_reclamo` siempre pausa.
+- **Evidencia.** `src/taaml/agente.py` (`resolver_aprobacion`), `api/main.py` (`Decision`), pruebas en `tests/test_agente.py` y `tests/test_api.py`.
+
+## D17. Mejoras de la Clase 9 que no se adoptaron
+- **Jev (System One) como compuerta del RAG.** Sigue abierta (D9): es una API comercial y no hay clave. El agente ya decide cuándo buscar (D12) y la matriz de enrutamiento mide ese acierto (32 de 33), así que la compuerta sería una optimización de costo y latencia, no una pieza que falte.
+- **Campos `verified` y `stale_after` del formato OKF en la capa Gold.** No se agregaron: obligaría a regenerar todos los documentos y a reindexar a un día de la sustentación, sin cambiar lo que responde el agente. Hoy la frescura se cubre con `fecha_extraccion`, `fecha_publicacion` y `hash` en cada documento.
+- **Skill propia.** Sí se agregó: `skills/celsia-corpus-medallion/SKILL.md`, con nombre abstracto como pide la Clase 3. No se publicó en skills.sh ni se escaneó con SkillSpector; falta si el profesor lo exige.
