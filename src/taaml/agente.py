@@ -368,7 +368,8 @@ MENSAJE_RECHAZADO = "Una persona de Celsia revisó el reclamo y no lo aprobó, a
 
 MENSAJE_HERRAMIENTA_CAIDA = (
     "La herramienta «{herramienta}» no está disponible en este momento. No inventes la respuesta: dile al cliente, con cortesía, "
-    "que no pudiste consultarlo ahora, que intente de nuevo en unos minutos o que llame a la línea 01 8000 112 115."
+    "que en este momento no pudiste verificarlo, que intente de nuevo en unos minutos o llame a la línea 01 8000 112 115, y ofrécele "
+    "ayuda con otra cosa de Celsia (sedes, trámites, tarifas o un reclamo)."
 )
 
 

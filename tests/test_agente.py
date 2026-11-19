@@ -863,6 +863,7 @@ def test_si_una_herramienta_falla_el_turno_sigue_con_un_aviso_cortes(monkeypatch
     (aviso,) = _mensajes_de_herramienta(agente, "h-caida")
     assert respuesta == "No pude consultarlo ahora." and aviso.status == "error"
     assert "01 8000 112 115" in aviso.content and "Ollama" not in aviso.content and "11434" not in aviso.content
+    assert "ayuda con otra cosa" in aviso.content and "no pudiste verificarlo" in aviso.content  # la alternativa que se le ofrece al cliente
 
 
 def test_argumentos_inventados_o_fuera_de_rango_se_rechazan_sin_tocar_los_datos(monkeypatch):
