@@ -47,7 +47,7 @@ def test_firma_valida_solo_con_el_secreto_y_el_cuerpo_exactos():
 def test_mensajes_entrantes_lee_texto_y_ignora_avisos_de_estado():
     carga = json.loads(_aviso(texto="¿Cuánto cuesta?"))
     assert whatsapp.mensajes_entrantes(carga) == [
-        {"id": "wamid.1", "telefono": "573001234567", "tipo": "text", "texto": "¿Cuánto cuesta?"}
+        {"id": "wamid.1", "telefono": "573001234567", "tipo": "text", "texto": "¿Cuánto cuesta?", "audio": ""}
     ]
     estado = {"entry": [{"changes": [{"value": {"statuses": [{"id": "x", "status": "read"}]}}]}]}
     assert whatsapp.mensajes_entrantes(estado) == [] and whatsapp.mensajes_entrantes({}) == []
@@ -132,7 +132,7 @@ def test_recibir_rechaza_cuerpos_que_no_son_json():
 def test_un_mensaje_de_texto_llega_al_agente_y_la_respuesta_sale_por_whatsapp(monkeypatch):
     preguntas, enviados = [], []
 
-    def agente(telefono, mensaje):
+    def agente(telefono, mensaje, canal="chat"):
         preguntas.append((telefono, mensaje))
         return RespuestaDelAgente(respuesta="Hola, soy el asistente", herramientas=[], ok=True)
 
@@ -150,7 +150,7 @@ def test_un_reintento_de_meta_no_se_atiende_dos_veces(monkeypatch):
     monkeypatch.setattr(
         api_main,
         "responder_a_telefono",
-        lambda t, m: preguntas.append(m) or RespuestaDelAgente(respuesta="ok", herramientas=[], ok=True),
+        lambda t, m, canal="chat": preguntas.append(m) or RespuestaDelAgente(respuesta="ok", herramientas=[], ok=True),
     )
     monkeypatch.setattr(api_main, "enviar_texto", lambda *a: True)
     cuerpo = _aviso(id_mensaje="wamid.repetido")
@@ -161,7 +161,7 @@ def test_un_reintento_de_meta_no_se_atiende_dos_veces(monkeypatch):
 
 def test_lo_que_no_es_texto_recibe_una_respuesta_amable_sin_llamar_al_agente(monkeypatch):
     enviados = []
-    monkeypatch.setattr(api_main, "responder_a_telefono", lambda *a: pytest.fail("no debía llamar al agente"))
+    monkeypatch.setattr(api_main, "responder_a_telefono", lambda *a, **k: pytest.fail("no debía llamar al agente"))
     monkeypatch.setattr(api_main, "enviar_texto", lambda tel, texto: enviados.append(texto) or True)
     cuerpo = _aviso(tipo="image")
     assert cliente.post("/webhook/whatsapp", content=cuerpo, headers=_firmar(cuerpo)).status_code == 200
@@ -176,7 +176,7 @@ def test_los_avisos_de_estado_no_generan_respuesta(monkeypatch):
 
 
 def test_un_fallo_al_atender_no_tumba_el_webhook(monkeypatch):
-    def roto(*a):
+    def roto(*a, **k):
         raise RuntimeError("falla interna")
 
     monkeypatch.setattr(api_main, "responder_a_telefono", roto)

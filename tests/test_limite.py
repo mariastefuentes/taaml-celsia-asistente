@@ -58,7 +58,7 @@ def test_no_guarda_el_numero_en_claro():
 def api_con_limite(monkeypatch):
     monkeypatch.setattr(api_main, "LIMITE", LimitePorTelefono(2, 60, Reloj()))
     monkeypatch.setattr(
-        api_main, "responder_a_telefono", lambda tel, msg: api_main.RespuestaDelAgente(respuesta="ok", herramientas=[])
+        api_main, "responder_a_telefono", lambda tel, msg, canal="chat": api_main.RespuestaDelAgente(respuesta="ok", herramientas=[])
     )
     return TestClient(api_main.app)
 
@@ -79,7 +79,7 @@ def test_whatsapp_avisa_una_sola_vez_y_no_llama_al_agente_al_pasarse(monkeypatch
     monkeypatch.setattr(
         api_main,
         "responder_a_telefono",
-        lambda tel, msg: preguntas.append(msg) or api_main.RespuestaDelAgente(respuesta="ok", herramientas=[]),
+        lambda tel, msg, canal="chat": preguntas.append(msg) or api_main.RespuestaDelAgente(respuesta="ok", herramientas=[]),
     )
     for _ in range(4):
         api_main.atender_mensaje_de_whatsapp("573001234567", "text", "hola")

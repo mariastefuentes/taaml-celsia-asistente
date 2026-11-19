@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -32,6 +32,8 @@ ayuda:
 	$(info )
 	$(info   VERIFICAR ANTES DE LA DEMO)
 	$(info     make demo-limpiar    borra la memoria de largo plazo de los ensayos (antes de la demo))
+	$(info     make demo-plan-b     plan B: repite en pantalla una conversacion real grabada (por si Meta falla))
+	$(info     make exportar-chats  exporta los chats reales de los ensayos para el analisis t-SNE)
 	$(info     make ensayo          revisa que la demo este lista, sin gastar cuota)
 	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas al modelo))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
@@ -87,6 +89,14 @@ db-down:
 # Limpia la memoria de la misma base que usa `make api` (PostgreSQL local, o el de DATABASE_URL si está definida).
 demo-limpiar:
 	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run python scripts/30_limpiar_memoria_demo.py --borrar
+
+# Plan B de la demostración: repite en pantalla una conversación real grabada (avisa que es una repetición).
+demo-plan-b:
+	uv run python scripts/37_demo_plan_b.py
+
+# Exporta los chats reales de los ensayos (de la base que usa `make api`) para el análisis t-SNE.
+exportar-chats:
+	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run python scripts/38_exportar_conversaciones_reales.py
 
 demo-inyeccion:
 	uv run python scripts/23_demo_corpus_envenenado.py --servir
