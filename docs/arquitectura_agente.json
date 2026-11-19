@@ -1,0 +1,290 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Agente de Celsia: de WhatsApp a la respuesta",
+    "output": "arquitectura_agente.html",
+    "locale": "es",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    {
+      "id": "cliente",
+      "type": "external",
+      "label": "Cliente",
+      "sublabel": "WhatsApp",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "meta",
+      "type": "cloud",
+      "label": "Meta",
+      "sublabel": "API Cloud de WhatsApp",
+      "pos": [
+        240,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API FastAPI",
+      "sublabel": "webhook · /chat · /api/chat",
+      "pos": [
+        450,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "firma + mensaje ya visto"
+    },
+    {
+      "id": "limite",
+      "type": "security",
+      "label": "Límite por teléfono",
+      "sublabel": "8 mensajes por minuto",
+      "pos": [
+        450,
+        460
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "frontend",
+      "type": "frontend",
+      "label": "Frontend React",
+      "sublabel": "streaming SSE (Módulo 2)",
+      "pos": [
+        450,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "agente",
+      "type": "backend",
+      "label": "Agente",
+      "sublabel": "create_agent · prompt v7",
+      "pos": [
+        680,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "pausa en reclamos"
+    },
+    {
+      "id": "modelo",
+      "type": "cloud",
+      "label": "Modelo de lenguaje",
+      "sublabel": "DeepSeek, Gemini, Ollama",
+      "pos": [
+        680,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "persona",
+      "type": "external",
+      "label": "Persona de Celsia",
+      "sublabel": "aprueba o rechaza",
+      "pos": [
+        240,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "herramientas",
+      "type": "backend",
+      "label": "5 herramientas",
+      "sublabel": "esquemas Pydantic estrictos",
+      "pos": [
+        940,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "qdrant",
+      "type": "database",
+      "label": "Qdrant + Ollama",
+      "sublabel": "1.690 fragmentos",
+      "pos": [
+        940,
+        460
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "coseno"
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "PostgresSaver · PostgresStore",
+      "pos": [
+        680,
+        460
+      ],
+      "size": [
+        150,
+        60
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "cliente-meta",
+      "from": "cliente",
+      "to": "meta",
+      "label": "escribe",
+      "variant": "emphasis",
+      "labelDy": 19
+    },
+    {
+      "id": "meta-api",
+      "from": "meta",
+      "to": "api",
+      "label": "webhook",
+      "variant": "emphasis",
+      "labelDy": 19
+    },
+    {
+      "id": "api-meta",
+      "from": "api",
+      "to": "meta",
+      "label": "respuesta",
+      "variant": "dashed",
+      "labelDy": -19
+    },
+    {
+      "id": "api-limite",
+      "from": "api",
+      "to": "limite",
+      "label": "cuenta",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "frontend-api",
+      "from": "frontend",
+      "to": "api",
+      "label": "/api/chat",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "api-agente",
+      "from": "api",
+      "to": "agente",
+      "label": "turno",
+      "variant": "emphasis",
+      "labelDy": 19
+    },
+    {
+      "id": "agente-modelo",
+      "from": "agente",
+      "to": "modelo",
+      "label": "prompt",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "persona-api",
+      "from": "persona",
+      "to": "api",
+      "label": "/aprobar",
+      "variant": "security",
+      "fromSide": "right",
+      "toSide": "top"
+    },
+    {
+      "id": "agente-herramientas",
+      "from": "agente",
+      "to": "herramientas",
+      "label": "function calling",
+      "labelDy": 19
+    },
+    {
+      "id": "herramientas-qdrant",
+      "from": "herramientas",
+      "to": "qdrant",
+      "label": "búsqueda",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "agente-postgres",
+      "from": "agente",
+      "to": "postgres",
+      "label": "guarda el turno",
+      "variant": "dashed",
+      "fromSide": "bottom",
+      "toSide": "top"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Entrada",
+      "items": [
+        "Meta firma cada aviso (X-Hub-Signature-256)",
+        "Se responde 200 enseguida y el mensaje se atiende una sola vez",
+        "Pasado el límite no se llama al modelo"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Agente",
+      "items": [
+        "El modelo elige la herramienta por function calling",
+        "Cada herramienta valida sus argumentos con Pydantic",
+        "Radicar un reclamo queda pausado hasta que una persona decide"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Memoria y datos",
+      "items": [
+        "Una conversación por teléfono (se guarda su hash, no el número)",
+        "PostgreSQL guarda la conversación y lo que el cliente cuenta de sí mismo",
+        "Qdrant responde las preguntas sobre el sitio de Celsia"
+      ]
+    }
+  ]
+}

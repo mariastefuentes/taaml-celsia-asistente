@@ -43,7 +43,9 @@ Interactivo en [docs/pipeline.html](docs/pipeline.html) (fuente en [docs/pipelin
 
 El agente (`create_agent` de LangChain) decide en cada turno qué herramienta usar mediante **function calling**: el modelo recibe las herramientas con su esquema (JSON Schema generado desde Pydantic) y responde con una llamada estructurada (nombre y argumentos), que Pydantic valida antes de ejecutar; el prompt solo lo guía. No hay enrutamiento por texto libre. Habla con el cliente por una API FastAPI con streaming, y un frontend React independiente la consume.
 
-![Arquitectura de punta a punta, de WhatsApp a la respuesta](docs/3%20-%20Informe/diagrama_extremo_a_extremo.svg)
+[![Arquitectura de punta a punta, de WhatsApp a la respuesta](docs/capturas/arquitectura_agente.jpg)](docs/arquitectura_agente.html)
+
+Diagrama interactivo: [docs/arquitectura_agente.html](docs/arquitectura_agente.html) (fuente en [docs/arquitectura_agente.json](docs/arquitectura_agente.json), generado con Archify).
 
 ![Arquitectura del agente](docs/3%20-%20Informe/diagrama_arquitectura_agente.svg)
 
@@ -231,7 +233,7 @@ data/        0_manual/ 1_bronze/ 2_silver/ 3_gold/ 4_curaduria/ 5_extraccion/
 src/taaml/   código del asistente (base.py, recuperacion.py, vectorstore.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, consulta_datos.py, prompts.py, tareas.py, whatsapp.py, limite.py, conversaciones.py)
 prompts/     prompts versionados (asistente v3 vigente, v4 y v5 descartados; resumen y FAQ v2; agente v7 vigente, v2 a v6 reemplazados; extracción v1)
 tests/       pruebas automáticas de componentes (make test)
-specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 012: asistente, validación y agente, continuidad de la demo, base vectorial, evidencia de Resumen y FAQ, pestaña Corpus, prueba del scraper, etapa Descubrir, organización de la entrega, agente con memoria y router, y Qdrant; las decisiones de arquitectura están en `docs/decisiones.md`
+specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 013: asistente, validación y agente, continuidad de la demo, base vectorial, evidencia de Resumen y FAQ, pestaña Corpus, prueba del scraper, etapa Descubrir, organización de la entrega, agente con memoria y router, Qdrant, y el agente en producción con WhatsApp; las decisiones de arquitectura están en `docs/decisiones.md`
 .specify/   memoria del proyecto: memory/constitution.md (verdad central)
 docs/        incluye skillspector-corpus-medallion.md, el reporte de seguridad de la skill
 .github/    plantilla de Pull Request y CI
