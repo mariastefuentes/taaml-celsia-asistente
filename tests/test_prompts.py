@@ -44,14 +44,14 @@ def test_la_linea_de_servicio_de_los_prompts_esta_en_los_datos_manuales():
 
 
 def test_prompt_del_agente_tiene_los_cinco_bloques_y_nombra_las_herramientas():
-    texto = leer_prompt("v6_agente.md")
+    texto = leer_prompt("v7_agente.md")
     for bloque in ("# 1.", "# 2. CONTEXTO", "# 3. INSTRUCCIÓN", "# 4. FORMATO", "# 5. RESTRICCIONES"):
         assert bloque in texto
     assert "consultar_datos" in texto and "buscar_en_base" in texto
 
 
 def test_prompt_del_agente_explica_el_router_la_memoria_y_la_defensa():
-    texto = leer_prompt("v6_agente.md")
+    texto = leer_prompt("v7_agente.md")
     assert "«sedes»" in texto and "«contactos»" in texto  # regla de datos exactos
     assert "Sin resultados" in texto  # respaldo hacia el texto
     assert "turno anterior" in texto  # memoria
@@ -60,7 +60,7 @@ def test_prompt_del_agente_explica_el_router_la_memoria_y_la_defensa():
 
 
 def test_el_prompt_del_agente_prohibe_formatos_de_programacion():
-    texto = leer_prompt("v6_agente.md")
+    texto = leer_prompt("v7_agente.md")
     for formato in ("JSON", "XML", "YAML", "HTML", "CSV", "SQL"):
         assert formato in texto
     assert "texto plano" in texto
@@ -70,21 +70,28 @@ def test_el_prompt_del_agente_prohibe_formatos_de_programacion():
 def test_el_prompt_del_agente_nombra_herramientas_que_existen():
     from taaml.agente import HERRAMIENTAS
 
-    texto = leer_prompt("v6_agente.md")
+    texto = leer_prompt("v7_agente.md")
     assert all(f"`{h.name}`" in texto for h in HERRAMIENTAS)
 
 
-def test_el_agente_carga_el_prompt_v6():
+def test_el_agente_carga_el_prompt_v7():
     import inspect
     from taaml import agente
 
-    assert "v6_agente.md" in inspect.getsource(agente.crear_agente)
+    assert "v7_agente.md" in inspect.getsource(agente.crear_agente)
 
 
 
 
-def test_v6_prohibe_responder_preguntas_ajenas_a_celsia_aunque_sean_sencillas():
-    texto = leer_prompt("v6_agente.md")
+def test_v7_conserva_la_regla_de_v6_de_no_responder_preguntas_ajenas_a_celsia_aunque_sean_sencillas():
+    texto = leer_prompt("v7_agente.md")
     assert "capital de Francia" in texto and "ni siquiera para una pregunta sencilla" in texto
     assert "una pregunta que no necesita datos de Celsia se responde sin herramientas" not in texto  # la frase de v5 que dejaba pasar las trivias
     assert "estado: reemplazado por v6" in (Path(__file__).parents[1] / "prompts" / "v5_agente.md").read_text(encoding="utf-8")
+    assert "estado: reemplazado por v7" in (Path(__file__).parents[1] / "prompts" / "v6_agente.md").read_text(encoding="utf-8")
+
+
+def test_v7_manda_buscar_los_temas_de_energia_y_no_prometer_lo_que_fallo():
+    texto = leer_prompt("v7_agente.md")
+    assert "energía solar" in texto and "no los rechaces sin buscar" in texto
+    assert "nada se guardó ni se radicó" in texto

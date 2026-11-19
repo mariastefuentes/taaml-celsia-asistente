@@ -594,7 +594,7 @@ def test_el_prompt_de_sistema_se_arma_en_cada_turno_con_la_fecha_de_hoy():
     modelo = ModeloQueLeeElPrompt(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[], sistemas=[])
     conversar("hola", "hilo-fecha", agente=crear_agente(llm=modelo))
     assert f"Fecha de hoy: {date.today().isoformat()}" in modelo.sistemas[0]
-    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v6_agente.md
+    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v7_agente.md
 
 
 def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
@@ -834,6 +834,45 @@ def test_mientras_espera_aprobacion_el_modelo_no_vuelve_a_correr():
     llamadas_al_modelo = len(modelo.vistos)
     assert conversar("¿ya está?", "h4", agente=agente, usuario="c4") == (MENSAJE_EN_REVISION, [])
     assert len(modelo.vistos) == llamadas_al_modelo
+
+
+def _llamada_reclamo(id_, **args):
+    datos = {"tipo": "falla_de_servicio", "ciudad": "Ibagué", "descripcion": "Sin luz desde las 8"} | args
+    return AIMessage(content="", tool_calls=[{"name": "radicar_reclamo", "args": datos, "id": id_}])
+
+
+def _agente_con_mensajes(*mensajes):
+    from langgraph.store.memory import InMemoryStore
+
+    modelo = ModeloEspia(messages=iter(mensajes), vistos=[])
+    return crear_agente(llm=modelo, store=InMemoryStore()), modelo
+
+
+def test_un_reclamo_con_argumentos_invalidos_no_llega_a_la_persona_que_aprueba():
+    from taaml.agente import pendiente_de_aprobacion
+
+    agente, modelo = _agente_con_mensajes(
+        _llamada_reclamo("r1", tipo="queja", ciudad=""),  # tipo inexistente y ciudad vacía
+        _llamada_reclamo("r2"),  # el modelo corrige
+        AIMessage(content="Listo."),
+    )
+    texto, _ = conversar("Radica mi reclamo", "h-val1", agente=agente, usuario="cv1")
+    pendiente = pendiente_de_aprobacion("h-val1", agente=agente)
+    assert pendiente["args"]["tipo"] == "falla_de_servicio"  # lo que se aprueba es la llamada ya corregida
+    assert len(modelo.vistos) == 2  # el modelo reintentó una vez, sin molestar a nadie
+    avisos = _mensajes_de_herramienta(agente, "h-val1")
+    assert [(a.status, "tipo" in a.content and "ciudad" in a.content) for a in avisos] == [("error", True)]
+
+
+def test_si_el_modelo_insiste_con_un_reclamo_invalido_se_le_pide_al_cliente_que_repita():
+    from taaml.agente import MENSAJE_RECLAMO_INCOMPLETO, pendiente_de_aprobacion
+
+    malas = [_llamada_reclamo(f"m{i}", tipo="queja") for i in range(5)]
+    agente, modelo = _agente_con_mensajes(*malas, AIMessage(content="no debería llegar aquí"))
+    texto, _ = conversar("Radica mi reclamo", "h-val2", agente=agente, usuario="cv2")
+    assert texto == MENSAJE_RECLAMO_INCOMPLETO
+    assert pendiente_de_aprobacion("h-val2", agente=agente) is None
+    assert len(modelo.vistos) == 3  # el intento original y dos reintentos, no un bucle sin fin
 
 
 def test_en_vivo_avisa_que_hay_un_reclamo_pendiente():
