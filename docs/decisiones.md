@@ -126,4 +126,4 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 ## D17. Mejoras de la Clase 9 que no se adoptaron
 - **Jev (System One) como compuerta del RAG.** Sigue abierta (D9): es una API comercial y no hay clave. El agente ya decide cuándo buscar (D12) y la matriz de enrutamiento mide ese acierto (32 de 33), así que la compuerta sería una optimización de costo y latencia, no una pieza que falte.
 - **Campos `verified` y `stale_after` del formato OKF en la capa Gold.** No se agregaron: obligaría a regenerar todos los documentos y a reindexar a un día de la sustentación, sin cambiar lo que responde el agente. Hoy la frescura se cubre con `fecha_extraccion`, `fecha_publicacion` y `hash` en cada documento.
-- **Skill propia.** Sí se agregó: `skills/celsia-corpus-medallion/SKILL.md`, con nombre abstracto como pide la Clase 3. No se publicó en skills.sh ni se escaneó con SkillSpector; falta si el profesor lo exige.
+- **Skill propia.** Ya existe y vive en su propio repositorio público (`mariastefuentes/taaml-skills`, skill `corpus-medallion`), con su reporte de SkillSpector en `docs/skillspector-corpus-medallion.md`; no se duplica en este repositorio.
