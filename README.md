@@ -31,6 +31,8 @@ El detalle y las limitaciones están en el [informe](docs/3%20-%20Informe/inform
 
 [![Arquitectura de la aplicación](docs/capturas/arquitectura.png)](docs/arquitectura.html)
 
+Esta es la arquitectura del Taller 1 (Streamlit). La del agente actual, de WhatsApp a la respuesta, está más abajo, en [Agente (Módulos 2 y 3)](#agente-módulos-2-y-3).
+
 El diagrama es interactivo: abre [docs/arquitectura.html](docs/arquitectura.html) (fuente en [docs/arquitectura.json](docs/arquitectura.json)). La preparación de los datos, de celsia.com a los fragmentos indexados, tiene su propio diagrama:
 
 [![Pipeline de datos](docs/capturas/pipeline.png)](docs/pipeline.html)
@@ -40,6 +42,8 @@ Interactivo en [docs/pipeline.html](docs/pipeline.html) (fuente en [docs/pipelin
 ### Agente (Módulos 2 y 3)
 
 El agente (`create_agent` de LangChain) decide en cada turno qué herramienta usar mediante **function calling**: el modelo recibe las herramientas con su esquema (JSON Schema generado desde Pydantic) y responde con una llamada estructurada (nombre y argumentos), que Pydantic valida antes de ejecutar; el prompt solo lo guía. No hay enrutamiento por texto libre. Habla con el cliente por una API FastAPI con streaming, y un frontend React independiente la consume.
+
+![Arquitectura de punta a punta, de WhatsApp a la respuesta](docs/3%20-%20Informe/diagrama_extremo_a_extremo.svg)
 
 ![Arquitectura del agente](docs/3%20-%20Informe/diagrama_arquitectura_agente.svg)
 
