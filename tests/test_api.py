@@ -61,6 +61,40 @@ def test_rechaza_mensajes_vacios_demasiado_largos_o_hilos_inventados():
     assert cliente.get("/api/hilos/no-es-un-hilo/mensajes").status_code == 422
 
 
+def test_chat_por_telefono_responde_json_y_mantiene_la_conversacion(monkeypatch):
+    recibido = []
+
+    def falso(mensaje, hilo, usuario):
+        recibido.append((mensaje, hilo, usuario))
+        return "Hola", [{"herramienta": "consultar_datos", "args": {"tabla": "sedes"}}]
+
+    monkeypatch.setattr("api.main.conversar", falso)
+    r = cliente.post("/chat", json={"mensaje": "hola", "telefono": "573001234567"})
+    assert r.status_code == 200
+    assert r.json() == {"respuesta": "Hola", "herramientas": ["consultar_datos"], "ok": True}
+    cliente.post("/chat", json={"mensaje": "y su teléfono?", "telefono": "+573001234567"})
+    cliente.post("/chat", json={"mensaje": "hola", "telefono": "573009999999"})
+    assert recibido[0][1:] == recibido[1][1:]  # el mismo número, con o sin +, vuelve a la misma conversación y memoria
+    assert recibido[0][1] != recibido[2][1] and recibido[0][2] != recibido[2][2]  # otro número, otra conversación
+    assert "573001234567" not in "".join(recibido[0][1:])  # el número no queda escrito en los identificadores
+
+
+def test_chat_por_telefono_responde_con_cortesia_si_el_agente_falla(monkeypatch):
+    def falla(mensaje, hilo, usuario):
+        raise RuntimeError("clave secreta rota")
+
+    monkeypatch.setattr("api.main.conversar", falla)
+    r = cliente.post("/chat", json={"mensaje": "hola", "telefono": "573001234567"})
+    assert r.status_code == 200 and r.json()["ok"] is False
+    assert "clave secreta" not in r.text and r.json()["respuesta"].startswith("En este momento no pude responder")
+
+
+def test_chat_por_telefono_rechaza_telefonos_y_mensajes_invalidos():
+    assert cliente.post("/chat", json={"mensaje": "hola", "telefono": "abc"}).status_code == 422
+    assert cliente.post("/chat", json={"mensaje": "", "telefono": "573001234567"}).status_code == 422
+    assert cliente.post("/chat", json={"mensaje": "x" * 1001, "telefono": "573001234567"}).status_code == 422
+
+
 def test_historial_devuelve_la_conversacion_guardada(monkeypatch):
     monkeypatch.setattr("api.main.historial_visible", lambda hilo: [{"rol": "user", "texto": "hola"}])
     assert cliente.get(f"/api/hilos/{HILO}/mensajes").json() == {

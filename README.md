@@ -138,7 +138,7 @@ make api        # API del agente (necesita GOOGLE_API_KEY en .env y Ollama encen
 make app        # frontend en http://localhost:5173 (alias de make frontend)
 ```
 
-La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen":"qdrant"`), `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde SQLite.
+La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen":"qdrant"`), `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). Para servicios externos (WhatsApp, N8N) expone `POST /chat`: recibe `{mensaje, telefono}` y devuelve un JSON `{respuesta, herramientas, ok}`; el teléfono identifica la conversación y la memoria del cliente (se guarda su hash, no el número) y, si el agente falla, responde con un mensaje cortés y `ok: false`. El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde SQLite.
 
 ```bash
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)
