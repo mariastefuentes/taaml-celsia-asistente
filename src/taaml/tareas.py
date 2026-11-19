@@ -13,13 +13,12 @@ from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
+from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import HumanMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import Runnable, RunnableConfig, RunnablePassthrough
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
 from taaml.base import cargar_base
@@ -94,15 +93,16 @@ def clave_faltante(modelo: str = MODELO_POR_DEFECTO) -> str | None:
 
 @lru_cache(maxsize=4)
 def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
-    """DeepSeek por defecto (con el razonamiento apagado); «ollama:» usa el modelo local y el resto se trata como Gemini.
+    """El modelo de chat, creado siempre con `init_chat_model` de LangChain.
 
-    DeepSeek solo respeta temperature con el razonamiento apagado y deja top_p fijo en 1,0 (lo dice su documentación).
+    DeepSeek por defecto (con el razonamiento apagado, por su API compatible con OpenAI); «ollama:» usa el modelo local y el
+    resto se trata como Gemini. DeepSeek solo respeta temperature con el razonamiento apagado y deja top_p fijo en 1,0 (lo dice
+    su documentación).
     """
     if nombre.startswith("ollama:"):  # modelo local de respaldo (spec 003): sin clave y sin costo
-        from langchain_ollama import ChatOllama
-
-        return ChatOllama(
-            model=_tag_instalado(nombre.removeprefix("ollama:")),
+        return init_chat_model(
+            _tag_instalado(nombre.removeprefix("ollama:")),
+            model_provider="ollama",
             temperature=PARAMETROS_MODELO["temperature"],
             top_p=PARAMETROS_MODELO["top_p"],
             num_ctx=VENTANA_CONTEXTO_LOCAL,
@@ -111,8 +111,9 @@ def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
     if nombre.startswith("deepseek"):
         if not os.environ.get("DEEPSEEK_API_KEY"):
             raise RuntimeError("Falta DEEPSEEK_API_KEY en el archivo .env")
-        return ChatOpenAI(
-            model=nombre,
+        return init_chat_model(
+            nombre,
+            model_provider="openai",  # DeepSeek habla el protocolo de OpenAI; solo cambia la dirección
             base_url=URL_DEEPSEEK,
             api_key=os.environ["DEEPSEEK_API_KEY"],
             temperature=PARAMETROS_MODELO["temperature"],
@@ -123,8 +124,9 @@ def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
         )
     if not os.environ.get("GOOGLE_API_KEY"):
         raise RuntimeError("Falta GOOGLE_API_KEY en el archivo .env")
-    return ChatGoogleGenerativeAI(
-        model=nombre,
+    return init_chat_model(
+        nombre,
+        model_provider="google_genai",
         temperature=PARAMETROS_MODELO["temperature"],
         top_p=PARAMETROS_MODELO["top_p"],
         max_output_tokens=MAX_TOKENS_SALIDA,
