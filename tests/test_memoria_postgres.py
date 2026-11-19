@@ -17,7 +17,7 @@ def url(tmp_path_factory):
     servidor.cleanup()
 
 
-def _agente(url, respuestas):
+def _agente_con_mensajes(url, mensajes):
     from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 
     from taaml.agente import almacen_de_largo_plazo, almacen_de_memoria, crear_agente
@@ -27,10 +27,12 @@ def _agente(url, respuestas):
             return self
 
     return crear_agente(
-        llm=Modelo(messages=iter(AIMessage(content=r) for r in respuestas)),
-        checkpointer=almacen_de_memoria(url=url),
-        store=almacen_de_largo_plazo(url=url),
+        llm=Modelo(messages=iter(mensajes)), checkpointer=almacen_de_memoria(url=url), store=almacen_de_largo_plazo(url=url)
     )
+
+
+def _agente(url, respuestas):
+    return _agente_con_mensajes(url, [AIMessage(content=r) for r in respuestas])
 
 
 def test_se_usa_postgres_cuando_hay_database_url(url, monkeypatch):
@@ -77,3 +79,27 @@ def test_el_store_separa_a_los_clientes_por_namespace(url):
         and datos_del_cliente("ana-pg", almacen) == []
         and datos_del_cliente("luis-pg", almacen) == ["Vive en Ibagué"]
     )
+
+
+def test_la_aprobacion_pendiente_sobrevive_a_un_reinicio_y_se_radica_en_postgres(url):
+    from taaml.agente import almacen_de_largo_plazo, conversar, pendiente_de_aprobacion, resolver_aprobacion
+
+    llamada = AIMessage(
+        content="",
+        tool_calls=[
+            {
+                "name": "radicar_reclamo",
+                "args": {"tipo": "falla_de_servicio", "ciudad": "Ibagué", "descripcion": "Sin luz desde las 8"},
+                "id": "r1",
+            }
+        ],
+    )
+    primero = _agente_con_mensajes(url, [llamada])  # solo necesita llegar a la pausa
+    conversar("Radica mi reclamo", "pg-aprob", agente=primero, usuario="cliente-pg")
+    # «reinicio»: otro agente, otras conexiones; lo único compartido es PostgreSQL
+    segundo = _agente(url, ["Tu reclamo quedó radicado."])
+    assert pendiente_de_aprobacion("pg-aprob", agente=segundo)["args"]["ciudad"] == "Ibagué"
+    texto, _ = resolver_aprobacion("pg-aprob", "aprobar", usuario="cliente-pg", agente=segundo)
+    guardados = almacen_de_largo_plazo(url=url).search(("reclamos", "cliente-pg"))
+    assert texto == "Tu reclamo quedó radicado." and len(guardados) == 1
+    assert pendiente_de_aprobacion("pg-aprob", agente=segundo) is None
