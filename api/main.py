@@ -4,6 +4,7 @@ Endpoints:
   GET  /api/salud                    estado, modelo del agente y dónde busca por significado (qdrant, numpy o ninguno)
   POST /api/chat                     un turno de conversación; responde por streaming (Server-Sent Events)
   POST /chat                         un turno por teléfono; responde un JSON (para WhatsApp, N8N o cualquier servicio externo)
+  POST /aprobar                      una persona aprueba o rechaza lo que el agente dejó pendiente (necesita el encabezado X-Aprobador)
   GET  /api/hilos/{hilo}/mensajes    la conversación guardada, para recuperarla al recargar la página
   GET  /api/usuarios/{usuario}/datos    lo que el agente recuerda del cliente (memoria de largo plazo)
   DELETE /api/usuarios/{usuario}/datos  borra todo lo que el agente recuerda del cliente
@@ -13,18 +14,31 @@ Uso:  uv run uvicorn api.main:app --reload --port 8000
 import hashlib
 import json
 import logging
+import os
 import re
+import secrets
 import threading
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
+from typing import Literal
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from taaml.agente import MODELO_AGENTE, calentar, conversar, conversar_en_vivo, datos_del_cliente, historial_visible, olvidar_cliente
+from taaml.agente import (
+    MODELO_AGENTE,
+    calentar,
+    conversar,
+    conversar_en_vivo,
+    datos_del_cliente,
+    historial_visible,
+    olvidar_cliente,
+    pendiente_de_aprobacion,
+    resolver_aprobacion,
+)
 from taaml.recuperacion import almacen_vectorial
 
 log = logging.getLogger("taaml.api")
@@ -109,6 +123,7 @@ class RespuestaDelAgente(BaseModel):
     respuesta: str
     herramientas: list[str]
     ok: bool = True
+    pendiente: dict | None = None  # algo que una persona debe aprobar (herramienta y argumentos); lo decide POST /aprobar
 
 
 MENSAJE_DE_FALLO = "En este momento no pude responder. Intenta de nuevo en unos minutos; si sigue fallando, llama a la línea 01 8000 112 115."
@@ -140,7 +155,36 @@ def chat_por_telefono(entrada: MensajeEntrante) -> RespuestaDelAgente:
     except Exception:  # el detalle va al registro; al cliente no se le filtra nada interno
         log.exception("falló el turno del hilo %s", hilo)
         return RespuestaDelAgente(respuesta=MENSAJE_DE_FALLO, herramientas=[], ok=False)
-    return RespuestaDelAgente(respuesta=texto, herramientas=[ll["herramienta"] for ll in llamadas])
+    pendiente = pendiente_de_aprobacion(hilo)
+    if pendiente:
+        log.info("pendiente de aprobación en el hilo %s: %s", hilo, pendiente["herramienta"])
+    return RespuestaDelAgente(respuesta=texto, herramientas=[ll["herramienta"] for ll in llamadas], pendiente=pendiente)
+
+
+class Decision(BaseModel):
+    """Cuerpo de POST /aprobar: de qué teléfono es la conversación y qué decide la persona."""
+
+    telefono: str = Field(pattern=r"^\+?[0-9]{7,15}$")
+    decision: Literal["aprobar", "rechazar"]
+
+
+@app.post("/aprobar")
+def aprobar(decision: Decision, x_aprobador: str | None = Header(default=None)) -> dict:
+    """Una persona de Celsia aprueba o rechaza lo que el agente dejó pausado (por ejemplo, radicar un reclamo).
+
+    Solo funciona con el encabezado `X-Aprobador` igual a la variable `APROBADOR_TOKEN` del servidor; sin esa variable queda
+    deshabilitado, para que nadie pueda aprobar por su cuenta.
+    """
+    esperado = os.environ.get("APROBADOR_TOKEN")
+    if not esperado:
+        raise HTTPException(status_code=503, detail="La aprobación no está habilitada en este servidor")
+    if not secrets.compare_digest((x_aprobador or "").encode(), esperado.encode()):
+        raise HTTPException(status_code=401, detail="No autorizado")
+    hilo, usuario = ids_del_telefono(decision.telefono)
+    if not pendiente_de_aprobacion(hilo):
+        raise HTTPException(status_code=404, detail="No hay nada pendiente de aprobación para ese teléfono")
+    texto, _ = resolver_aprobacion(hilo, decision.decision, usuario=usuario)
+    return {"decision": decision.decision, "respuesta": texto}
 
 
 @app.get("/api/hilos/{hilo}/mensajes")

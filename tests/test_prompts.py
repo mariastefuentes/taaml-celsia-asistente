@@ -42,14 +42,14 @@ def test_la_linea_de_servicio_de_los_prompts_esta_en_los_datos_manuales():
 
 
 def test_prompt_del_agente_tiene_los_cinco_bloques_y_nombra_las_herramientas():
-    texto = leer_prompt("v4_agente.md")
+    texto = leer_prompt("v5_agente.md")
     for bloque in ("# 1.", "# 2. CONTEXTO", "# 3. INSTRUCCIÓN", "# 4. FORMATO", "# 5. RESTRICCIONES"):
         assert bloque in texto
     assert "consultar_datos" in texto and "buscar_en_base" in texto
 
 
 def test_prompt_del_agente_explica_el_router_la_memoria_y_la_defensa():
-    texto = leer_prompt("v4_agente.md")
+    texto = leer_prompt("v5_agente.md")
     assert "«sedes»" in texto and "«contactos»" in texto  # regla de datos exactos
     assert "Sin resultados" in texto  # respaldo hacia el texto
     assert "turno anterior" in texto  # memoria
@@ -58,7 +58,7 @@ def test_prompt_del_agente_explica_el_router_la_memoria_y_la_defensa():
 
 
 def test_el_prompt_del_agente_prohibe_formatos_de_programacion():
-    texto = leer_prompt("v4_agente.md")
+    texto = leer_prompt("v5_agente.md")
     for formato in ("JSON", "XML", "YAML", "HTML", "CSV", "SQL"):
         assert formato in texto
     assert "texto plano" in texto
@@ -68,14 +68,14 @@ def test_el_prompt_del_agente_prohibe_formatos_de_programacion():
 def test_el_prompt_del_agente_nombra_herramientas_que_existen():
     from taaml.agente import HERRAMIENTAS
 
-    texto = leer_prompt("v4_agente.md")
+    texto = leer_prompt("v5_agente.md")
     assert all(f"`{h.name}`" in texto for h in HERRAMIENTAS)
 
 
-def test_el_agente_carga_el_prompt_v4():
+def test_el_agente_carga_el_prompt_v5():
     import inspect
     from taaml import agente
 
-    assert "v4_agente.md" in inspect.getsource(agente.crear_agente)
+    assert "v5_agente.md" in inspect.getsource(agente.crear_agente)
 
 

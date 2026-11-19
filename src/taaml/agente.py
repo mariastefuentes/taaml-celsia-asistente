@@ -18,6 +18,7 @@ from uuid import uuid4
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import (
+    HumanInTheLoopMiddleware,
     ModelFallbackMiddleware,
     SummarizationMiddleware,
     ToolCallLimitMiddleware,
@@ -33,8 +34,10 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.store.base import BaseStore
 from langgraph.store.memory import InMemoryStore
 from langgraph.store.sqlite import SqliteStore
+from langgraph.types import Command
 
 from taaml.consulta_datos import consultar
+from taaml.flujo_reclamo import radicar_simulado
 from taaml.prompts import leer_prompt
 from taaml.recuperacion import buscar, formatear_contexto
 from taaml.sanitizar import quitar_invisibles
@@ -287,7 +290,38 @@ def recordar_datos_del_cliente(runtime: ToolRuntime[Contexto]) -> str:
     )
 
 
-HERRAMIENTAS = [buscar_en_base, consultar_datos, guardar_dato_del_cliente, recordar_datos_del_cliente]
+@tool
+def radicar_reclamo(
+    tipo: Literal["falla_de_servicio", "facturacion", "otro"], ciudad: str, descripcion: str, runtime: ToolRuntime[Contexto]
+) -> str:
+    """Radica un reclamo del cliente: una falla del servicio (por ejemplo, sin luz), un problema de facturación u otro.
+    Úsala solo cuando el cliente pida radicar o poner un reclamo, y después de tener la ciudad y qué pasó (si falta la ciudad,
+    pídesela antes). Una persona de Celsia debe aprobarlo antes de que se radique: el sistema pausa esta herramienta hasta
+    que decida."""
+    if runtime.context.usuario == ANONIMO:
+        return "No se radicó: no hay un cliente identificado para asociar el reclamo."
+    if not ciudad.strip():
+        return "No se radicó: falta la ciudad; pídesela al cliente."
+    reclamo = {"tipo": tipo, "ciudad": quitar_invisibles(ciudad).strip()[:80], "descripcion": quitar_invisibles(descripcion).strip()[:500]}
+    numero = radicar_simulado(reclamo)  # registro de mentira: un sistema real llamaría al de Celsia
+    _almacen(runtime).put(("reclamos", runtime.context.usuario), numero, reclamo)
+    return f"Reclamo radicado con el número {numero}."
+
+
+HERRAMIENTAS = [buscar_en_base, consultar_datos, guardar_dato_del_cliente, recordar_datos_del_cliente, radicar_reclamo]
+
+# Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
+APROBACION_HUMANA = {
+    "radicar_reclamo": {
+        "allowed_decisions": ["approve", "edit", "reject"],
+        "description": "Un cliente pidió radicar este reclamo: apruébalo, edítalo o recházalo.",
+    }
+}
+MENSAJE_EN_REVISION = (
+    "Tu reclamo quedó en revisión: una persona de Celsia debe aprobarlo antes de radicarlo. "
+    "Cuando lo haga, te daremos el número de radicado."
+)
+MENSAJE_RECHAZADO = "Una persona de Celsia revisó el reclamo y no lo aprobó, así que no se radicó. Puedes llamar a la línea 01 8000 112 115."
 
 
 @wrap_model_call
@@ -308,7 +342,7 @@ def limitar_historial(request: Any, handler: Any) -> Any:
 
 @dynamic_prompt
 def con_fecha_de_hoy(request: Any) -> str:
-    """El prompt de sistema se arma en cada turno: al texto fijo de `v4_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
+    """El prompt de sistema se arma en cada turno: al texto fijo de `v5_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
     base = request.system_message.text if request.system_message else ""
     return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
 
@@ -406,7 +440,7 @@ def crear_agente(
     return create_agent(
         model=llm,
         tools=HERRAMIENTAS,
-        system_prompt=leer_prompt("v4_agente.md"),
+        system_prompt=leer_prompt("v5_agente.md"),
         checkpointer=checkpointer,
         store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
         context_schema=Contexto,
@@ -417,6 +451,7 @@ def crear_agente(
                 model=llm, trigger=("tokens", UMBRAL_RESUMEN_TOKENS), keep=("messages", MENSAJES_TRAS_RESUMEN)
             ),
             ToolCallLimitMiddleware(run_limit=MAX_LLAMADAS_POR_TURNO, exit_behavior="continue"),
+            HumanInTheLoopMiddleware(APROBACION_HUMANA),
             *respaldo,
         ],
     )
@@ -448,6 +483,8 @@ def conversar(
     Mismo `thread_id` = misma conversación (el agente ve los turnos anteriores); otro `thread_id` empieza en blanco.
     """
     agente = agente or _agente(modelo)
+    if pendiente_de_aprobacion(thread_id, agente=agente):  # esta conversación espera a una persona: no se sigue hasta que decida
+        return MENSAJE_EN_REVISION, []
     resultado = agente.invoke(
         {"messages": [{"role": "user", "content": quitar_invisibles(pregunta)}]},
         config={"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente"]},
@@ -462,6 +499,34 @@ def conversar(
         for m in mensajes[ultimo:]
         for ll in getattr(m, "tool_calls", [])
     ]
+    if resultado.get("__interrupt__"):  # el agente se pausó pidiendo aprobación: el cliente recibe el aviso, no un texto vacío
+        return MENSAJE_EN_REVISION, llamadas
+    return mensajes[-1].text.strip(), llamadas
+
+
+def pendiente_de_aprobacion(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> dict | None:
+    """Lo que una persona debe aprobar en esta conversación (el nombre de la herramienta y sus argumentos), o None si no hay nada pendiente."""
+    agente = agente or _agente(modelo)
+    for pausa in agente.get_state({"configurable": {"thread_id": thread_id}}).interrupts:
+        for pedido in pausa.value.get("action_requests", []):
+            return {"herramienta": pedido["name"], "args": pedido["args"]}
+    return None
+
+
+def resolver_aprobacion(
+    thread_id: str, decision: Literal["aprobar", "rechazar"], usuario: str = ANONIMO, modelo: str = MODELO_AGENTE, agente: Any = None
+) -> tuple[str, list[dict]]:
+    """Una persona decide lo que estaba pausado: el agente sigue (si aprueba corre la herramienta, si rechaza no) y devuelve el mensaje final."""
+    agente = agente or _agente(modelo)
+    respuesta = {"type": "approve"} if decision == "aprobar" else {"type": "reject", "message": MENSAJE_RECHAZADO}
+    resultado = agente.invoke(
+        Command(resume={"decisions": [respuesta]}),
+        config={"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente", "aprobacion"]},
+        context=Contexto(usuario=usuario),
+    )
+    mensajes = resultado["messages"]
+    ultimo = max(i for i, m in enumerate(mensajes) if m.type == "human")
+    llamadas = [{"herramienta": ll["name"], "args": ll["args"]} for m in mensajes[ultimo:] for ll in getattr(m, "tool_calls", [])]
     return mensajes[-1].text.strip(), llamadas
 
 
@@ -482,6 +547,11 @@ def conversar_en_vivo(
     Mismo `thread_id` = misma conversación. Los eventos `fuentes` traen la cita (documento, fragmento y enlace) de lo que recuperó `buscar_en_base`. El evento `fin` trae los tokens y el costo del turno. Un error del modelo sube como excepción.
     """
     agente = agente or _agente(modelo)
+    if pendiente := pendiente_de_aprobacion(thread_id, agente=agente):  # espera a una persona: no se sigue hasta que decida
+        yield {"tipo": "pendiente", **pendiente}
+        yield {"tipo": "texto", "texto": MENSAJE_EN_REVISION}
+        yield {"tipo": "fin", "usadas": "Reclamo en revisión", "tokens_entrada": 0, "tokens_salida": 0, "costo_usd": 0.0}
+        return
     entrada = {"messages": [{"role": "user", "content": quitar_invisibles(pregunta)}]}
     config = {"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente"]}
     llamadas: list[dict] = []
@@ -495,6 +565,10 @@ def conversar_en_vivo(
                 hubo_texto = True
                 yield {"tipo": "texto", "texto": trozo.text}
         else:
+            if "__interrupt__" in datos:  # el agente se pausó pidiendo aprobación humana
+                hubo_texto = True
+                yield {"tipo": "texto", "texto": MENSAJE_EN_REVISION}
+                continue
             for actualizacion in datos.values():
                 for m in (actualizacion or {}).get("messages", []):
                     if m.type == "tool" and m.name == "buscar_en_base" and m.artifact:
@@ -502,6 +576,8 @@ def conversar_en_vivo(
                     for ll in getattr(m, "tool_calls", []):
                         llamadas.append({"herramienta": ll["name"], "args": ll["args"]})
                         yield {"tipo": "herramienta", "herramienta": ll["name"], "args": ll["args"]}
+    if pendiente := pendiente_de_aprobacion(thread_id, agente=agente):
+        yield {"tipo": "pendiente", **pendiente}
     if not hubo_texto:  # un modelo que no emite trozos (o el respaldo) entrega la respuesta completa de una vez
         yield {"tipo": "texto", "texto": agente.get_state(config).values["messages"][-1].text.strip()}
     mensajes = agente.get_state(config).values["messages"]
@@ -581,6 +657,8 @@ def etiqueta_herramientas(llamadas: list[dict]) -> str:
             partes.append("guardó un dato del cliente")
         elif ll["herramienta"] == "recordar_datos_del_cliente":
             partes.append("recordó lo que sabe del cliente")
+        elif ll["herramienta"] == "radicar_reclamo":
+            partes.append("preparó un reclamo para aprobación")
         else:
             filtros = ", ".join(f"{k}: {v}" for k, v in ll["args"].items() if k != "tabla" and v)
             partes.append(f"consultó la tabla {ll['args'].get('tabla', '?')}" + (f" ({filtros})" if filtros else ""))
