@@ -76,7 +76,7 @@ sequenceDiagram
 |---|---|
 | Memoria corta | Checkpointer SQLite con `thread_id` (persiste entre reinicios) |
 | Confianza baja | `buscar_en_base` antepone un aviso del sistema cuando el mejor fragmento tiene coseno < 0,40; el agente responde con cautela y remite a la línea de atención (`scripts/28_confianza_baja.py`) |
-| Memoria en PostgreSQL | Con `DATABASE_URL` definida, el checkpointer y el Store son `PostgresSaver` y `PostgresStore` (grupo de conexiones que se reconecta solo; probados con un PostgreSQL local, `tests/test_memoria_postgres.py`, incluida una aprobación pendiente que sobrevive a un reinicio); sin ella, SQLite. `make db-up` levanta un PostgreSQL local persistente sin Docker (`scripts/34_postgres_local.py`), `make api-pg` arranca la API contra él y `make db-down` lo apaga |
+| Memoria en PostgreSQL | Con `DATABASE_URL` definida, el checkpointer y el Store son `PostgresSaver` y `PostgresStore` (grupo de conexiones que se reconecta solo; probados con un PostgreSQL local, `tests/test_memoria_postgres.py`, incluida una aprobación pendiente que sobrevive a un reinicio); sin ella, SQLite. `make api` ya arranca la API contra PostgreSQL (un PostgreSQL local persistente sin Docker, `scripts/34_postgres_local.py`, o el de `DATABASE_URL`), `make api-sqlite` usa SQLite, `make db-up` solo levanta el servidor local y `make db-down` lo apaga; `/api/salud` informa cuál memoria está en uso |
 | Grafo del agente | `scripts/31_mostrar_grafo.py`: `create_agent` devuelve un StateGraph compilado; el script imprime sus nodos (modelo, herramientas y dos de middleware), sus aristas condicionales y el estado, sin llamar a ningún modelo |
 | Traza de LangSmith | `scripts/33_diagrama_traza_langsmith.py`: lee de LangSmith (solo lectura) la traza más reciente de una pregunta y dibuja sus pasos, tiempos, tokens y argumentos de herramienta en `docs/3 - Informe/diagrama_traza_langsmith.svg`; necesita `LANGSMITH_API_KEY`, no llama a ningún modelo |
 | Flujo con aprobación humana | `scripts/32_flujo_reclamo.py`: un StateGraph escrito a mano (`src/taaml/flujo_reclamo.py`) con `interrupt`: el reclamo se radica solo si una persona lo aprueba; salida estructurada con Pydantic; sin modelo ni costo (con `--real` usa DeepSeek) |
@@ -134,7 +134,8 @@ Para reconstruir la base **desde cero** (descargar todo el sitio): `scripts/01_s
 **Agente conversacional (Módulo 2): API y frontend separados.** El frontend (React con Vite, carpeta `frontend/`) no llama al modelo: habla por HTTP con una API FastAPI (`api/`) que ejecuta el agente y le responde por streaming (Server-Sent Events). Se corren en dos terminales:
 
 ```bash
-make api        # API del agente (necesita GOOGLE_API_KEY en .env y Ollama encendido)
+make api        # API del agente con memoria en PostgreSQL (levanta uno local si no defines DATABASE_URL; necesita la clave del modelo en .env y Ollama encendido)
+make api-sqlite # la misma API con la memoria en archivos SQLite
 ```
 
 ```bash

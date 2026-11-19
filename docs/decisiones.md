@@ -34,8 +34,8 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Decisión.** `consultar_datos` devuelve el total ya calculado, incluida la suma de varias ciudades. Además, `datos_dudosos` revisa que cada cifra, correo y enlace de la respuesta aparezca en lo que devolvieron las herramientas.
 - **Evidencia.** `src/taaml/consulta_datos.py`, `tests/test_consulta_datos.py`.
 
-## D4. Memoria con SQLite por defecto y PostgreSQL por configuración
-- **Decisión.** `SqliteSaver` y `SqliteStore` sin servidor para desarrollar y demostrar; con `DATABASE_URL` se usan `PostgresSaver` y `PostgresStore`. La memoria de largo plazo guarda lo que el cliente cuenta de sí mismo bajo el namespace `("perfil", usuario)`, con tope de 20 datos y borrado por el cliente.
+## D4. Memoria en PostgreSQL en la API y SQLite como alternativa
+- **Decisión.** `make api` arranca la API con `PostgresSaver` y `PostgresStore` (levanta un PostgreSQL local sin Docker si no hay `DATABASE_URL`); `make api-sqlite` usa `SqliteSaver` y `SqliteStore`, sin servidor. En el código, sin `DATABASE_URL` se usa SQLite (así los scripts y las pruebas no necesitan servidor). La memoria de largo plazo guarda lo que el cliente cuenta de sí mismo bajo el namespace `("perfil", usuario)`, con tope de 20 datos y borrado por el cliente.
 - **Consecuencia.** El mismo código corre en ambos; las pruebas de PostgreSQL usan un servidor real.
 - **Evidencia.** `src/taaml/agente.py`, `tests/test_memoria_postgres.py`, informe sección 3.
 
