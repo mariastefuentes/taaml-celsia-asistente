@@ -6,9 +6,10 @@
 ![LangChain](https://img.shields.io/badge/LangChain-1.x-1C3C3C)
 ![Streamlit](https://img.shields.io/badge/Taller%201-Streamlit-FF4B4B)
 ![React](https://img.shields.io/badge/M%C3%B3dulo%202-React%20%2B%20FastAPI-61DAFB)
+![WhatsApp](https://img.shields.io/badge/M%C3%B3dulo%203-WhatsApp%20%2B%20PostgreSQL-25D366)
 [![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-green.svg)](LICENSE)
 
-Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energía del Valle del Cauca y el Tolima. Responde **solo con información oficial de celsia.com** y dice «no sé» cuando la fuente no lo trae. El Módulo 1 construyó el corpus y el Q&A (resumen y FAQ); el Módulo 2 lo convirtió en un agente con memoria, herramientas, router y blindaje, servido por una API y un frontend propio. Curso *Técnicas avanzadas de IA aplicadas en modelos de lenguaje* (Maestría en IA y Ciencias de Datos, UAO, 2026-2S).
+Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energía del Valle del Cauca y el Tolima. Responde **solo con información oficial de celsia.com** y dice «no sé» cuando la fuente no lo trae. El Módulo 1 construyó el corpus y el Q&A (resumen y FAQ); el Módulo 2 lo convirtió en un agente con memoria, herramientas, router y blindaje, servido por una API y un frontend propio; el Módulo 3 lo llevó a producción: memoria en PostgreSQL, herramientas con esquemas estrictos, aprobación humana para los reclamos y un servidor propio que atiende a los clientes por WhatsApp. Curso *Técnicas avanzadas de IA aplicadas en modelos de lenguaje* (Maestría en IA y Ciencias de Datos, UAO, 2026-2S).
 
 ## Problema y solución
 
@@ -36,7 +37,7 @@ El diagrama es interactivo: abre [docs/arquitectura.html](docs/arquitectura.html
 
 Interactivo en [docs/pipeline.html](docs/pipeline.html) (fuente en [docs/pipeline.json](docs/pipeline.json)). Los HTML se generan con Archify desde el JSON y no se editan a mano.
 
-### Agente del Módulo 2
+### Agente (Módulos 2 y 3)
 
 El agente (`create_agent` de LangChain) decide en cada turno qué herramienta usar mediante **function calling**: el modelo recibe las herramientas con su esquema (JSON Schema generado desde Pydantic) y responde con una llamada estructurada (nombre y argumentos), que Pydantic valida antes de ejecutar; el prompt solo lo guía. No hay enrutamiento por texto libre. Habla con el cliente por una API FastAPI con streaming, y un frontend React independiente la consume.
 
@@ -52,29 +53,35 @@ El agente (`create_agent` de LangChain) decide en cada turno qué herramienta us
 
 ```mermaid
 sequenceDiagram
-    participant C as Frontend React
+    participant W as Cliente (WhatsApp)
+    participant Me as Meta (API Cloud)
     participant A as API FastAPI
-    participant G as Agente
+    participant G as Agente (create_agent)
     participant M as DeepSeek V4.1 Flash
     participant T as Herramientas
-    participant S as SQLite (checkpointer y Store)
-    C->>A: POST /api/chat {mensaje, hilo, usuario}
-    A->>G: stream(thread_id=hilo, context=usuario)
-    G->>S: lee historial del hilo (memoria corta)
-    G->>M: prompt v3 + historial recortado
-    M-->>G: llama herramienta
+    participant P as PostgreSQL
+    W->>Me: mensaje
+    Me->>A: POST /webhook/whatsapp (firma X-Hub-Signature-256)
+    A-->>Me: 200 enseguida
+    A->>A: límite por teléfono y mensaje ya visto
+    A->>G: conversar(mensaje, hilo = hash del teléfono)
+    G->>P: PostgresSaver: lee el historial del hilo
+    G->>M: prompt v7 + historial recortado
+    M-->>G: llamada a una herramienta (function calling, esquema Pydantic)
     G->>T: buscar_en_base, consultar_datos, guardar/recordar dato
     T-->>G: datos (nunca órdenes)
     G->>M: resultado de la herramienta
     M-->>G: texto
-    G->>S: guarda el turno y los datos del cliente (memoria larga)
-    G-->>A: eventos herramienta, texto, fin
-    A-->>C: Server-Sent Events
+    G->>P: guarda el turno (checkpointer) y los datos del cliente (Store)
+    A->>Me: envía la respuesta (Graph API)
+    Me->>W: respuesta
 ```
+
+Un reclamo no se radica solo: `radicar_reclamo` pausa el flujo con `HumanInTheLoopMiddleware` hasta que una persona de Celsia lo aprueba con `POST /aprobar`, y entonces el cliente recibe la decisión por WhatsApp. El frontend React sigue usando `POST /api/chat` (streaming) sobre la misma API y la misma memoria.
 
 | Componente | Qué usa |
 |---|---|
-| Memoria corta | Checkpointer SQLite con `thread_id` (persiste entre reinicios) |
+| Memoria corta | Checkpointer con `thread_id`: `PostgresSaver` en `make api`, SQLite en `make api-sqlite` (persiste entre reinicios) |
 | Confianza baja | `buscar_en_base` antepone un aviso del sistema cuando el mejor fragmento tiene coseno < 0,40; el agente responde con cautela y remite a la línea de atención (`scripts/28_confianza_baja.py`) |
 | Memoria en PostgreSQL | Con `DATABASE_URL` definida, el checkpointer y el Store son `PostgresSaver` y `PostgresStore` (grupo de conexiones que se reconecta solo; probados con un PostgreSQL local, `tests/test_memoria_postgres.py`, incluida una aprobación pendiente que sobrevive a un reinicio); sin ella, SQLite. `make api` ya arranca la API contra PostgreSQL (un PostgreSQL local persistente sin Docker, `scripts/34_postgres_local.py`, o el de `DATABASE_URL`), `make api-sqlite` usa SQLite, `make db-up` solo levanta el servidor local y `make db-down` lo apaga; `/api/salud` informa cuál memoria está en uso |
 | Grafo del agente | `scripts/31_mostrar_grafo.py`: `create_agent` devuelve un StateGraph compilado; el script imprime sus nodos (modelo, herramientas y dos de middleware), sus aristas condicionales y el estado, sin llamar a ningún modelo |
@@ -93,7 +100,9 @@ sequenceDiagram
 | Exploración de embeddings | `scripts/25_explorar_embeddings.py`: coseno, producto punto y L2 (mismo orden con vectores de norma 1), recorte Matryoshka (512 dimensiones casi no pierde calidad) y mapa t-SNE en `docs/3 - Informe/tsne_corpus.svg` |
 | Validación de la respuesta | `datos_dudosos` revisa que cada cifra, correo o enlace de la respuesta aparezca en lo que devolvieron las herramientas, lo que dijo el cliente o la fecha de hoy; si no, el frontend avisa «Verifica antes de usar» |
 | Blindaje | Limpieza de caracteres invisibles, reglas del prompt y 11/11 ataques directos y 8/8 indirectos resistidos |
-| Respaldo | `llama3.2` local si DeepSeek falla |
+| Respaldo | Si DeepSeek falla: `gemini-3.8-flash` y después `llama3.2` local |
+| Límite por teléfono | `src/taaml/limite.py`: 8 mensajes por minuto por teléfono (`LIMITE_MENSAJES`, `LIMITE_VENTANA_S`); `/chat` responde 429 con `Retry-After` y por WhatsApp se avisa una sola vez por ventana, sin llamar al modelo. Protege la cuota cuando el bot es público |
+| Análisis de conversaciones | `src/taaml/conversaciones.py` y `notebooks/analisis_conversaciones.ipynb`: t-SNE sobre conversaciones simuladas (ver la sección siguiente) |
 
 La app de Streamlit del Taller 1 tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes** y **Corpus y scraping** (etapas del pipeline y métricas). El agente del Módulo 2 no está en ella: se entrega con la API y el frontend de arriba (`make api` y `make app`).
 
@@ -142,7 +151,9 @@ make api-sqlite # la misma API con la memoria en archivos SQLite
 make app        # frontend en http://localhost:5173 (alias de make frontend)
 ```
 
-La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen":"qdrant"`), `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). Para servicios externos (WhatsApp, N8N) expone `POST /chat`: recibe `{mensaje, telefono}` y devuelve un JSON `{respuesta, herramientas, ok, pendiente}`; si el agente deja algo pausado (radicar un reclamo), una persona lo decide con `POST /aprobar` (encabezado `X-Aprobador` igual a `APROBADOR_TOKEN`, sin esa variable queda deshabilitado; si WhatsApp está configurado, el cliente recibe la decisión por mensaje); el teléfono identifica la conversación y la memoria del cliente (se guarda su hash, no el número) y, si el agente falla, responde con un mensaje cortés y `ok: false`. Para WhatsApp (API Cloud de Meta), `GET/POST /webhook/whatsapp` verifica el webhook y recibe los mensajes: comprueba la firma `X-Hub-Signature-256` con `WHATSAPP_APP_SECRET`, responde 200 enseguida, atiende cada mensaje una sola vez en segundo plano y envía la respuesta del agente al cliente (variables `WHATSAPP_*` en `.env.example`; sin ellas el webhook queda deshabilitado). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde SQLite.
+La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen":"qdrant"`), `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). Para servicios externos (WhatsApp, N8N) expone `POST /chat`: recibe `{mensaje, telefono}` y devuelve un JSON `{respuesta, herramientas, ok, pendiente}`; si el agente deja algo pausado (radicar un reclamo), una persona lo decide con `POST /aprobar` (encabezado `X-Aprobador` igual a `APROBADOR_TOKEN`, sin esa variable queda deshabilitado; si WhatsApp está configurado, el cliente recibe la decisión por mensaje); el teléfono identifica la conversación y la memoria del cliente (se guarda su hash, no el número) y, si el agente falla, responde con un mensaje cortés y `ok: false`. Para WhatsApp (API Cloud de Meta), `GET/POST /webhook/whatsapp` verifica el webhook y recibe los mensajes: comprueba la firma `X-Hub-Signature-256` con `WHATSAPP_APP_SECRET`, responde 200 enseguida, atiende cada mensaje una sola vez en segundo plano y envía la respuesta del agente al cliente (variables `WHATSAPP_*` en `.env.example`; sin ellas el webhook queda deshabilitado). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde la base de memoria.
+
+**WhatsApp paso a paso (Módulo 3, vía 2: servidor propio, sin N8N).** (1) En developers.facebook.com crea una app de tipo Empresa con el producto WhatsApp y toma el número de prueba. (2) Copia a `.env` `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` y `WHATSAPP_APP_SECRET`, e inventa `WHATSAPP_VERIFY_TOKEN`. (3) Enciende la API (`make api`) y expónla con un túnel https (por ejemplo `cloudflared tunnel --url http://localhost:8000`). (4) En Meta registra `https://<túnel>/webhook/whatsapp` con ese token de verificación y suscribe el campo `messages`. (5) Agrega tu teléfono como destinatario de prueba y escribe al número. Las pruebas automáticas (`tests/test_whatsapp.py`) cubren la verificación, la firma, los reintentos y el envío con avisos firmados simulados; la prueba con Meta real queda documentada en el informe.
 
 ```bash
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)
@@ -211,16 +222,17 @@ Equivalencias de datos: `data/1_bronze/` es el crudo (raw), `data/2_silver/` el 
 
 ```
 docs/        análisis de la empresa, conjunto de prueba, informe y capturas
-scripts/     01 a 18: etapas del pipeline y pruebas en el orden en que se usan; utilidades/: herramientas sueltas
+scripts/     01 a 36: etapas del pipeline y pruebas en el orden en que se usan (34 PostgreSQL local, 35 y 36 análisis de conversaciones); utilidades/: herramientas sueltas
 data/        0_manual/ 1_bronze/ 2_silver/ 3_gold/ 4_curaduria/ 5_extraccion/
-src/taaml/   código del asistente (base.py, recuperacion.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, consulta_datos.py, prompts.py, tareas.py)
-prompts/     prompts versionados (asistente v3 vigente, v4 y v5 descartados; resumen y FAQ v2; agente v2 vigente; extracción v1)
+src/taaml/   código del asistente (base.py, recuperacion.py, vectorstore.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, consulta_datos.py, prompts.py, tareas.py, whatsapp.py, limite.py, conversaciones.py)
+prompts/     prompts versionados (asistente v3 vigente, v4 y v5 descartados; resumen y FAQ v2; agente v7 vigente, v2 a v6 reemplazados; extracción v1)
 tests/       pruebas automáticas de componentes (make test)
 specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 012: asistente, validación y agente, continuidad de la demo, base vectorial, evidencia de Resumen y FAQ, pestaña Corpus, prueba del scraper, etapa Descubrir, organización de la entrega, agente con memoria y router, y Qdrant; las decisiones de arquitectura están en `docs/decisiones.md`
 .specify/   memoria del proyecto: memory/constitution.md (verdad central)
 docs/        incluye skillspector-corpus-medallion.md, el reporte de seguridad de la skill
 .github/    plantilla de Pull Request y CI
-api/        Módulo 2: API FastAPI del agente (streaming SSE, sesiones, memoria del cliente)
+api/        Módulos 2 y 3: API FastAPI del agente (streaming SSE, POST /chat, webhook de WhatsApp, aprobación humana, memoria del cliente)
+notebooks/  Módulo 3: análisis de conversaciones con t-SNE (conversaciones simuladas)
 frontend/   Módulo 2: interfaz React + Vite, separada de la API
 app/        Taller 1: aplicaciones Streamlit, asistente.py (Q&A, Resumen, FAQ y Corpus) y modulo1.py (solo corpus y scraping)
 ```
