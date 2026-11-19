@@ -1,0 +1,152 @@
+{
+  "schema_version": 3,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Grafo del agente: el ciclo de un turno",
+    "output": "grafo_agente.html",
+    "locale": "es",
+    "quality_profile": "showcase"
+  },
+  "mainPath": [
+    "resumen",
+    "modelo",
+    "validar",
+    "tope",
+    "fin"
+  ],
+  "states": [
+    {
+      "id": "resumen",
+      "type": "active",
+      "label": "Resumen",
+      "sublabel": "SummarizationMiddleware",
+      "tag": "arranca el turno",
+      "step": "01"
+    },
+    {
+      "id": "modelo",
+      "type": "active",
+      "label": "Modelo",
+      "sublabel": "prompt v7",
+      "tag": "DeepSeek",
+      "step": "02"
+    },
+    {
+      "id": "validar",
+      "type": "decision",
+      "label": "Valida el reclamo",
+      "sublabel": "antes de pausar",
+      "tag": "antes de pausar",
+      "step": "03"
+    },
+    {
+      "id": "tope",
+      "type": "decision",
+      "label": "Tope",
+      "sublabel": "ToolCallLimitMiddleware",
+      "tag": "máximo 4 por turno",
+      "step": "04"
+    },
+    {
+      "id": "fin",
+      "type": "success",
+      "label": "Respuesta",
+      "sublabel": "__end__",
+      "tag": "sale por WhatsApp",
+      "step": "05"
+    },
+    {
+      "id": "herramientas",
+      "type": "active",
+      "label": "Herramientas",
+      "sublabel": "5 con esquema Pydantic",
+      "tag": "function calling"
+    },
+    {
+      "id": "aprobacion",
+      "type": "waiting",
+      "label": "Aprobación",
+      "sublabel": "HumanInTheLoop",
+      "tag": "pausa el hilo"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "resumen-modelo",
+      "from": "resumen",
+      "to": "modelo",
+      "label": "listo"
+    },
+    {
+      "id": "modelo-validar",
+      "from": "modelo",
+      "to": "validar",
+      "label": "respuesta"
+    },
+    {
+      "id": "validar-tope",
+      "from": "validar",
+      "to": "tope",
+      "label": "ok"
+    },
+    {
+      "id": "validar-aprobacion",
+      "from": "validar",
+      "to": "aprobacion",
+      "label": "reclamo",
+      "variant": "security"
+    },
+    {
+      "id": "aprobacion-tope",
+      "from": "aprobacion",
+      "to": "tope",
+      "label": "decide"
+    },
+    {
+      "id": "tope-fin",
+      "from": "tope",
+      "to": "fin",
+      "label": "responde"
+    },
+    {
+      "id": "tope-herramientas",
+      "from": "tope",
+      "to": "herramientas",
+      "label": "herramienta"
+    },
+    {
+      "id": "herramientas-resumen",
+      "from": "herramientas",
+      "to": "resumen",
+      "label": "resultado",
+      "variant": "dashed"
+    },
+    {
+      "id": "validar-resumen",
+      "from": "validar",
+      "to": "resumen",
+      "label": "corrige",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Un turno",
+      "items": [
+        "Cada vuelta pasa por el resumen y por el modelo",
+        "Si el modelo pide una herramienta, el resultado vuelve al resumen y al modelo",
+        "Un tope de 4 herramientas por turno evita ciclos"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Reclamos y memoria",
+      "items": [
+        "radicar_reclamo se revisa y queda pausado hasta que una persona decide",
+        "Después de cada paso se guarda un punto de control por thread_id",
+        "Con el checkpointer se puede ver el historial, repetir y bifurcar un hilo"
+      ]
+    }
+  ]
+}

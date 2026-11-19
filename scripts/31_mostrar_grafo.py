@@ -1,7 +1,7 @@
 """MUESTRA EL GRAFO DEL AGENTE (LangGraph): `create_agent` devuelve un StateGraph compilado con nodos, aristas y estado. No llama a ningún modelo: usa uno simulado.
 
-Los nodos son el modelo, las herramientas y dos nodos de middleware (el resumen antes del modelo y el tope de llamadas después). Las aristas condicionales son las decisiones del ciclo:
-tras el modelo, el tope de llamadas decide si sigue a las herramientas o termina.
+Los nodos son el modelo, las herramientas y cuatro nodos de middleware (el resumen antes del modelo; después de él, la validación del reclamo, la aprobación humana y el tope de llamadas). Las aristas condicionales son las decisiones del ciclo:
+tras el modelo, la validación y el tope deciden si sigue a la aprobación, a las herramientas o termina.
 Uso:  uv run python scripts/31_mostrar_grafo.py
 """
 

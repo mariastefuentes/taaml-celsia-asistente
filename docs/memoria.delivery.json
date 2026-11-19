@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "8400f5d7-8de9-45c5-b7c8-10f73183c383",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "C:\\taaml\\docs\\memoria.json",
+  "output": "C:\\taaml\\docs\\memoria.html",
+  "specification": {
+    "sha256": "8232319295ffe3655ed8e96d75dfaeb36e2744f711b2dd8e32841f8e3c6a12b3",
+    "bytes": 2400
+  },
+  "artifact": {
+    "sha256": "f5f47d75d6809da39cc3a6bb3d90a792e1e3fdfbb33d2daf601bcbf042c4dcd4",
+    "bytes": 840575
+  }
+}
