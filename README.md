@@ -43,17 +43,21 @@ Interactivo en [docs/pipeline.html](docs/pipeline.html) (fuente en [docs/pipelin
 
 El agente (`create_agent` de LangChain) decide en cada turno qué herramienta usar mediante **function calling**: el modelo recibe las herramientas con su esquema (JSON Schema generado desde Pydantic) y responde con una llamada estructurada (nombre y argumentos), que Pydantic valida antes de ejecutar; el prompt solo lo guía. No hay enrutamiento por texto libre. Habla con el cliente por una API FastAPI con streaming, y un frontend React independiente la consume.
 
-[![Arquitectura de punta a punta, de WhatsApp a la respuesta](docs/capturas/arquitectura_agente.jpg)](docs/arquitectura_agente.html)
+[![Arquitectura de punta a punta, de WhatsApp a la respuesta](docs/capturas/arquitectura_agente.png)](docs/arquitectura_agente.html)
 
 Diagrama interactivo: [docs/arquitectura_agente.html](docs/arquitectura_agente.html) (fuente en [docs/arquitectura_agente.json](docs/arquitectura_agente.json), generado con Archify).
 
-![Arquitectura del agente](docs/3%20-%20Informe/diagrama_arquitectura_agente.svg)
+[![Enrutamiento por herramienta](docs/capturas/enrutamiento.png)](docs/enrutamiento.html)
 
-![Enrutamiento por herramienta](docs/3%20-%20Informe/diagrama_enrutamiento.svg)
+Cómo elige el agente la herramienta. Interactivo en [docs/enrutamiento.html](docs/enrutamiento.html) (fuente en [docs/enrutamiento.json](docs/enrutamiento.json)).
 
-![Grafo del agente](docs/3%20-%20Informe/diagrama_grafo_agente.svg)
+[![Grafo del agente: el ciclo de un turno](docs/capturas/grafo_agente.png)](docs/grafo_agente.html)
 
-![Memoria: checkpointer frente a Store](docs/3%20-%20Informe/diagrama_memoria.svg)
+El ciclo de un turno, con el resumen, la validación del reclamo, el tope de herramientas y la aprobación humana. Interactivo en [docs/grafo_agente.html](docs/grafo_agente.html) (fuente en [docs/grafo_agente.json](docs/grafo_agente.json)).
+
+[![Memoria: checkpointer frente a Store](docs/capturas/memoria.png)](docs/memoria.html)
+
+Qué guarda cada memoria y para qué. Interactivo en [docs/memoria.html](docs/memoria.html) (fuente en [docs/memoria.json](docs/memoria.json)).
 
 ![Traza real de LangSmith](docs/3%20-%20Informe/diagrama_traza_langsmith.svg)
 
@@ -90,7 +94,7 @@ Un reclamo no se radica solo: `radicar_reclamo` pausa el flujo con `HumanInTheLo
 | Memoria corta | Checkpointer con `thread_id`: `PostgresSaver` en `make api`, SQLite en `make api-sqlite` (persiste entre reinicios) |
 | Confianza baja | `buscar_en_base` antepone un aviso del sistema cuando el mejor fragmento tiene coseno < 0,40; el agente responde con cautela y remite a la línea de atención (`scripts/28_confianza_baja.py`) |
 | Memoria en PostgreSQL | Con `DATABASE_URL` definida, el checkpointer y el Store son `PostgresSaver` y `PostgresStore` (grupo de conexiones que se reconecta solo; probados con un PostgreSQL local, `tests/test_memoria_postgres.py`, incluida una aprobación pendiente que sobrevive a un reinicio); sin ella, SQLite. `make api` ya arranca la API contra PostgreSQL (un PostgreSQL local persistente sin Docker, `scripts/34_postgres_local.py`, o el de `DATABASE_URL`), `make api-sqlite` usa SQLite, `make db-up` solo levanta el servidor local y `make db-down` lo apaga; `/api/salud` informa cuál memoria está en uso |
-| Grafo del agente | `scripts/31_mostrar_grafo.py`: `create_agent` devuelve un StateGraph compilado; el script imprime sus nodos (modelo, herramientas y dos de middleware), sus aristas condicionales y el estado, sin llamar a ningún modelo |
+| Grafo del agente | `scripts/31_mostrar_grafo.py`: `create_agent` devuelve un StateGraph compilado; el script imprime sus nodos (8 nodos: el modelo, las herramientas y cuatro de middleware: resumen, validación del reclamo, aprobación humana y tope de llamadas), sus aristas condicionales y el estado, sin llamar a ningún modelo; el diagrama está en [docs/grafo_agente.html](docs/grafo_agente.html) |
 | Traza de LangSmith | `scripts/33_diagrama_traza_langsmith.py`: lee de LangSmith (solo lectura) la traza más reciente de una pregunta y dibuja sus pasos, tiempos, tokens y argumentos de herramienta en `docs/3 - Informe/diagrama_traza_langsmith.svg`; necesita `LANGSMITH_API_KEY`, no llama a ningún modelo |
 | Flujo con aprobación humana | `scripts/32_flujo_reclamo.py`: un StateGraph escrito a mano (`src/taaml/flujo_reclamo.py`) con `interrupt`: el reclamo se radica solo si una persona lo aprueba; salida estructurada con Pydantic; sin modelo ni costo (con `--real` usa DeepSeek) |
 | Viaje en el tiempo | `scripts/27_viaje_en_el_tiempo.py`: historial de puntos de control, replay y fork de un hilo, con un modelo simulado (sin costo) |
@@ -264,4 +268,4 @@ Licencia MIT ([LICENSE](LICENSE)), © 2026 María Stella Fuentes, Juan José Mos
 
 Para contribuir, lee la [guía de contribución](CONTRIBUTING.md), el [código de conducta](CODE_OF_CONDUCT.md) y la [constitución](CONSTITUTION.md) del proyecto.
 
-Herramientas: LangChain, Streamlit, Qdrant, Ollama, Gemini y DeepSeek. El código se escribió con ayuda de Claude Code; la declaración completa de uso de IA está en el informe.
+Herramientas: LangChain, Streamlit, FastAPI, React, Qdrant, PostgreSQL, Ollama, Gemini, DeepSeek, LangSmith y la API Cloud de WhatsApp. El código se escribió con ayuda de Claude Code; la declaración de uso de IA del Módulo 3 está en [docs/3 - Informe/declaracion_uso_ia_modulo3.md](<docs/3 - Informe/declaracion_uso_ia_modulo3.md>) y la de los talleres anteriores, en sus informes.
