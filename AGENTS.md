@@ -37,7 +37,7 @@ Base de conocimiento y asistente de preguntas y respuestas (Q&A) de **Celsia**, 
 - Correr `make test` (pruebas automáticas, gratis) y `make lint`.
 - Si se agregó una dependencia, `uv.lock` debe ir en el mismo commit.
 - Actualizar el documento afectado (bitácora o análisis) con la decisión tomada, y, si es el informe, regenerar su PDF.
-- Mensajes de commit semánticos y en español: `feat:`, `fix:`, `docs:`, `test:`, `refactor:` o `chore:`, seguido de una frase descriptiva. Las decisiones importantes también se registran en Engram (`engram save ... --project taaml-celsia`).
+- Mensajes de commit semánticos y en español: `feat:`, `fix:`, `docs:`, `test:`, `refactor:` o `chore:`, seguido de una frase descriptiva. Las decisiones importantes se registran en `docs/decisiones.md` (alternativas, razón y límites). Engram no se usó en este proyecto.
 - Los cambios nuevos llevan antes una spec en `specs/00N-nombre/` (spec, plan y tareas) que se aprueba antes de programar. La `001` es retroactiva y lo dice.
 
 ## Transparencia sobre el uso de IA

@@ -826,6 +826,20 @@ def test_al_aprobar_se_radica_y_al_rechazar_no():
     assert almacen.search(("reclamos", "c3")) == [] and pendiente_de_aprobacion("h3", agente=agente) is None
 
 
+def test_la_persona_puede_responder_por_la_herramienta_sin_radicar_nada():
+    from taaml.agente import pendiente_de_aprobacion, resolver_aprobacion
+
+    agente, _, almacen = _agente_con_reclamo("Necesitamos la dirección del predio para radicar.")
+    conversar("Radica mi reclamo", "h4", agente=agente, usuario="c4")
+    texto, _ = resolver_aprobacion("h4", "responder", usuario="c4", agente=agente, mensaje="Falta la dirección del predio.")
+    assert texto == "Necesitamos la dirección del predio para radicar."
+    assert almacen.search(("reclamos", "c4")) == [] and pendiente_de_aprobacion("h4", agente=agente) is None  # no se radicó
+    herramienta = [m for m in agente.get_state({"configurable": {"thread_id": "h4"}}).values["messages"] if m.type == "tool"][-1]
+    assert herramienta.content == "Falta la dirección del predio." and herramienta.status == "success"  # el modelo recibió lo que dijo la persona
+    with pytest.raises(ValueError):
+        resolver_aprobacion("h4", "responder", usuario="c4", agente=agente, mensaje="  ")
+
+
 def test_mientras_espera_aprobacion_el_modelo_no_vuelve_a_correr():
     from taaml.agente import MENSAJE_EN_REVISION
 

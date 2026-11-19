@@ -27,7 +27,7 @@ from uuid import uuid4
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from taaml.agente import (
     MODELO_AGENTE,
@@ -182,12 +182,19 @@ class Decision(BaseModel):
     """Cuerpo de POST /aprobar: de qué teléfono es la conversación y qué decide la persona."""
 
     telefono: str = Field(pattern=r"^\+?[0-9]{7,15}$")
-    decision: Literal["aprobar", "rechazar"]
+    decision: Literal["aprobar", "rechazar", "responder"]
+    mensaje: str | None = Field(default=None, max_length=500)  # lo que se le dice al cliente cuando la decisión es «responder»
+
+    @model_validator(mode="after")
+    def _responder_lleva_mensaje(self) -> "Decision":
+        if self.decision == "responder" and not (self.mensaje or "").strip():
+            raise ValueError("responder necesita un mensaje")
+        return self
 
 
 @app.post("/aprobar")
 def aprobar(decision: Decision, x_aprobador: str | None = Header(default=None)) -> dict:
-    """Una persona de Celsia aprueba o rechaza lo que el agente dejó pausado (por ejemplo, radicar un reclamo).
+    """Una persona de Celsia aprueba, rechaza o responde lo que el agente dejó pausado (por ejemplo, radicar un reclamo).
 
     Solo funciona con el encabezado `X-Aprobador` igual a la variable `APROBADOR_TOKEN` del servidor; sin esa variable queda
     deshabilitado, para que nadie pueda aprobar por su cuenta.
@@ -200,7 +207,7 @@ def aprobar(decision: Decision, x_aprobador: str | None = Header(default=None)) 
     hilo, usuario = ids_del_telefono(decision.telefono)
     if not pendiente_de_aprobacion(hilo):
         raise HTTPException(status_code=404, detail="No hay nada pendiente de aprobación para ese teléfono")
-    texto, _ = resolver_aprobacion(hilo, decision.decision, usuario=usuario)
+    texto, _ = resolver_aprobacion(hilo, decision.decision, usuario=usuario, **({"mensaje": decision.mensaje} if decision.mensaje else {}))
     avisado = enviar_texto(decision.telefono, texto)  # el cliente se entera por WhatsApp (si está configurado)
     return {"decision": decision.decision, "respuesta": texto, "avisado_por_whatsapp": avisado}
 

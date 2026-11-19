@@ -185,6 +185,18 @@ def test_aprobar_decide_lo_pendiente_o_dice_que_no_hay_nada(monkeypatch):
     assert cliente.post("/aprobar", json={**cuerpo, "decision": "tal vez"}, headers=cabecera).status_code == 422
 
 
+def test_aprobar_con_responder_pasa_el_mensaje_y_lo_exige(monkeypatch):
+    monkeypatch.setenv("APROBADOR_TOKEN", "secreto-largo")
+    cabecera = {"X-Aprobador": "secreto-largo"}
+    recibido = {}
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: {"herramienta": "radicar_reclamo", "args": {}})
+    monkeypatch.setattr("api.main.resolver_aprobacion", lambda hilo, decision, usuario, mensaje=None: recibido.update(d=decision, m=mensaje) or ("Falta la dirección.", []))
+    cuerpo = {"telefono": "573001234567", "decision": "responder"}
+    assert cliente.post("/aprobar", json=cuerpo, headers=cabecera).status_code == 422  # sin mensaje no se acepta
+    r = cliente.post("/aprobar", json={**cuerpo, "mensaje": "Falta la dirección del predio."}, headers=cabecera)
+    assert r.status_code == 200 and recibido == {"d": "responder", "m": "Falta la dirección del predio."}
+
+
 def test_aprobar_avisa_al_cliente_por_whatsapp(monkeypatch):
     monkeypatch.setenv("APROBADOR_TOKEN", "secreto-largo")
     enviados = []
