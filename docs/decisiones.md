@@ -54,8 +54,8 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 
 ## D8. Modelo de pago principal y respaldo local
 - **Decisión.** `deepseek-flash` (DeepSeek-V4.1-Flash-1017, API de pago) en el agente y en Q&A, Resumen, FAQ y el flujo de reclamo, con `llama3.2` en Ollama como respaldo. Ollama también calcula los embeddings.
-- **Respaldo en cadena (PR 73).** Si DeepSeek falla (cuota, red o más de 60 s sin respuesta), el agente prueba `gemini-3.5-flash` y después `llama3.2` local. `TAAML_MODELO_AGENTE` en `.env` cambia el modelo principal sin tocar código; `/api/salud` informa el principal, no el que respondió.
-- **Límite declarado.** DeepSeek respeta `temperature` con el razonamiento apagado, pero deja `top_p` fijo en 1,0; el respaldo Gemini 3.5 ignora ambos. Se compensa con las herramientas, la validación y el «No tengo esa información».
+- **Respaldo en cadena (PR 73).** Si DeepSeek falla (cuota, red o más de 60 s sin respuesta), el agente prueba `gemini-3.8-flash` y después `llama3.2` local. `TAAML_MODELO_AGENTE` en `.env` cambia el modelo principal sin tocar código; `/api/salud` informa el principal, no el que respondió.
+- **Límite declarado.** DeepSeek respeta `temperature` con el razonamiento apagado, pero deja `top_p` fijo en 1,0; el respaldo Gemini 3.8 ignora ambos. Se compensa con las herramientas, la validación y el «No tengo esa información».
 - **Evidencia.** `src/taaml/agente.py`, `tests/test_agente.py`, informe 7.
 
 ## D9. Gatekeeper System One (Jev): abierta
