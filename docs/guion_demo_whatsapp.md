@@ -1,6 +1,6 @@
 # Guion de la sustentación del Módulo 3 (WhatsApp)
 
-Sábado 21 de noviembre de 2026, 8:00 a. m. Duración: **15 minutos, sin diapositivas**. El profesor y el público le escriben al bot por WhatsApp mientras se muestra la terminal. Lo que no se pueda mostrar en vivo se muestra con el diagrama de `docs/3 - Informe/diagrama_extremo_a_extremo.svg` y el cuaderno de t-SNE.
+Sábado 21 de noviembre de 2026, 8:00 a. m. Duración: **15 minutos, sin diapositivas**. El profesor y el público le escriben al bot por WhatsApp mientras se muestra la terminal. Lo que no se pueda mostrar en vivo se muestra con el diagrama de `docs/arquitectura_agente.html` (diagrama interactivo, hecho con Archify) y el cuaderno de t-SNE.
 
 Lo marcado como **(verificar)** no se ha probado con Meta real: se confirma en el ensayo.
 
