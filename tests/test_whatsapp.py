@@ -18,7 +18,7 @@ def _firmar(cuerpo: bytes, secreto: str = SECRETO) -> dict:
     return {"X-Hub-Signature-256": "sha256=" + hmac.new(secreto.encode(), cuerpo, hashlib.sha256).hexdigest()}
 
 
-def _aviso(id_mensaje="wamid.1", telefono="573001234567", tipo="text", texto="hola") -> bytes:
+def _aviso(id_mensaje="wamid.1", telefono="573001234567", tipo="text", texto="¿Qué sedes hay?") -> bytes:
     mensaje = {"id": id_mensaje, "from": telefono, "type": tipo}
     if tipo == "text":
         mensaje["text"] = {"body": texto}

@@ -680,6 +680,18 @@ def conversar(
     return mensajes[-1].text.strip(), llamadas
 
 
+def reiniciar_conversacion(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> bool:
+    """Borra lo conversado en ese hilo (memoria corta) para empezar de cero; lo que el agente sabe del cliente (memoria larga) se conserva.
+
+    No reinicia si hay algo esperando aprobación: se perdería el reclamo. Devuelve si se reinició.
+    """
+    agente = agente or _agente(modelo)
+    if pendiente_de_aprobacion(thread_id, agente=agente):
+        return False
+    agente.checkpointer.delete_thread(thread_id)
+    return True
+
+
 def pendiente_de_aprobacion(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> dict | None:
     """Lo que una persona debe aprobar en esta conversación (el nombre de la herramienta y sus argumentos), o None si no hay nada pendiente."""
     agente = agente or _agente(modelo)

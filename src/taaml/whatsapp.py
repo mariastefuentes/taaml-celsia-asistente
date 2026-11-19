@@ -138,6 +138,24 @@ def enviar_botones(telefono: str, texto: str, botones: list[tuple[str, str]]) ->
     return True
 
 
+def marcar_leido(id_mensaje: str) -> bool:
+    """Marca el mensaje como leído y muestra «escribiendo…» al cliente mientras el agente piensa (5 a 25 s).
+
+    Es solo cortesía: si Meta no lo acepta no pasa nada y se sigue. El indicador dura hasta 25 s o hasta que llegue la respuesta.
+    """
+    if not configurado() or not id_mensaje:
+        return False
+    cuerpo = {"messaging_product": "whatsapp", "status": "read", "message_id": id_mensaje, "typing_indicator": {"type": "text"}}
+    try:
+        r = requests.post(
+            _url_graph(f"{os.environ['WHATSAPP_PHONE_NUMBER_ID']}/messages"), json=cuerpo, headers=_cabeceras(), timeout=TIEMPO_MAXIMO_ENVIO
+        )
+    except requests.RequestException:
+        log.warning("no se pudo marcar como leído")
+        return False
+    return r.ok
+
+
 def descargar_audio(id_audio: str) -> tuple[bytes, str] | None:
     """Baja una nota de voz de Meta: primero pide la dirección del archivo y luego lo descarga. Devuelve `(bytes, tipo MIME)` o None."""
     if not configurado():

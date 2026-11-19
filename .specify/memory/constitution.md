@@ -90,7 +90,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
 | **Base vectorial** | Qdrant en modo local (persistente, sin servidor), similitud del coseno |
 | **Interfaz** | API FastAPI + frontend React (`api/`, `frontend/`, Módulo 2); Streamlit solo para el Taller 1 (`app/`) |
-| **Testing** | `pytest` (315 pruebas, sin modelos ni red) |
+| **Testing** | `pytest` (328 pruebas, sin modelos ni red) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
 | **CI/CD** | GitHub Actions (`.github/workflows/ci.yml`) |
 
@@ -120,7 +120,7 @@ taaml-celsia-asistente/
 │   ├── prompts.py            # armado del prompt (5 bloques + XML)
 │   ├── corpus.py             # métricas del pipeline para la app
 │   └── tareas.py             # Q&A, resumen y FAQ
-├── scripts/                  # 01–38: etapas del pipeline, pruebas, análisis y plan B de la demo (orden de uso)
+├── scripts/                  # 01–41: etapas del pipeline, pruebas, análisis, plan B y chequeos de la demo (orden de uso)
 │   └── utilidades/           # herramientas sueltas (PDF, claves)
 ├── data/                     # capas Medallion
 │   ├── 0_manual/             # único lugar de datos escritos a mano, con fuente
