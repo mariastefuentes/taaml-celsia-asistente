@@ -162,3 +162,57 @@ def test_un_filtro_que_nadie_cumple_devuelve_vacio_y_un_campo_desconocido_falla(
     assert buscar("sedes", 5, "palabras", {"categoria": "no-existe"}) == []
     with pytest.raises(ValueError, match="No se puede filtrar"):
         buscar("sedes", 5, "palabras", {"autor": "x"})
+
+
+def test_el_indice_se_guarda_en_el_formato_del_vectorstore_de_langchain(carpeta_temporal):
+    from langchain_core.documents import Document
+
+    from taaml.vectorstore import almacen_langchain
+
+    construir_qdrant(
+        ["a", "b", "c"],
+        np.eye(3, dtype=np.float32),
+        [{"categoria": "sedes", "region": "Tolima", "fuente": "u"}] * 3,
+        ["texto a", "texto b", "texto c"],
+    )
+    almacen = almacen_langchain(carpeta_temporal, recuperacion.COLECCION)
+    (documento, puntaje), *_ = almacen.similarity_search_with_score_by_vector([0.0, 1.0, 0.0], k=2)
+    assert isinstance(documento, Document) and documento.page_content == "texto b"
+    assert documento.metadata["chunk_id"] == "b" and documento.metadata["categoria"] == "sedes"
+    assert puntaje == pytest.approx(1.0, abs=1e-3)
+
+
+def test_las_similitudes_pasan_por_el_vectorstore_nativo(carpeta_temporal, monkeypatch):
+    import taaml.recuperacion as r
+
+    llamadas = []
+    original = r.almacen_langchain
+
+    def espia(*a, **k):
+        almacen = original(*a, **k)
+        llamadas.append(almacen)
+        return almacen
+
+    fragmentos = [{"chunk_id": c, "categoria": "x", "region": "y"} for c in "abc"]
+    monkeypatch.setattr(r, "cargar_fragmentos", lambda: fragmentos)
+    monkeypatch.setattr(r, "almacen_langchain", espia)
+    construir_qdrant(["a", "b", "c"], np.eye(3, dtype=np.float32), [{"categoria": "x", "region": "y", "fuente": "u"}] * 3, ["a", "b", "c"])
+    puntajes = r._similitudes(np.array([1.0, 0.0, 0.0], dtype=np.float32))
+    assert llamadas and int(np.argmax(puntajes)) == 0
+
+
+def test_un_indice_sin_texto_del_formato_anterior_no_se_usa_y_la_busqueda_cae_a_la_matriz(carpeta_temporal, monkeypatch):
+    from qdrant_client import models
+
+    fragmentos = [{"chunk_id": "a", "categoria": "x", "region": "y"}]
+    monkeypatch.setattr(recuperacion, "cargar_fragmentos", lambda: fragmentos)
+    cliente = carpeta_temporal
+    cliente.create_collection(
+        recuperacion.COLECCION, vectors_config=models.VectorParams(size=3, distance=models.Distance.COSINE)
+    )
+    cliente.upsert(
+        recuperacion.COLECCION,
+        points=[models.PointStruct(id=recuperacion._id_punto("a"), vector=[1.0, 0.0, 0.0], payload={"chunk_id": "a"})],
+    )
+    recuperacion._coleccion.cache_clear()
+    assert recuperacion._coleccion() is None  # sin `page_content`: hay que reconstruir con scripts/07

@@ -73,6 +73,7 @@ def main() -> None:
         [f["chunk_id"] for f in fragmentos],
         np.array([previos[h] for h in huellas], dtype=np.float32),
         [{"categoria": f["categoria"], "region": f["region"], "fuente": f["fuente"]} for f in fragmentos],
+        [f["texto"] for f in fragmentos],
     )
     print(
         f"Listo: {INDICE.name} con {len(fragmentos)} vectores de {len(previos[huellas[0]])} dimensiones en {(time.time() - t0) / 60:.1f} min"

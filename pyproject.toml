@@ -34,6 +34,7 @@ dependencies = [
     "requests>=2.34.2",
     "streamlit>=1.66.0",
     "tiktoken>=0.14.0",
+    "langchain-qdrant>=1.1.0",
 ]
 
 [build-system]

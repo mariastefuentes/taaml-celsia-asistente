@@ -3,6 +3,7 @@
 La base completa tiene unos 316.800 tokens: cabe en el contexto de Gemini, pero cuesta unas 80 veces más por pregunta que 12 fragmentos. Cada fragmento (data/4_curaduria/chunks.jsonl) tiene
 un embedding (un vector que representa su significado) calculado con nomic-embed-text-v2-moe en Ollama. Para una
 pregunta se calcula su embedding y se buscan los fragmentos más parecidos (similitud del coseno) en una base vectorial (Qdrant). Esos van al prompt.
+Embeddings y vectorstore son las clases nativas de LangChain (`OllamaEmbeddings` y `QdrantVectorStore`, ver vectorstore.py).
 
 Si la carpeta de Qdrant no existe, está abierta por otro proceso o no corresponde a los fragmentos actuales, se busca en la matriz de vectores del .npz (mismo resultado).
 Si Ollama no responde, se usa una búsqueda por palabras (menos precisa, pero el asistente sigue funcionando).
@@ -14,7 +15,6 @@ import math
 import os
 import re
 import time
-import urllib.request
 from functools import lru_cache
 from uuid import NAMESPACE_URL, uuid5
 from pathlib import Path
@@ -24,6 +24,7 @@ from qdrant_client import QdrantClient, models
 
 from taaml.sanitizar import quitar_invisibles
 from taaml.sinonimos import ampliar_consulta
+from taaml.vectorstore import CAMPO_METADATOS, CAMPO_TEXTO, almacen_langchain, embeddings_celsia
 
 CURADURIA = Path(
     os.environ.get("TAAML_CURADURIA") or Path(__file__).resolve().parents[2] / "data" / "4_curaduria"
@@ -34,7 +35,6 @@ QDRANT = (
     CURADURIA / "qdrant"
 )  # base vectorial Qdrant (modo local, archivos en disco, sin servidor); se regenera con scripts/07_construir_indice.py
 COLECCION = "celsia"
-OLLAMA_EMBED = "http://localhost:11434/api/embed"
 MODELO_EMBEDDINGS = "nomic-embed-text-v2-moe"
 FRAGMENTOS_POR_DEFECTO = (
     12  # con 5, 8, 12 y 16 se midió 71, 74, 81 y 81 % de aciertos (scripts/10_evaluar_recuperacion.py)
@@ -42,14 +42,8 @@ FRAGMENTOS_POR_DEFECTO = (
 
 
 def embeddings(textos: list[str], tipo: str, timeout: int = 300) -> np.ndarray:
-    """Embeddings normalizados. `tipo` es «document» o «query»: el modelo espera ese prefijo."""
-    # keep_alive: Ollama descarga el modelo si pasan 5 minutos sin usarlo y la siguiente búsqueda tarda ~7 s en cargarlo; así queda en memoria
-    cuerpo = {"model": MODELO_EMBEDDINGS, "input": [f"search_{tipo}: {t}" for t in textos], "keep_alive": "30m"}
-    req = urllib.request.Request(
-        OLLAMA_EMBED, data=json.dumps(cuerpo).encode("utf-8"), headers={"Content-Type": "application/json"}
-    )
-    vectores = np.array(json.load(urllib.request.urlopen(req, timeout=timeout))["embeddings"], dtype=np.float32)
-    return vectores / np.linalg.norm(vectores, axis=1, keepdims=True)
+    """Embeddings normalizados, calculados con los embeddings nativos de LangChain (`EmbeddingsCelsia`). `tipo` es «document» o «query»: el modelo espera ese prefijo."""
+    return np.array(embeddings_celsia(MODELO_EMBEDDINGS, timeout).incrustar(textos, tipo), dtype=np.float32)
 
 
 @lru_cache(maxsize=1)
@@ -105,11 +99,14 @@ def _apuntar_alias(cliente: QdrantClient, coleccion: str) -> None:
     cliente.update_collection_aliases(change_aliases_operations=operaciones)
 
 
-def construir_qdrant(ids: list[str], vectores: np.ndarray, metadatos: list[dict]) -> str:
+def construir_qdrant(
+    ids: list[str], vectores: np.ndarray, metadatos: list[dict], textos: list[str] | None = None
+) -> str:
     """Migración blue/green: carga una colección nueva (`celsia_v<n>`), la valida y solo entonces mueve el alias `celsia` hacia ella.
 
     La versión en uso (blue) sigue respondiendo mientras la nueva (green) se carga; si la validación falla, la nueva se borra y el alias no se toca.
     Se conserva la versión anterior para poder volver atrás con `revertir_qdrant`; las más viejas se borran. Devuelve el nombre de la colección nueva.
+    Cada punto guarda además su texto y sus metadatos en el formato del vectorstore de LangChain (`page_content` y `metadata`), junto a los campos planos.
     """
     cliente = _cliente_qdrant()
     versiones = _versiones(cliente)
@@ -118,11 +115,18 @@ def construir_qdrant(ids: list[str], vectores: np.ndarray, metadatos: list[dict]
         nueva, vectors_config=models.VectorParams(size=int(vectores.shape[1]), distance=models.Distance.COSINE)
     )
     for n in range(0, len(ids), 500):
-        lote = zip(ids[n : n + 500], vectores[n : n + 500], metadatos[n : n + 500])
+        lote = zip(
+            ids[n : n + 500], vectores[n : n + 500], metadatos[n : n + 500], (textos or [""] * len(ids))[n : n + 500]
+        )
         cliente.upsert(
             nueva,
             points=[
-                models.PointStruct(id=_id_punto(i), vector=v.tolist(), payload={"chunk_id": i, **m}) for i, v, m in lote
+                models.PointStruct(
+                    id=_id_punto(i),
+                    vector=v.tolist(),
+                    payload={"chunk_id": i, **m, CAMPO_TEXTO: t, CAMPO_METADATOS: {"chunk_id": i, **m}},
+                )
+                for i, v, m, t in lote
             ],
         )
     cuenta = cliente.count(nueva).count
@@ -171,7 +175,9 @@ def _coleccion() -> QdrantClient | None:
         cliente = _cliente_qdrant()
         if not cliente.collection_exists(COLECCION):
             return None
-        puntos, _ = cliente.scroll(COLECCION, limit=100_000, with_payload=["chunk_id"], with_vectors=False)
+        puntos, _ = cliente.scroll(COLECCION, limit=100_000, with_payload=["chunk_id", CAMPO_TEXTO], with_vectors=False)
+        if any(CAMPO_TEXTO not in (p.payload or {}) for p in puntos):  # índice del formato anterior (sin texto): reconstruirlo con scripts/07
+            return None
         return (
             cliente
             if {(p.payload or {})["chunk_id"] for p in puntos} == {f["chunk_id"] for f in cargar_fragmentos()}
@@ -215,14 +221,10 @@ def _similitudes(vector: np.ndarray, filtro: dict | None = None) -> np.ndarray:
         for campo, valor in (filtro or {}).items()
     ]
     cuantos = int(mascara.sum()) if mascara is not None else cliente.count(COLECCION).count
-    respuesta = cliente.query_points(
-        COLECCION,
-        query=vector.tolist(),
-        limit=max(cuantos, 1),
-        with_payload=["chunk_id"],
-        query_filter=models.Filter(must=condiciones) if condiciones else None,
+    encontrados = almacen_langchain(cliente, COLECCION).similarity_search_with_score_by_vector(
+        vector.tolist(), k=max(cuantos, 1), filter=models.Filter(must=condiciones) if condiciones else None
     )
-    por_id = {(p.payload or {})["chunk_id"]: p.score for p in respuesta.points}
+    por_id = {documento.metadata["chunk_id"]: puntaje for documento, puntaje in encontrados}
     return np.array([por_id.get(f["chunk_id"], -np.inf) for f in cargar_fragmentos()])
 
 

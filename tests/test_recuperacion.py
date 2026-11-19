@@ -155,27 +155,18 @@ def test_el_contexto_no_lleva_ordenes_escondidas_con_caracteres_invisibles():
 
 
 def test_los_embeddings_piden_a_ollama_mantener_el_modelo_cargado(monkeypatch):
-    import json
+    import ollama
 
     enviado = {}
 
-    class Respuesta:
-        def read(self):
-            return b'{"embeddings": [[3.0, 4.0]]}'
+    def falso_embed(self, model, input, **kwargs):
+        enviado.update(model=model, input=input, **kwargs)
+        return {"embeddings": [[3.0, 4.0]]}
 
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *a):
-            return False
-
-    def falso_urlopen(req, timeout):
-        enviado.update(json.loads(req.data))
-        return Respuesta()
-
-    monkeypatch.setattr("taaml.recuperacion.urllib.request.urlopen", falso_urlopen)
-    from taaml.recuperacion import embeddings
+    monkeypatch.setattr(ollama.Client, "embed", falso_embed)
+    from taaml.recuperacion import MODELO_EMBEDDINGS, embeddings
 
     vector = embeddings(["hola"], "query")
-    assert enviado["keep_alive"] == "30m"
-    assert [round(float(x), 2) for x in vector[0]] == [0.6, 0.8]
+    assert enviado["keep_alive"] == 1800 and enviado["model"] == MODELO_EMBEDDINGS  # 30 minutos, en segundos and enviado["model"] == MODELO_EMBEDDINGS
+    assert enviado["input"] == ["search_query: hola"]  # el prefijo de tarea que pide el modelo
+    assert [round(float(x), 2) for x in vector[0]] == [0.6, 0.8]  # normalizado
