@@ -82,8 +82,9 @@ db-up:
 db-down:
 	uv run python scripts/34_postgres_local.py --detener
 
+# Limpia la memoria de la misma base que usa `make api` (PostgreSQL local, o el de DATABASE_URL si está definida).
 demo-limpiar:
-	uv run python scripts/30_limpiar_memoria_demo.py --borrar
+	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run python scripts/30_limpiar_memoria_demo.py --borrar
 
 demo-inyeccion:
 	uv run python scripts/23_demo_corpus_envenenado.py --servir
