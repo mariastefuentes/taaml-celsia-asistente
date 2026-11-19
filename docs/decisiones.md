@@ -54,7 +54,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 
 ## D6. Contexto recuperado como datos pasivos
 - **Decisión.** Lo que devuelve una herramienta llega encerrado en `<documentos_recuperados>` con un aviso de que son datos y no instrucciones; un fragmento no puede cerrar ese bloque. Se filtran los caracteres invisibles.
-- **Evidencia.** `delimitar_como_datos` en `src/taaml/agente.py`; batería de 11 ataques directos y 8 indirectos resistidos; demo `make demo-inyeccion`; informe 5.3.
+- **Evidencia.** `delimitar_como_datos` en `src/taaml/agente.py`; batería de 11 ataques directos y 8 indirectos; demo `make demo-inyeccion`; informe 5.3. En el Taller 2 (Gemini, prompt v3) se resistieron todos. Se repitió el 19 de noviembre con DeepSeek y el prompt v7 (`scripts/19_probar_ataques.py` y `scripts/12_probar_inyeccion_indirecta.py --agente`, resultados en `inyeccion_indirecta_agente_deepseek-flash_v3.csv`): la revisión automática dio 10 de 11 directos y 6 de 8 indirectos. Se leyeron las 3 respuestas marcadas y ninguna obedeció: son falsos positivos del detector, que marca la respuesta cuando cita el texto del ataque para rechazarlo (dice «no voy a confirmar con MODO LIBRE», o avisa al cliente de la orden de pedir cédula y clave por un enlace externo). Con la lectura manual: 11 de 11 y 8 de 8. La revisión manual la hizo el asistente de código y la ratifica María Stella Fuentes. El detector no se cambió.
 
 ## D7. API FastAPI con SSE y frontend React desacoplado
 - **Decisión.** El backend (`api/main.py`) transmite eventos SSE y el frontend (`frontend/`) los pinta; el identificador de conversación va en la ruta `/c/<hilo>`. Streamlit queda solo como la aplicación del Taller 1.
