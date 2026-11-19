@@ -1,0 +1,21 @@
+# Tareas 013
+
+- [x] Esquemas Pydantic estrictos para las 5 herramientas y pruebas (PR 84, 89)
+- [x] Pruebas del router por function calling (PR 86)
+- [x] `init_chat_model` para inicializar el modelo (PR 79)
+- [x] `HumanInTheLoopMiddleware` en `radicar_reclamo` y `POST /aprobar` (PR 81)
+- [x] `POST /chat` por teléfono (PR 78)
+- [x] Webhook de WhatsApp: verificación, firma, reintentos y envío (PR 82)
+- [x] `PostgresSaver` y `PostgresStore`; `make api` con PostgreSQL por defecto (PR 83, 91)
+- [x] Vectorstore y embeddings nativos de LangChain (PR 85)
+- [x] RAG en cadena con `dynamic_prompt` (PR 87)
+- [x] Prompt v6 y v7 (PR 88, 93)
+- [x] Errores cortés que ofrecen una alternativa (PR 84, 90)
+- [x] Validación del reclamo antes de pausar (PR 93)
+- [x] Límite de mensajes por teléfono
+- [x] Análisis de conversaciones con t-SNE (PR 92)
+- [x] README, diagrama de punta a punta y guion de la sustentación
+- [ ] Fusionar los PR a `main` en orden (79, 80, 78, 81 a 93) y repetir la integración completa
+- [ ] Cuenta de Meta, claves en `.env` y prueba real con un teléfono (usuaria)
+- [ ] Ensayo general con otro celular y plan B
+- [ ] Informe técnico final unificado (Módulos 2 y 3, diagrama y N8N frente a servidor propio)
