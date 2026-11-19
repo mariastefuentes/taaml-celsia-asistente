@@ -1,6 +1,8 @@
-## 5. Qué encontramos (sobre 114 conversaciones simuladas)
+## 6. Qué encontramos (sobre 114 conversaciones simuladas)
 
 **Los vectores sí capturan el tema.** K-means, sin ver la categoría prevista, recupera la estructura con un índice de Rand ajustado de 0,45 (1 sería idéntico): los reclamos quedan juntos (clúster de 17 con 88 % de pureza), los datos personales en otro y las preguntas de producto en tres clústeres con pureza de 71 % a 100 %. Se mezclan sobre todo los saludos con las conversaciones largas (`mixta`) y las preguntas de factura con las de producto, lo que es razonable: conversan sobre lo mismo.
+
+**KNN frente a t-SNE.** Clasificando cada conversación por sus 5 vecinas más cercanas (dejando una fuera), KNN acierta la categoría prevista el 61 % de las veces en los vectores originales, el 58 % en el t-SNE 3D y el 70 % en el t-SNE 2D, contra 18 % del azar. Que el 2D saque más que el espacio original **no** significa que proyectar agregue información: t-SNE exagera los grupos locales y se calculó con todas las conversaciones a la vez, así que mide qué tan bien separa, no cómo clasificaría una conversación nueva. Lo que sí se puede decir: t-SNE es una buena forma de **mirar** los grupos, y KNN en el espacio original es la forma de **buscar** conversaciones parecidas (por ejemplo, las 5 más cercanas a un reclamo por corte de luz son 4 reclamos y una conversación mezclada que también trata de un corte). El 61 % tampoco es un fallo de los vectores: varias categorías que escribimos se solapan de verdad (saludos, conversaciones mezcladas y preguntas de factura hablan de lo mismo).
 
 **El asistente marcó 20 conversaciones como fallidas (18 %), pero no todas son fallos.** La marca es una regla simple: el asistente dijo «no tengo esa información» o «no pude», o una herramienta devolvió error. Al leer las 20 una por una:
 
