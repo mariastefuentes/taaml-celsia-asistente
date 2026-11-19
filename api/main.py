@@ -3,7 +3,7 @@
 Endpoints:
   GET  /api/salud                    estado, modelo del agente y dónde busca por significado (qdrant, numpy o ninguno)
   POST /api/chat                     un turno de conversación; responde por streaming (Server-Sent Events)
-  POST /chat                         un turno por teléfono; responde un JSON (para WhatsApp, N8N o cualquier servicio externo)
+  POST /chat                         un turno por teléfono; responde un JSON (para WhatsApp, N8N o cualquier servicio externo); 429 si el teléfono escribe demasiado rápido
   GET/POST /webhook/whatsapp         WhatsApp (Meta): verificación del webhook y mensajes entrantes (se responde por WhatsApp en segundo plano)
   POST /aprobar                      una persona aprueba o rechaza lo que el agente dejó pendiente (necesita el encabezado X-Aprobador)
   GET  /api/hilos/{hilo}/mensajes    la conversación guardada, para recuperarla al recargar la página
@@ -40,10 +40,12 @@ from taaml.agente import (
     pendiente_de_aprobacion,
     resolver_aprobacion,
 )
+from taaml.limite import TEXTO_LIMITE, limite_desde_entorno
 from taaml.recuperacion import almacen_vectorial
 from taaml.whatsapp import TEXTO_NO_SOPORTADO, enviar_texto, firma_valida, mensajes_entrantes
 
 log = logging.getLogger("taaml.api")
+LIMITE = limite_desde_entorno()  # mensajes por teléfono y minuto (ver taaml/limite.py): protege la cuota del modelo
 ORIGENES = ["http://localhost:5173", "http://127.0.0.1:5173"]  # el servidor de desarrollo del frontend
 HILO = re.compile(
     r"^[0-9a-f]{32}$"
@@ -156,6 +158,9 @@ def chat_por_telefono(entrada: MensajeEntrante) -> RespuestaDelAgente:
     Si el modelo o una herramienta fallan responde con un mensaje cortés (`ok` en falso) en vez de un error, porque quien llama
     (WhatsApp) tiene que poder reenviar algo al cliente.
     """
+    decision = LIMITE.revisar(entrada.telefono)
+    if not decision.permitido:
+        raise HTTPException(status_code=429, detail=TEXTO_LIMITE, headers={"Retry-After": str(decision.espera_s)})
     return responder_a_telefono(entrada.telefono, entrada.mensaje)
 
 
@@ -245,6 +250,12 @@ def _ya_atendido(id_mensaje: str) -> bool:
 def atender_mensaje_de_whatsapp(telefono: str, tipo: str, texto: str) -> None:
     """Responde un mensaje de WhatsApp: pregunta al agente y envía su respuesta. Corre en segundo plano, después de contestarle 200 a Meta."""
     try:
+        decision = LIMITE.revisar(telefono)
+        if not decision.permitido:
+            log.warning("límite de mensajes alcanzado; reintento en %s s", decision.espera_s)
+            if decision.avisar:  # un solo aviso por ventana, para no contestar spam con más mensajes
+                enviar_texto(telefono, TEXTO_LIMITE)
+            return
         if tipo != "text" or not texto.strip():
             enviar_texto(telefono, TEXTO_NO_SOPORTADO)
             return
