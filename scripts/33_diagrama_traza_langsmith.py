@@ -23,7 +23,7 @@ load_dotenv(ROOT / ".env")
 
 SALIDA = ROOT / "docs" / "3 - Informe" / "diagrama_traza_langsmith.svg"
 COLORES = {"llm": "#2563eb", "tool": "#d9650f"}
-ETIQUETA = {"llm": "Modelo (Gemini)", "tool": "Herramienta"}
+ETIQUETA = {"llm": "Modelo (DeepSeek)", "tool": "Herramienta"}  # el agente usa deepseek-flash; el cliente de la traza se llama ChatOpenAI porque la API es compatible
 
 
 def pregunta_de(run) -> str:
@@ -89,7 +89,7 @@ def dibujar(raiz, pasos: list[dict]) -> str:
         args = ", ".join(f"{k}={json.dumps(v, ensure_ascii=False)}" for k, v in p["args"].items())
         corto = f"{p['fin'] - p['inicio']:.2f} s" + ("" if p["tipo"] == "tool" else f" · {p['tokens']:,} tokens")
         s.append(f'<text x="24" y="{y + 16}" font-size="13" font-weight="600" fill="#1f2937">{i + 1}. {ETIQUETA[p["tipo"]]}</text>')
-        s.append(f'<text x="24" y="{y + 33}" font-size="11" fill="#6b7280">{escape(p["nombre"] if p["tipo"] == "tool" else "ChatGoogleGenerativeAI")}</text>')
+        s.append(f'<text x="24" y="{y + 33}" font-size="11" fill="#6b7280">{escape(p["nombre"])}</text>')
         s.append(f'<rect x="{x:.1f}" y="{y + 4}" width="{w:.1f}" height="22" rx="5" fill="{COLORES[p["tipo"]]}"/>')
         if x + w + 6 + 6.4 * len(corto) < ancho - 12:  # el tiempo va a la derecha de la barra; si no cabe, a su izquierda
             s.append(f'<text x="{x + w + 6:.1f}" y="{y + 20}" font-size="12" fill="#1f2937">{corto}</text>')

@@ -22,10 +22,10 @@ Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energ�
 | Corpus curado | 393 documentos, 1.690 fragmentos, ~316.800 tokens |
 | Recuperación (la respuesta está entre los 12 fragmentos) | 89 % con embeddings (54 % por palabras, 74 % híbrido). El 89 % se midió con las mismas preguntas que motivaron el diccionario de sinónimos: con preguntas nuevas sería menor |
 | Preguntas de prueba | 59 (35 con respuesta y 24 que no deben responderse), 4 de inyección |
-| Respuestas correctas | Según el juez automático: 31 de 35 con respuesta y 21 de 24 negativas bien resueltas. Con la revisión asistida: 29 de 35 y 19 de 24. Los veredictos de la revisión los propuso el asistente de código y los ratificó María Stella Fuentes |
+| Respuestas correctas (Taller 1, con `gemini-3.5-flash`) | Según el juez automático: 31 de 35 con respuesta y 21 de 24 negativas bien resueltas. Con la revisión asistida: 29 de 35 y 19 de 24. Los veredictos de la revisión los propuso el asistente de código y los ratificó María Stella Fuentes |
 | Costo frente a pegar toda la base en el prompt | unas 80 veces menor por pregunta |
 
-El detalle y las limitaciones están en el [informe](docs/3%20-%20Informe/informe_taller1.md).
+El detalle y las limitaciones están en el [informe del Taller 1](docs/3%20-%20Informe/informe_taller1.md); el agente del Taller 2, en su [informe](docs/3%20-%20Informe/informe_taller2.md); y las decisiones de arquitectura (D1 a D17), con su porqué, en [docs/decisiones.md](docs/decisiones.md).
 
 ## Arquitectura
 
@@ -61,31 +61,11 @@ Qué guarda cada memoria y para qué. Interactivo en [docs/memoria.html](docs/me
 
 ![Traza real de LangSmith](docs/3%20-%20Informe/diagrama_traza_langsmith.svg)
 
-```mermaid
-sequenceDiagram
-    participant W as Cliente (WhatsApp)
-    participant Me as Meta (API Cloud)
-    participant A as API FastAPI
-    participant G as Agente (create_agent)
-    participant M as DeepSeek V4.1 Flash
-    participant T as Herramientas
-    participant P as PostgreSQL
-    W->>Me: mensaje
-    Me->>A: POST /webhook/whatsapp (firma X-Hub-Signature-256)
-    A-->>Me: 200 enseguida
-    A->>A: límite por teléfono y mensaje ya visto
-    A->>G: conversar(mensaje, hilo = hash del teléfono)
-    G->>P: PostgresSaver: lee el historial del hilo
-    G->>M: prompt v7 + historial recortado
-    M-->>G: llamada a una herramienta (function calling, esquema Pydantic)
-    G->>T: buscar_en_base, consultar_datos, guardar/recordar dato
-    T-->>G: datos (nunca órdenes)
-    G->>M: resultado de la herramienta
-    M-->>G: texto
-    G->>P: guarda el turno (checkpointer) y los datos del cliente (Store)
-    A->>Me: envía la respuesta (Graph API)
-    Me->>W: respuesta
-```
+Traza real de una pregunta al agente actual (DeepSeek, prompt v7), generada con `scripts/33_diagrama_traza_langsmith.py`.
+
+[![Un mensaje de WhatsApp, paso a paso](docs/capturas/secuencia_whatsapp.png)](docs/secuencia_whatsapp.html)
+
+El camino de un mensaje, del cliente a la respuesta. Interactivo en [docs/secuencia_whatsapp.html](docs/secuencia_whatsapp.html) (fuente en [docs/secuencia_whatsapp.json](docs/secuencia_whatsapp.json)).
 
 Un reclamo no se radica solo: `radicar_reclamo` pausa el flujo con `HumanInTheLoopMiddleware` hasta que una persona de Celsia lo aprueba con `POST /aprobar`, y entonces el cliente recibe la decisión por WhatsApp. El frontend React sigue usando `POST /api/chat` (streaming) sobre la misma API y la misma memoria.
 
@@ -109,12 +89,12 @@ Un reclamo no se radica solo: `radicar_reclamo` pausa el flujo con `HumanInTheLo
 | Base vectorial | Qdrant local con alias `celsia` sobre colecciones versionadas (migración blue/green y `revertir_qdrant`), payload filtrable por `categoria` y `region`; `scripts/26_explorar_ann_y_filtros.py` mide IVF, PQ y pre/post-filtrado frente a la búsqueda exacta; `scripts/29_medir_hnsw_en_servidor.py` mide HNSW (`m`, `ef_construct`, `ef`) contra un servidor Qdrant en Docker |
 | Exploración de embeddings | `scripts/25_explorar_embeddings.py`: coseno, producto punto y L2 (mismo orden con vectores de norma 1), recorte Matryoshka (512 dimensiones casi no pierde calidad) y mapa t-SNE en `docs/3 - Informe/tsne_corpus.svg` |
 | Validación de la respuesta | `datos_dudosos` revisa que cada cifra, correo o enlace de la respuesta aparezca en lo que devolvieron las herramientas, lo que dijo el cliente o la fecha de hoy; si no, el frontend avisa «Verifica antes de usar» |
-| Blindaje | Limpieza de caracteres invisibles, reglas del prompt y 11/11 ataques directos y 8/8 indirectos resistidos |
+| Blindaje | Limpieza de caracteres invisibles, reglas del prompt y delimitadores `<documentos_recuperados>`. En el Taller 2 el agente (`gemini-3.8-flash`, prompt v3) resistió 11 de 11 ataques directos y 8 de 8 indirectos; **no se han repetido con DeepSeek y el prompt v7** |
 | Respaldo | Si DeepSeek falla: `gemini-3.8-flash` y después `llama3.2` local |
 | Límite por teléfono | `src/taaml/limite.py`: 8 mensajes por minuto por teléfono (`LIMITE_MENSAJES`, `LIMITE_VENTANA_S`); `/chat` responde 429 con `Retry-After` y por WhatsApp se avisa una sola vez por ventana, sin llamar al modelo. Protege la cuota cuando el bot es público |
 | Análisis de conversaciones | `src/taaml/conversaciones.py` y `notebooks/analisis_conversaciones.ipynb`: t-SNE sobre conversaciones simuladas (ver la sección siguiente) |
 
-La app de Streamlit del Taller 1 tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes** y **Corpus y scraping** (etapas del pipeline y métricas). El agente del Módulo 2 no está en ella: se entrega con la API y el frontend de arriba (`make api` y `make app`).
+La app de Streamlit del Taller 1 tiene cuatro pestañas: **Preguntas y respuestas** (con fuentes), **Resumen**, **Preguntas frecuentes** y **Corpus y scraping** (etapas del pipeline y métricas). El agente (Módulos 2 y 3) no está en ella: se entrega con la API y el frontend de arriba (`make api` y `make app`).
 
 ## Capturas
 
@@ -132,7 +112,7 @@ cd taaml-celsia-asistente
 make setup               # uv sync + .env + modelos de Ollama (nomic y llama3.2:3b)
 # o paso a paso:
 # uv sync
-# cp .env.example .env   # completa DEEPSEEK_API_KEY (agente) y GOOGLE_API_KEY (tareas); sin ellas responde el modelo local
+# cp .env.example .env   # completa DEEPSEEK_API_KEY (agente y tareas); GOOGLE_API_KEY es opcional (respaldo Gemini); sin ellas responde el modelo local
 # ollama pull nomic-embed-text-v2-moe
 # ollama pull llama3.2:3b
 make indice              # construye el índice de vectores con Ollama (el repositorio no versiona el .npz ni Qdrant)
@@ -150,7 +130,7 @@ Para reconstruir la base **desde cero** (descargar todo el sitio): `scripts/01_s
 
 ## Uso
 
-**Agente conversacional (Módulo 2): API y frontend separados.** El frontend (React con Vite, carpeta `frontend/`) no llama al modelo: habla por HTTP con una API FastAPI (`api/`) que ejecuta el agente y le responde por streaming (Server-Sent Events). Se corren en dos terminales:
+**Agente conversacional (Módulos 2 y 3): API y frontend separados.** El frontend (React con Vite, carpeta `frontend/`) no llama al modelo: habla por HTTP con una API FastAPI (`api/`) que ejecuta el agente y le responde por streaming (Server-Sent Events). Se corren en dos terminales:
 
 ```bash
 make api        # API del agente con memoria en PostgreSQL (levanta uno local si no defines DATABASE_URL; necesita la clave del modelo en .env y Ollama encendido)
@@ -161,23 +141,23 @@ make api-sqlite # la misma API con la memoria en archivos SQLite
 make app        # frontend en http://localhost:5173 (alias de make frontend)
 ```
 
-La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen":"qdrant"`), `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación). Para servicios externos (WhatsApp, N8N) expone `POST /chat`: recibe `{mensaje, telefono}` y devuelve un JSON `{respuesta, herramientas, ok, pendiente}`; si el agente deja algo pausado (radicar un reclamo), una persona lo decide con `POST /aprobar` (`aprobar`, `rechazar` o `responder` con un `mensaje` para el cliente; encabezado `X-Aprobador` igual a `APROBADOR_TOKEN`, sin esa variable queda deshabilitado; si WhatsApp está configurado, el cliente recibe la decisión por mensaje); el teléfono identifica la conversación y la memoria del cliente (se guarda su hash, no el número) y, si el agente falla, responde con un mensaje cortés y `ok: false`. Para WhatsApp (API Cloud de Meta), `GET/POST /webhook/whatsapp` verifica el webhook y recibe los mensajes: comprueba la firma `X-Hub-Signature-256` con `WHATSAPP_APP_SECRET`, responde 200 enseguida, atiende cada mensaje una sola vez en segundo plano y envía la respuesta del agente al cliente (variables `WHATSAPP_*` en `.env.example`; sin ellas el webhook queda deshabilitado). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde la base de memoria.
+La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen":"qdrant"`), `POST /api/chat` (un turno, por streaming) y `GET /api/hilos/{hilo}/mensajes` (recupera la conversación) y `GET /api/usuarios/{usuario}/datos` (lo que el agente recuerda de un cliente, para el panel «Lo que recuerdo»). Para servicios externos (WhatsApp, N8N) expone `POST /chat`: recibe `{mensaje, telefono}` y devuelve un JSON `{respuesta, herramientas, ok, pendiente}`; si el agente deja algo pausado (radicar un reclamo), una persona lo decide con `POST /aprobar` (`aprobar`, `rechazar` o `responder` con un `mensaje` para el cliente; encabezado `X-Aprobador` igual a `APROBADOR_TOKEN`, sin esa variable queda deshabilitado; si WhatsApp está configurado, el cliente recibe la decisión por mensaje); el teléfono identifica la conversación y la memoria del cliente (se guarda su hash, no el número) y, si el agente falla, responde con un mensaje cortés y `ok: false`. Para WhatsApp (API Cloud de Meta), `GET/POST /webhook/whatsapp` verifica el webhook y recibe los mensajes: comprueba la firma `X-Hub-Signature-256` con `WHATSAPP_APP_SECRET`, responde 200 enseguida, atiende cada mensaje una sola vez en segundo plano y envía la respuesta del agente al cliente (variables `WHATSAPP_*` en `.env.example`; sin ellas el webhook queda deshabilitado). El identificador de la conversación va en la dirección (`/c/<hilo>`), así que recargar la página recupera el hilo desde la base de memoria.
 
 **WhatsApp paso a paso (Módulo 3, vía 2: servidor propio, sin N8N).** (1) En developers.facebook.com crea una app de tipo Empresa con el producto WhatsApp y toma el número de prueba. (2) Copia a `.env` `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` y `WHATSAPP_APP_SECRET`, e inventa `WHATSAPP_VERIFY_TOKEN`. (3) Enciende la API (`make api`) y expónla con un túnel https (por ejemplo `cloudflared tunnel --url http://localhost:8000`). (4) En Meta registra `https://<túnel>/webhook/whatsapp` con ese token de verificación y suscribe el campo `messages`. (5) Agrega tu teléfono como destinatario de prueba y escribe al número. Las pruebas automáticas (`tests/test_whatsapp.py`) cubren la verificación, la firma, los reintentos y el envío con avisos firmados simulados; la prueba con Meta real está pendiente del ensayo general; el guion de la demostración, con el plan B, está en [docs/guion_demo_whatsapp.md](docs/guion_demo_whatsapp.md).
 
 ```bash
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)
 make modulo1                              # la app del Módulo 1: solo el corpus y las etapas del scraping
-make app-taller1                          # la app del Taller 1 (Streamlit); el agente del Módulo 2 va por API + frontend
+make app-taller1                          # la app del Taller 1 (Streamlit); el agente va por API + frontend
 make test                                 # pruebas de componentes, sin Gemini ni Ollama (el CI las corre en cada PR)
 make lint                                 # ruff y lock vigente
 make ensayo                               # revisa que la demo esté lista, sin gastar cuota
 make ensayo-agente                        # conversación real con el agente (GASTA CUOTA: 8 a 12 llamadas)
 ```
 
-`make` muestra el menú de atajos (`setup`, `modulo1`, `api`, `app`, `datos`, `indice`, `scraping-demo`, `recuperacion`, `ensayo`, `ensayo-agente`, `evaluar`, `pdf`).
+`make` muestra el menú de atajos (`setup`, `modulo1`, `api`, `api-sqlite`, `db-up`, `db-down`, `app`, `app-taller1`, `demo-inyeccion`, `demo-limpiar`, `datos`, `indice`, `scraping-demo`, `recuperacion`, `ensayo`, `ensayo-agente`, `test`, `lint`, `check`, `evaluar`, `pdf`).
 
-**Demo del Módulo 1.** `app/modulo1.py` es la versión que se sustenta en la sesión 8: muestra solo las métricas del corpus y las etapas del scraping (descubrir → extraer → limpiar → deduplicar → enriquecer → curar → fragmentar), sin Q&A, Resumen ni FAQ. La app completa queda en `app/asistente.py` (`make app-taller1`). El scraping en vivo se ejecuta con `make scraping-demo`.
+**Demo del Módulo 1 (histórica).** `app/modulo1.py` fue la versión que se sustentó en la sesión 8: muestra solo las métricas del corpus y las etapas del scraping (descubrir → extraer → limpiar → deduplicar → enriquecer → curar → fragmentar), sin Q&A, Resumen ni FAQ. La app completa queda en `app/asistente.py` (`make app-taller1`). El scraping en vivo se ejecuta con `make scraping-demo`.
 
 <details>
 <summary><b>Referencia detallada: cómo se construye la base, pruebas y opciones</b></summary>
@@ -204,13 +184,13 @@ Reglas del scraper: respeta `robots.txt` (los PDF de celsia.com están bloqueado
 Los datos que el sitio muestra solo como enlaces (WhatsApp, PQR, pagos) están escritos a mano, con su fuente, en `data/0_manual/`.
 
 ### Pruebas y atajos
-`make test` corre las pruebas automáticas de componentes (sin Gemini ni Ollama) y `make` muestra los demás atajos (`datos`, `app`, `evaluar`, `pdf`). `uv run python scripts/12_probar_inyeccion_indirecta.py` prueba órdenes escondidas en los documentos (4 llamadas a Gemini).
+`make test` corre las pruebas automáticas de componentes (sin Gemini ni Ollama) y `make` muestra los demás atajos (`datos`, `app`, `evaluar`, `pdf`). `uv run python scripts/12_probar_inyeccion_indirecta.py` prueba órdenes escondidas en los documentos (una llamada al modelo por caso: 7 indirectos y 3 directos; con `--agente`, contra el agente).
 
 ### Opciones que se activan a propósito
 - **Post-validación.** La app avisa si una cifra, un correo o un enlace de la respuesta no aparece en las fuentes consultadas (`src/taaml/validacion.py`); `scripts/14_validar_respuestas.py` lo mide sobre las respuestas guardadas, sin modelo.
 - **Continuidad de la demo.** Si el modelo elegido falla por cuota o conexión, la app prueba `deepseek-flash` (si hay clave) y luego `ollama:llama3.2` (local), y si ninguno responde muestra la respuesta ya evaluada (v3) de esa pregunta, marcada como guardada (`src/taaml/respaldo.py`). `uv run python scripts/16_ensayo_demo.py` revisa que todo esté listo sin gastar; con `--llamar` hace una llamada corta por proveedor.
 - **Agente con memoria y router (specs 011 y 013).** `src/taaml/agente.py` arma un agente `create_agent` con `deepseek-flash` (DeepSeek-V4.1-Flash-1017, respaldo `gemini-3.8-flash` y `ollama:llama3.2`), memoria por conversación (`thread_id`) en PostgreSQL (o SQLite en `data/memoria/`, que no se versiona; el hilo viaja en la dirección `/c/<hilo>` y la conversación vuelve al recargar), un recorte del historial que ve el modelo (3.000 tokens aproximados; lo guardado y lo que se ve en pantalla siguen completos) y cinco herramientas: `buscar_en_base`, `consultar_datos`, `guardar_dato_del_cliente`, `recordar_datos_del_cliente` y `radicar_reclamo` (con aprobación humana). El prompt vigente es `prompts/v7_agente.md`. Se usa por la API y el frontend (no por Streamlit); `uv run python scripts/18_ensayo_agente.py` hace una conversación de cuatro preguntas (gasta unas 8 a 12 llamadas al modelo de pago) y `scripts/15_probar_agente.py` hace preguntas sueltas.
-- **Extracción a JSONL.** `uv run python scripts/13_extraer_contactos.py` (3 llamadas a Gemini) escribe `data/5_extraccion/contactos.jsonl`.
+- **Extracción a JSONL.** `uv run python scripts/13_extraer_contactos.py` (3 llamadas al modelo por defecto, DeepSeek) escribe `data/5_extraccion/contactos.jsonl`.
 - **Trazabilidad (LangSmith).** Si el `.env` tiene `LANGSMITH_API_KEY`, la app y las tareas registran cada ejecución (pregunta, fragmentos, prompt, respuesta, tokens y tiempo) en el proyecto `taaml-celsia` de smith.langchain.com. Sin la clave no se envía nada. La evaluación (`11_evaluar_modelo.py`) llama a la API directamente y no se traza. En el agente, cada paso (modelo y herramientas) es un nodo de la traza con su latencia, y un error en los argumentos de una herramienta aparece como error de ese nodo. `scripts/24_evaluar_en_langsmith.py` sube la matriz de enrutamiento como dataset (`celsia-matriz-enrutamiento`) y la evalúa con `evaluate`, con dos configuraciones del agente (con y sin tope de herramientas) que se comparan en LangSmith. LangSmith observa; no orquesta.
 - **Reordenamiento de fragmentos.** `responder_con_fuentes(..., reordenar=True)` o `--reordenar` en los scripts 10 y 11: recupera 30 candidatos y un modelo barato elige los 12 mejores (`deepseek-flash`; `gemini-3.5-flash-lite` si el que responde es de Gemini). Cuesta una llamada más por pregunta y está apagado por defecto.
 - **DeepSeek (modelo por defecto).** Con `DEEPSEEK_API_KEY` en el `.env`, `deepseek-flash` (DeepSeek-V4.1-Flash-1017) es el modelo por defecto del agente y de las tareas; también se puede escribir `deepseek-flash` (o `deepseek-v4-pro`) en el campo «Modelo» de la app, o pasar `modelo="deepseek-flash"` a las tareas, con el razonamiento apagado; el reordenador también cambia a `deepseek-flash`. En la evaluación: `--modelo deepseek:deepseek-flash --juez deepseek:deepseek-v4-pro`. DeepSeek respeta `temperature 0.0`, pero deja `top_p` fijo en 1,0.
@@ -231,16 +211,15 @@ uv run python scripts/36_construir_notebook_tsne.py  # construye y ejecuta el cu
 Equivalencias de datos: `data/1_bronze/` es el crudo (raw), `data/2_silver/` el procesado (processed) y `data/3_gold/` el corpus con metadatos (gold). Cada documento de Gold lleva `url`, `title`, `categoria` (la sección del sitio), `fecha_extraccion` (captura), `fecha_publicacion`, `section` (el sitemap de origen) y `hash`; Silver conserva `url`, `title`, `section`, `fecha_publicacion` y `hash`.
 
 ```
-docs/        (los `*.delivery.json` junto a cada diagrama los genera Archify para la entrega; la fuente editable es el `.json` sin sufijo) análisis de la empresa, conjunto de prueba, informes, capturas, decisiones.md (D1 a D17), guion_demo_whatsapp.md y la declaración de uso de IA del Módulo 3
+docs/        análisis de la empresa, conjunto de prueba, informes, capturas, diagramas de Archify (el `.json` es la fuente; los `*.delivery.json` los genera Archify para la entrega), decisiones.md (D1 a D17), guion_demo_whatsapp.md, la declaración de uso de IA del Módulo 3 y skillspector-corpus-medallion.md (reporte de seguridad de la skill)
 scripts/     01 a 36: etapas del pipeline y pruebas en el orden en que se usan (34 PostgreSQL local, 35 y 36 análisis de conversaciones); utilidades/: herramientas sueltas
 data/        0_manual/ 1_bronze/ 2_silver/ 3_gold/ 4_curaduria/ 5_extraccion/
 src/taaml/   código del asistente (base.py, recuperacion.py, vectorstore.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, consulta_datos.py, prompts.py, tareas.py, whatsapp.py, limite.py, conversaciones.py)
 prompts/     prompts versionados (asistente v3 vigente, v4 y v5 descartados; resumen y FAQ v2; agente v7 vigente, v2 a v6 reemplazados; extracción v1)
 tests/       pruebas automáticas de componentes (make test)
-specs/      especificaciones (qué, cómo y tareas) de cada cambio; 001 a 013: asistente, validación y agente, continuidad de la demo, base vectorial, evidencia de Resumen y FAQ, pestaña Corpus, prueba del scraper, etapa Descubrir, organización de la entrega, agente con memoria y router, Qdrant, y el agente en producción con WhatsApp; las decisiones de arquitectura están en `docs/decisiones.md`
-.specify/   memoria del proyecto: memory/constitution.md (verdad central)
-docs/        incluye skillspector-corpus-medallion.md, el reporte de seguridad de la skill
-.github/    plantilla de Pull Request y CI
+specs/       especificaciones (qué, cómo y tareas) de cada cambio; 001 a 013: asistente, validación y agente, continuidad de la demo, base vectorial con Chroma (después reemplazada por Qdrant, spec 012), evidencia de Resumen y FAQ, tabla y pruebas del pipeline, pestaña Corpus, prueba del scraper, etapa Descubrir, organización de la entrega, agente con memoria y router, Qdrant, y el agente en producción con WhatsApp; las decisiones de arquitectura están en `docs/decisiones.md`
+.specify/    memoria del proyecto: memory/constitution.md (verdad central)
+.github/     plantilla de Pull Request y CI
 api/        Módulos 2 y 3: API FastAPI del agente (streaming SSE, POST /chat, webhook de WhatsApp, aprobación humana, memoria del cliente)
 notebooks/  Módulo 3: análisis de conversaciones con t-SNE (conversaciones simuladas)
 frontend/   Módulo 2: interfaz React + Vite, separada de la API

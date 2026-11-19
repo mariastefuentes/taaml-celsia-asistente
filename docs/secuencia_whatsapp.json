@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Un mensaje de WhatsApp, paso a paso",
+    "output": "secuencia_whatsapp.html",
+    "locale": "es",
+    "viewBox": [
+      1080,
+      520
+    ],
+    "column_fit": "spread",
+    "quality_profile": "showcase"
+  },
+  "participants": [
+    {
+      "id": "cliente",
+      "type": "external",
+      "label": "Cliente",
+      "sublabel": "WhatsApp"
+    },
+    {
+      "id": "meta",
+      "type": "cloud",
+      "label": "Meta",
+      "sublabel": "API Cloud"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API FastAPI",
+      "sublabel": "webhook"
+    },
+    {
+      "id": "agente",
+      "type": "backend",
+      "label": "Agente",
+      "sublabel": "create_agent"
+    },
+    {
+      "id": "modelo",
+      "type": "cloud",
+      "label": "DeepSeek",
+      "sublabel": "V4.1 Flash"
+    },
+    {
+      "id": "herramientas",
+      "type": "backend",
+      "label": "Herramientas",
+      "sublabel": "5 con Pydantic"
+    },
+    {
+      "id": "postgres",
+      "type": "database",
+      "label": "PostgreSQL",
+      "sublabel": "memoria"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "from": "cliente",
+      "to": "meta",
+      "y": 160,
+      "label": "mensaje",
+      "variant": "default"
+    },
+    {
+      "id": "m2",
+      "from": "meta",
+      "to": "api",
+      "y": 188,
+      "label": "webhook (firma)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m3",
+      "from": "api",
+      "to": "agente",
+      "y": 216,
+      "label": "turno (hilo = hash)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m4",
+      "from": "agente",
+      "to": "postgres",
+      "y": 244,
+      "label": "lee historial",
+      "variant": "default"
+    },
+    {
+      "id": "m5",
+      "from": "agente",
+      "to": "modelo",
+      "y": 272,
+      "label": "prompt v7",
+      "variant": "default"
+    },
+    {
+      "id": "m6",
+      "from": "modelo",
+      "to": "agente",
+      "y": 300,
+      "label": "pide herramienta",
+      "variant": "return"
+    },
+    {
+      "id": "m7",
+      "from": "agente",
+      "to": "herramientas",
+      "y": 328,
+      "label": "ejecuta",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m8",
+      "from": "agente",
+      "to": "postgres",
+      "y": 356,
+      "label": "guarda turno",
+      "variant": "dashed"
+    },
+    {
+      "id": "m9",
+      "from": "api",
+      "to": "meta",
+      "y": 384,
+      "label": "respuesta (Graph API)",
+      "variant": "emphasis"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Antes del agente",
+      "items": [
+        "Meta firma el aviso (X-Hub-Signature-256) y la API responde 200 enseguida",
+        "Un mensaje ya visto se ignora y pasado el límite por teléfono no se llama al modelo"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Dentro del agente",
+      "items": [
+        "El modelo pide una herramienta por function calling; Pydantic valida los argumentos",
+        "Radicar un reclamo se pausa hasta que una persona decide con POST /aprobar"
+      ]
+    }
+  ]
+}

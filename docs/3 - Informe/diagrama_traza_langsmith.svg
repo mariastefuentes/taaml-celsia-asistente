@@ -1,49 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 434" font-family="Segoe UI, Arial, sans-serif" role="img" aria-label="Traza de LangSmith de una pregunta al agente">
-<rect width="980" height="434" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 330" font-family="Segoe UI, Arial, sans-serif" role="img" aria-label="Traza de LangSmith de una pregunta al agente">
+<rect width="980" height="330" fill="#ffffff"/>
 <text x="24" y="34" font-size="20" font-weight="700" fill="#1f2937">Traza real de LangSmith: agente_celsia</text>
 <text x="24" y="58" font-size="13" fill="#4b5563">«Muéstrame solo las noticias de Celsia sobre proyectos solares en el Tolima.»</text>
-<text x="24" y="80" font-size="12" fill="#6b7280">Proyecto taaml-celsia · traza 01a1d81a-f99f-70f0-97da-7169641ef4f9 · total 18.1 s · 10,441 tokens · generada por scripts/33_diagrama_traza_langsmith.py</text>
-<line x1="250.0" y1="104" x2="250.0" y2="394" stroke="#e5e7eb"/>
+<text x="24" y="80" font-size="12" fill="#6b7280">Proyecto taaml-celsia · traza 01a1f41b-d917-7468-8ae1-2c5b5d70601e · total 11.2 s · 8,418 tokens · generada por scripts/33_diagrama_traza_langsmith.py</text>
+<line x1="250.0" y1="104" x2="250.0" y2="290" stroke="#e5e7eb"/>
 <text x="250.0" y="98" font-size="11" fill="#6b7280" text-anchor="middle">0 s</text>
-<line x1="326.3" y1="104" x2="326.3" y2="394" stroke="#e5e7eb"/>
-<text x="326.3" y="98" font-size="11" fill="#6b7280" text-anchor="middle">2 s</text>
-<line x1="402.7" y1="104" x2="402.7" y2="394" stroke="#e5e7eb"/>
-<text x="402.7" y="98" font-size="11" fill="#6b7280" text-anchor="middle">4 s</text>
-<line x1="479.0" y1="104" x2="479.0" y2="394" stroke="#e5e7eb"/>
-<text x="479.0" y="98" font-size="11" fill="#6b7280" text-anchor="middle">6 s</text>
-<line x1="555.4" y1="104" x2="555.4" y2="394" stroke="#e5e7eb"/>
-<text x="555.4" y="98" font-size="11" fill="#6b7280" text-anchor="middle">8 s</text>
-<line x1="631.7" y1="104" x2="631.7" y2="394" stroke="#e5e7eb"/>
-<text x="631.7" y="98" font-size="11" fill="#6b7280" text-anchor="middle">10 s</text>
-<line x1="708.1" y1="104" x2="708.1" y2="394" stroke="#e5e7eb"/>
-<text x="708.1" y="98" font-size="11" fill="#6b7280" text-anchor="middle">12 s</text>
-<line x1="784.4" y1="104" x2="784.4" y2="394" stroke="#e5e7eb"/>
-<text x="784.4" y="98" font-size="11" fill="#6b7280" text-anchor="middle">14 s</text>
-<line x1="860.7" y1="104" x2="860.7" y2="394" stroke="#e5e7eb"/>
-<text x="860.7" y="98" font-size="11" fill="#6b7280" text-anchor="middle">16 s</text>
-<line x1="937.1" y1="104" x2="937.1" y2="394" stroke="#e5e7eb"/>
-<text x="937.1" y="98" font-size="11" fill="#6b7280" text-anchor="middle">18 s</text>
-<text x="24" y="134" font-size="13" font-weight="600" fill="#1f2937">1. Modelo (Gemini)</text>
-<text x="24" y="151" font-size="11" fill="#6b7280">ChatGoogleGenerativeAI</text>
-<rect x="258.0" y="122" width="143.0" height="22" rx="5" fill="#2563eb"/>
-<text x="407.0" y="138" font-size="12" fill="#1f2937">3.75 s · 1,947 tokens</text>
+<line x1="372.9" y1="104" x2="372.9" y2="290" stroke="#e5e7eb"/>
+<text x="372.9" y="98" font-size="11" fill="#6b7280" text-anchor="middle">2 s</text>
+<line x1="495.8" y1="104" x2="495.8" y2="290" stroke="#e5e7eb"/>
+<text x="495.8" y="98" font-size="11" fill="#6b7280" text-anchor="middle">4 s</text>
+<line x1="618.7" y1="104" x2="618.7" y2="290" stroke="#e5e7eb"/>
+<text x="618.7" y="98" font-size="11" fill="#6b7280" text-anchor="middle">6 s</text>
+<line x1="741.6" y1="104" x2="741.6" y2="290" stroke="#e5e7eb"/>
+<text x="741.6" y="98" font-size="11" fill="#6b7280" text-anchor="middle">8 s</text>
+<line x1="864.5" y1="104" x2="864.5" y2="290" stroke="#e5e7eb"/>
+<text x="864.5" y="98" font-size="11" fill="#6b7280" text-anchor="middle">10 s</text>
+<text x="24" y="134" font-size="13" font-weight="600" fill="#1f2937">1. Modelo (DeepSeek)</text>
+<text x="24" y="151" font-size="11" fill="#6b7280">ChatOpenAI</text>
+<rect x="262.5" y="122" width="131.3" height="22" rx="5" fill="#2563eb"/>
+<text x="399.8" y="138" font-size="12" fill="#1f2937">2.14 s · 3,376 tokens</text>
 <text x="24" y="186" font-size="13" font-weight="600" fill="#1f2937">2. Herramienta</text>
 <text x="24" y="203" font-size="11" fill="#6b7280">buscar_en_base</text>
-<rect x="401.2" y="174" width="121.9" height="22" rx="5" fill="#d9650f"/>
-<text x="529.1" y="190" font-size="12" fill="#1f2937">3.19 s</text>
-<text x="401.2" y="210" font-size="11" fill="#9a3f08" text-anchor="start">categoria=&quot;noticias&quot;, pregunta=&quot;proyectos solares&quot;, region=&quot;Tolima&quot;</text>
-<text x="24" y="238" font-size="13" font-weight="600" fill="#1f2937">3. Modelo (Gemini)</text>
-<text x="24" y="255" font-size="11" fill="#6b7280">ChatGoogleGenerativeAI</text>
-<rect x="523.5" y="226" width="104.1" height="22" rx="5" fill="#2563eb"/>
-<text x="633.6" y="242" font-size="12" fill="#1f2937">2.73 s · 3,326 tokens</text>
-<text x="24" y="290" font-size="13" font-weight="600" fill="#1f2937">4. Herramienta</text>
-<text x="24" y="307" font-size="11" fill="#6b7280">buscar_en_base</text>
-<rect x="627.7" y="278" width="86.6" height="22" rx="5" fill="#d9650f"/>
-<text x="720.3" y="294" font-size="12" fill="#1f2937">2.27 s</text>
-<text x="714.3" y="314" font-size="11" fill="#9a3f08" text-anchor="end">categoria=&quot;noticias&quot;, pregunta=&quot;solar parque granja Tolima&quot;, region=&quot;Tolima&quot;</text>
-<text x="24" y="342" font-size="13" font-weight="600" fill="#1f2937">5. Modelo (Gemini)</text>
-<text x="24" y="359" font-size="11" fill="#6b7280">ChatGoogleGenerativeAI</text>
-<rect x="714.6" y="330" width="224.2" height="22" rx="5" fill="#2563eb"/>
-<text x="708.6" y="346" font-size="12" fill="#1f2937" text-anchor="end">5.87 s · 5,168 tokens</text>
-<text x="24" y="418" font-size="11" fill="#6b7280">Azul: el modelo decide o redacta. Naranja: la herramienta que eligió. Tiempos medidos por LangSmith, no estimados.</text>
+<rect x="394.3" y="174" width="378.5" height="22" rx="5" fill="#d9650f"/>
+<text x="778.8" y="190" font-size="12" fill="#1f2937">6.16 s</text>
+<text x="772.8" y="210" font-size="11" fill="#9a3f08" text-anchor="end">categoria=&quot;noticias&quot;, pregunta=&quot;noticias sobre proyectos solares en el Tolima&quot;, region=&quot;Tolima&quot;</text>
+<text x="24" y="238" font-size="13" font-weight="600" fill="#1f2937">3. Modelo (DeepSeek)</text>
+<text x="24" y="255" font-size="11" fill="#6b7280">ChatOpenAI</text>
+<rect x="773.9" y="226" width="164.8" height="22" rx="5" fill="#2563eb"/>
+<text x="767.9" y="242" font-size="12" fill="#1f2937" text-anchor="end">2.68 s · 5,042 tokens</text>
+<text x="24" y="314" font-size="11" fill="#6b7280">Azul: el modelo decide o redacta. Naranja: la herramienta que eligió. Tiempos medidos por LangSmith, no estimados.</text>
 </svg>
