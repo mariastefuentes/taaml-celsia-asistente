@@ -227,7 +227,7 @@ uv run python scripts/36_construir_notebook_tsne.py  # construye y ejecuta el cu
 Equivalencias de datos: `data/1_bronze/` es el crudo (raw), `data/2_silver/` el procesado (processed) y `data/3_gold/` el corpus con metadatos (gold). Cada documento de Gold lleva `url`, `title`, `categoria` (la sección del sitio), `fecha_extraccion` (captura), `fecha_publicacion`, `section` (el sitemap de origen) y `hash`; Silver conserva `url`, `title`, `section`, `fecha_publicacion` y `hash`.
 
 ```
-docs/        análisis de la empresa, conjunto de prueba, informes, capturas, decisiones.md (D1 a D17), guion_demo_whatsapp.md y la declaración de uso de IA del Módulo 3
+docs/        (los `*.delivery.json` junto a cada diagrama los genera Archify para la entrega; la fuente editable es el `.json` sin sufijo) análisis de la empresa, conjunto de prueba, informes, capturas, decisiones.md (D1 a D17), guion_demo_whatsapp.md y la declaración de uso de IA del Módulo 3
 scripts/     01 a 36: etapas del pipeline y pruebas en el orden en que se usan (34 PostgreSQL local, 35 y 36 análisis de conversaciones); utilidades/: herramientas sueltas
 data/        0_manual/ 1_bronze/ 2_silver/ 3_gold/ 4_curaduria/ 5_extraccion/
 src/taaml/   código del asistente (base.py, recuperacion.py, vectorstore.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, consulta_datos.py, prompts.py, tareas.py, whatsapp.py, limite.py, conversaciones.py)
@@ -240,7 +240,7 @@ docs/        incluye skillspector-corpus-medallion.md, el reporte de seguridad d
 api/        Módulos 2 y 3: API FastAPI del agente (streaming SSE, POST /chat, webhook de WhatsApp, aprobación humana, memoria del cliente)
 notebooks/  Módulo 3: análisis de conversaciones con t-SNE (conversaciones simuladas)
 frontend/   Módulo 2: interfaz React + Vite, separada de la API
-app/        Taller 1: aplicaciones Streamlit, asistente.py (Q&A, Resumen, FAQ y Corpus) y modulo1.py (solo corpus y scraping)
+app/        Taller 1 (material histórico, el agente vigente no lo usa): aplicaciones Streamlit, asistente.py (Q&A, Resumen, FAQ y Corpus) y modulo1.py (solo corpus y scraping)
 ```
 
 ## Skills
