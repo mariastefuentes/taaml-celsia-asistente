@@ -104,6 +104,33 @@ resumen = df.groupby("cluster").agg(
 resumen["tasa_de_fallo"] = (resumen["fallidas"] / resumen["conversaciones"]).round(2)
 resumen.sort_values("tasa_de_fallo", ascending=False)"""
 
+KNN = """from sklearn.model_selection import LeaveOneOut, cross_val_predict
+from sklearn.neighbors import KNeighborsClassifier
+
+etiquetas = df["categoria_prevista"]
+
+
+def acierto(M, metrica="euclidean", k=5):
+    # cada conversación se clasifica con sus k vecinas más cercanas, sin contarse a sí misma (dejar uno fuera)
+    pred = cross_val_predict(KNeighborsClassifier(n_neighbors=k, metric=metrica), M, etiquetas, cv=LeaveOneOut())
+    return round(float((pred == etiquetas).mean()), 2)
+
+
+comparacion = pd.DataFrame(
+    {
+        "espacio": ["vectores originales (768 dimensiones, coseno)", "t-SNE en 3D", "t-SNE en 2D", "azar (siempre la categoría más común)"],
+        "acierto_de_KNN": [acierto(X, "cosine"), acierto(Y3), acierto(Y2), round(float(etiquetas.value_counts(normalize=True).iloc[0]), 2)],
+    }
+)
+comparacion"""
+
+VECINAS = """# Las 5 conversaciones más parecidas a un reclamo, en el espacio original (esto sí es una búsqueda, no un dibujo)
+S = X @ X.T  # los vectores tienen norma 1: el producto punto es el coseno
+i = df.index[df["categoria_prevista"] == "reclamo"][0]
+orden = [j for j in np.argsort(-S[i]) if j != i][:5]
+print("Conversación de referencia:", df.loc[i, "primera_pregunta"])
+df.loc[orden, ["categoria_prevista", "primera_pregunta"]].assign(coseno=S[i, orden].round(2))"""
+
 FALLOS = """pd.set_option("display.max_colwidth", 110)
 df[df["fallida"]][["categoria_prevista", "cluster", "primera_pregunta"]].sort_values("categoria_prevista")"""
 
@@ -130,6 +157,14 @@ def construir() -> None:
         nbformat.v4.new_code_cell(TASA),
         nbformat.v4.new_markdown_cell("### Conversaciones fallidas, una por una"),
         nbformat.v4.new_code_cell(FALLOS),
+        nbformat.v4.new_markdown_cell(
+            "## 5. KNN frente a t-SNE\n\nt-SNE sirve para **mirar**: acomoda los puntos en 2D o 3D conservando la vecindad local, pero distorsiona las distancias. "
+            "KNN sirve para **buscar**: encuentra las conversaciones más parecidas en el espacio original. Para ver cuánta información se pierde "
+            "al proyectar, cada conversación se clasifica por la categoría de sus 5 vecinas más cercanas (dejando una fuera) en cada espacio. "
+            "Aviso: t-SNE se calculó con todas las conversaciones a la vez, así que esto solo compara qué tan bien separa cada espacio; no es una predicción para conversaciones nuevas."
+        ),
+        nbformat.v4.new_code_cell(KNN),
+        nbformat.v4.new_code_cell(VECINAS),
         nbformat.v4.new_markdown_cell(analisis),
     ]
     nb.metadata["kernelspec"] = {"display_name": "Python 3", "language": "python", "name": "python3"}
