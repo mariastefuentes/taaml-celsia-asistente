@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api frontend demo-inyeccion demo-limpiar test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -9,7 +9,7 @@ help: ayuda
 # $(info) imprime desde make, no desde el shell: el menú se ve igual en cmd, PowerShell o sh.
 ayuda:
 	$(info )
-	$(info   Asistente Celsia - Taller 1 y Modulo 2 (UAO))
+	$(info   Asistente Celsia - Taller 1 y Modulos 2 y 3 (UAO))
 	$(info   ===========================================)
 	$(info )
 	$(info   PREPARAR EL EQUIPO)
@@ -17,7 +17,9 @@ ayuda:
 	$(info )
 	$(info   EJECUTAR LA APLICACION)
 	$(info     make modulo1         App del Modulo 1: solo el corpus y las etapas del scraping)
-	$(info     make api             MODULO 2: API FastAPI del agente, en http://127.0.0.1:8000)
+	$(info     make api             MODULOS 2 Y 3: API FastAPI del agente con memoria en PostgreSQL, en http://127.0.0.1:8000)
+	$(info     make api-sqlite      la misma API con la memoria en archivos SQLite)
+	$(info     make db-up           levanta solo el PostgreSQL local (make db-down lo apaga))
 	$(info     make app             MODULO 2: frontend React, en http://localhost:5173 (igual que make frontend))
 	$(info     make frontend        instala las dependencias del frontend si faltan y lo enciende)
 	$(info     make app-taller1     Taller 1 (Streamlit): Q&A, Resumen, FAQ y Corpus  [historico])
@@ -31,7 +33,7 @@ ayuda:
 	$(info   VERIFICAR ANTES DE LA DEMO)
 	$(info     make demo-limpiar    borra la memoria de largo plazo de los ensayos (antes de la demo))
 	$(info     make ensayo          revisa que la demo este lista, sin gastar cuota)
-	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas a Gemini))
+	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas al modelo))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
 	$(info     make lint            errores de codigo con ruff y lock vigente)
 	$(info     make check           lint + pruebas: lo que corre el CI; correrlo antes de subir)
