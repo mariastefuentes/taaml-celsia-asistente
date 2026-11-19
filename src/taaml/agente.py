@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Any, Literal
 from uuid import uuid4
 
 from langchain.agents import create_agent
@@ -277,13 +277,37 @@ def _almacen(runtime: ToolRuntime[Contexto]) -> BaseStore:
     return runtime.store
 
 
-# Las herramientas que reciben `runtime` declaran sus límites en la firma (Annotated + Field): con `args_schema` aparte, LangChain no
-# inyecta el `runtime` y la llamada falla.
-@tool
-def guardar_dato_del_cliente(
-    dato: Annotated[str, Field(min_length=1, max_length=300, description="Lo que el cliente contó, en una frase corta.")],
-    runtime: ToolRuntime[Contexto],
-) -> str:
+class EsquemaConRuntime(EsquemaEstricto):
+    """Base de los esquemas de las herramientas que usan la memoria: lleva `runtime`, que inyecta el sistema.
+
+    Hay que declararlo en el esquema: sin él, LangChain no lo inyecta y la llamada falla. Aun así el modelo no lo ve: el JSON Schema
+    que se le envía (`tool_call_schema`) solo trae los campos de cada herramienta (lo comprueba una prueba).
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, arbitrary_types_allowed=True)
+    runtime: ToolRuntime = Field(exclude=True)  # exclude: que Pydantic no intente serializar el contexto
+
+
+class DatoDelCliente(EsquemaConRuntime):
+    """Esquema de entrada de `guardar_dato_del_cliente`."""
+
+    dato: str = Field(min_length=1, max_length=300, description="Lo que el cliente contó, en una frase corta.")
+
+
+class SinArgumentos(EsquemaConRuntime):
+    """Esquema de las herramientas que no piden nada al modelo (`recordar_datos_del_cliente`)."""
+
+
+class Reclamo(EsquemaConRuntime):
+    """Esquema de entrada de `radicar_reclamo`."""
+
+    tipo: Literal["falla_de_servicio", "facturacion", "otro"] = Field(description="Clase de reclamo.")
+    ciudad: str = Field(max_length=80, description="Ciudad donde ocurre el problema.")
+    descripcion: str = Field(min_length=1, max_length=500, description="Qué pasó, con las palabras del cliente.")
+
+
+@tool(args_schema=DatoDelCliente)
+def guardar_dato_del_cliente(dato: str, runtime: ToolRuntime[Contexto]) -> str:
     """Guarda un dato que el cliente contó de sí mismo (nombre, ciudad, empresa, preferencia) para recordarlo en conversaciones futuras.
     Úsala solo cuando el cliente comparta ese dato o pida que lo recuerdes; nunca guardes cédulas, claves, tarjetas ni cuentas."""
     if runtime.context.usuario == ANONIMO:
@@ -298,7 +322,7 @@ def guardar_dato_del_cliente(
     return "Guardado."
 
 
-@tool
+@tool(args_schema=SinArgumentos)
 def recordar_datos_del_cliente(runtime: ToolRuntime[Contexto]) -> str:
     """Devuelve lo que el cliente contó de sí mismo en conversaciones anteriores. Úsala cuando pregunte por algo que dijo antes
     (su nombre, dónde trabaja, qué prefiere) y no esté en la conversación actual."""
@@ -308,12 +332,9 @@ def recordar_datos_del_cliente(runtime: ToolRuntime[Contexto]) -> str:
     )
 
 
-@tool
+@tool(args_schema=Reclamo)
 def radicar_reclamo(
-    tipo: Annotated[Literal["falla_de_servicio", "facturacion", "otro"], Field(description="Clase de reclamo.")],
-    ciudad: Annotated[str, Field(max_length=80, description="Ciudad donde ocurre el problema.")],
-    descripcion: Annotated[str, Field(min_length=1, max_length=500, description="Qué pasó, con las palabras del cliente.")],
-    runtime: ToolRuntime[Contexto],
+    tipo: Literal["falla_de_servicio", "facturacion", "otro"], ciudad: str, descripcion: str, runtime: ToolRuntime[Contexto]
 ) -> str:
     """Radica un reclamo del cliente: una falla del servicio (por ejemplo, sin luz), un problema de facturación u otro.
     Úsala solo cuando el cliente pida radicar o poner un reclamo, y después de tener la ciudad y qué pasó (si falta la ciudad,
