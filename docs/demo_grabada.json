@@ -1,0 +1,58 @@
+{
+  "grabada_el": "2026-11-19",
+  "modelo": "deepseek-flash",
+  "turnos": [
+    {
+      "cliente": "¿Qué sedes hay en Ibagué?",
+      "asistente": "En Ibagué hay 6 puntos de atención:\n\n1. Internet Celsia, Carrera 5 N. 41-90. Horario: lunes a viernes 7:30 am - 12:00 m y 1:30 pm - 4:00 pm; sábado 9:00 am a 2:00 pm.\n2. Internet Celsia, Calle 14 # 4-10 Local de la Esquina (Edificio Moncaleano). Horario: lunes a viernes de 7:30 a.m. a 12:00 m. y de 1:30 p.m. a 4:00 p.m.; sábados 9:00 AM 1:00 PM - 2:00 A 4:00 PM.\n3. Ibagué El Papayo, Zona Industrial El Papayo. Horario: lunes a viernes 7:30 am - 12:00 m y 1:30 pm - 4:00 pm; sábado solo recaudo 9:00 am a 2:00 pm.\n4. Ibagué Tienda Carrera Quinta (punto de recaudo y pago), Carrera 5 N. 41-90. Horario: lunes a viernes 7:30 am a 12:00 y de 1:30 a 4:00 pm.\n5. Sede Ibagué – Calle 39 A (sede administrativa), Calle 39 A # 5-15. Teléfono: 608 277 08 22. Horario: 7:15 a.m. - 12:00 m. y 1:30 p.m. - 5:30 p.m.; viernes 7:15 a.m. - 12:00 m. y 1:30 p.m. a 4:30 p.m.\n6. Tienda Ibagué Calle 5N, Carrera 5 N. 41-90. Horario: lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.; viernes 7:20 a.m. a 12:30 p.m. y de 1:30 p.m a 3:40 p.m.\n\n¿Quieres que te ayude con algo más, como un trámite o un reclamo?",
+      "herramientas": [
+        "consultar_datos"
+      ],
+      "segundos": 11.3
+    },
+    {
+      "cliente": "¿Cuántas tiendas Celsia hay?",
+      "asistente": "Hay 21 tiendas Celsia en total. Si quieres, te puedo dar el detalle de las tiendas de una ciudad o departamento en particular.",
+      "herramientas": [
+        "consultar_datos"
+      ],
+      "segundos": 3.1
+    },
+    {
+      "cliente": "¿Qué es Celsia Solar?",
+      "asistente": "Celsia Solar es la línea de soluciones de energía solar de Celsia. Con ella Celsia diseña, instala, financia y mantiene sistemas de paneles solares para hogares, empresas y pymes, y también desarrolla granjas solares.\n\nAlgunos beneficios que ofrece: ahorro en la factura, porque la energía generada y no consumida se devuelve a la red y se compensa según la resolución CREG 030; seguimiento de la generación con una app; garantía Celsia en la instalación de 5 años en inversores o microinversores y 15 años en paneles; un mantenimiento preventivo gratis durante el primer año; financiación del 100% del proyecto hasta 8 años; certificación de cumplimiento con la norma RETIE; y garantía del 85% de la generación, con pago de la diferencia si el sistema produce menos.\n\nAdemás, Celsia tiene más de 8 años de experiencia y más de 20 proyectos solares en operación que superan los 350 MW, como Celsia Solar La Victoria 1 y 2 en el Valle del Cauca, de 52,5 MWp.\n\n¿Quieres que te cuente cómo solicitar un sistema solar para tu casa o tu empresa?",
+      "herramientas": [
+        "buscar_en_base"
+      ],
+      "segundos": 6.0
+    },
+    {
+      "cliente": "¿Quién ganó el mundial de 2014?",
+      "asistente": "No tengo esa información: solo puedo ayudarte con temas de Celsia, como sedes, trámites, tarifas o reclamos. ¿En qué te puedo ayudar?",
+      "herramientas": [],
+      "segundos": 1.4
+    },
+    {
+      "cliente": "¿Cuánto cuesta un cargador de carro eléctrico?",
+      "asistente": "No encontré el precio de los cargadores en la información disponible. Lo que sí sé es que Celsia ofrece cargadores para carros eléctricos para instalar en casa, con opciones de 3.5kW o 7.5kW, y que debes tener claro el tipo de conector de tu carro y la potencia compatible con tu vivienda.\n\nPara conocer el precio y las condiciones de compra e instalación, te recomiendo comunicarte con la línea 01 8000 112 115. ¿Quieres que te dé también los canales de atención o las ciudades donde se pueden comprar e instalar?",
+      "herramientas": [
+        "buscar_en_base"
+      ],
+      "segundos": 4.0
+    },
+    {
+      "cliente": "Me llamo Laura y vivo en Palmira",
+      "asistente": "¡Gracias, Laura! Ya lo guardé: sé que vives en Palmira. ¿En qué te puedo ayudar hoy?",
+      "herramientas": [
+        "guardar_dato_del_cliente"
+      ],
+      "segundos": 2.4
+    },
+    {
+      "cliente": "¿Cómo me llamo y dónde vivo?",
+      "asistente": "Te llamas Laura y vives en Palmira. ¿En qué más te puedo ayudar?",
+      "herramientas": [],
+      "segundos": 1.0
+    }
+  ]
+}

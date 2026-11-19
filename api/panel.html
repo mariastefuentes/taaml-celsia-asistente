@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel en vivo · Agente Celsia</title>
+<style>
+  :root { --fondo:#0b1020; --panel:#141b30; --texto:#e8ecf6; --suave:#8f9ab8; --borde:#27304d; --ok:#34d399; --aviso:#fbbf24; --mal:#f87171; --acento:#60a5fa; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--fondo); color:var(--texto); font:16px/1.4 system-ui, sans-serif; }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; padding:16px 24px; border-bottom:1px solid var(--borde); }
+  h1 { margin:0; font-size:20px; }
+  .acceso { display:flex; gap:8px; align-items:center; }
+  input { background:var(--panel); border:1px solid var(--borde); color:var(--texto); padding:8px 10px; border-radius:8px; }
+  button { background:var(--acento); color:#06101f; border:0; padding:8px 14px; border-radius:8px; font-weight:600; cursor:pointer; }
+  #estado { color:var(--suave); font-size:14px; }
+  main { padding:16px 24px; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--borde); vertical-align:top; }
+  th { color:var(--suave); font-weight:500; font-size:13px; text-transform:uppercase; letter-spacing:.04em; }
+  td.msg { max-width:46ch; }
+  .etiqueta { display:inline-block; padding:2px 8px; border-radius:999px; font-size:13px; background:var(--panel); border:1px solid var(--borde); margin-right:4px; }
+  .respondido { color:var(--ok); } .pendiente { color:var(--aviso); } .limite, .error, .nosop { color:var(--mal); }
+  .vacio { color:var(--suave); padding:24px 0; }
+  @media (max-width: 700px) { header, main { padding:12px; } .ocultar { display:none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Panel en vivo del agente</h1>
+  <div class="acceso">
+    <input id="token" type="password" placeholder="Token del aprobador" autocomplete="off" aria-label="Token del aprobador">
+    <button id="entrar">Ver</button>
+    <span id="estado" role="status"></span>
+  </div>
+</header>
+<main>
+  <table>
+    <thead><tr><th>Hora</th><th>Canal</th><th class="ocultar">Quién</th><th>Mensaje</th><th>Herramientas</th><th>Tiempo</th><th>Estado</th></tr></thead>
+    <tbody id="filas"></tbody>
+  </table>
+  <p id="vacio" class="vacio">Escribe el token y pulsa «Ver». Aquí aparece cada mensaje que llega al agente, con la herramienta que eligió y lo que tardó.</p>
+</main>
+<script>
+  let token = "", ultimo = 0, temporizador = null;
+  const filas = document.getElementById("filas"), estado = document.getElementById("estado"), vacio = document.getElementById("vacio");
+  const clase = e => e.startsWith("pendiente") ? "pendiente" : e === "respondido" || e === "aprobación" ? "respondido" : e === "no soportado" ? "nosop" : e === "límite" ? "limite" : "error";
+  function celda(texto, extra) { const td = document.createElement("td"); td.textContent = texto; if (extra) td.className = extra; return td; }
+  function pintar(f) {
+    const tr = document.createElement("tr");
+    tr.append(celda(f.hora), celda(f.canal), celda(f.quien, "ocultar"), celda(f.mensaje, "msg"));
+    const herr = document.createElement("td");
+    (f.herramientas.length ? f.herramientas : ["ninguna"]).forEach(h => { const s = document.createElement("span"); s.className = "etiqueta"; s.textContent = h; herr.append(s); });
+    tr.append(herr, celda(f.segundos == null ? "" : f.segundos + " s"), celda(f.estado, clase(f.estado)));
+    filas.prepend(tr);
+  }
+  async function consultar() {
+    try {
+      const r = await fetch("/api/actividad?desde=" + ultimo, { headers: { "X-Aprobador": token } });
+      if (r.status === 401 || r.status === 503) { estado.textContent = r.status === 401 ? "Token incorrecto" : "El servidor no tiene APROBADOR_TOKEN"; parar(); return; }
+      if (!r.ok) { estado.textContent = "Error " + r.status; return; }
+      const d = await r.json();
+      d.filas.forEach(pintar); ultimo = d.ultimo;
+      vacio.style.display = filas.children.length ? "none" : "block";
+      estado.textContent = "En vivo";
+    } catch { estado.textContent = "Sin conexión con la API"; }
+  }
+  function parar() { clearInterval(temporizador); temporizador = null; }
+  document.getElementById("entrar").addEventListener("click", () => {
+    token = document.getElementById("token").value; ultimo = 0; filas.innerHTML = ""; parar();
+    consultar(); temporizador = setInterval(consultar, 2000);
+  });
+</script>
+</body>
+</html>

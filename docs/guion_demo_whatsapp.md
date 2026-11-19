@@ -73,12 +73,19 @@ Abrir `notebooks/analisis_conversaciones.ipynb` y mostrar el mapa t-SNE:
 - **Por qué servidor propio y no N8N.** Un solo servicio (FastAPI) en vez de dos sistemas que mantener; la firma del webhook, el límite por teléfono, la aprobación humana y el reintento de Meta se prueban con pruebas automáticas; el estado vive en nuestra base y no en el flujo de una herramienta externa. N8N habría sido más rápido de armar y más fácil de modificar sin código; lo que se pierde es esa velocidad y el editor visual.
 - **Qué mejoraríamos:** desplegar en un servidor fijo (hoy el túnel cambia de dirección), un sistema real de radicación, más contenido en la base (precios, fechas) y más pruebas con conversaciones reales.
 
+## Ayudas opcionales para la demostración
+- **Panel en vivo.** En una pestaña aparte: `http://127.0.0.1:8000/panel`, con el `APROBADOR_TOKEN` de `.env`. Cada mensaje que llega aparece con la herramienta que eligió el agente, lo que tardó y cómo terminó. Se proyecta durante «Casos con el público». Muestra lo que escriben, así que se avisa al público.
+- **Aprobar con botones.** Con `APROBADOR_WHATSAPP=<teléfono de quien aprueba>` en `.env`, el reclamo le llega a esa persona por WhatsApp con «Aprobar» y «Rechazar». Hay que haberle escrito al número de prueba en las últimas 24 horas (si no, Meta no entrega el mensaje) y estar entre los destinatarios de prueba. **No se ha probado con Meta real:** ensayarlo antes y, si falla, usar `POST /aprobar` como arriba.
+- **Notas de voz (tentativo).** Apagado por defecto. No lo mostramos en vivo; si se ensaya, ver `src/taaml/voz.py`.
+- **Chats reales para el t-SNE.** Los ensayos con otros celulares quedan guardados en PostgreSQL. Después, `make exportar-chats` los deja en `data/analisis/reales/` (no se suben a Git). Avisar antes a quienes escriban que sus mensajes se guardan.
+
 ## Si algo falla
 | Falla | Qué hacer |
 |---|---|
 | El bot no responde por WhatsApp | Revisar la terminal: si no llega el aviso, el túnel o el webhook de Meta no están bien registrados (la dirección cambió); si llega pero no responde, el token de Meta venció o el teléfono no es destinatario de prueba. Pasar al plan B |
 | El profesor no recibe respuesta | Probablemente no está en los destinatarios de prueba. Que escriba un integrante desde un teléfono registrado mientras se explica |
 | Meta no entrega nada | **Plan B:** la misma API por `POST /chat` desde PowerShell (`Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/chat -ContentType "application/json" -Body '{"mensaje":"Hola","telefono":"57300XXXXXXX"}'`) o el frontend React (`make app`). Decir que Meta no está entregando y que el agente es el mismo |
+| Meta, el túnel o la red caen del todo | **Plan B grabado:** `make demo-plan-b` repite en pantalla una conversación real con el agente. Decir en voz alta que es una repetición grabada: la pantalla también lo avisa en cada mensaje |
 | La respuesta tarda más de 40 s | Esperar sin tocar nada; pasar al siguiente caso si pasa de un minuto |
 | Un solo teléfono escribe muy seguido | El bot responde una vez «estás escribiendo muy rápido» y no gasta cuota (límite de 8 mensajes por minuto por teléfono) |
 | Gemini o DeepSeek no responden | El agente cae solo al modelo de respaldo; es más lento y acierta menos. Decirlo y seguir |

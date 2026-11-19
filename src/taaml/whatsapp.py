@@ -7,6 +7,7 @@ Meta y el nuestro, así se prueba sin red ni claves. Las claves viven en el `.en
   WHATSAPP_TOKEN            token de acceso para enviar mensajes
   WHATSAPP_PHONE_NUMBER_ID  identificador del número de WhatsApp Business desde el que se responde
   WHATSAPP_API_VERSION      versión de la API de Graph (opcional; por defecto la de VERSION_API)
+  APROBADOR_WHATSAPP        (opcional) teléfono de la persona de Celsia que aprueba reclamos con botones; sin él solo funciona POST /aprobar
 """
 
 import hashlib
@@ -43,8 +44,12 @@ def mensajes_entrantes(carga: dict[str, Any]) -> list[dict[str, str]]:
             for m in (cambio.get("value") or {}).get("messages", []) or []:
                 if not m.get("id") or not m.get("from"):
                     continue
-                texto = (m.get("text") or {}).get("body", "") if m.get("type") == "text" else ""
-                salida.append({"id": m["id"], "telefono": m["from"], "tipo": m.get("type", ""), "texto": texto})
+                tipo = m.get("type", "")
+                texto = (m.get("text") or {}).get("body", "") if tipo == "text" else ""
+                if tipo == "interactive":  # la respuesta a un botón trae su identificador: es lo que `texto` guarda
+                    texto = ((m.get("interactive") or {}).get("button_reply") or {}).get("id", "")
+                audio = (m.get("audio") or {}).get("id", "") if tipo == "audio" else ""
+                salida.append({"id": m["id"], "telefono": m["from"], "tipo": tipo, "texto": texto, "audio": audio})
     return salida
 
 
@@ -88,3 +93,62 @@ def enviar_texto(telefono: str, texto: str) -> bool:
         log.error("Meta rechazó el envío (HTTP %s, código %s)", r.status_code, codigo)  # sin el número ni el texto del cliente
         return False
     return True
+
+
+def _cabeceras() -> dict[str, str]:
+    return {"Authorization": f"Bearer {os.environ['WHATSAPP_TOKEN']}"}
+
+
+def _url_graph(ruta: str) -> str:
+    return f"https://graph.facebook.com/{os.environ.get('WHATSAPP_API_VERSION') or VERSION_API}/{ruta}"
+
+
+def enviar_botones(telefono: str, texto: str, botones: list[tuple[str, str]]) -> bool:
+    """Envía un mensaje con hasta 3 botones de respuesta rápida: cada botón es `(identificador, rótulo)`.
+
+    Meta exige rótulos de 20 caracteres como máximo. Solo llega si la persona le escribió al número en las últimas 24 horas
+    (fuera de esa ventana Meta pide una plantilla aprobada); si no llega, se registra y quien llama sigue con otro camino.
+    """
+    if not configurado() or not 1 <= len(botones) <= 3:
+        return False
+    cuerpo = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": telefono,
+        "type": "interactive",
+        "interactive": {
+            "type": "button",
+            "body": {"text": texto[:1024]},
+            "action": {"buttons": [{"type": "reply", "reply": {"id": i, "title": rotulo[:20]}} for i, rotulo in botones]},
+        },
+    }
+    try:
+        r = requests.post(
+            _url_graph(f"{os.environ['WHATSAPP_PHONE_NUMBER_ID']}/messages"),
+            json=cuerpo,
+            headers=_cabeceras(),
+            timeout=TIEMPO_MAXIMO_ENVIO,
+        )
+    except requests.RequestException:
+        log.exception("no se pudo contactar a Meta para enviar los botones")
+        return False
+    if not r.ok:
+        log.error("Meta rechazó los botones (HTTP %s)", r.status_code)  # sin el número ni el texto
+        return False
+    return True
+
+
+def descargar_audio(id_audio: str) -> tuple[bytes, str] | None:
+    """Baja una nota de voz de Meta: primero pide la dirección del archivo y luego lo descarga. Devuelve `(bytes, tipo MIME)` o None."""
+    if not configurado():
+        return None
+    try:
+        info = requests.get(_url_graph(id_audio), headers=_cabeceras(), timeout=TIEMPO_MAXIMO_ENVIO)
+        if not info.ok:
+            return None
+        datos = info.json()
+        archivo = requests.get(datos["url"], headers=_cabeceras(), timeout=TIEMPO_MAXIMO_ENVIO)
+    except (requests.RequestException, ValueError, KeyError):
+        log.exception("no se pudo descargar la nota de voz")
+        return None
+    return (archivo.content, datos.get("mime_type", "audio/ogg")) if archivo.ok else None
