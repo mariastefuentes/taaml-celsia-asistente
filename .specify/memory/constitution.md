@@ -73,7 +73,8 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | 7. Pestaña Corpus y scraping (specs 007) | ✅ Hecha | `app/asistente.py`, `app/modulo1.py` |
 | 8. Prueba del scraper (specs 008) | ✅ Hecha | `tests/test_scraper.py` |
 | 9. Etapa Descubrir (specs 009) | ✅ Hecha | `data/2_silver/_descubrimiento.json` |
-| 11. Agente con memoria y router (specs 011) | ✅ Hecha (falta el PR) | `src/taaml/agente.py`, `consulta_datos.py`, `prompts/v4_agente.md`, pestaña Agente |
+| 11. Agente con memoria y router (specs 011) | ✅ Hecha | `src/taaml/agente.py`, `consulta_datos.py`, API `api/` y frontend `frontend/` |
+| 13. Agente en producción con WhatsApp (specs 013) | ✅ Código fusionado; falta la prueba con Meta real | `api/main.py`, `src/taaml/whatsapp.py`, `limite.py`, `prompts/v7_agente.md` |
 
 ## 3. Stack técnico
 
@@ -89,7 +90,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
 | **Base vectorial** | Qdrant en modo local (persistente, sin servidor), similitud del coseno |
 | **Interfaz** | API FastAPI + frontend React (`api/`, `frontend/`, Módulo 2); Streamlit solo para el Taller 1 (`app/`) |
-| **Testing** | `pytest` (233 pruebas, sin modelos ni red) |
+| **Testing** | `pytest` (298 pruebas, sin modelos ni red) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
 | **CI/CD** | GitHub Actions (`.github/workflows/ci.yml`) |
 
@@ -110,12 +111,16 @@ taaml-celsia-asistente/
 │   ├── reordenar.py          # reordenamiento opcional de candidatos
 │   ├── validacion.py         # cifras, correos y enlaces sin respaldo
 │   ├── respaldo.py           # cadena de modelos y respuestas guardadas
-│   ├── agente.py             # agente con memoria, dos herramientas y router (DeepSeek)
+│   ├── agente.py             # agente con memoria, cinco herramientas, aprobación humana y router (DeepSeek)
+│   ├── whatsapp.py           # webhook de WhatsApp: firma, mensajes y envío
+│   ├── limite.py             # límite de mensajes por teléfono
+│   ├── conversaciones.py     # lectura de las conversaciones guardadas para el análisis t-SNE
+│   ├── vectorstore.py        # QdrantVectorStore y embeddings nativos de LangChain
 │   ├── consulta_datos.py     # sedes, contactos y catálogo con filtros exactos
 │   ├── prompts.py            # armado del prompt (5 bloques + XML)
 │   ├── corpus.py             # métricas del pipeline para la app
 │   └── tareas.py             # Q&A, resumen y FAQ
-├── scripts/                  # 01–18: etapas del pipeline y pruebas (orden de uso)
+├── scripts/                  # 01–36: etapas del pipeline, pruebas y análisis (orden de uso)
 │   └── utilidades/           # herramientas sueltas (PDF, claves)
 ├── data/                     # capas Medallion
 │   ├── 0_manual/             # único lugar de datos escritos a mano, con fuente
@@ -126,7 +131,7 @@ taaml-celsia-asistente/
 │   └── 5_extraccion/         # JSONL de contactos
 ├── prompts/                  # prompts versionados (nunca se editan: se versionan)
 ├── docs/                     # análisis, conjunto de prueba, informe, capturas y diagramas (Archify)
-├── specs/                    # especificaciones 001–011 (spec, plan, tareas)
+├── specs/                    # especificaciones 001–013 (spec, plan, tareas)
 ├── tests/                    # pruebas automáticas de componentes
 ├── .specify/memory/          # este archivo — verdad central
 ├── .github/                  # plantillas de PR e issues, CI, Dependabot y etiquetas

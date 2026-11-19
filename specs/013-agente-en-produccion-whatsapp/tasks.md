@@ -15,7 +15,7 @@
 - [x] Límite de mensajes por teléfono
 - [x] Análisis de conversaciones con t-SNE (PR 92)
 - [x] README, diagrama de punta a punta y guion de la sustentación
-- [ ] Fusionar los PR a `main` en orden (79, 80, 78, 81 a 93) y repetir la integración completa
+- [x] Fusionar los PR a `main` y repetir la integración completa (hecho el 19 de noviembre: 292 pruebas, lint y agente real sobre PostgreSQL)
 - [ ] Cuenta de Meta, claves en `.env` y prueba real con un teléfono (usuaria)
 - [ ] Ensayo general con otro celular y plan B
 - [ ] Informe técnico final unificado (Módulos 2 y 3, diagrama y N8N frente a servidor propio)

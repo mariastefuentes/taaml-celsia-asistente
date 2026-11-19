@@ -1,5 +1,7 @@
 # Informe del Taller 2: agente de Celsia con memoria, herramientas y enrutamiento
 
+> **Estado en que se entregó el Taller 2.** Este informe describe el agente tal como estaba en ese momento (Gemini como modelo, memoria en SQLite, prompt v4). El Módulo 3 cambió varias cosas: el modelo del agente es DeepSeek, la memoria va en PostgreSQL, el prompt vigente es v7, hay cinco herramientas con esquemas estrictos, aprobación humana para los reclamos y un servidor propio para WhatsApp. Lo vigente está en el [README](../../README.md) y en [docs/decisiones.md](../decisiones.md).
+
 ## Resumen
 
 El asistente del Taller 1 respondía cada pregunta por separado y siempre buscaba en el texto del sitio. Para este taller se convirtió en un **agente conversacional**: recuerda lo que el cliente ya dijo (dentro de la conversación y entre conversaciones), tiene dos herramientas de consulta (búsqueda por significado en el texto oficial y datos exactos en tablas) y dos de memoria, y decide cuál usar con un prompt que hace de enrutador. El modelo del agente es `gemini-3.8-flash` por API de pago, con respaldo local (`llama3.2`). La interfaz es una aplicación React que habla por HTTP, con respuestas en streaming, con una API FastAPI que ejecuta el agente.
