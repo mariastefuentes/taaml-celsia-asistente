@@ -23,17 +23,18 @@ from langchain.agents.middleware import (
     ModelFallbackMiddleware,
     SummarizationMiddleware,
     ToolCallLimitMiddleware,
+    after_model,
     dynamic_prompt,
     wrap_model_call,
     wrap_tool_call,
 )
-from langchain.messages import ToolMessage
+from langchain.messages import AIMessage, ToolMessage
 from langchain.tools import ToolRuntime
 from langchain_core.messages.utils import count_tokens_approximately, trim_messages
 from langchain_core.tools import tool
 from langgraph.errors import GraphBubbleUp
 from langgraph.prebuilt.tool_node import ToolInvocationError
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.store.base import BaseStore
@@ -302,7 +303,7 @@ class Reclamo(EsquemaConRuntime):
     """Esquema de entrada de `radicar_reclamo`."""
 
     tipo: Literal["falla_de_servicio", "facturacion", "otro"] = Field(description="Clase de reclamo.")
-    ciudad: str = Field(max_length=80, description="Ciudad donde ocurre el problema.")
+    ciudad: str = Field(min_length=1, max_length=80, description="Ciudad donde ocurre el problema.")
     descripcion: str = Field(min_length=1, max_length=500, description="Qué pasó, con las palabras del cliente.")
 
 
@@ -369,7 +370,8 @@ MENSAJE_RECHAZADO = "Una persona de Celsia revisó el reclamo y no lo aprobó, a
 MENSAJE_HERRAMIENTA_CAIDA = (
     "La herramienta «{herramienta}» no está disponible en este momento. No inventes la respuesta: dile al cliente, con cortesía, "
     "que en este momento no pudiste verificarlo, que intente de nuevo en unos minutos o llame a la línea 01 8000 112 115, y ofrécele "
-    "ayuda con otra cosa de Celsia (sedes, trámites, tarifas o un reclamo)."
+    "ayuda con otra cosa de Celsia (sedes, trámites, tarifas o un reclamo). Si la herramienta iba a guardar o radicar algo, "
+    "NO se guardó ni se radicó: no digas que quedó hecho."
 )
 
 
@@ -395,6 +397,56 @@ def errores_amables(request: Any, handler: Any) -> Any:
     return ToolMessage(content=contenido, tool_call_id=id_llamada, name=nombre, status="error")
 
 
+MAX_REINTENTOS_RECLAMO = 2
+MENSAJE_RECLAMO_INCOMPLETO = (
+    "No pude dejar listo tu reclamo con los datos que tengo. Cuéntame de nuevo en qué ciudad ocurre y qué pasó, "
+    "o llama a la línea 01 8000 112 115."
+)
+
+
+def _errores_del_reclamo(args: dict) -> list[str]:
+    """Campos mal enviados por el modelo en `radicar_reclamo` (el `runtime` lo inyecta el sistema, no se revisa)."""
+    try:
+        Reclamo.model_validate(args)
+    except ValidationError as e:
+        return [".".join(map(str, d["loc"])) for d in e.errors() if d["loc"] != ("runtime",)]
+    return []
+
+
+@after_model(can_jump_to=["model", "end"])
+def validar_reclamo_antes_de_pausar(state: Any, runtime: Any) -> dict | None:
+    """Revisa los argumentos de `radicar_reclamo` ANTES de que `HumanInTheLoopMiddleware` pause el flujo.
+
+    Sin esto, la persona de Celsia vería para aprobar un reclamo con datos inválidos (ciudad vacía, tipo inexistente) y el error
+    solo aparecería después de aprobarlo. Si hay campos inválidos, el modelo recibe el aviso y reintenta (como máximo
+    `MAX_REINTENTOS_RECLAMO` veces seguidas; después se le pide al cliente que repita los datos). Debe ir DESPUÉS de
+    `HumanInTheLoopMiddleware` en la lista: los `after_model` corren en orden inverso.
+    """
+    mensajes = state["messages"]
+    ultimo = mensajes[-1]
+    llamadas = getattr(ultimo, "tool_calls", None) or []
+    malas = {ll["id"]: _errores_del_reclamo(ll["args"]) for ll in llamadas if ll["name"] == "radicar_reclamo"}
+    malas = {i: campos for i, campos in malas.items() if campos}
+    if not malas:
+        return None
+    reintentos = 0
+    for m in reversed(mensajes[:-1]):
+        if m.type == "human":
+            break
+        if m.type == "tool" and m.name == "radicar_reclamo" and m.status == "error":
+            reintentos += 1
+    if reintentos >= MAX_REINTENTOS_RECLAMO:
+        return {"messages": [AIMessage(content=MENSAJE_RECLAMO_INCOMPLETO, id=ultimo.id)], "jump_to": "end"}
+    respuestas = []
+    for ll in llamadas:
+        if ll["id"] in malas:
+            texto = f"Argumentos inválidos para «radicar_reclamo» ({', '.join(malas[ll['id']])}). Corrígelos y vuelve a intentarlo."
+            respuestas.append(ToolMessage(content=texto, tool_call_id=ll["id"], name=ll["name"], status="error"))
+        else:
+            respuestas.append(ToolMessage(content="No se ejecutó en este paso; vuelve a pedirla si hace falta.", tool_call_id=ll["id"], name=ll["name"]))
+    return {"messages": respuestas, "jump_to": "model"}
+
+
 @wrap_model_call
 def limitar_historial(request: Any, handler: Any) -> Any:
     """Al modelo solo le llegan los últimos mensajes que caben en `MAX_TOKENS_HISTORIAL` (siempre empezando en un turno del cliente).
@@ -413,7 +465,7 @@ def limitar_historial(request: Any, handler: Any) -> Any:
 
 @dynamic_prompt
 def con_fecha_de_hoy(request: Any) -> str:
-    """El prompt de sistema se arma en cada turno: al texto fijo de `v6_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
+    """El prompt de sistema se arma en cada turno: al texto fijo de `v7_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
     base = request.system_message.text if request.system_message else ""
     return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
 
@@ -561,7 +613,7 @@ def crear_agente(
     return create_agent(
         model=llm,
         tools=[t for t in HERRAMIENTAS if not (en_cadena and t is buscar_en_base)],
-        system_prompt=leer_prompt("v6_agente.md"),
+        system_prompt=leer_prompt("v7_agente.md"),
         checkpointer=checkpointer,
         store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
         context_schema=Contexto,
@@ -575,6 +627,7 @@ def crear_agente(
             ),
             ToolCallLimitMiddleware(run_limit=MAX_LLAMADAS_POR_TURNO, exit_behavior="continue"),
             HumanInTheLoopMiddleware(APROBACION_HUMANA),
+            validar_reclamo_antes_de_pausar,  # después de HumanInTheLoop: su after_model corre primero
             *respaldo,
         ],
     )
