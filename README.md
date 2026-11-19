@@ -38,7 +38,7 @@ Interactivo en [docs/pipeline.html](docs/pipeline.html) (fuente en [docs/pipelin
 
 ### Agente del Módulo 2
 
-El agente (`create_agent` de LangChain) decide en cada turno qué herramienta usar: el prompt v3 hace de enrutador. Habla con el cliente por una API FastAPI con streaming, y un frontend React independiente la consume.
+El agente (`create_agent` de LangChain) decide en cada turno qué herramienta usar mediante **function calling**: el modelo recibe las herramientas con su esquema (JSON Schema generado desde Pydantic) y responde con una llamada estructurada (nombre y argumentos), que Pydantic valida antes de ejecutar; el prompt solo lo guía. No hay enrutamiento por texto libre. Habla con el cliente por una API FastAPI con streaming, y un frontend React independiente la consume.
 
 ![Arquitectura del agente](docs/3%20-%20Informe/diagrama_arquitectura_agente.svg)
 
