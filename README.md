@@ -25,7 +25,7 @@ Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energ�
 | Respuestas correctas (Taller 1, con `gemini-3.5-flash`) | Según el juez automático: 31 de 35 con respuesta y 21 de 24 negativas bien resueltas. Con la revisión asistida: 29 de 35 y 19 de 24. Los veredictos de la revisión los propuso el asistente de código y los ratificó María Stella Fuentes |
 | Costo frente a pegar toda la base en el prompt | unas 80 veces menor por pregunta |
 
-El detalle y las limitaciones están en el [informe del Taller 1](docs/3%20-%20Informe/informe_taller1.md); el agente del Taller 2, en su [informe](docs/3%20-%20Informe/informe_taller2.md); y las decisiones de arquitectura (D1 a D18), con su porqué, en [docs/decisiones.md](docs/decisiones.md).
+El detalle y las limitaciones están en el [informe del Taller 1](docs/3%20-%20Informe/informe_taller1.md); el agente del Taller 2, en su [informe](docs/3%20-%20Informe/informe_taller2.md); y las decisiones de arquitectura (D1 a D19), con su porqué, en [docs/decisiones.md](docs/decisiones.md).
 
 ## Arquitectura
 
@@ -95,6 +95,8 @@ Un reclamo no se radica solo: `radicar_reclamo` pausa el flujo con `HumanInTheLo
 | Panel en vivo | `GET /panel` (página) y `GET /api/actividad` (datos, con el token del aprobador): cada turno con canal, mensaje, herramientas, tiempo y estado. En memoria (últimos 200), con un identificador corto y nunca el número (`src/taaml/actividad.py`) |
 | Aprobar con botones | Con `APROBADOR_WHATSAPP`, el reclamo pendiente le llega a esa persona con «Aprobar» y «Rechazar»; solo decide el botón que toca ese número. `POST /aprobar` sigue igual. **No probado con Meta real** (Meta solo entrega el mensaje si la persona escribió en las últimas 24 h) |
 | Notas de voz (tentativo) | Apagado por defecto (`VOZ_ACTIVA=1`); transcribe en el mismo equipo con `faster-whisper`, que se instala a mano (`src/taaml/voz.py`). No probado con audios reales de Meta |
+| Menú, `/nuevo` y «escribiendo…» | «Hola», «menú» o «ayuda» responden con 3 botones sin llamar al modelo (o como texto si Meta no los entrega); `/nuevo` reinicia la conversación (conserva la memoria de largo plazo; no con un reclamo pendiente); cada mensaje se marca leído con indicador de escribiendo. **No probado con Meta real** |
+| Chequeo y preguntas de la demo | `make ensayo-whatsapp` (claves, Ollama, API, token de Meta vivo, túnel; gratis), `make preguntas-hostiles` (12 preguntas incómodas al agente real; gasta cuota) y `make informe-borrador` (esqueleto del informe final desde el repo) |
 | Plan B de la demostración | `make demo-plan-b` (`scripts/37_demo_plan_b.py`): repite en pantalla una conversación real grabada en `docs/demo_grabada.json`, avisando que es una repetición |
 | Análisis de conversaciones | `src/taaml/conversaciones.py` y `notebooks/analisis_conversaciones.ipynb`: t-SNE sobre conversaciones simuladas (ver la sección siguiente) |
 
@@ -215,8 +217,8 @@ uv run python scripts/36_construir_notebook_tsne.py  # construye y ejecuta el cu
 Equivalencias de datos: `data/1_bronze/` es el crudo (raw), `data/2_silver/` el procesado (processed) y `data/3_gold/` el corpus con metadatos (gold). Cada documento de Gold lleva `url`, `title`, `categoria` (la sección del sitio), `fecha_extraccion` (captura), `fecha_publicacion`, `section` (el sitemap de origen) y `hash`; Silver conserva `url`, `title`, `section`, `fecha_publicacion` y `hash`.
 
 ```
-docs/        análisis de la empresa, conjunto de prueba, informes, capturas, diagramas de Archify (el `.json` es la fuente; los `*.delivery.json` los genera Archify para la entrega), decisiones.md (D1 a D18), guion_demo_whatsapp.md, la declaración de uso de IA del Módulo 3 y skillspector-corpus-medallion.md (reporte de seguridad de la skill)
-scripts/     01 a 38: etapas del pipeline y pruebas en el orden en que se usan (34 PostgreSQL local, 35 y 36 análisis de conversaciones, 37 plan B de la demostración, 38 exporta los chats reales); utilidades/: herramientas sueltas
+docs/        análisis de la empresa, conjunto de prueba, informes, capturas, diagramas de Archify (el `.json` es la fuente; los `*.delivery.json` los genera Archify para la entrega), decisiones.md (D1 a D19), guion_demo_whatsapp.md, vacios_de_la_base.md, la declaración de uso de IA del Módulo 3 y skillspector-corpus-medallion.md (reporte de seguridad de la skill)
+scripts/     01 a 41: etapas del pipeline y pruebas en el orden en que se usan (34 PostgreSQL local, 35 y 36 análisis de conversaciones, 37 plan B de la demostración, 38 exporta los chats reales, 39 chequeo previo de WhatsApp, 40 preguntas hostiles, 41 borrador del informe); utilidades/: herramientas sueltas
 data/        0_manual/ 1_bronze/ 2_silver/ 3_gold/ 4_curaduria/ 5_extraccion/
 src/taaml/   código del asistente (base.py, recuperacion.py, vectorstore.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, consulta_datos.py, prompts.py, tareas.py, whatsapp.py, limite.py, conversaciones.py, actividad.py, voz.py)
 prompts/     prompts versionados (asistente v3 vigente, v4 y v5 descartados; resumen y FAQ v2; agente v7 vigente, v2 a v6 reemplazados; extracción v1)

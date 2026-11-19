@@ -22,6 +22,7 @@ import re
 import secrets
 import threading
 import time
+import unicodedata
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -42,6 +43,7 @@ from taaml.agente import (
     historial_visible,
     olvidar_cliente,
     pendiente_de_aprobacion,
+    reiniciar_conversacion,
     resolver_aprobacion,
 )
 from taaml import actividad, voz
@@ -53,6 +55,7 @@ from taaml.whatsapp import (
     enviar_botones,
     enviar_texto,
     firma_valida,
+    marcar_leido,
     mensajes_entrantes,
 )
 
@@ -337,12 +340,55 @@ def _decidir_por_boton(aprobador: str, identificador: str) -> None:
         enviar_texto(aprobador, "Ese reclamo ya no está pendiente.")
 
 
-def atender_mensaje_de_whatsapp(telefono: str, tipo: str, texto: str, audio: str = "") -> None:
+SALUDOS = {"hola", "buenas", "buenos dias", "buenas tardes", "buenas noches", "menu", "/menu", "ayuda", "/ayuda", "inicio", "/inicio"}
+COMANDOS_NUEVO = {"/nuevo", "/reiniciar"}
+TEXTO_MENU = "Hola, soy el asistente virtual de Celsia. ¿Con qué te ayudo? Elige una opción o escríbeme tu pregunta. Con /nuevo empezamos una conversación desde cero."
+BOTONES_MENU = [("menu:sedes", "Sedes y canales"), ("menu:reclamo", "Poner un reclamo"), ("menu:solar", "Celsia Solar")]
+# Lo que se le pregunta al agente cuando la persona toca cada botón del menú (pasa por el agente como cualquier pregunta).
+PREGUNTA_DEL_BOTON = {
+    "menu:sedes": "¿Cuáles son las sedes y los canales de atención de Celsia?",
+    "menu:reclamo": "Quiero poner un reclamo.",
+    "menu:solar": "¿Qué es Celsia Solar y qué ofrece?",
+}
+
+
+def _normalizado(texto: str) -> str:
+    """Minúsculas, sin tildes ni signos, para reconocer saludos y comandos escritos de cualquier forma."""
+    sin_tildes = "".join(c for c in unicodedata.normalize("NFD", texto.lower()) if unicodedata.category(c) != "Mn")
+    return re.sub(r"[^a-z0-9/ ]", "", sin_tildes).strip()
+
+
+def _responder_comando(telefono: str, texto: str) -> bool:
+    """Atiende `/nuevo` y los saludos (menú con botones) sin llamar al modelo. Devuelve True si el mensaje era uno de ellos."""
+    clave = _normalizado(texto)
+    if clave in COMANDOS_NUEVO:
+        hilo, _ = ids_del_telefono(telefono)
+        reiniciado = reiniciar_conversacion(hilo)
+        enviar_texto(
+            telefono,
+            "Listo, empezamos de cero. Lo que me hayas contado de ti (tu nombre, por ejemplo) lo sigo recordando."
+            if reiniciado
+            else "Tu reclamo está esperando la revisión de una persona de Celsia; hasta que la tome no puedo empezar de cero.",
+        )
+        actividad.registrar("whatsapp", telefono, texto, "respondido" if reiniciado else "pendiente de aprobación")
+        return True
+    if clave in SALUDOS:
+        if not enviar_botones(telefono, TEXTO_MENU, BOTONES_MENU):  # sin botones (ventana de 24 h, Meta caído) el menú va como texto
+            enviar_texto(telefono, TEXTO_MENU + "\nPor ejemplo: «sedes y canales», «poner un reclamo» o «qué es Celsia Solar».")
+        actividad.registrar("whatsapp", telefono, texto, "respondido")
+        return True
+    return False
+
+
+def atender_mensaje_de_whatsapp(telefono: str, tipo: str, texto: str, audio: str = "", id_mensaje: str = "") -> None:
     """Responde un mensaje de WhatsApp: pregunta al agente y envía su respuesta. Corre en segundo plano, después de contestarle 200 a Meta."""
     try:
-        if tipo == "interactive" and _es_el_aprobador(telefono):
+        if tipo == "interactive" and _es_el_aprobador(telefono) and BOTON_DE_APROBACION.match(texto):
             _decidir_por_boton(telefono, texto)
             return
+        marcar_leido(id_mensaje)  # palomitas azules y «escribiendo…» mientras el agente piensa
+        if tipo == "interactive" and texto in PREGUNTA_DEL_BOTON:  # el cliente tocó un botón del menú
+            tipo, texto = "text", PREGUNTA_DEL_BOTON[texto]
         decision = LIMITE.revisar(telefono)
         if not decision.permitido:
             log.warning("límite de mensajes alcanzado; reintento en %s s", decision.espera_s)
@@ -359,6 +405,8 @@ def atender_mensaje_de_whatsapp(telefono: str, tipo: str, texto: str, audio: str
         if tipo != "text" or not texto.strip():
             actividad.registrar("whatsapp", telefono, f"({tipo or 'mensaje'} sin texto)", "no soportado")
             enviar_texto(telefono, TEXTO_NO_SOPORTADO)
+            return
+        if canal == "whatsapp" and _responder_comando(telefono, texto):
             return
         respuesta = responder_a_telefono(telefono, texto.strip()[:1000], canal=canal)
         enviar_texto(telefono, respuesta.respuesta)
@@ -405,5 +453,5 @@ async def recibir_de_whatsapp(peticion: Request, segundo_plano: BackgroundTasks)
         if _ya_atendido(m["id"]):
             continue
         nuevos += 1
-        segundo_plano.add_task(atender_mensaje_de_whatsapp, m["telefono"], m["tipo"], m["texto"], m.get("audio", ""))
+        segundo_plano.add_task(atender_mensaje_de_whatsapp, m["telefono"], m["tipo"], m["texto"], m.get("audio", ""), m["id"])
     return {"ok": True, "mensajes": nuevos}

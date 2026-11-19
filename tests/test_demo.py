@@ -162,8 +162,8 @@ def test_un_boton_repetido_o_ajeno_se_responde_con_amabilidad(monkeypatch):
     enviados = []
     monkeypatch.setattr(api_main, "enviar_texto", lambda tel, texto: enviados.append((tel, texto)) or True)
     api_main.atender_mensaje_de_whatsapp(APROBADOR, "interactive", f"aprobar:{CLIENTE}")
-    api_main.atender_mensaje_de_whatsapp(APROBADOR, "interactive", "cualquier-otra-cosa")  # un identificador que no es nuestro se ignora
-    assert enviados == [(APROBADOR, "Ese reclamo ya no está pendiente.")]
+    api_main.atender_mensaje_de_whatsapp(APROBADOR, "interactive", "cualquier-otra-cosa")  # un identificador que no es nuestro no decide nada
+    assert enviados == [(APROBADOR, "Ese reclamo ya no está pendiente."), (APROBADOR, whatsapp.TEXTO_NO_SOPORTADO)]
 
 
 # --- notas de voz (tentativo) ---

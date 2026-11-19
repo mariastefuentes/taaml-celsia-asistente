@@ -13,6 +13,7 @@ Lo marcado como **(verificar)** no se ha probado con Meta real: se confirma en e
 | Persona 4 | Explica el código cuando el profesor pregunte (herramientas, esquemas, HITL, PostgresSaver) y muestra el cuaderno de t-SNE |
 
 ## Antes de empezar (la noche anterior y 30 minutos antes)
+0. **Chequeo automático:** `make ensayo-whatsapp` (gratis) revisa claves, Ollama, índice, API, panel y si el token de Meta sigue vivo; con el túnel encendido, `make ensayo-whatsapp ARGS="--tunel https://<túnel>"` prueba también ese camino. No cambia nada ni llama al modelo. Si dice FALTA, se arregla antes de seguir con los pasos.
 1. **Token de Meta.** El token temporal del panel de Meta vence en unas 24 horas **(verificar)**: generar uno nuevo la mañana del sábado y ponerlo en `.env` (`WHATSAPP_TOKEN`). Sin esto el bot recibe pero no puede responder.
 2. **Destinatarios de prueba.** Con el número de prueba, Meta solo entrega mensajes a los teléfonos registrados como destinatarios, y hay un máximo pequeño **(verificar cuántos)**. Registrar el teléfono del profesor y los de los cuatro integrantes. Si el profesor no está en la lista, no recibirá respuesta: tener el plan B listo.
 3. **Ollama encendido** (los embeddings lo necesitan) y las claves del modelo en `.env`.
@@ -77,6 +78,9 @@ Abrir `notebooks/analisis_conversaciones.ipynb` y mostrar el mapa t-SNE:
 - **Panel en vivo.** En una pestaña aparte: `http://127.0.0.1:8000/panel`, con el `APROBADOR_TOKEN` de `.env`. Cada mensaje que llega aparece con la herramienta que eligió el agente, lo que tardó y cómo terminó. Se proyecta durante «Casos con el público». Muestra lo que escriben, así que se avisa al público.
 - **Aprobar con botones.** Con `APROBADOR_WHATSAPP=<teléfono de quien aprueba>` en `.env`, el reclamo le llega a esa persona por WhatsApp con «Aprobar» y «Rechazar». Hay que haberle escrito al número de prueba en las últimas 24 horas (si no, Meta no entrega el mensaje) y estar entre los destinatarios de prueba. **No se ha probado con Meta real:** ensayarlo antes y, si falla, usar `POST /aprobar` como arriba.
 - **Notas de voz (tentativo).** Apagado por defecto. No lo mostramos en vivo; si se ensaya, ver `src/taaml/voz.py`.
+- **Menú, `/nuevo` y «escribiendo…».** Quien escribe «Hola», «menú» o «ayuda» recibe tres botones (Sedes y canales, Poner un reclamo, Celsia Solar) sin gastar el modelo; si Meta no entrega los botones, el menú va como texto. Tocar un botón es una pregunta normal al agente. `/nuevo` borra la conversación para empezar de cero (conserva lo que el agente sabe del cliente; no funciona con un reclamo pendiente: sirve para repetir la demostración con el mismo teléfono). Cada mensaje se marca como leído y muestra «escribiendo…». **Nada de esto se ha probado con Meta real**: ensayarlo antes.
+- **Preguntas incómodas.** `make preguntas-hostiles` (gasta unas 15 a 25 llamadas) le hace al agente real 12 preguntas tipo profesor (ambigua, fuera de alcance, celular del gerente, competencia, insulto, reclamo dado por hecho…). La regla automática solo mira patrones: hay que **leer** cada respuesta antes de la demo.
+- **Informe final.** `make informe-borrador` arma el esqueleto del informe con lo que hay en el repo y marca con «COMPLETAR» lo que escribe el equipo.
 - **Chats reales para el t-SNE.** Los ensayos con otros celulares quedan guardados en PostgreSQL. Después, `make exportar-chats` los deja en `data/analisis/reales/` (no se suben a Git). Avisar antes a quienes escriban que sus mensajes se guardan.
 
 ## Si algo falla

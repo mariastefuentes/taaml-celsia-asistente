@@ -82,6 +82,6 @@ def test_whatsapp_avisa_una_sola_vez_y_no_llama_al_agente_al_pasarse(monkeypatch
         lambda tel, msg, canal="chat": preguntas.append(msg) or api_main.RespuestaDelAgente(respuesta="ok", herramientas=[]),
     )
     for _ in range(4):
-        api_main.atender_mensaje_de_whatsapp("573001234567", "text", "hola")
-    assert preguntas == ["hola"]  # el agente (y la cuota) solo se usó una vez
+        api_main.atender_mensaje_de_whatsapp("573001234567", "text", "¿Qué sedes hay?")
+    assert preguntas == ["¿Qué sedes hay?"]  # el agente (y la cuota) solo se usó una vez
     assert enviados == ["ok", TEXTO_LIMITE]  # y el aviso salió una sola vez

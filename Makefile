@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -35,6 +35,9 @@ ayuda:
 	$(info     make demo-plan-b     plan B: repite en pantalla una conversacion real grabada (por si Meta falla))
 	$(info     make exportar-chats  exporta los chats reales de los ensayos para el analisis t-SNE)
 	$(info     make ensayo          revisa que la demo este lista, sin gastar cuota)
+	$(info     make ensayo-whatsapp chequeo previo de WhatsApp: claves, token de Meta, API y panel (gratis; con ARGS="--tunel URL" prueba el tunel))
+	$(info     make preguntas-hostiles  12 preguntas incomodas tipo profesor al agente real (GASTA CUOTA: unas 15 a 25 llamadas))
+	$(info     make informe-borrador    genera docs/3 - Informe/borrador_informe_final.md con los datos del repo (gratis))
 	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas al modelo))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
 	$(info     make lint            errores de codigo con ruff y lock vigente)
@@ -97,6 +100,18 @@ demo-plan-b:
 # Exporta los chats reales de los ensayos (de la base que usa `make api`) para el análisis t-SNE.
 exportar-chats:
 	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run python scripts/38_exportar_conversaciones_reales.py
+
+# Chequeo previo de la demo por WhatsApp (no llama al modelo). Ejemplo: make ensayo-whatsapp ARGS="--tunel https://algo.trycloudflare.com"
+ensayo-whatsapp:
+	uv run python scripts/39_chequeo_whatsapp.py $(ARGS)
+
+# Preguntas incomodas tipo profesor (gasta cuota). Ejemplo: make preguntas-hostiles ARGS="cargador"
+preguntas-hostiles:
+	uv run python scripts/40_preguntas_hostiles.py $(ARGS)
+
+# Borrador del informe final con los datos que ya estan en el repo (sin red ni modelo).
+informe-borrador:
+	uv run python scripts/41_borrador_informe.py
 
 demo-inyeccion:
 	uv run python scripts/23_demo_corpus_envenenado.py --servir
