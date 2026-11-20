@@ -70,7 +70,7 @@ def main() -> None:
         "## 3. Decisiones de diseño\nCada una está explicada con contexto, alternativas, decisión y evidencia en `docs/decisiones.md`:\n" + "\n".join(decisiones()),
         f"## 4. Pruebas y resultados\n- Pruebas automáticas: **{numero_de_pruebas()}** (`make test`, gratis).\n- Resultados guardados (conjunto de prueba, ataques, inyección indirecta):\n" + ("\n".join(resultados_guardados()) or "  COMPLETAR"),
         "Tablas con cifras: `informe_taller2.md`, secciones 5.1 a 5.6. **COMPLETAR** aquí solo lo que cambió después de ese informe (por ejemplo, el ensayo con celulares reales).",
-        "## 5. Demostración por WhatsApp\n- Guion y plan B: `docs/guion_demo_whatsapp.md`.\n- Resultado del ensayo con Meta real: **COMPLETAR** (a la fecha no se ha probado con Meta; no afirmar lo contrario).\n- Chats reales: `make exportar-chats`; indicar cuántos fueron (mínimo recomendado 30) y que son de compañeros, no de clientes de Celsia.",
+        "## 5. Demostración por WhatsApp\n- Guion y plan B: `docs/guion_demo_whatsapp.md`.\n- Resultado del ensayo con Meta real: el 20 de noviembre de 2026 se confirmó que un «Hola» llega por el túnel y que el menú con tres botones se entrega; las respuestas largas, la aprobación con botones y la voz siguen sin confirmar con Meta real (ver `docs/3 - Informe/informe_final.md`, sección 7).\n- Chats reales: `make exportar-chats`; indicar cuántos fueron (mínimo recomendado 30) y que son de compañeros, no de clientes de Celsia.",
         "## 6. Limitaciones\nBase: `informe_taller2.md` sección 7 y los «Límites» de cada decisión. COMPLETAR con lo que se descubra en los ensayos.",
         "## 7. Conclusiones\nCOMPLETAR.",
         "## Anexo A. Especificaciones\n" + "\n".join(especificaciones()),

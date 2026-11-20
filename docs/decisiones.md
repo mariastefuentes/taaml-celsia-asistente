@@ -22,6 +22,8 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 | D16 | Aprobación humana con tres salidas: aprobar, rechazar o responder | vigente |
 | D17 | Mejoras de la Clase 9 que no se adoptaron (Jev, formato OKF) | vigente |
 | D18 | Ayudas de la demostración: panel en vivo, botones de aprobación, plan B, chats reales y voz tentativa | vigente |
+| D19 | Chequeo de la demo, menú con botones, `/nuevo`, preguntas hostiles y vacíos de la base sin tocar | vigente |
+| D20 | Ruta A (LangChain, API REST y WhatsApp) y no la Ruta B (OpenFang) | vigente |
 
 ## D1. Agente `create_agent`, sin `StateGraph` propio
 - **Contexto.** El flujo es un solo ciclo de decisión: modelo, herramienta, modelo.
@@ -77,7 +79,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Decisión.** (c) con la API Cloud de Meta: `GET/POST /webhook/whatsapp` verifica el webhook, comprueba la firma `X-Hub-Signature-256`, responde 200 enseguida, atiende el mensaje en segundo plano, descarta avisos repetidos por id y envía la respuesta por la Graph API.
 - **Por qué.** Un solo servicio que mantener en lugar de dos; la firma, los reintentos, el límite por teléfono y la aprobación se prueban con pruebas automáticas (`tests/test_whatsapp.py`, 15), cosa que un flujo visual no permite igual; el estado vive en nuestra base y no en un sistema externo; la lógica queda versionada en el repositorio y revisada por PR.
 - **Qué se pierde.** N8N habría sido más rápido de armar, se modifica sin código y trae el editor visual; hubiéramos escrito menos. Además el servidor propio hay que exponerlo con un túnel https (hoy cambia de dirección en cada arranque).
-- **Límite declarado.** El webhook se probó con avisos firmados simulados, no con Meta real: falta confirmar el formato real, la caducidad del token temporal y a cuántos destinatarios puede escribir el número de prueba.
+- **Límite declarado.** Con Meta real (20 de noviembre de 2026) se comprobó que un «Hola» llega por el túnel, que el agente lo atiende y que el menú con tres botones se entrega; el token temporal vence en pocas horas y el número de prueba solo escribe a cinco destinatarios autorizados. Las respuestas largas del agente, la aprobación con botones y la voz siguen probadas solo con avisos simulados.
 - **Evidencia.** `api/main.py`, `src/taaml/whatsapp.py`, `tests/test_whatsapp.py`, `specs/013-agente-en-produccion-whatsapp`.
 
 ## D11. Aprobación humana con `HumanInTheLoopMiddleware` en `radicar_reclamo`
@@ -142,3 +144,11 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Vacíos de la base: no se llenaron.** Precio del cargador, fecha límite de pago y facturación por estimación no están publicados por Celsia (se buscó). Solo hay regla general de la Superservicios y la Ley 142. Agregarla cambia el corpus (394 documentos, 1.692 fragmentos) e invalida las mediciones hechas sobre 1.690, así que el texto quedó listo en `docs/vacios_de_la_base.md` y no se aplicó. Mientras tanto el agente dice «No tengo esa información» y da la línea 01 8000 112 115.
 - **Límites.** Menú, `/nuevo` y «escribiendo…» no se han probado con Meta real. Los botones solo llegan dentro de las 24 h desde el último mensaje de la persona.
 - **Evidencia.** `scripts/39_chequeo_whatsapp.py`, `scripts/40_preguntas_hostiles.py`, `scripts/41_borrador_informe.py`, `scripts/42_herramienta_caida.py` (herramientas rotas a propósito con el modelo real: respuesta cortés, sin inventar y sin filtrar el detalle interno; una corrida, un modelo), `api/main.py` (`_responder_comando`), `src/taaml/agente.py` (`reiniciar_conversacion`), `src/taaml/whatsapp.py` (`marcar_leido`), `tests/test_menu_y_chequeos.py`.
+
+## D20. Ruta A (LangChain, API REST y WhatsApp) y no la Ruta B (OpenFang)
+- **Contexto.** El Módulo 3 ofrece dos rutas alternativas: la A (llevar el agente de LangChain a producción con una API REST y WhatsApp) y la B (un sistema operativo de agentes, OpenFang, con memoria en capas, «Hands» y puentes a Telegram o WhatsApp). Se elige una.
+- **Decisión.** Ruta A, con la vía 2 de D10.
+- **Por qué.** (1) El agente del Módulo 2 ya estaba hecho con LangChain: la Ruta A lo lleva a producción y la B obliga a reconstruirlo en otro sistema. (2) La Ruta B pide instalar un runtime distinto, migrar la base de conocimiento a su memoria y escribir manifiestos de operaciones autónomas, con su propia curva de aprendizaje y poco margen. (3) Todo lo medido y probado (esquemas de herramientas, PostgresSaver, aprobación humana, webhook, pruebas, análisis de conversaciones) pertenece a la Ruta A.
+- **Qué se pierde.** La Ruta B ofrece operaciones autónomas en segundo plano (los «Hands») y un runtime ligero; no se evaluó OpenFang, así que la comparación se argumenta y no se midió.
+- **Nota.** Las razones se dedujeron del estado del proyecto; el registro original de esa elección no existe.
+- **Evidencia.** `specs/013-agente-en-produccion-whatsapp/spec.md`, informe final (sección 4).

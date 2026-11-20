@@ -42,6 +42,7 @@ code { font-family: Consolas, 'Courier New', monospace; background: #f3f4f6; pad
 pre code { background: none; padding: 0; }
 hr { border: none; border-top: 1px solid #d1d5db; margin: 18px 0; }
 li { margin: 2px 0; }
+img { max-width: 100%; height: auto; display: block; margin: 8px auto; }
 """
 ITEM = re.compile(r"^\s*([-*]|\d+\.)\s")
 
@@ -66,7 +67,7 @@ def a_html(texto: str) -> str:
     return f"<!doctype html><html lang='es'><head><meta charset='utf-8'><style>{CSS}</style></head><body>{cuerpo}</body></html>"
 
 
-PDF_DEL_REPOSITORIO = {"3 - Informe/informe_taller1.md", "3 - Informe/informe_taller2.md"}
+PDF_DEL_REPOSITORIO = {"3 - Informe/informe_taller1.md", "3 - Informe/informe_taller2.md", "3 - Informe/informe_final.md"}
 
 
 def convertir(md: Path, pdf: Path, edge: str) -> None:
