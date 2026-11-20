@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -18,6 +18,7 @@ ayuda:
 	$(info   EJECUTAR LA APLICACION)
 	$(info     make modulo1         App del Modulo 1: solo el corpus y las etapas del scraping)
 	$(info     make api             MODULOS 2 Y 3: API FastAPI del agente con memoria en PostgreSQL, en http://127.0.0.1:8000)
+	$(info     make api-cadena      la misma API con RAG en cadena (dynamic_prompt) en vez del agentico; para mostrarlo en la sustentacion)
 	$(info     make api-sqlite      la misma API con la memoria en archivos SQLite)
 	$(info     make db-up           levanta solo el PostgreSQL local (make db-down lo apaga))
 	$(info     make app             MODULO 2: frontend React, en http://localhost:5173 (igual que make frontend))
@@ -75,6 +76,10 @@ app-taller1:
 # La API usa PostgreSQL (PostgresSaver y PostgresStore): si DATABASE_URL ya está definida la respeta; si no, levanta un PostgreSQL local sin Docker.
 api:
 	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run uvicorn api.main:app --port 8000
+
+# La API con RAG EN CADENA: un dynamic_prompt inyecta los fragmentos recuperados en cada turno y se quita la herramienta buscar_en_base (D12).
+api-cadena:
+	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" RAG_MODO=cadena uv run uvicorn api.main:app --port 8000
 
 # La misma API con la memoria en archivos SQLite (sin servidor de base de datos).
 api-sqlite:

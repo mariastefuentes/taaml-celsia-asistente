@@ -53,6 +53,18 @@ def mensajes_entrantes(carga: dict[str, Any]) -> list[dict[str, str]]:
     return salida
 
 
+def estados_fallidos(carga: dict[str, Any]) -> list[str]:
+    """Los avisos de estado «failed» de Meta, como «código: título»: dicen por qué un mensaje que Meta aceptó no llegó al cliente (sin teléfono ni texto)."""
+    salida = []
+    for entrada in carga.get("entry", []) or []:
+        for cambio in entrada.get("changes", []) or []:
+            for estado in (cambio.get("value") or {}).get("statuses", []) or []:
+                if estado.get("status") == "failed":
+                    for error in estado.get("errors", []) or [{}]:
+                        salida.append(f"{error.get('code', '?')}: {error.get('title') or error.get('message', 'sin detalle')}")
+    return salida
+
+
 def configurado() -> bool:
     """¿Hay con qué enviar mensajes? Sin token y sin número, el servidor responde por la API pero no por WhatsApp."""
     return bool(os.environ.get("WHATSAPP_TOKEN") and os.environ.get("WHATSAPP_PHONE_NUMBER_ID"))

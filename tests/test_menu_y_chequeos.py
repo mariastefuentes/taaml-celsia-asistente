@@ -143,3 +143,12 @@ def test_el_borrador_del_informe_lista_las_decisiones_y_marca_lo_que_falta():
     titulos = borrador.decisiones()
     assert any(t.startswith("- **D1.**") for t in titulos) and len(titulos) >= 18
     assert borrador.scripts() and borrador.especificaciones()
+
+
+def test_los_estados_fallidos_de_meta_se_leen_sin_datos_personales():
+    carga = {"entry": [{"changes": [{"value": {"statuses": [
+        {"status": "delivered", "recipient_id": "573001234567"},
+        {"status": "failed", "recipient_id": "573001234567", "errors": [{"code": 131047, "title": "Re-engagement message"}]},
+    ]}}]}]}
+    assert whatsapp.estados_fallidos(carga) == ["131047: Re-engagement message"]
+    assert whatsapp.estados_fallidos({}) == []

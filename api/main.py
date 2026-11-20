@@ -54,6 +54,7 @@ from taaml.whatsapp import (
     descargar_audio,
     enviar_botones,
     enviar_texto,
+    estados_fallidos,
     firma_valida,
     marcar_leido,
     mensajes_entrantes,
@@ -448,6 +449,8 @@ async def recibir_de_whatsapp(peticion: Request, segundo_plano: BackgroundTasks)
         carga = json.loads(cuerpo)
     except ValueError:
         raise HTTPException(status_code=400, detail="Cuerpo inválido") from None
+    for fallo in estados_fallidos(carga if isinstance(carga, dict) else {}):
+        log.error("Meta no pudo entregar un mensaje (%s)", fallo)
     nuevos = 0
     for m in mensajes_entrantes(carga if isinstance(carga, dict) else {}):
         if _ya_atendido(m["id"]):
