@@ -92,6 +92,40 @@ ax.legend(loc="center left", bbox_to_anchor=(1.05, 0.5))
 ax.set_title("t-SNE 3D de las conversaciones (datos simulados)")
 plt.tight_layout(); plt.show()"""
 
+COMPARACION = """# Las tres proyecciones a 2D sobre los MISMOS vectores, y una medida objetiva de cuál conserva mejor los vecinos
+import umap
+from sklearn.decomposition import PCA
+from sklearn.manifold import trustworthiness
+
+K = max(1, min(5, len(X) // 2 - 1))
+Yp = PCA(n_components=2, random_state=0).fit_transform(X)
+Yu = umap.UMAP(n_components=2, n_neighbors=max(2, min(15, len(X) - 1)), min_dist=0.1, metric="cosine", init="random" if len(X) < 30 else "spectral", random_state=0).fit_transform(X)
+proyecciones = [("PCA (lineal)", Yp), ("t-SNE", Y2), ("UMAP", Yu)]
+
+fig, ejes = plt.subplots(1, 3, figsize=(21, 6))
+paleta = plt.get_cmap("tab10")
+for ax, (nombre, Y) in zip(ejes, proyecciones):
+    for i, (valor, g) in enumerate(df.groupby("@COLOR@")):
+        ax.scatter(Y[g.index, 0], Y[g.index, 1], s=45, color=paleta(i % 10), alpha=0.85, label=str(valor))
+    mal = df.index[df["fallida"]]
+    ax.scatter(Y[mal, 0], Y[mal, 1], s=100, facecolors="none", edgecolors="black", linewidths=1.4)
+    ax.set_title(nombre); ax.set_xticks([]); ax.set_yticks([])
+ejes[0].legend(loc="best", fontsize=8, title="@COLOR@")
+plt.tight_layout(); plt.show()
+
+tabla = pd.DataFrame(
+    {"Proyección": [n for n, _ in proyecciones], f"Confiabilidad de los vecinos (k={K}, 0 a 1)": [round(trustworthiness(X, Y, n_neighbors=K, metric="cosine"), 3) for _, Y in proyecciones]}
+)
+tabla"""
+
+TEXTO_COMPARACION = """## PCA, t-SNE y UMAP sobre los mismos vectores
+
+- **PCA** es lineal: dibuja las dos direcciones donde los vectores más varían. Es rápido y fiel a las distancias grandes, pero aplasta los grupos que no se separan en línea recta.
+- **t-SNE** cuida a los vecinos cercanos: junta lo parecido, pero las distancias entre grupos lejanos no significan nada.
+- **UMAP** también cuida a los vecinos y conserva algo más de la estructura global; suele dar grupos más compactos y es más rápido.
+
+La tabla mide qué tan bien cada dibujo mantiene los mismos vecinos que había en los 768 números (confiabilidad: 1 es perfecto). Los tres gráficos usan los mismos puntos, así que las diferencias son de método, no de datos."""
+
 CLUSTERS = """from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
 
@@ -270,6 +304,8 @@ def celdas_reales() -> list:
         code(TSNE2_REALES),
         md("## 4. t-SNE en 3D"),
         code(TSNE3_REALES),
+        md(TEXTO_COMPARACION),
+        code(COMPARACION.replace("@COLOR@", "cluster")),
         md("## 5. Qué hay dentro de cada grupo\n\nLas conversaciones por grupo y las marcadas como fallidas, para leerlas una por una."),
         code(LEER_REALES),
         code(FALLOS_REALES),
@@ -306,6 +342,8 @@ def construir() -> None:
         nbformat.v4.new_code_cell(TSNE2),
         nbformat.v4.new_markdown_cell("## 3. t-SNE en 3D"),
         nbformat.v4.new_code_cell(TSNE3),
+        nbformat.v4.new_markdown_cell(TEXTO_COMPARACION),
+        nbformat.v4.new_code_cell(COMPARACION.replace("@COLOR@", "categoria_prevista")),
         nbformat.v4.new_markdown_cell("## 4. Clústeres y dónde falla el asistente\n\nK-means agrupa los vectores sin ver la categoría prevista."),
         nbformat.v4.new_code_cell(CLUSTERS),
         nbformat.v4.new_markdown_cell("### Tasa de fallo por categoría prevista"),

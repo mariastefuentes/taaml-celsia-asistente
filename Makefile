@@ -89,6 +89,13 @@ api-sqlite:
 frontend:
 	cd frontend && npm install && npm run dev
 
+# Compila el chat web para que la API lo sirva en «/» (respaldo de WhatsApp para el público); luego `make api` y `make qr-chat-web ARGS="https://..."`.
+chat-web:
+	cd frontend && npm install && npm run build
+
+qr-chat-web:
+	uv run python scripts/44_qr_chat_web.py $(ARGS)
+
 db-up:
 	uv run python scripts/34_postgres_local.py
 

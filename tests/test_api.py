@@ -206,3 +206,36 @@ def test_aprobar_avisa_al_cliente_por_whatsapp(monkeypatch):
     cuerpo = {"telefono": "573001234567", "decision": "aprobar"}
     r = cliente.post("/aprobar", json=cuerpo, headers={"X-Aprobador": "secreto-largo"})
     assert r.json()["avisado_por_whatsapp"] is True and enviados == [("573001234567", "Reclamo radicado.")]
+
+
+def test_el_chat_web_se_sirve_desde_la_api_sin_tapar_las_rutas(tmp_path, monkeypatch):
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+
+    from api.main import montar_frontend
+
+    (tmp_path / "index.html").write_text("<html>Chat Celsia</html>", encoding="utf-8")
+    aplicacion = FastAPI()
+
+    @aplicacion.get("/api/salud")
+    def salud():
+        return {"estado": "ok"}
+
+    assert montar_frontend(aplicacion, tmp_path) is True
+    cliente = TestClient(aplicacion)
+    assert "Chat Celsia" in cliente.get("/").text
+    assert cliente.get("/api/salud").json() == {"estado": "ok"}  # la montura en «/» no tapa las rutas de la API
+    assert "Chat Celsia" in cliente.get("/c/0123456789abcdef0123456789abcdef").text  # recargar la página de una conversación devuelve el chat
+    assert cliente.get("/api/no-existe").status_code == 404
+
+    monkeypatch.setenv("SERVIR_FRONTEND", "0")
+    assert montar_frontend(FastAPI(), tmp_path) is False
+
+
+def test_el_chat_web_no_se_monta_si_falta_el_frontend_compilado(tmp_path):
+    from fastapi import FastAPI
+
+    from api.main import montar_frontend
+
+    assert montar_frontend(FastAPI(), tmp_path) is False
+
