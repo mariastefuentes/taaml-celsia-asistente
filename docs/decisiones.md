@@ -99,7 +99,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Alternativas consideradas.** (a) Ninguno; (b) por dirección IP; (c) por teléfono en memoria del proceso; (d) por teléfono en Redis.
 - **Decisión.** (c): 8 mensajes por minuto por teléfono (`LIMITE_MENSAJES`, `LIMITE_VENTANA_S`). `/chat` responde 429 con `Retry-After`; por WhatsApp se avisa una sola vez por ventana y no se llama al modelo. No guarda el número: usa un hash.
 - **Por qué no las otras.** La IP no sirve: todos los avisos de WhatsApp llegan de Meta. Redis añade un servicio para un solo proceso.
-- **Límite declarado.** Con varios procesos cada uno cuenta aparte. `POST /api/chat` (el frontend, sin teléfono) no tiene límite.
+- **Límite declarado.** Con varios procesos cada uno cuenta aparte. `POST /api/chat` (el frontend, sin teléfono) se limita por origen (la dirección de `Cf-Connecting-Ip` por el túnel, o la del cliente) con el mismo tope. `POST /chat` exige el encabezado `X-Api-Key` si el servidor define `CHAT_TOKEN` (opcional: sin ella queda abierto); el webhook de WhatsApp no pasa por ahí y se protege con la firma de Meta. Límite: el origen detrás de un proxy distinto de Cloudflare se vería como una sola dirección.
 - **Evidencia.** `src/taaml/limite.py`, `tests/test_limite.py`.
 
 ## D14. Prompt del agente versionado: v7 vigente

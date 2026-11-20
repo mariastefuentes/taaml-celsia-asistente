@@ -85,3 +85,24 @@ def test_whatsapp_avisa_una_sola_vez_y_no_llama_al_agente_al_pasarse(monkeypatch
         api_main.atender_mensaje_de_whatsapp("573001234567", "text", "¿Qué sedes hay?")
     assert preguntas == ["¿Qué sedes hay?"]  # el agente (y la cuota) solo se usó una vez
     assert enviados == ["ok", TEXTO_LIMITE]  # y el aviso salió una sola vez
+
+
+def test_chat_exige_la_clave_solo_si_el_servidor_la_tiene(api_con_limite, monkeypatch):
+    cuerpo = {"mensaje": "hola", "telefono": "573001234567"}
+    assert api_con_limite.post("/chat", json=cuerpo).status_code == 200  # sin CHAT_TOKEN queda abierto
+    monkeypatch.setenv("CHAT_TOKEN", "clave-de-prueba")
+    assert api_con_limite.post("/chat", json=cuerpo).status_code == 401
+    assert api_con_limite.post("/chat", json=cuerpo, headers={"X-Api-Key": "otra"}).status_code == 401
+    assert api_con_limite.post("/chat", json=cuerpo, headers={"X-Api-Key": "clave-de-prueba"}).status_code == 200
+
+
+def test_api_chat_limita_por_origen_y_cada_origen_cuenta_aparte(monkeypatch):
+    monkeypatch.setattr(api_main, "LIMITE", LimitePorTelefono(1, 60, Reloj()))
+    monkeypatch.setattr(api_main, "conversar_en_vivo", lambda *a, **k: iter([]))
+    cliente = TestClient(api_main.app)
+    cuerpo = {"mensaje": "hola"}
+    desde = lambda ip: cliente.post("/api/chat", json=cuerpo, headers={"Cf-Connecting-Ip": ip})  # noqa: E731
+    assert desde("1.1.1.1").status_code == 200
+    r = desde("1.1.1.1")
+    assert r.status_code == 429 and int(r.headers["Retry-After"]) > 0
+    assert desde("2.2.2.2").status_code == 200

@@ -16,6 +16,12 @@ import pytest  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
+def sin_clave_de_chat(monkeypatch):
+    """Las pruebas llaman a /chat sin clave aunque el .env tenga CHAT_TOKEN (la que la mide la fija ella misma)."""
+    monkeypatch.delenv("CHAT_TOKEN", raising=False)
+
+
+@pytest.fixture(autouse=True)
 def sin_limite_de_mensajes(monkeypatch):
     """El límite por teléfono de la API se apaga en las pruebas que no lo miden (varias escriben muchos mensajes seguidos)."""
     try:

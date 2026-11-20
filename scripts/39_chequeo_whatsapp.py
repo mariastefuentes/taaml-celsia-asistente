@@ -55,6 +55,7 @@ def revisar_variables() -> None:
         ("APROBADOR_TOKEN", "aprobar reclamos y ver el panel en vivo"),
     ]:
         anotar(bool(os.environ.get(nombre)), f"{nombre} definida ({para})", "agrégala al .env (ver .env.example)")
+    anotar(bool(os.environ.get("CHAT_TOKEN")), "CHAT_TOKEN definida (protege POST /chat)", "opcional pero recomendada: sin ella /chat está abierto a quien tenga la URL", critico=False)
     anotar(None, "APROBADOR_WHATSAPP (aprobar con botones, opcional)" if not os.environ.get("APROBADOR_WHATSAPP") else "APROBADOR_WHATSAPP definida", "opcional: sin ella se aprueba con POST /aprobar", critico=False)
     if os.environ.get("APROBADOR_WHATSAPP"):
         resultados[-1] = ("OK   ", "APROBADOR_WHATSAPP definida (aprobar con botones)", "")

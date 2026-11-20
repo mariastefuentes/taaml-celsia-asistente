@@ -3,7 +3,8 @@
 Endpoints:
   GET  /api/salud                    estado, modelo del agente y dónde busca por significado (qdrant, numpy o ninguno)
   POST /api/chat                     un turno de conversación; responde por streaming (Server-Sent Events)
-  POST /chat                         un turno por teléfono; responde un JSON (para WhatsApp, N8N o cualquier servicio externo); 429 si el teléfono escribe demasiado rápido
+  POST /chat                         un turno por teléfono; responde un JSON (para N8N o cualquier servicio externo); 429 si el teléfono escribe demasiado rápido;
+                                     con CHAT_TOKEN definida exige el encabezado X-Api-Key (401 si falta o no coincide)
   GET/POST /webhook/whatsapp         WhatsApp (Meta): verificación del webhook y mensajes entrantes (se responde por WhatsApp en segundo plano)
   POST /aprobar                      una persona aprueba o rechaza lo que el agente dejó pendiente (necesita el encabezado X-Aprobador)
   GET  /api/hilos/{hilo}/mensajes    la conversación guardada, para recuperarla al recargar la página
@@ -122,9 +123,20 @@ def salud() -> dict:
     }
 
 
+def _origen(peticion: Request) -> str:
+    """Quién llama, para limitar a quien no trae teléfono: la dirección que Cloudflare pone en `Cf-Connecting-Ip` (por el túnel) o la del cliente directo."""
+    return peticion.headers.get("cf-connecting-ip") or (peticion.client.host if peticion.client else "desconocido")
+
+
 @app.post("/api/chat")
-def chat(pregunta: Pregunta) -> StreamingResponse:
-    """Un turno de conversación por streaming; crea el hilo si falta y rechaza identificadores que no sean uuid4 hexadecimal."""
+def chat(pregunta: Pregunta, peticion: Request) -> StreamingResponse:
+    """Un turno de conversación por streaming; crea el hilo si falta y rechaza identificadores que no sean uuid4 hexadecimal.
+
+    No trae teléfono ni clave (la usa el frontend del navegador), así que se limita por origen para que nadie gaste la cuota del modelo.
+    """
+    decision = LIMITE.revisar(f"origen:{_origen(peticion)}")
+    if not decision.permitido:
+        raise HTTPException(status_code=429, detail=TEXTO_LIMITE, headers={"Retry-After": str(decision.espera_s)})
     hilo = pregunta.hilo or uuid4().hex
     if not HILO.match(hilo) or (pregunta.usuario and not HILO.match(pregunta.usuario)):
         raise HTTPException(status_code=422, detail="Identificador inválido")
@@ -167,13 +179,23 @@ def ids_del_telefono(telefono: str) -> tuple[str, str]:
     )
 
 
+def _exigir_clave_del_chat(x_api_key: str | None) -> None:
+    """Si el servidor tiene `CHAT_TOKEN`, deja pasar solo con el encabezado `X-Api-Key` igual a ella; sin la variable, `/chat` queda abierto (lo frena el límite por teléfono)."""
+    esperado = os.environ.get("CHAT_TOKEN")
+    if esperado and not secrets.compare_digest((x_api_key or "").encode(), esperado.encode()):
+        raise HTTPException(status_code=401, detail="No autorizado")
+
+
 @app.post("/chat")
-def chat_por_telefono(entrada: MensajeEntrante) -> RespuestaDelAgente:
+def chat_por_telefono(entrada: MensajeEntrante, x_api_key: str | None = Header(default=None)) -> RespuestaDelAgente:
     """Un turno del agente, sin streaming: recibe mensaje y teléfono y devuelve la respuesta en JSON.
+
+    Con `CHAT_TOKEN` definida en el servidor exige el encabezado `X-Api-Key`. El webhook de WhatsApp no pasa por aquí: se protege con la firma de Meta.
 
     Si el modelo o una herramienta fallan responde con un mensaje cortés (`ok` en falso) en vez de un error, porque quien llama
     (WhatsApp) tiene que poder reenviar algo al cliente.
     """
+    _exigir_clave_del_chat(x_api_key)
     decision = LIMITE.revisar(entrada.telefono)
     if not decision.permitido:
         actividad.registrar("chat", entrada.telefono, entrada.mensaje, "límite")
