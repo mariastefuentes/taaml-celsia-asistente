@@ -52,3 +52,20 @@ class FalsoCheckpointer:
 def test_leer_conversaciones_una_por_hilo_ordenadas_y_omite_vacias():
     cp = FalsoCheckpointer({"b": [HumanMessage("hola"), AIMessage("Hola")], "a": [HumanMessage("hey")], "c": []})
     assert [c["hilo"] for c in leer_conversaciones(cp)] == ["a", "b"]
+
+
+def test_el_cuaderno_de_conversaciones_reales_tiene_codigo_valido_y_avisa_que_no_son_clientes():
+    import ast
+    import importlib.util
+    from pathlib import Path
+
+    ruta = Path(__file__).resolve().parent.parent / "scripts" / "36_construir_notebook_tsne.py"
+    spec = importlib.util.spec_from_file_location("construir_notebook_tsne", ruta)
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    celdas = modulo.celdas_reales()
+    for celda in celdas:
+        if celda["cell_type"] == "code":
+            ast.parse(celda["source"])  # cada celda de código compila
+    texto = " ".join(c["source"] for c in celdas if c["cell_type"] == "markdown")
+    assert "no clientes de Celsia" in texto and "nadie etiquetó" in texto
