@@ -5,12 +5,16 @@
 estándar de LangChain para guardar y consultar vectores con filtros. Este módulo no conoce el corpus: lo usa `recuperacion.py`.
 """
 
-from typing import Any
-
 import numpy as np
+from langchain_core.embeddings import Embeddings
+from langchain_core.vectorstores import VectorStore
 from langchain_ollama import OllamaEmbeddings
 from langchain_qdrant import QdrantVectorStore
 from qdrant_client import QdrantClient
+
+# Contrato con LangChain: nuestro almacén es un `VectorStore` estándar (langchain_core.vectorstores) y nuestros embeddings, un `Embeddings`.
+# Si una versión futura de las librerías rompiera esto, el módulo falla al importarse y no en medio de una demostración.
+assert issubclass(QdrantVectorStore, VectorStore) and issubclass(OllamaEmbeddings, Embeddings)
 
 PREFIJO_DOCUMENTO = "search_document: "
 PREFIJO_CONSULTA = "search_query: "
@@ -39,7 +43,7 @@ def embeddings_celsia(modelo: str, timeout: int = 300) -> EmbeddingsCelsia:
     return EmbeddingsCelsia(model=modelo, keep_alive=1800, client_kwargs={"timeout": timeout})
 
 
-def almacen_langchain(cliente: QdrantClient, coleccion: str, embedding: Any = None) -> QdrantVectorStore:
+def almacen_langchain(cliente: QdrantClient, coleccion: str, embedding: Embeddings | None = None) -> QdrantVectorStore:
     """El vectorstore de LangChain sobre una colección de Qdrant (o su alias).
 
     No valida la colección al crearlo (`validate_*=False`): esa validación llamaría a Ollama para medir los vectores y aquí solo
