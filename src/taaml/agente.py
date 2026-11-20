@@ -734,12 +734,15 @@ def resolver_aprobacion(
     return mensajes[-1].text.strip(), llamadas
 
 
+NUMEROS_CONOCIDOS = "123 línea de emergencias de Colombia. 01 8000 112 115 línea de atención de Celsia."  # el agente puede darlos aunque ninguna herramienta los devuelva
+
+
 def datos_dudosos(respuesta: str, mensajes: list) -> list[str]:
     """Cifras, correos y enlaces de la respuesta que no están en lo que el agente tuvo delante: lo que devolvieron las herramientas, lo que dijo el cliente y la fecha de hoy.
 
     Es la misma revisión del Q&A del Taller 1 (`taaml.validacion`): una revisión de texto, no de significado.
     """
-    soporte = [m.text for m in mensajes if m.type in ("tool", "human")] + [date.today().isoformat()]
+    soporte = [m.text for m in mensajes if m.type in ("tool", "human")] + [date.today().isoformat(), NUMEROS_CONOCIDOS]
     return datos_sin_respaldo(respuesta, [{"texto": t} for t in soporte])
 
 

@@ -1158,3 +1158,9 @@ def test_el_aviso_de_datos_dudosos_no_rompe_la_respuesta_si_la_revision_falla():
     roto = SimpleNamespace(get_state=lambda config: (_ for _ in ()).throw(RuntimeError("base caída")))
     assert aviso_de_datos_dudosos("h", "Escribe al 300 555 1234.", agente=roto) == ""
     assert aviso_de_datos_dudosos("h", MENSAJE_EN_REVISION, agente=_estado_falso([])) == ""
+
+
+def test_el_aviso_de_datos_dudosos_no_marca_la_linea_de_emergencias():
+    from taaml.agente import aviso_de_datos_dudosos
+
+    assert aviso_de_datos_dudosos("h", "Si es una emergencia llama al 123 o al 01 8000 112 115.", agente=_estado_falso([])) == ""
