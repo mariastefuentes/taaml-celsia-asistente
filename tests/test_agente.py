@@ -1164,3 +1164,9 @@ def test_el_aviso_de_datos_dudosos_no_marca_la_linea_de_emergencias():
     from taaml.agente import aviso_de_datos_dudosos
 
     assert aviso_de_datos_dudosos("h", "Si es una emergencia llama al 123 o al 01 8000 112 115.", agente=_estado_falso([])) == ""
+
+
+def test_el_aviso_de_datos_dudosos_no_marca_la_linea_106_de_salud_mental():
+    from taaml.agente import aviso_de_datos_dudosos
+
+    assert aviso_de_datos_dudosos("h", "Puedes llamar a la Línea 106 o a la 123.", agente=_estado_falso([])) == ""

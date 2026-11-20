@@ -734,7 +734,7 @@ def resolver_aprobacion(
     return mensajes[-1].text.strip(), llamadas
 
 
-NUMEROS_CONOCIDOS = "123 línea de emergencias de Colombia. 01 8000 112 115 línea de atención de Celsia."  # el agente puede darlos aunque ninguna herramienta los devuelva
+NUMEROS_CONOCIDOS = "123 línea de emergencias de Colombia. 106 línea de salud mental. 01 8000 112 115 línea de atención de Celsia."  # el agente puede darlos aunque ninguna herramienta los devuelva
 
 
 def datos_dudosos(respuesta: str, mensajes: list) -> list[str]:

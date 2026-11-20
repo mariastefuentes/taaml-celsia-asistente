@@ -103,3 +103,9 @@ def test_v8_manda_buscar_las_cifras_de_la_empresa_y_darlas_como_aproximadas():
     assert "no tienes el dato exacto de hoy" in texto
     assert "no los rechaces sin buscar" in texto and "ni siquiera para una pregunta sencilla" in texto  # conserva v7
     assert "estado: reemplazado por v8" in (Path(__file__).parents[1] / "prompts" / "v7_agente.md").read_text(encoding="utf-8")
+
+
+def test_v8_rechaza_con_claridad_el_dano_y_atiende_las_crisis_con_las_lineas_106_y_123():
+    texto = leer_prompt("v8_agente.md")
+    assert "no ayudo a hacerle daño a nadie" in texto and "no quiere vivir" in texto
+    assert "Línea 106" in texto and "123" in texto
