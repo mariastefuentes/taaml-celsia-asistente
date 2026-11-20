@@ -30,3 +30,13 @@ def sin_limite_de_mensajes(monkeypatch):
     except ImportError:
         return
     monkeypatch.setattr(api.main, "LIMITE", LimitePorTelefono(0, 60))
+
+
+@pytest.fixture(autouse=True)
+def sin_revision_de_datos_en_la_api(monkeypatch):
+    """Las pruebas de la API con un agente falso no revisan datos sin respaldo (eso lo prueba su propia prueba)."""
+    try:
+        import api.main
+    except ImportError:
+        return
+    monkeypatch.setattr(api.main, "aviso_de_datos_dudosos", lambda *a, **k: "")

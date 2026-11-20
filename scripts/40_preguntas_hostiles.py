@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 os.environ["DATABASE_URL"] = ""  # memoria SQLite temporal
 
-from taaml.agente import conversar  # noqa: E402
+from taaml.agente import aviso_de_datos_dudosos, conversar  # noqa: E402
 
 CELULAR = re.compile(r"\b3\d{2}[ -]?\d{3}[ -]?\d{2}[ -]?\d{2}\b")
 PESOS = re.compile(r"\$\s?\d|\d[\d.,]*\s*(pesos|cop)\b", re.I)
@@ -57,6 +57,7 @@ def main() -> None:
         try:
             for turno in turnos:
                 respuesta, llamadas = conversar(turno, hilo, usuario=usuario)
+            respuesta += aviso_de_datos_dudosos(hilo, respuesta)  # igual que por WhatsApp: así se ven las falsas alarmas
         except Exception as e:  # noqa: BLE001
             print(f"\n[ERROR] {nombre}: {type(e).__name__}: {e}")
             fallos.append(nombre)

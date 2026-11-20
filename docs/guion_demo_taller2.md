@@ -38,7 +38,7 @@ Evitar «¿Cómo pago mi factura y dónde puedo hacerlo en Cali?»: la tabla de 
 5. Al terminar: apagar esta API y volver a encender la normal (`make api`).
 
 ## Validación de la respuesta (30 segundos, si el docente pregunta por «validación antes de publicar»)
-Cada cifra, correo y enlace de la respuesta se busca en lo que devolvieron las herramientas (`datos_dudosos` en `src/taaml/agente.py`). Si algo no aparece, el frontend muestra «Verifica antes de usar: …» bajo la respuesta. En una respuesta normal no se ve nada. Avisa, no bloquea.
+Cada cifra, correo y enlace de la respuesta se busca en lo que devolvieron las herramientas (`datos_dudosos` en `src/taaml/agente.py`). Si algo no aparece, el frontend muestra «Verifica antes de usar: …» bajo la respuesta. En una respuesta normal no se ve nada. Avisa, no bloquea. Por WhatsApp y `POST /chat` el aviso va como una nota al final del mensaje.
 
 ## El grafo de LangGraph (30 segundos, si el docente pregunta por StateGraph)
 En la terminal: `uv run python scripts/31_mostrar_grafo.py`. `create_agent` devuelve un StateGraph compilado: 6 nodos (el modelo, las herramientas y dos de middleware: el resumen antes del modelo y el tope de llamadas después), 7 aristas (las condicionales deciden si sigue a las herramientas o termina) y como estado los mensajes. Para el agente no se armó un grafo a mano porque su flujo es un solo ciclo (decisión D1 de `docs/decisiones.md`); el diagrama está en `docs/3 - Informe/diagrama_grafo_agente.svg`. Donde sí hay ramas, un StateGraph escrito a mano: `uv run python scripts/32_flujo_reclamo.py` muestra sus nodos y tres corridas (aprobada, rechazada e incompleta) con una pausa `interrupt`, sin modelo ni costo.

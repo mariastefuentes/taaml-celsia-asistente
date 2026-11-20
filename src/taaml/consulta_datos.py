@@ -6,6 +6,7 @@ estas funciones, así se prueban sin Gemini ni Ollama.
 
 import csv
 import json
+import re
 import unicodedata
 from pathlib import Path
 from typing import Any
@@ -51,13 +52,26 @@ def sedes(ciudad: str = "", departamento: str = "", tipo: str = "") -> list[dict
     ]
 
 
+def _clave_de_contacto(c: dict) -> tuple[str, str]:
+    """Identifica un contacto sin importar cómo esté escrito: un teléfono o WhatsApp por sus dígitos («311 321 0000» y «3113210000» son el mismo), lo demás por su texto."""
+    if c["tipo"] in ("telefono", "whatsapp"):
+        return c["tipo"], re.sub(r"\D", "", c["valor"]) or c["valor"].lower()
+    return c["tipo"], c["valor"].strip().lower()
+
+
 def contactos(tipo: str = "", tema: str = "") -> list[dict]:
-    """Un contacto por fila (teléfono, correo, WhatsApp o enlace), con para qué sirve."""
-    salida = []
+    """Un contacto por fila (teléfono, correo, WhatsApp o enlace), con para qué sirve.
+
+    Un mismo número escrito de dos formas (con y sin espacios) sale una sola vez, con la primera descripción: así el agente no lo presenta como dos canales distintos.
+    """
+    salida, vistos = [], set()
     for linea in CONTACTOS.read_text(encoding="utf-8").splitlines():
         for c in json.loads(linea)["contactos"]:
             if _contiene_alguno(c["tipo"], tipo) and _contiene_alguno(c["para_que_sirve"], tema):
-                salida.append(c)
+                clave = _clave_de_contacto(c)
+                if clave not in vistos:
+                    vistos.add(clave)
+                    salida.append(c)
     return salida
 
 
