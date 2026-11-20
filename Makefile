@@ -115,6 +115,10 @@ ensayo-whatsapp:
 preguntas-hostiles:
 	uv run python scripts/40_preguntas_hostiles.py $(ARGS)
 
+# Banco verificable: respuestas esperadas calculadas desde los datos (datos, trampas, robustez, aislamiento, conversación larga). Gasta cuota.
+banco-verificable:
+	uv run python scripts/43_banco_verificable.py $(ARGS)
+
 # Herramientas que fallan de verdad con el modelo real (gasta cuota).
 herramienta-caida:
 	uv run python scripts/42_herramienta_caida.py
