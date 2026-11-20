@@ -105,7 +105,7 @@ demo-plan-b:
 
 # Exporta los chats reales de los ensayos (de la base que usa `make api`) para el análisis t-SNE.
 exportar-chats:
-	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run python scripts/38_exportar_conversaciones_reales.py
+	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run python scripts/38_exportar_conversaciones_reales.py $(ARGS)
 
 # Chequeo previo de la demo por WhatsApp (no llama al modelo). Ejemplo: make ensayo-whatsapp ARGS="--tunel https://algo.trycloudflare.com"
 ensayo-whatsapp:
