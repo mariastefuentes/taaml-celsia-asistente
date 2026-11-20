@@ -211,6 +211,10 @@ La API ya guarda cada conversación completa en PostgreSQL (el checkpointer, baj
 uv sync --group analisis
 uv run python scripts/35_simular_conversaciones.py   # simula con el agente real (gasta cuota) y exporta a data/analisis/
 uv run python scripts/36_construir_notebook_tsne.py  # construye y ejecuta el cuaderno (necesita Ollama la primera vez)
+
+# Con conversaciones reales (30 o más de los ensayos por WhatsApp; las pruebas técnicas se dejan fuera):
+make exportar-chats ARGS="--excluir-telefonos 573009990001,573009990002"
+uv run python scripts/36_construir_notebook_tsne.py --reales   # genera notebooks/analisis_conversaciones_reales.ipynb (sin categorías previas: los grupos se descubren)
 ```
 
 ## Estructura
