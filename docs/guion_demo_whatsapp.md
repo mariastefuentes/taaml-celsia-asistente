@@ -58,7 +58,7 @@ Evitar en vivo: «¿Cuánto cuesta reconectar el servicio?» (gasta muchos token
 3. Aprobar como persona de Celsia (PowerShell; el token es `APROBADOR_TOKEN` de `.env`, y el teléfono el del cliente, con indicativo):
 
 ```powershell
-Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/aprobar -Headers @{ "X-Aprobador" = "<APROBADOR_TOKEN>" } -ContentType "application/json" -Body '{"telefono":"57300XXXXXXX","decision":"aprobar"}'
+Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/aprobar -Headers @{ "X-Aprobador" = "<APROBADOR_TOKEN>" } -Headers @{"X-Api-Key"="<CHAT_TOKEN del .env, si la definiste>"} -ContentType "application/json" -Body '{"telefono":"57300XXXXXXX","decision":"aprobar"}'
 ```
 
 4. Al teléfono del cliente llega la decisión; si se aprobó, con el número de radicado (`REC-…`). Probar también `"decision":"rechazar"` si sobra tiempo.
