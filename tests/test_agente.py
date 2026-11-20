@@ -1125,3 +1125,42 @@ def test_el_esquema_del_reclamo_rechaza_tipo_invalido_y_valores_fuera_de_rango()
     for malo in ({"tipo": "queja"}, {"descripcion": ""}, {"ciudad": "x" * 81}):  # los campos extra los rechaza `args_schema` (prueba anterior)
         with pytest.raises(ValidationError):
             esquema(**{**bueno, **malo})
+
+
+def _estado_falso(mensajes):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(get_state=lambda config: SimpleNamespace(values={"messages": mensajes}))
+
+
+def _mensaje(tipo, texto):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(type=tipo, text=texto)
+
+
+def test_el_aviso_de_datos_dudosos_marca_lo_inventado_y_calla_lo_respaldado():
+    from taaml.agente import aviso_de_datos_dudosos
+
+    soporte = [_mensaje("human", "¿Cuál es el WhatsApp?"), _mensaje("tool", "- whatsapp: 311 321 0000. Atención")]
+    agente = _estado_falso(soporte)
+    assert aviso_de_datos_dudosos("h", "Escribe al 311 321 0000.", agente=agente) == ""
+    nota = aviso_de_datos_dudosos("h", "Escribe al 300 555 1234 o a inventado@celsia.com.", agente=agente)
+    assert nota.startswith("\n\nNota:") and "300 555 1234" in nota and "inventado@celsia.com" in nota and "estos datos" in nota
+    assert "01 8000 112 115" in nota
+
+
+def test_el_aviso_de_datos_dudosos_no_rompe_la_respuesta_si_la_revision_falla():
+    from types import SimpleNamespace
+
+    from taaml.agente import MENSAJE_EN_REVISION, aviso_de_datos_dudosos
+
+    roto = SimpleNamespace(get_state=lambda config: (_ for _ in ()).throw(RuntimeError("base caída")))
+    assert aviso_de_datos_dudosos("h", "Escribe al 300 555 1234.", agente=roto) == ""
+    assert aviso_de_datos_dudosos("h", MENSAJE_EN_REVISION, agente=_estado_falso([])) == ""
+
+
+def test_el_aviso_de_datos_dudosos_no_marca_la_linea_de_emergencias():
+    from taaml.agente import aviso_de_datos_dudosos
+
+    assert aviso_de_datos_dudosos("h", "Si es una emergencia llama al 123 o al 01 8000 112 115.", agente=_estado_falso([])) == ""

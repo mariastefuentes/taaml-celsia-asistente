@@ -40,7 +40,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 
 ## D3. Los números los calcula el código
 - **Contexto.** Un modelo que suma o cuenta puede equivocarse, y una cifra mal dicha sobre sedes o tarifas es un error de cara al cliente.
-- **Decisión.** `consultar_datos` devuelve el total ya calculado, incluida la suma de varias ciudades. Además, `datos_dudosos` revisa que cada cifra, correo y enlace de la respuesta aparezca en lo que devolvieron las herramientas.
+- **Decisión.** `consultar_datos` devuelve el total ya calculado, incluida la suma de varias ciudades. Además, `datos_dudosos` revisa que cada cifra, correo y enlace de la respuesta aparezca en lo que devolvieron las herramientas. Desde la rama de mejoras contra alucinaciones, esa revisión también corre en WhatsApp y `POST /chat`: si algo no aparece, la respuesta termina con una nota breve («no pude confirmar…, verifícalo en celsia.com o en la línea 01 8000 112 115»). Medido con las 12 preguntas hostiles: 0 falsas alarmas.
 - **Evidencia.** `src/taaml/consulta_datos.py`, `tests/test_consulta_datos.py`.
 
 ## D4. Memoria en PostgreSQL en la API y SQLite como alternativa

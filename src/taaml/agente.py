@@ -734,13 +734,37 @@ def resolver_aprobacion(
     return mensajes[-1].text.strip(), llamadas
 
 
+NUMEROS_CONOCIDOS = "123 línea de emergencias de Colombia. 01 8000 112 115 línea de atención de Celsia."  # el agente puede darlos aunque ninguna herramienta los devuelva
+
+
 def datos_dudosos(respuesta: str, mensajes: list) -> list[str]:
     """Cifras, correos y enlaces de la respuesta que no están en lo que el agente tuvo delante: lo que devolvieron las herramientas, lo que dijo el cliente y la fecha de hoy.
 
     Es la misma revisión del Q&A del Taller 1 (`taaml.validacion`): una revisión de texto, no de significado.
     """
-    soporte = [m.text for m in mensajes if m.type in ("tool", "human")] + [date.today().isoformat()]
+    soporte = [m.text for m in mensajes if m.type in ("tool", "human")] + [date.today().isoformat(), NUMEROS_CONOCIDOS]
     return datos_sin_respaldo(respuesta, [{"texto": t} for t in soporte])
+
+
+def aviso_de_datos_dudosos(thread_id: str, respuesta: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> str:
+    """Nota para añadir al final de una respuesta si trae cifras, correos o enlaces que no aparecen en lo que el agente tuvo delante; vacío si todo tiene respaldo.
+
+    La web ya muestra este aviso aparte; por WhatsApp y `POST /chat` no hay dónde, así que va como texto. Si algo falla al revisar, no se añade nada:
+    es una ayuda, no debe tumbar la respuesta.
+    """
+    if respuesta == MENSAJE_EN_REVISION:
+        return ""
+    try:
+        agente = agente or _agente(modelo)
+        mensajes = agente.get_state({"configurable": {"thread_id": thread_id}}).values.get("messages", [])
+        dudosos = datos_dudosos(respuesta, mensajes)
+    except Exception:  # noqa: BLE001
+        log.exception("no se pudo revisar la respuesta del hilo %s", thread_id)
+        return ""
+    if not dudosos:
+        return ""
+    rotulo = "este dato" if len(dudosos) == 1 else "estos datos"
+    return f"\n\nNota: no pude confirmar en la información oficial {rotulo}: {', '.join(dudosos[:3])}. Verifícalo en celsia.com o en la línea 01 8000 112 115."
 
 
 def conversar_en_vivo(
