@@ -95,3 +95,10 @@ Abrir `notebooks/analisis_conversaciones.ipynb` y mostrar el mapa t-SNE:
 | Un solo teléfono escribe muy seguido | El bot responde una vez «estás escribiendo muy rápido» y no gasta cuota (límite de 8 mensajes por minuto por teléfono) |
 | Gemini o DeepSeek no responden | El agente cae solo al modelo de respaldo; es más lento y acierta menos. Decirlo y seguir |
 | Ollama apagado | `buscar_en_base` cae a búsqueda por palabras; las tablas siguen funcionando. Encenderlo y repetir |
+
+## Respaldo para el público: chat web con código QR
+El número de prueba de Meta solo habla con 5 personas. Para que cualquiera del auditorio pruebe el agente desde su celular, sin lista ni instalación:
+1. Una sola vez: `make chat-web` (compila el chat web; la API lo sirve en `/`).
+2. `make api` y el túnel (`cloudflared tunnel --url http://localhost:8000`): **la misma dirección** sirve el webhook de WhatsApp y el chat web.
+3. `make qr-chat-web ARGS="https://<tu-tunel>.trycloudflare.com"` genera `qr_chat_web.png`; se muestra en pantalla o se imprime.
+Límites: no es WhatsApp (es una página en el navegador); la API limita cada origen a 8 mensajes por minuto en `/api/chat`; solo responde mientras el computador y el túnel estén encendidos.
