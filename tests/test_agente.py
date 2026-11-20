@@ -594,7 +594,7 @@ def test_el_prompt_de_sistema_se_arma_en_cada_turno_con_la_fecha_de_hoy():
     modelo = ModeloQueLeeElPrompt(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[], sistemas=[])
     conversar("hola", "hilo-fecha", agente=crear_agente(llm=modelo))
     assert f"Fecha de hoy: {date.today().isoformat()}" in modelo.sistemas[0]
-    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v7_agente.md
+    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v8_agente.md
 
 
 def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
@@ -1164,3 +1164,9 @@ def test_el_aviso_de_datos_dudosos_no_marca_la_linea_de_emergencias():
     from taaml.agente import aviso_de_datos_dudosos
 
     assert aviso_de_datos_dudosos("h", "Si es una emergencia llama al 123 o al 01 8000 112 115.", agente=_estado_falso([])) == ""
+
+
+def test_el_aviso_de_datos_dudosos_no_marca_la_linea_106_de_salud_mental():
+    from taaml.agente import aviso_de_datos_dudosos
+
+    assert aviso_de_datos_dudosos("h", "Puedes llamar a la Línea 106 o a la 123.", agente=_estado_falso([])) == ""
