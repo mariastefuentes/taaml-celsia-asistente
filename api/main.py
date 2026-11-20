@@ -475,7 +475,10 @@ async def recibir_de_whatsapp(peticion: Request, segundo_plano: BackgroundTasks)
         log.error("Meta no pudo entregar un mensaje (%s)", fallo)
     nuevos = 0
     for m in mensajes_entrantes(carga if isinstance(carga, dict) else {}):
-        if _ya_atendido(m["id"]):
+        repetido = _ya_atendido(m["id"])
+        # Solo el final del identificador (no el teléfono ni el texto): sirve para distinguir un reintento de Meta de un mensaje nuevo
+        log.info("mensaje de WhatsApp ...%s (tipo %s), repetido: %s", m["id"][-8:], m["tipo"] or "?", "sí" if repetido else "no")
+        if repetido:
             continue
         nuevos += 1
         segundo_plano.add_task(atender_mensaje_de_whatsapp, m["telefono"], m["tipo"], m["texto"], m.get("audio", ""), m["id"])
