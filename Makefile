@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -38,6 +38,7 @@ ayuda:
 	$(info     make ensayo          revisa que la demo este lista, sin gastar cuota)
 	$(info     make ensayo-whatsapp chequeo previo de WhatsApp: claves, token de Meta, API y panel (gratis; con ARGS="--tunel URL" prueba el tunel))
 	$(info     make preguntas-hostiles  12 preguntas incomodas tipo profesor al agente real (GASTA CUOTA: unas 15 a 25 llamadas))
+	$(info     make herramienta-caida   rompe herramientas a proposito con el modelo real y mira que el agente avise sin inventar (GASTA CUOTA: unas 4 a 8 llamadas))
 	$(info     make informe-borrador    genera docs/3 - Informe/borrador_informe_final.md con los datos del repo (gratis))
 	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas al modelo))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
@@ -113,6 +114,10 @@ ensayo-whatsapp:
 # Preguntas incomodas tipo profesor (gasta cuota). Ejemplo: make preguntas-hostiles ARGS="cargador"
 preguntas-hostiles:
 	uv run python scripts/40_preguntas_hostiles.py $(ARGS)
+
+# Herramientas que fallan de verdad con el modelo real (gasta cuota).
+herramienta-caida:
+	uv run python scripts/42_herramienta_caida.py
 
 # Borrador del informe final con los datos que ya estan en el repo (sin red ni modelo).
 informe-borrador:

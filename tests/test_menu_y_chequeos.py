@@ -152,3 +152,10 @@ def test_los_estados_fallidos_de_meta_se_leen_sin_datos_personales():
     ]}}]}]}
     assert whatsapp.estados_fallidos(carga) == ["131047: Re-engagement message"]
     assert whatsapp.estados_fallidos({}) == []
+
+
+def test_la_prueba_de_herramienta_caida_distingue_lo_guardado_de_lo_no_guardado():
+    prueba = _script("42_herramienta_caida")
+    assert not prueba._dice_que_quedo_hecho("En este momento no pude guardar tu dato. No quedó registrado.")
+    assert prueba._dice_que_quedo_hecho("Listo, guardado.")
+    assert [n for n, _, _ in prueba.CASOS] == ["lectura caída", "escritura caída"]
