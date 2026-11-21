@@ -42,6 +42,7 @@ from taaml.agente import (
     MODELO_AGENTE,
     aviso_de_datos_dudosos,
     calentar,
+    costo_del_turno,
     conversar,
     conversar_en_vivo,
     datos_del_cliente,
@@ -218,13 +219,13 @@ def responder_a_telefono(telefono: str, mensaje: str, canal: str = "chat") -> Re
         actividad.registrar(canal, telefono, mensaje, "error", segundos=time.monotonic() - inicio)
         return RespuestaDelAgente(respuesta=MENSAJE_DE_FALLO, herramientas=[], ok=False)
     pendiente = pendiente_de_aprobacion(hilo)
-    if not pendiente:
-        texto += aviso_de_datos_dudosos(hilo, texto)  # un dato sin respaldo en la respuesta queda avisado (por WhatsApp no hay otro lugar)
+    nota = "" if pendiente else aviso_de_datos_dudosos(hilo, texto)  # un dato sin respaldo en la respuesta queda avisado (por WhatsApp no hay otro lugar)
+    texto += nota
     if pendiente:
         log.info("pendiente de aprobación en el hilo %s: %s", hilo, pendiente["herramienta"])
     herramientas = [ll["herramienta"] for ll in llamadas]
     estado = "pendiente de aprobación" if pendiente else "respondido"
-    actividad.registrar(canal, telefono, mensaje, estado, herramientas, time.monotonic() - inicio)
+    actividad.registrar(canal, telefono, mensaje, estado, herramientas, time.monotonic() - inicio, nota=bool(nota), costo=costo_del_turno(hilo))
     return RespuestaDelAgente(respuesta=texto, herramientas=herramientas, pendiente=pendiente)
 
 
