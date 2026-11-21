@@ -28,7 +28,7 @@ if os.environ.get(
 ):  # ensayo con otro índice: el resultado se queda en esa carpeta y no pisa el del informe
     SALIDA = Path(os.environ["TAAML_CURADURIA"]) / "ranking_k10.csv"
 K = 10
-METODOS = ["palabras", "embeddings", "hibrido"]
+METODOS = ["palabras", "embeddings", "hibrido", "mezcla"]
 
 
 def ndcg(relevantes: list[int], total_relevantes: int) -> float:
@@ -52,7 +52,7 @@ def main() -> None:
             patron = re.compile(inventario[p["intencion_id"]]["regex_cobertura"], re.I)
             total = sum(1 for f in corpus if patron.search(f["texto"]))
             recuperados = buscar(p["pregunta"], K, metodo)
-            if recuperados[0]["metodo"] != metodo:
+            if recuperados[0]["metodo"] != ("embeddings" if metodo == "mezcla" else metodo):  # la mezcla etiqueta los primeros como embeddings
                 sys.exit(
                     f"El método «{metodo}» no se pudo usar (¿Ollama apagado?): se usó «{recuperados[0]['metodo']}»."
                 )
