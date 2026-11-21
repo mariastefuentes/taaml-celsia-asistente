@@ -2,25 +2,25 @@
 
 Sábado 21 de noviembre de 2026, 8:00 a. m. Duración: **15 minutos, sin diapositivas**. El profesor y el público le escriben al bot por WhatsApp mientras se muestra la terminal. Lo que no se pueda mostrar en vivo se muestra con el diagrama de `docs/arquitectura_agente.html` (diagrama interactivo, hecho con Archify) y el cuaderno de t-SNE.
 
-Lo marcado como **(verificar)** no se ha probado con Meta real: se confirma en el ensayo.
+Estado de las pruebas con Meta real (20 de noviembre): ya se probaron el mensaje de texto, la memoria, el reclamo con aprobación por botones (aprobar y rechazar) y el aviso de que no se leen notas de voz. Lo que siga marcado como **(verificar)** no se ha probado con Meta real.
 
 ## Reparto sugerido (cuatro integrantes)
 | Quién | Qué hace en la sustentación |
 |---|---|
-| Persona 1 | Abre y cierra: qué es el sistema, el recorrido del mensaje (diagrama) y por qué servidor propio y no N8N |
-| Persona 2 | Maneja la terminal: API, túnel, reinicio, aprobación del reclamo |
-| Persona 3 | Maneja el teléfono y recibe los mensajes del público; lee en voz alta lo que responde el bot |
-| Persona 4 | Explica el código cuando el profesor pregunte (herramientas, esquemas, HITL, PostgresSaver) y muestra el cuaderno de t-SNE |
+| Persona 1 (provisional) | Abre y cierra: qué es el sistema, el recorrido del mensaje (diagrama) y por qué servidor propio y no N8N |
+| Persona 2 (provisional) | Maneja la terminal y el panel: API, túnel, reinicio. **No es quien aprueba el reclamo** |
+| Persona 3 (provisional) | Maneja el teléfono y recibe los mensajes del público; lee en voz alta lo que responde el bot |
+| Persona 4 (provisional) | Aprueba el reclamo desde su WhatsApp (`APROBADOR_WHATSAPP`, botones Aprobar/Rechazar); explica el código y muestra el cuaderno de t-SNE |
 
 ## Antes de empezar (la noche anterior y 30 minutos antes)
 0. **Chequeo automático:** `make ensayo-whatsapp` (gratis) revisa claves, Ollama, índice, API, panel y si el token de Meta sigue vivo; con el túnel encendido, `make ensayo-whatsapp ARGS="--tunel https://<túnel>"` prueba también ese camino. No cambia nada ni llama al modelo. Si dice FALTA, se arregla antes de seguir con los pasos.
-1. **Token de Meta.** El token temporal del panel de Meta vence en unas 24 horas **(verificar)**: generar uno nuevo la mañana del sábado y ponerlo en `.env` (`WHATSAPP_TOKEN`). Sin esto el bot recibe pero no puede responder.
-2. **Destinatarios de prueba.** Con el número de prueba, Meta solo entrega mensajes a los teléfonos registrados como destinatarios, y hay un máximo pequeño **(verificar cuántos)**. Registrar el teléfono del profesor y los de los cuatro integrantes. Si el profesor no está en la lista, no recibirá respuesta: tener el plan B listo.
+1. **Token de Meta.** Ya es de usuario del sistema y dura 60 días (vence el 19 de enero de 2027): no hay que generarlo de nuevo el sábado. Solo se comprueba con `make ensayo-whatsapp`. Después de la demostración conviene rotar el token de verificación.
+2. **Destinatarios de prueba.** El número de prueba (+1 555-159-4922) solo entrega a un máximo de **5** teléfonos registrados. Registrar el del profesor y los de los integrantes; quien aprueba también debe haber escrito al número en las últimas 24 horas. Si alguien no está en la lista, no recibe respuesta: mostrar el chat web con QR (último apartado).
 3. **Ollama encendido** (los embeddings lo necesitan) y las claves del modelo en `.env`.
 4. **Memoria limpia:** `make demo-limpiar` borra lo que el bot recuerda de los ensayos. Las conversaciones de los ensayos siguen guardadas por teléfono: usar un teléfono que no haya ensayado para la parte de memoria, o decir que es el mismo.
-5. **Terminal 1:** `make api` (levanta PostgreSQL local y la API). Esperar `Application startup complete` y comprobar `http://127.0.0.1:8000/api/salud`: debe decir `"almacen":"qdrant"` y `"memoria":"postgresql"`.
+5. **Terminal 1:** `make api` (levanta PostgreSQL local y la API). **Reiniciar siempre así:** apagar con Ctrl+C, **esperar a que mueran todos los procesos** (si no, Qdrant sigue bloqueado y la API cae a un buscador más lento: la primera respuesta tarda más de 2 minutos), volver a lanzar `make api` y comprobar `http://127.0.0.1:8000/api/salud`: debe decir `"almacen":"qdrant"` y `"memoria":"postgresql"`. Hacer **dos preguntas de calentamiento** antes de que llegue el público.
 6. **Terminal 2:** el túnel https hacia el puerto 8000 (por ejemplo `cloudflared tunnel --url http://localhost:8000`). La dirección cambia cada vez: copiarla y **registrarla de nuevo en el panel de Meta** como `https://<túnel>/webhook/whatsapp` con el token de verificación (`WHATSAPP_VERIFY_TOKEN`). Con el campo `messages` suscrito.
-7. **Prueba de humo:** escribir «Hola» desde un teléfono registrado y comprobar que llega la respuesta (5 a 25 s la primera vez).
+7. **Prueba de humo:** escribir «Hola» desde un teléfono registrado y comprobar que llega la respuesta (tarda de 3 a 11 s; mediana medida 6,4 s). Computador con la pantalla y el reposo sin apagarse (`powercfg /change standby-timeout-ac 0` y `powercfg /change monitor-timeout-ac 0`) y enchufado.
 8. Tener a mano: este guion, el diagrama, el cuaderno `notebooks/analisis_conversaciones.ipynb` abierto y el comando de aprobación (más abajo) con el teléfono del que va a escribir el reclamo.
 
 ## Línea de tiempo (15 minutos)
@@ -76,7 +76,7 @@ Abrir `notebooks/analisis_conversaciones.ipynb` y mostrar el mapa t-SNE:
 
 ## Ayudas opcionales para la demostración
 - **Panel en vivo.** En una pestaña aparte: `http://127.0.0.1:8000/panel`, con el `APROBADOR_TOKEN` de `.env`. Cada mensaje que llega aparece con la herramienta que eligió el agente, lo que tardó y cómo terminó. Se proyecta durante «Casos con el público». Muestra lo que escriben, así que se avisa al público.
-- **Aprobar con botones.** Con `APROBADOR_WHATSAPP=<teléfono de quien aprueba>` en `.env`, el reclamo le llega a esa persona por WhatsApp con «Aprobar» y «Rechazar». Hay que haberle escrito al número de prueba en las últimas 24 horas (si no, Meta no entrega el mensaje) y estar entre los destinatarios de prueba. **No se ha probado con Meta real:** ensayarlo antes y, si falla, usar `POST /aprobar` como arriba.
+- **Aprobar con botones.** Con `APROBADOR_WHATSAPP=<teléfono de quien aprueba>` en `.env`, el reclamo le llega a esa persona por WhatsApp con «Aprobar» y «Rechazar». Hay que haberle escrito al número de prueba en las últimas 24 horas (si no, Meta no entrega el mensaje) y estar entre los destinatarios de prueba. **Probado con Meta real el 20 de noviembre** (aprobar y rechazar); la confirmación «Hecho: …» le llega a quien aprueba. Si falla en vivo, usar `POST /aprobar` como arriba.
 - **Notas de voz (tentativo).** Apagado por defecto. No lo mostramos en vivo; si se ensaya, ver `src/taaml/voz.py`.
 - **Menú, `/nuevo` y «escribiendo…».** Quien escribe «Hola», «menú» o «ayuda» recibe tres botones (Sedes y canales, Poner un reclamo, Celsia Solar) sin gastar el modelo; si Meta no entrega los botones, el menú va como texto. Tocar un botón es una pregunta normal al agente. `/nuevo` borra la conversación para empezar de cero (conserva lo que el agente sabe del cliente; no funciona con un reclamo pendiente: sirve para repetir la demostración con el mismo teléfono). Cada mensaje se marca como leído y muestra «escribiendo…». **Nada de esto se ha probado con Meta real**: ensayarlo antes.
 - **RAG en cadena con `dynamic_prompt`.** La demo corre por defecto con RAG agéntico (el modelo decide cuándo llamar a `buscar_en_base`). Si el profesor pide ver el RAG en cadena que exige el taller: se apaga la API y se enciende con `make api-cadena`; ahí un `dynamic_prompt` (`con_contexto_recuperado`, `src/taaml/agente.py`) inyecta los fragmentos en cada turno y se quita la herramienta. En ese modo un saludo también hace una búsqueda. Las pruebas automáticas lo cubren; **no se ha probado en vivo con WhatsApp**.
@@ -102,3 +102,9 @@ El número de prueba de Meta solo habla con 5 personas. Para que cualquiera del 
 2. `make api` y el túnel (`cloudflared tunnel --url http://localhost:8000`): **la misma dirección** sirve el webhook de WhatsApp y el chat web.
 3. `make qr-chat-web ARGS="https://<tu-tunel>.trycloudflare.com"` genera `qr_chat_web.png`; se muestra en pantalla o se imprime.
 Límites: no es WhatsApp (es una página en el navegador); la API limita cada origen a 8 mensajes por minuto en `/api/chat`; solo responde mientras el computador y el túnel estén encendidos.
+
+## Caída provocada y respaldo (si el profesor pide ver qué pasa cuando algo falla)
+- `make herramienta-caida` rompe herramientas a propósito con el modelo real y comprueba que el agente avise sin inventar (gasta unas 4 a 8 llamadas).
+- Apagar Ollama en vivo: `buscar_en_base` cae a búsqueda por palabras y las tablas siguen funcionando; encenderlo y repetir.
+- Panel en vivo (`/panel`): muestra herramienta, tiempo, costo de cada respuesta y la insignia de «dato sin respaldo». Mostrarlo mientras escribe el público.
+- Si el túnel se reinicia, la dirección cambia: hay que registrar de nuevo el webhook en Meta y regenerar el QR del chat web.
