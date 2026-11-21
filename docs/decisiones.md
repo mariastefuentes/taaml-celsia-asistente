@@ -185,3 +185,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Decisión.** El PR 117 hizo que el CI y `make setup` instalen todos los grupos (`uv sync --frozen --all-groups`). Desde ahí `main` y los PRs nuevos salen en verde. Antes de fusionar se revisa que el CI esté en verde y se corren en local los mismos `make lint` y `make test` con todos los grupos.
 - **Límites.** Las cruces de los PRs 111 a 116 no se cambian: son el registro de ese momento. El código no tenía el fallo.
 - **Evidencia.** `.github/workflows/ci.yml`, `Makefile`.
+
+## D28. El panel en vivo muestra las notas de «dato sin respaldo» y el costo de cada respuesta
+- **Contexto.** El panel de la demostración mostraba herramienta, tiempo y estado, pero no dejaba ver dos cosas que sustentan la explicación «detrás de cámaras»: cuántas respuestas llevaron la nota de dato sin respaldo (D21) y cuánto cuesta cada respuesta.
+- **Decisión.** Cada fila del registro guarda si la respuesta llevó la nota (`nota`) y el costo del turno en dólares (`costo`, calculado con los tokens del turno y la tabla de precios). El panel muestra arriba tres totales (respuestas, con nota, costo total), una columna de costo y una etiqueta «dato sin respaldo» junto al mensaje. Si no se puede calcular el costo, la fila queda sin costo y la respuesta no se afecta.
+- **Resultado.** Con 3 preguntas reales a una API de prueba, cada turno quedó con su costo (entre US$ 0,0013 y 0,0038). La etiqueta de la nota se vio con una fila de ejemplo, porque con preguntas reales no se puede provocar la nota a voluntad.
+- **Límites.** El registro vive en memoria: se pierde al reiniciar la API. El costo usa la tabla de precios del código y puede no coincidir con la factura del proveedor. Se mide un turno del agente, no las llamadas de embeddings locales (que no cuestan).
+- **Evidencia.** `src/taaml/actividad.py`, `src/taaml/agente.py` (`costo_del_turno`), `api/main.py`, `api/panel.html`, `tests/test_demo.py`, `tests/test_agente.py`.

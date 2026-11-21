@@ -767,6 +767,19 @@ def aviso_de_datos_dudosos(thread_id: str, respuesta: str, modelo: str = MODELO_
     return f"\n\nNota: no pude confirmar en la información oficial {rotulo}: {', '.join(dudosos[:3])}. Verifícalo en celsia.com o en la línea 01 8000 112 115."
 
 
+def costo_del_turno(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> float | None:
+    """Costo en dólares del último turno de una conversación (para el panel); None si no se pudo calcular.
+
+    Si algo falla al medir no se rompe la respuesta: el costo es una ayuda para explicar la demostración.
+    """
+    try:
+        entrada, salida = uso_del_turno(agente or _agente(modelo), thread_id)
+        return costo_usd(entrada, salida, modelo)
+    except Exception:  # noqa: BLE001
+        log.warning("no se pudo calcular el costo del hilo %s", thread_id)
+        return None
+
+
 def conversar_en_vivo(
     pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None, usuario: str = ANONIMO
 ) -> Iterator[dict]:

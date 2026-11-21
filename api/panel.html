@@ -22,6 +22,10 @@
   .etiqueta { display:inline-block; padding:2px 8px; border-radius:999px; font-size:13px; background:var(--panel); border:1px solid var(--borde); margin-right:4px; }
   .respondido { color:var(--ok); } .pendiente { color:var(--aviso); } .limite, .error, .nosop { color:var(--mal); }
   .vacio { color:var(--suave); padding:24px 0; }
+  .resumen { display:flex; flex-wrap:wrap; gap:24px; margin:0 0 12px; color:var(--suave); font-size:15px; }
+  .resumen b { color:var(--texto); font-size:20px; margin-left:6px; }
+  .alerta { color:var(--aviso); }
+  .nota { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:12px; color:#06101f; background:var(--aviso); }
   @media (max-width: 700px) { header, main { padding:12px; } .ocultar { display:none; } }
 </style>
 </head>
@@ -35,24 +39,34 @@
   </div>
 </header>
 <main>
+  <p class="resumen" id="resumen" aria-live="polite">
+    <span>Respuestas<b id="n-resp">0</b></span>
+    <span>Con nota de dato sin respaldo<b id="n-notas">0</b></span>
+    <span>Costo total<b id="n-costo">US$ 0</b></span>
+  </p>
   <table>
-    <thead><tr><th>Hora</th><th>Canal</th><th class="ocultar">Quién</th><th>Mensaje</th><th>Herramientas</th><th>Tiempo</th><th>Estado</th></tr></thead>
+    <thead><tr><th>Hora</th><th>Canal</th><th class="ocultar">Quién</th><th>Mensaje</th><th>Herramientas</th><th>Tiempo</th><th class="ocultar">Costo</th><th>Estado</th></tr></thead>
     <tbody id="filas"></tbody>
   </table>
   <p id="vacio" class="vacio">Escribe el token y pulsa «Ver». Aquí aparece cada mensaje que llega al agente, con la herramienta que eligió y lo que tardó.</p>
 </main>
 <script>
-  let token = "", ultimo = 0, temporizador = null;
+  let token = "", ultimo = 0, temporizador = null, nResp = 0, nNotas = 0, costoTotal = 0;
+  const dinero = v => "US$ " + (v < 0.01 ? v.toFixed(5) : v.toFixed(3));
+  function resumir() { document.getElementById("n-resp").textContent = nResp; document.getElementById("n-notas").textContent = nNotas; document.getElementById("n-costo").textContent = dinero(costoTotal); }
   const filas = document.getElementById("filas"), estado = document.getElementById("estado"), vacio = document.getElementById("vacio");
   const clase = e => e.startsWith("pendiente") ? "pendiente" : e === "respondido" || e === "aprobación" ? "respondido" : e === "no soportado" ? "nosop" : e === "límite" ? "limite" : "error";
   function celda(texto, extra) { const td = document.createElement("td"); td.textContent = texto; if (extra) td.className = extra; return td; }
   function pintar(f) {
     const tr = document.createElement("tr");
-    tr.append(celda(f.hora), celda(f.canal), celda(f.quien, "ocultar"), celda(f.mensaje, "msg"));
+    const msg = celda(f.mensaje, "msg");
+    if (f.nota) { const n = document.createElement("span"); n.className = "nota"; n.textContent = "dato sin respaldo"; msg.append(n); }
+    tr.append(celda(f.hora), celda(f.canal), celda(f.quien, "ocultar"), msg);
     const herr = document.createElement("td");
     (f.herramientas.length ? f.herramientas : ["ninguna"]).forEach(h => { const s = document.createElement("span"); s.className = "etiqueta"; s.textContent = h; herr.append(s); });
-    tr.append(herr, celda(f.segundos == null ? "" : f.segundos + " s"), celda(f.estado, clase(f.estado)));
+    tr.append(herr, celda(f.segundos == null ? "" : f.segundos + " s"), celda(f.costo == null ? "" : dinero(f.costo), "ocultar"), celda(f.estado, clase(f.estado)));
     filas.prepend(tr);
+    if (f.estado === "respondido" || f.estado.startsWith("pendiente")) { nResp++; if (f.nota) nNotas++; costoTotal += f.costo || 0; resumir(); }
   }
   async function consultar() {
     try {
@@ -67,7 +81,7 @@
   }
   function parar() { clearInterval(temporizador); temporizador = null; }
   document.getElementById("entrar").addEventListener("click", () => {
-    token = document.getElementById("token").value; ultimo = 0; filas.innerHTML = ""; parar();
+    token = document.getElementById("token").value; ultimo = 0; filas.innerHTML = ""; nResp = nNotas = costoTotal = 0; resumir(); parar();
     consultar(); temporizador = setInterval(consultar, 2000);
   });
 </script>

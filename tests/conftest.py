@@ -40,3 +40,4 @@ def sin_revision_de_datos_en_la_api(monkeypatch):
     except ImportError:
         return
     monkeypatch.setattr(api.main, "aviso_de_datos_dudosos", lambda *a, **k: "")
+    monkeypatch.setattr(api.main, "costo_del_turno", lambda *a, **k: None)
