@@ -143,6 +143,8 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Límites.** Menú, `/nuevo` y «escribiendo…» no se han probado con Meta real. Los botones solo llegan dentro de las 24 h desde el último mensaje de la persona.
 - **Evidencia.** `scripts/39_chequeo_whatsapp.py`, `scripts/40_preguntas_hostiles.py`, `scripts/41_borrador_informe.py`, `scripts/42_herramienta_caida.py` (herramientas rotas a propósito con el modelo real: respuesta cortés, sin inventar y sin filtrar el detalle interno; una corrida, un modelo), `api/main.py` (`_responder_comando`), `src/taaml/agente.py` (`reiniciar_conversacion`), `src/taaml/whatsapp.py` (`marcar_leido`), `tests/test_menu_y_chequeos.py`.
 
+> No hay D20: la numeración salta de D19 a D21 (error de numeración). Se conserva el hueco para no cambiar las referencias existentes.
+
 ## D21. Prompt v8: las cifras de la propia empresa se buscan antes de rechazarlas
 - **Contexto.** Con las 12 preguntas hostiles, «¿Cuántos clientes tiene Celsia exactamente hoy?» se rechazó con «No tengo esa información» sin buscar, aunque la base trae cifras (1,3 millones en el Valle y Tolima; 1,4 millones en Colombia y Centroamérica). El prompt v7 rechazaba lo ajeno a Celsia y ese caso cayó en la regla.
 - **Decisión.** `prompts/v8_agente.md` agrega una línea: los datos de la empresa (clientes, plantas, capacidad, empleados, historia) se buscan con `buscar_en_base`, y si la cifra es aproximada o de una fecha pasada se da tal cual, aclarando que no es el dato exacto de hoy. El resto es igual a v7 (que queda como «reemplazado por v8»).
@@ -215,3 +217,24 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Qué no se hizo y por qué.** (1) No se amplió la matriz de enrutamiento: cambiaría la cifra 32/33 que ya citan el README y el informe, y el banco ya cubre más preguntas. (2) No se editó el diagrama Archify: la nota de datos sin respaldo, el panel y el chat web se describen en el informe, y tocar el archivo generado arriesgaba romper el HTML la víspera. (3) No se agregó el asesor humano ni se tocó la búsqueda ni el camino en vivo de WhatsApp: no se podían probar a tiempo contra Meta real.
 - **Límites.** Tres corridas son pocas para hablar de un intervalo; muestran que la variación es de un caso.
 - **Evidencia.** `scripts/43_banco_verificable.py` (salidas guardadas fuera del repositorio).
+
+## D31. El agente busca con una mezcla de significado y palabras
+- **Contexto.** La búsqueda por significado fallaba en dos preguntas de trámites (D29): el fragmento con el dato no estaba entre los primeros. D29 dejó el cambio para después de la demostración; al estabilizarse la entrega se hizo la mezcla.
+- **Decisión.** `buscar_en_base` y el RAG en cadena usan `metodo="mezcla"`: los k−1 primeros por significado y, al final, el mejor por palabras que no esté ya. El Q&A (`recuperar`) sigue con `auto` (embeddings) para no mover las cifras del Taller 1.
+- **Resultado.** La medición de ranking a k=10 (`ranking_k10.csv`, #131) da un nDCG@10 que empata con embeddings; la matriz de enrutamiento se volvió a correr con la mezcla.
+- **Límites.** El 89 % de recuperación del README mide el Q&A de 12 fragmentos, no la mezcla del agente (4 fragmentos). El nDCG es una métrica de orden, no de respuesta; no equivale al 89 %.
+- **Evidencia.** `src/taaml/recuperacion.py` (`_buscar`), `src/taaml/agente.py`, `tests/test_recuperacion_mezcla.py`, `docs/2 - Conjunto de prueba/resultados/ranking_k10.csv`, `scripts/21_metricas_ranking.py`.
+
+## D32. Servidor MCP propio, de solo lectura
+- **Contexto.** Las dos herramientas de consulta del agente sirven a otros clientes (por ejemplo OpenClaw) sin repetir el código ni pasar por WhatsApp.
+- **Decisión.** `src/taaml/servidor_mcp.py` expone `buscar_informacion_celsia` y `consultar_datos_celsia` con `MCPServer` y transporte stdio; `make mcp` lo lanza a mano. Dependencia nueva: `mcp>=1.2`. No escribe memoria, no radica reclamos y no abre puertos.
+- **Por qué.** El cliente MCP lo lanza como proceso hijo: no hay puerto hacia internet ni API que proteger; el alcance se limita a las dos consultas de lectura.
+- **Límites.** No expone memoria, aprobación ni reclamos; no tiene autenticación porque vive en la sesión local del cliente. No se creó spec aparte: esta decisión y la prueba hacen de registro.
+- **Evidencia.** `src/taaml/servidor_mcp.py`, `tests/test_servidor_mcp.py`, `Makefile` (`mcp`), `pyproject.toml`.
+
+## D33. pre-commit y revisión de tipos con ty
+- **Contexto.** El CI detectaba los errores después de subir; hacía falta verlos antes del commit.
+- **Decisión.** `.pre-commit-config.yaml` con hooks locales: ruff (`F`,`E9`), `uv lock --check` y bloqueo de `.env`. Se instala una vez por clon con `uvx pre-commit install`. `make tipos` corre `ty` sobre `src`, informa y no bloquea (hoy da avisos de tipos de LangChain).
+- **Por qué.** Los dos primeros son las mismas revisiones del CI; el bloqueo de `.env` protege la clave. `ty` todavía es ruidoso con LangChain, así que no se pone en `make check` ni en el CI.
+- **Límites.** pre-commit no se instala solo; los hooks usan el `bash` de Git (Windows lo trae). `make check` sigue siendo lint + pruebas + skills, sin ty.
+- **Evidencia.** `.pre-commit-config.yaml`, `Makefile` (`tipos`), `.github/workflows/ci.yml`.

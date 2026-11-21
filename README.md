@@ -20,7 +20,7 @@ Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energ�
 | Resultado medido | Valor |
 |---|---|
 | Corpus curado | 393 documentos, 1.690 fragmentos, ~316.800 tokens |
-| Recuperación (la respuesta está entre los 12 fragmentos) | 89 % con embeddings (54 % por palabras, 74 % híbrido). El 89 % se midió con las mismas preguntas que motivaron el diccionario de sinónimos: con preguntas nuevas sería menor |
+| Recuperación (la respuesta está entre los 12 fragmentos) | 89 % con embeddings (54 % por palabras, 74 % híbrido). El 89 % se midió con las mismas preguntas que motivaron el diccionario de sinónimos: con preguntas nuevas sería menor. Estas cifras son del Q&A (12 fragmentos); el agente usa una mezcla de significado y palabras, medida aparte en `docs/2 - Conjunto de prueba/resultados/ranking_k10.csv` |
 | Preguntas de prueba | 59 (35 con respuesta y 24 que no deben responderse), 4 de inyección |
 | Respuestas correctas (Taller 1, con `gemini-3.5-flash`) | Según el juez automático: 31 de 35 con respuesta y 21 de 24 negativas bien resueltas. Con la revisión asistida: 29 de 35 y 19 de 24. Los veredictos de la revisión los propuso el asistente de código y los ratificó María Stella Fuentes |
 | Costo frente a pegar toda la base en el prompt | unas 80 veces menor por pregunta |
