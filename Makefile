@@ -127,6 +127,10 @@ preguntas-hostiles:
 banco-verificable:
 	uv run python scripts/43_banco_verificable.py $(ARGS)
 
+# Clona el repositorio de GitHub en una carpeta vacía y comprueba que instala, pasa lint y pruebas, y que el README cita comandos que existen. No gasta cuota; tarda unos minutos.
+verificar-clon:
+	uv run python scripts/45_verificar_clon.py $(ARGS)
+
 # Herramientas que fallan de verdad con el modelo real (gasta cuota).
 herramienta-caida:
 	uv run python scripts/42_herramienta_caida.py
