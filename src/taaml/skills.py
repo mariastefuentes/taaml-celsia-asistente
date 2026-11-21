@@ -2,7 +2,7 @@
 
 No ejecuta las skills: revisa que cada carpeta tenga un `SKILL.md` con `name` y `description`,
 que el nombre coincida con la carpeta, que el archivo no pase de 500 líneas y que no traiga
-claves, rutas absolutas ni instrucciones para leer el `.env`.
+claves, rutas absolutas (fuera de bloques de código) ni instrucciones para leer el `.env`.
 """
 
 import re
@@ -36,6 +36,18 @@ def _frontmatter(texto: str) -> dict[str, str]:
         clave, _, valor = linea.partition(":")
         campos[clave.strip()] = valor.strip().strip("'\"")
     return campos
+
+
+def _sin_bloques_de_codigo(texto: str) -> str:
+    """Texto sin los bloques cercados por ``` (ahí caben rutas de ejemplo)."""
+    lineas, dentro = [], False
+    for linea in texto.splitlines():
+        if linea.lstrip().startswith("```"):
+            dentro = not dentro
+            continue
+        if not dentro:
+            lineas.append(linea)
+    return "\n".join(lineas)
 
 
 def verificar_skills(raiz: Path | None = None) -> list[str]:
@@ -77,7 +89,7 @@ def verificar_skills(raiz: Path | None = None) -> list[str]:
             errores.append(f"{carpeta.name}: {len(lineas)} líneas (máximo {MAX_LINEAS})")
         if any(patron.search(texto) for patron in SECRETOS):
             errores.append(f"{carpeta.name}: posible secreto en SKILL.md")
-        if RUTA_ABSOLUTA.search(texto):
+        if RUTA_ABSOLUTA.search(_sin_bloques_de_codigo(texto)):
             errores.append(f"{carpeta.name}: ruta absoluta en SKILL.md")
         if LECTURA_ENV.search(texto):
             errores.append(f"{carpeta.name}: instrucción para leer .env")

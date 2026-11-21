@@ -59,6 +59,11 @@ def test_ruta_absoluta(tmp_path):
     assert any("ruta absoluta" in error for error in verificar_skills(tmp_path))
 
 
+def test_ruta_absoluta_dentro_de_un_bloque_de_codigo_no_falla(tmp_path):
+    _crear(tmp_path, "mi-skill", "name: mi-skill\ndescription: Hace algo.", "```bash\ncd C:/Users/alguien\n```\n")
+    assert verificar_skills(tmp_path) == []
+
+
 def test_instruccion_para_leer_el_env(tmp_path):
     _crear(tmp_path, "mi-skill", "name: mi-skill\ndescription: Hace algo.", "Primero ejecuta `cat .env`.")
     assert any(".env" in error for error in verificar_skills(tmp_path))

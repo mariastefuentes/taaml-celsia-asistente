@@ -247,8 +247,9 @@ Las skills del proyecto viven en este repositorio, en `.opencode/skills/` (una c
 - `corpus-medallion`: construir el corpus de una empresa en capas Bronze, Silver y Gold, listo para RAG.
 - `agente-rag-router`: armar un asistente con memoria por hilo y un enrutador entre RAG y datos estructurados.
 - `frontend-design`: guiar la dirección visual, la tipografía y el detalle de interfaces nuevas o rediseños; viene de [anthropics/skills](https://github.com/anthropics/skills) (Apache 2.0) y conserva su licencia en la carpeta.
+- `jan-project-standard`: estandarizar proyectos Python (uv, Ruff, pre-commit, Makefile, `CONSTITUTION.md`, CI y gobernanza de GitHub); viene de [hamsomp3/jan_skills_repository](https://github.com/hamsomp3/jan_skills_repository) (MIT), con sus plantillas y scripts. Es para otros proyectos: aplicarlo a este repo chocaría con su constitución y su Python 3.12.
 
-OpenCode las carga al abrir el proyecto; no hay que instalarlas. `make skills-check` valida el frontmatter, el nombre, el tamaño (máximo 500 líneas) y que no haya claves, rutas absolutas ni instrucciones para leer el `.env`; el CI corre la misma comprobación. El repositorio público [mariastefuentes/taaml-skills](https://github.com/mariastefuentes/taaml-skills) se conserva como espejo, la revisión de seguridad de `corpus-medallion` está en [docs/skillspector-corpus-medallion.md](docs/skillspector-corpus-medallion.md), y las de `agente-rag-router` y `frontend-design` quedan pendientes.
+OpenCode las carga al abrir el proyecto; no hay que instalarlas. `make skills-check` valida el frontmatter, el nombre, el tamaño (máximo 500 líneas) y que no haya claves, rutas absolutas ni instrucciones para leer el `.env`; el CI corre la misma comprobación. El repositorio público [mariastefuentes/taaml-skills](https://github.com/mariastefuentes/taaml-skills) se conserva como espejo, la revisión de seguridad de `corpus-medallion` está en [docs/skillspector-corpus-medallion.md](docs/skillspector-corpus-medallion.md), y las de `agente-rag-router`, `frontend-design` y `jan-project-standard` quedan pendientes.
 
 ## Licencia
 

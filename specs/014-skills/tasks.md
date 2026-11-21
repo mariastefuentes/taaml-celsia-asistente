@@ -3,6 +3,7 @@
 - [x] Migrar `corpus-medallion` a `.opencode/skills/corpus-medallion/SKILL.md`
 - [x] Migrar `agente-rag-router` a `.opencode/skills/agente-rag-router/SKILL.md`
 - [x] Agregar `frontend-design` (de `anthropics/skills`, Apache 2.0) con su `LICENSE.txt`
+- [x] Agregar `jan-project-standard` (de `hamsomp3/jan_skills_repository`, MIT) con `references/`, `assets/`, `scripts/` y su `LICENSE`
 - [x] `src/taaml/skills.py` con `verificar_skills()`
 - [x] `scripts/verificar_skills.py`
 - [x] `tests/test_skills.py` (12 pruebas)
