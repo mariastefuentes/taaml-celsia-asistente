@@ -238,7 +238,12 @@ app/        Taller 1 (material histórico, el agente vigente no lo usa): aplicac
 
 ## Skills
 
-Las skills del proyecto (`corpus-medallion` y `agente-rag-router`) viven en su propio repositorio público: [mariastefuentes/taaml-skills](https://github.com/mariastefuentes/taaml-skills). Se instalan con `npx skills add mariastefuentes/taaml-skills --skill corpus-medallion`. La revisión de seguridad de `corpus-medallion` está en [docs/skillspector-corpus-medallion.md](docs/skillspector-corpus-medallion.md).
+Las skills del proyecto viven en este repositorio, en `.opencode/skills/` (una carpeta por skill con `SKILL.md`):
+
+- `corpus-medallion`: construir el corpus de una empresa en capas Bronze, Silver y Gold, listo para RAG.
+- `agente-rag-router`: armar un asistente con memoria por hilo y un enrutador entre RAG y datos estructurados.
+
+OpenCode las carga al abrir el proyecto; no hay que instalarlas. `make skills-check` valida el frontmatter, el nombre, el tamaño (máximo 500 líneas) y que no haya claves, rutas absolutas ni instrucciones para leer el `.env`; el CI corre la misma comprobación. El repositorio público [mariastefuentes/taaml-skills](https://github.com/mariastefuentes/taaml-skills) se conserva como espejo, y la revisión de seguridad de `corpus-medallion` está en [docs/skillspector-corpus-medallion.md](docs/skillspector-corpus-medallion.md).
 
 ## Licencia
 
