@@ -127,7 +127,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 ## D17. Mejoras de la Clase 9 que no se adoptaron
 - **Jev (System One) como compuerta del RAG.** Sigue abierta (D9): es una API comercial y no hay clave. El agente ya decide cuándo buscar (D12) y la matriz de enrutamiento mide ese acierto (32 de 33), así que la compuerta sería una optimización de costo y latencia, no una pieza que falte.
 - **Campos `verified` y `stale_after` del formato OKF en la capa Gold.** No se agregaron: obligaría a regenerar todos los documentos y a reindexar a un día de la sustentación, sin cambiar lo que responde el agente. Hoy la frescura se cubre con `fecha_extraccion`, `fecha_publicacion` y `hash` en cada documento.
-- **Skill propia.** Ya existe y vive en su propio repositorio público (`mariastefuentes/taaml-skills`, skill `corpus-medallion`), con su reporte de SkillSpector en `docs/skillspector-corpus-medallion.md`; no se duplica en este repositorio.
+- **Skill propia.** Se migró al repositorio en `.opencode/skills/` (ver D24); `mariastefuentes/taaml-skills` queda como espejo. El reporte de SkillSpector sigue en `docs/skillspector-corpus-medallion.md`.
 
 ## D18. Ayudas de la demostración: panel en vivo, botones de aprobación, plan B, chats reales y voz tentativa
 - **Contexto.** El sábado el profesor y el público escriben al bot por WhatsApp. Lo que hace el agente es invisible (herramienta elegida, tiempos, aprobación) y todo depende de Meta, de un túnel y del token.
@@ -164,3 +164,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Resultado.** Con las 114 conversaciones simuladas la confiabilidad de vecinos fue PCA 0,887, t-SNE 0,953 y UMAP 0,930: en estos datos t-SNE conserva mejor los vecinos y PCA es el menos fiel, como se espera de una proyección lineal. El chat web se probó en el navegador (pregunta real, respuesta con herramienta y costo) y a través del túnel de Cloudflare, incluida la recarga.
 - **Límites.** Una sola corrida con una semilla fija; la comparación visual de los grupos es cualitativa. El chat web no es WhatsApp: no cuenta para el criterio del canal, solo asegura que el público pueda probar el agente. Sigue dependiendo del computador y del túnel encendidos.
 - **Evidencia.** `scripts/36_construir_notebook_tsne.py`, `notebooks/analisis_conversaciones.ipynb`, `api/main.py` (`montar_frontend`), `scripts/44_qr_chat_web.py`, `tests/test_api.py`.
+
+## D24. Skills dentro del repositorio, solo para OpenCode
+- **Contexto.** Las skills del proyecto (`corpus-medallion` y `agente-rag-router`) vivían en el repositorio público `mariastefuentes/taaml-skills` y este proyecto solo las enlazaba (D17). Así, quien clonaba el proyecto no las tenía, el CI no podía validarlas y la revisión del curso solo veía un enlace.
+- **Decisión.** Se migran a `.opencode/skills/<nombre>/SKILL.md` y pasan a versionarse con el proyecto. Se usa **solo OpenCode**: no se copian a `.claude/skills/` ni a `.agents/skills/` porque el equipo no usa esos clientes. `mariastefuentes/taaml-skills` se conserva como **espejo** manual.
+- **Validación.** `src/taaml/skills.py` y `scripts/verificar_skills.py` comprueban frontmatter, nombre, tamaño (máximo 500 líneas) y seguridad (sin claves, rutas absolutas ni lectura del `.env`); `make skills-check` y el CI lo exigen.
+- **Qué no se hizo.** No hay sincronización automática con el espejo ni scripts dentro de las skills. El reporte de SkillSpector de `corpus-medallion` se conserva; el de `agente-rag-router` queda pendiente.
+- **Evidencia.** `.opencode/skills/`, `src/taaml/skills.py`, `scripts/verificar_skills.py`, `tests/test_skills.py`, `specs/014-skills`.

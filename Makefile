@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida test lint skills-check check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -43,7 +43,8 @@ ayuda:
 	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas al modelo))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
 	$(info     make lint            errores de codigo con ruff y lock vigente)
-	$(info     make check           lint + pruebas: lo que corre el CI; correrlo antes de subir)
+	$(info     make skills-check    valida las skills de .opencode/skills (gratis))
+	$(info     make check           lint + pruebas + skills: lo que corre el CI; correrlo antes de subir)
 	$(info     make recuperacion    mide la recuperacion de fragmentos (gratis; necesita Ollama))
 	$(info )
 	$(info   OTROS)
@@ -144,7 +145,11 @@ lint:
 	uvx ruff@0.17.3 check --select F,E9 src tests scripts app
 	uv lock --check
 
-check: lint test
+# Valida frontmatter, nombre, tamaño y seguridad de las skills; no las ejecuta.
+skills-check:
+	uv run python scripts/verificar_skills.py
+
+check: lint test skills-check
 
 format:
 	uvx ruff@0.17.3 format src tests scripts app

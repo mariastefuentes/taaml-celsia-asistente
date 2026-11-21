@@ -90,7 +90,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
 | **Base vectorial** | Qdrant en modo local (persistente, sin servidor), similitud del coseno |
 | **Interfaz** | API FastAPI + frontend React (`api/`, `frontend/`, Módulo 2); Streamlit solo para el Taller 1 (`app/`) |
-| **Testing** | `pytest` (330 pruebas, sin modelos ni red) |
+| **Testing** | `pytest` (353 pruebas, sin modelos ni red) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
 | **CI/CD** | GitHub Actions (`.github/workflows/ci.yml`) |
 
@@ -131,10 +131,11 @@ taaml-celsia-asistente/
 │   └── 5_extraccion/         # JSONL de contactos
 ├── prompts/                  # prompts versionados (nunca se editan: se versionan)
 ├── docs/                     # análisis, conjunto de prueba, informe, capturas y diagramas (Archify)
-├── specs/                    # especificaciones 001–013 (spec, plan, tareas)
+├── specs/                    # especificaciones 001–014 (spec, plan, tareas)
 ├── tests/                    # pruebas automáticas de componentes
 ├── .specify/memory/          # este archivo — verdad central
 ├── .github/                  # plantillas de PR e issues, CI, Dependabot y etiquetas
+├── .opencode/skills/         # skills para OpenCode (una carpeta por skill con SKILL.md)
 ├── api/                      # API FastAPI del agente (Módulo 2)
 ├── frontend/                 # interfaz React + Vite (Módulo 2)
 ├── app/                      # aplicaciones Streamlit del Taller 1 (puntos de entrada, no librería)
@@ -167,6 +168,7 @@ taaml-celsia-asistente/
   - Un cambio de prompt es una **versión nueva** (`prompts/vN_*.md`), no una edición.
   - Toda cifra, teléfono o enlace que responda el asistente debe existir en la base.
   - `temperature = 0.0` y `top_p = 0.1` en RAG y agentes. **Excepción:** DeepSeek (`deepseek-flash`, en el agente y en las tareas) respeta `temperature` con el razonamiento apagado, pero deja `top_p` fijo en 1,0; se compensa con las herramientas, la validación de datos sin respaldo y el «No tengo esa información».
+  - Las skills viven en `.opencode/skills/<nombre>/SKILL.md` (solo OpenCode); `make skills-check` valida frontmatter, nombre, tamaño y seguridad, y el CI lo exige.
 
 ## 6. Calidad y automatización
 
@@ -243,6 +245,7 @@ git push -u origin feat/mi-cambio
 | 2026-11-18 | Prompt del agente v5 (`prompts/v5_agente.md`) y aprobación humana: `radicar_reclamo` se pausa con `HumanInTheLoopMiddleware` hasta que una persona decide en `POST /aprobar` | Radicar un reclamo cambia algo fuera de la conversación; el agente prepara la acción y un humano la aprueba. Matriz de enrutamiento con el prompt v5: 32 de 33 |
 | 2026-11-18 | Prompt del agente v6 (`prompts/v6_agente.md`): las preguntas ajenas a Celsia no se responden, aunque sean sencillas | Con v5 el agente contestaba trivias con su conocimiento propio (3 de 10 preguntas ajenas: una capital, una suma). Con v6 se rechazaron 10 de 10, en los dos modos de RAG, y 8 de 8 preguntas de Celsia, saludos y despedidas siguieron bien. Matriz de enrutamiento con v6: 32 de 33 (igual que con v5) |
 | 2026-11-18 | Prompt del agente v7 (`prompts/v7_agente.md`): los temas de energía se buscan aunque no nombren a Celsia, y si una herramienta falla no se dice que algo quedó guardado | El análisis de conversaciones simuladas (PR de t-SNE) mostró 2 de 114 rechazos erróneos de preguntas de energía («¿Qué es la energía renovable?» se rechazó sin buscar) y una prueba anterior con el Store caído en la que el agente dijo «ya guardé». Con v7 y el agente real: 7 de 8 preguntas de energía respondidas con búsqueda (la octava, sobre medidores inteligentes, dijo con honestidad que no hay información), 10 de 10 preguntas ajenas rechazadas, 6 de 6 respuestas honestas con el Store caído y matriz de enrutamiento 32 de 33 (igual que con v6) |
+| 2026-11-21 | Las skills (`corpus-medallion` y `agente-rag-router`) se migran a `.opencode/skills/` y se validan con `make skills-check` y el CI; solo OpenCode, y `mariastefuentes/taaml-skills` queda como espejo | Quien clona el proyecto debe tener las skills, el CI debe validarlas y la revisión del curso debe verlas; el equipo usa solo OpenCode (D24) |
 
 ## 10. Notas y tareas pendientes
 

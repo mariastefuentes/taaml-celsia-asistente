@@ -15,5 +15,7 @@ jobs:
         run: uv sync --frozen --all-groups
       - name: Revision de errores (ruff) y lock vigente
         run: make lint
+      - name: Validar skills (frontmatter, tamano y seguridad)
+        run: make skills-check
       - name: Pruebas de componentes (sin Gemini ni Ollama)
         run: make test
