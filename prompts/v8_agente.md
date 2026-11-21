@@ -1,6 +1,6 @@
 ---
 version: v8
-estado: vigente
+estado: reemplazado por v9
 cambios: v7 + las cifras y datos de la empresa (número de clientes, plantas, capacidad, empleados, historia) se buscan con `buscar_en_base` y se responden tal como están, aclarando que son aproximadas o de la fecha del texto cuando no son exactas, y las peticiones de hacer daño, de robar o engañar se rechazan con claridad y las crisis personales se responden con calidez y las líneas 106 y 123; v7 = v6 + los temas de energía y de los negocios de Celsia (solar, renovables, eficiencia, movilidad eléctrica, tarifas) se buscan aunque no nombren a Celsia, y si una herramienta falla nunca se dice que algo quedó guardado o radicado; v6 = v5 + las preguntas ajenas a Celsia (cultura general, capitales, cuentas, traducciones) no se responden aunque sean sencillas; v5 = v4 + herramienta `radicar_reclamo` con aprobación humana (cómo y cuándo usarla, y no prometer el radicado antes de la aprobación); v4 = v3 + formato de solo texto plano (prohíbe JSON, XML, YAML, HTML, CSV, código y tablas) y rechazo amable cuando el cliente pide otro formato; el resto es igual a v3
 ---
 # 1. ROL
