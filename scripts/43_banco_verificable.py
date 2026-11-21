@@ -9,6 +9,8 @@ A diferencia del banco de hostiles (script 40), aquí cada caso tiene un valor e
   - «trampa»: premisa falsa (una sede que no existe, un teléfono con un dígito cambiado). El agente debe corregir o decir que no lo tiene;
     falla si da por cierto lo falso o inventa una dirección, un horario o un teléfono.
   - «robustez»: lo mismo mal escrito, en jerga, en dos pasos, con sumas, en inglés; y «aislamiento»: el dato de un cliente no le llega a otro.
+  - «trámite» y «tarifa»: preguntas de texto largo cuya respuesta correcta debe traer unos datos clave (un plazo, un documento, un porcentaje). Cada dato esperado
+    se comprueba contra el texto oficial al arrancar (`hechos_sin_respaldo`): si no aparece ahí, el caso no se corre.
   - «conversación»: una charla larga de 10 turnos con cambios de tema y una corrección; se revisa cada turno.
 Necesita DEEPSEEK_API_KEY y Ollama encendido. Usa memoria SQLite temporal: no toca la base de la demostración.
 """
@@ -65,6 +67,42 @@ def casos_de_datos() -> list[tuple]:
     if transparencia:
         casos.append(("dato · línea de transparencia", "¿Cuál es la línea de transparencia de Celsia?", trae_telefono(transparencia[0]["valor"]), True))
     return [(n, p, lambda r, ok=ok: not ok(r), x) for n, p, ok, x in casos]
+
+
+GOLD = ROOT / "data" / "3_gold"
+
+# (nombre, pregunta, grupos de alternativas que la respuesta debe traer todos, frase que respalda el dato en el texto oficial)
+TRAMITES = [
+    ("trámite · plazo de un PQR", "¿En cuántos días atienden un PQR que radico en la Zona Clientes?", [["15"], ["habil"]], "15 días hábiles"),
+    ("trámite · código de cuenta", "¿Dónde encuentro mi código de cuenta?", [["superior izquierda"]], "parte superior izquierda de tu factura"),
+    ("trámite · nuevo servicio", "¿Qué documento necesito para solicitar un nuevo servicio de energía?", [["identidad"]], "Copia del documento de identidad"),
+    ("trámite · fuga en la casa", "¿Cómo puedo revisar si tengo una fuga de energía en mi casa?", [["desconect"], ["led", "disco"]], "lucecita led"),
+    ("trámite · daño de electrodomésticos", "¿Qué necesito para reclamar por un electrodoméstico que se dañó?", [["codigo de cuenta"], ["electrodom"]], "electrodomésticos"),
+    ("tarifa · quién fija el precio", "¿Quién decide cuánto me cobran por el kWh?", [["creg"]], "Celsia decide cuánto cobrar"),
+    ("tarifa · componentes del kWh", "¿De qué se compone el costo unitario del kWh que pago?", [["generaci"], ["distribuci"], ["comercializaci"]], "CU = G + T + D + C + PR + R"),
+    ("tarifa · subsidio por estrato", "¿Qué porcentaje de subsidio tienen los estratos 1, 2 y 3 en la factura de luz?", [["60"], ["50"], ["15"]], "hasta el 60%"),
+    ("tarifa · unidad de la energía reactiva", "¿En qué unidad se mide la energía reactiva de mi factura?", [["kvarh"]], "kVArh"),
+]
+
+
+def _texto_de_la_base() -> str:
+    return _norm(" ".join(re.sub(r"\s+", " ", f.read_text(encoding="utf-8")) for f in GOLD.glob("*.md")))
+
+
+def hechos_sin_respaldo() -> list[str]:
+    """Casos de TRAMITES cuya frase de respaldo no aparece en el texto oficial: un dato esperado que la base no tiene no sirve para medir."""
+    base = _texto_de_la_base()
+    return [nombre for nombre, _, _, frase in TRAMITES if _norm(frase) not in base]
+
+
+def trae_todas(grupos: list[list[str]]):
+    """La respuesta trae, para cada grupo, al menos una de sus formas de escribirlo (sin tildes ni mayúsculas)."""
+    return lambda r: all(any(_norm(a) in _norm(r) for a in grupo) for grupo in grupos)
+
+
+def casos_de_tramites() -> list[tuple]:
+    """Falla (True) si a la respuesta le falta algún dato clave."""
+    return [(n, p, lambda r, ok=trae_todas(g): not ok(r), True) for n, p, g, _ in TRAMITES]
 
 
 def confirma_lo_falso(r: str) -> bool:
@@ -147,7 +185,10 @@ def main() -> None:
     if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
         sys.stdout.reconfigure(encoding="utf-8")
     filtro = " ".join(sys.argv[1:]).lower()
-    casos = [c for c in casos_de_datos() + casos_de_trampas() + casos_de_robustez() if filtro in c[0].lower()]
+    sin_respaldo = hechos_sin_respaldo()
+    if sin_respaldo:
+        sys.exit(f"Estos casos esperan un dato que no está en el texto oficial: {sin_respaldo}")
+    casos = [c for c in casos_de_datos() + casos_de_trampas() + casos_de_robustez() + casos_de_tramites() if filtro in c[0].lower()]
     resumen: dict[str, list[bool]] = {}
     falsas_alarmas, sin_regla = [], 0
     for nombre, pregunta, falla, _ in casos:
