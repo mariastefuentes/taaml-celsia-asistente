@@ -46,6 +46,20 @@ export async function cargarMensajes(hilo) {
   return (await r.json()).mensajes;
 }
 
+// Valora una respuesta del asistente: `valor` es 1 (👍) o -1 (👎). Devuelve la valoración que la API guardó.
+export async function valorarRespuesta(hilo, mensajeId, valor) {
+  const r = await fetch("/api/feedback", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hilo, mensaje_id: mensajeId, valor, usuario: usuario() }),
+  });
+  if (!r.ok) {
+    const datos = await r.json().catch(() => ({}));
+    throw new Error(datos.detail || `No se pudo guardar la valoración (${r.status}).`);
+  }
+  return r.json();
+}
+
 function leerBloque(bloque) {
   const tipo = /^event: (.+)$/m.exec(bloque)?.[1];
   const datos = /^data: (.+)$/m.exec(bloque)?.[1];

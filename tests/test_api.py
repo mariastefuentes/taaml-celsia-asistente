@@ -239,3 +239,56 @@ def test_el_chat_web_no_se_monta_si_falta_el_frontend_compilado(tmp_path):
 
     assert montar_frontend(FastAPI(), tmp_path) is False
 
+
+# --- retroalimentación (valoración 👍/👎 de las respuestas del asistente) ---
+
+def _valoración_falsa(monkeypatch, valorado=True, guardado=True):
+    """Falsifica el agente y el guardado de POST /api/feedback; devuelve la lista de las valoraciones que llaman."""
+    guardados = []
+    monkeypatch.setattr("api.main.mensaje_del_hilo", lambda hilo, mensaje_id: valorado)
+    monkeypatch.setattr(
+        "api.main.registrar",
+        lambda hilo, mensaje_id, valor, usuario: guardados.append((hilo, mensaje_id, valor, usuario)) or guardado,
+    )
+    return guardados
+
+
+def test_valoración_positiva_y_negativa_se_guardan(monkeypatch):
+    guardados = _valoración_falsa(monkeypatch)
+    usuario = "a" * 32
+    for valor in (1, -1):
+        r = cliente.post("/api/feedback", json={"hilo": HILO, "mensaje_id": "m" * 32, "valor": valor, "usuario": usuario})
+        assert r.status_code == 200 and r.json() == {"valor": valor}
+    assert guardados == [(HILO, "m" * 32, 1, usuario), (HILO, "m" * 32, -1, usuario)]
+
+
+def test_valoración_rechaza_datos_inválidos(monkeypatch):
+    guardados = _valoración_falsa(monkeypatch)
+    base = {"hilo": HILO, "mensaje_id": "m" * 32, "valor": 1, "usuario": "a" * 32}
+    inválidos = [
+        {**base, "valor": 0},
+        {**base, "valor": 2},
+        {**base, "valor": "x"},
+        {**base, "valor": None},
+        {**base, "hilo": "../x"},
+        {**base, "usuario": "../x"},
+        {**base, "mensaje_id": ""},
+        {**base, "mensaje_id": "m" * 65},
+        {k: v for k, v in base.items() if k != "valor"},
+        {},
+    ]
+    assert [cliente.post("/api/feedback", json=c).status_code for c in inválidos] == [422] * len(inválidos)
+    assert guardados == []
+
+
+def test_valoración_de_mensaje_inexistente_da_404(monkeypatch):
+    guardados = _valoración_falsa(monkeypatch, valorado=False)
+    r = cliente.post("/api/feedback", json={"hilo": HILO, "mensaje_id": "m" * 32, "valor": 1, "usuario": "a" * 32})
+    assert r.status_code == 404 and guardados == []
+
+
+def test_valorar_dos_veces_el_mismo_mensaje_da_409(monkeypatch):
+    _valoración_falsa(monkeypatch, guardado=False)
+    r = cliente.post("/api/feedback", json={"hilo": HILO, "mensaje_id": "m" * 32, "valor": 1, "usuario": "a" * 32})
+    assert r.status_code == 409
+

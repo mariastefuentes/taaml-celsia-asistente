@@ -8,6 +8,7 @@ Endpoints:
   GET/POST /webhook/whatsapp         WhatsApp (Meta): verificación del webhook y mensajes entrantes (se responde por WhatsApp en segundo plano)
   POST /aprobar                      una persona aprueba o rechaza lo que el agente dejó pendiente (necesita el encabezado X-Aprobador)
   GET  /api/hilos/{hilo}/mensajes    la conversación guardada, para recuperarla al recargar la página
+  POST /api/feedback                guarda la valoración (1: 👍, -1: 👎) de una respuesta del asistente
   GET  /api/usuarios/{usuario}/datos    lo que el agente recuerda del cliente (memoria de largo plazo)
   DELETE /api/usuarios/{usuario}/datos  borra todo lo que el agente recuerda del cliente
   GET  /panel                        página del panel en vivo de la demostración (pide el token del aprobador en la pantalla)
@@ -47,12 +48,14 @@ from taaml.agente import (
     conversar_en_vivo,
     datos_del_cliente,
     historial_visible,
+    mensaje_del_hilo,
     olvidar_cliente,
     pendiente_de_aprobacion,
     reiniciar_conversacion,
     resolver_aprobacion,
 )
 from taaml import actividad, voz
+from taaml.retroalimentacion import registrar
 from taaml.limite import TEXTO_LIMITE, limite_desde_entorno
 from taaml.recuperacion import almacen_vectorial
 from taaml.whatsapp import (
@@ -316,6 +319,34 @@ def datos(usuario: str) -> dict:
 def borrar_datos(usuario: str) -> dict:
     """Borra todo lo que el agente recuerda del cliente y dice cuántos datos eran."""
     return {"borrados": olvidar_cliente(_usuario_valido(usuario))}
+
+
+class Feedback(BaseModel):
+    """Cuerpo de POST /api/feedback: valoración de una respuesta del asistente: 1 (👍) o -1 (👎)."""
+
+    hilo: str
+    mensaje_id: str = Field(min_length=1, max_length=64)
+    valor: Literal[1, -1]
+    usuario: str
+
+
+@app.post("/api/feedback")
+def feedback(dato: Feedback) -> dict:
+    """Guarda la valoración (1: 👍, -1: 👎) de una respuesta del asistente.
+
+    El mensaje que se valora se identifica por `hilo` y `mensaje_id` — el id del mensaje que el frontend recibe
+    en el evento `fin` de un turno — y se valida contra la conversación: debe ser el mensaje del asistente en ese hilo.
+    Errores: 422 (identificadores inválidos), 404 (no hay ese mensaje en la conversación) y 409 (la respuesta ya
+    fue valorada; no se guardan duplicados).
+    """
+    if not HILO.match(dato.hilo):
+        raise HTTPException(status_code=422, detail="Identificador de hilo inválido")
+    _usuario_valido(dato.usuario)
+    if not mensaje_del_hilo(dato.hilo, dato.mensaje_id):
+        raise HTTPException(status_code=404, detail="No existe ese mensaje en la conversación")
+    if not registrar(dato.hilo, dato.mensaje_id, dato.valor, dato.usuario):
+        raise HTTPException(status_code=409, detail="Esa respuesta ya fue valorada")
+    return {"valor": dato.valor}
 
 
 # --- WhatsApp (API Cloud de Meta) ---

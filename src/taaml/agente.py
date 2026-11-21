@@ -701,6 +701,13 @@ def pendiente_de_aprobacion(thread_id: str, modelo: str = MODELO_AGENTE, agente:
     return None
 
 
+def mensaje_del_hilo(thread_id: str, mensaje_id: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> bool:
+    """¿Existe ese mensaje del asistente en la conversación? Sirve para validar una valoración antes de guardarla."""
+    agente = agente or _agente(modelo)
+    mensajes = agente.get_state({"configurable": {"thread_id": thread_id}}).values.get("messages", [])
+    return any(m.type == "ai" and m.id == mensaje_id for m in mensajes)
+
+
 def resolver_aprobacion(
     thread_id: str,
     decision: Literal["aprobar", "rechazar", "responder"],
@@ -791,7 +798,7 @@ def conversar_en_vivo(
     if pendiente := pendiente_de_aprobacion(thread_id, agente=agente):  # espera a una persona: no se sigue hasta que decida
         yield {"tipo": "pendiente", **pendiente}
         yield {"tipo": "texto", "texto": MENSAJE_EN_REVISION}
-        yield {"tipo": "fin", "usadas": "Reclamo en revisión", "tokens_entrada": 0, "tokens_salida": 0, "costo_usd": 0.0}
+        yield {"tipo": "fin", "usadas": "Reclamo en revisión", "tokens_entrada": 0, "tokens_salida": 0, "costo_usd": 0.0, "mensaje_id": None}
         return
     entrada = {"messages": [{"role": "user", "content": quitar_invisibles(pregunta)}]}
     config = {"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente"]}
@@ -827,12 +834,14 @@ def conversar_en_vivo(
     ):  # validación antes de dar la respuesta por buena: el cliente ve qué datos no tienen respaldo
         yield {"tipo": "aviso", "datos": dudosos}
     entrada_tokens, salida_tokens = uso_del_turno(agente, thread_id)
+    ultimo = mensajes[-1] if mensajes else None
     yield {
         "tipo": "fin",
         "usadas": etiqueta_herramientas(llamadas),
         "tokens_entrada": entrada_tokens,
         "tokens_salida": salida_tokens,
         "costo_usd": costo_usd(entrada_tokens, salida_tokens, modelo),
+        "mensaje_id": ultimo.id if ultimo is not None and ultimo.type == "ai" else None,
     }
 
 
@@ -858,6 +867,7 @@ def historial_visible(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any =
                         "texto": m.text.strip(),
                         "usadas": etiqueta_herramientas(llamadas),
                         "fuentes": fuentes,
+                        "id": m.id,
                     }
                 )
     return visibles

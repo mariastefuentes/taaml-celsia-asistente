@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useMatch, useNavigate, useParams } from "react-router-dom";
 import Markdown from "./Markdown.jsx";
-import { cargarDatos, cargarMensajes, cargarSalud, enviar, olvidarDatos } from "./api.js";
+import { cargarDatos, cargarMensajes, cargarSalud, enviar, olvidarDatos, valorarRespuesta } from "./api.js";
 
 // Cada tarjeta muestra una capacidad del agente con una pregunta de ejemplo (la misma que enruta a esa herramienta).
 const SUGERENCIAS = [
@@ -130,10 +130,23 @@ export default function App() {
     } else if (e.tipo === "aviso") {
       setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, aviso: e.datos })));
     } else if (e.tipo === "fin") {
-      setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, usadas: e.usadas, tokens: e.tokens_entrada + e.tokens_salida, costo: e.costo_usd })));
+      setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, id: e.mensaje_id, usadas: e.usadas, tokens: e.tokens_entrada + e.tokens_salida, costo: e.costo_usd })));
     } else if (e.tipo === "error") {
       setError(e.mensaje);
       setMensajes((m) => (m.at(-1)?.texto === "" ? m.slice(0, -1) : m));
+    }
+  }
+
+  async function valorar(indice, valor) {
+    const mensaje = mensajes[indice];
+    if (!hilo || !mensaje?.id || mensaje.valorado !== undefined || mensaje.valorando) return;
+    setMensajes((m) => m.map((x, k) => (k === indice ? { ...x, valorando: true } : x)));
+    try {
+      await valorarRespuesta(hilo, mensaje.id, valor);
+      setMensajes((m) => m.map((x, k) => (k === indice ? { ...x, valorando: false, valorado: valor } : x)));
+    } catch {
+      // Si ya estaba valorada sale 409 y si el mensaje no existe 404: sin cambios en la interfaz
+      setMensajes((m) => m.map((x, k) => (k === indice ? { ...x, valorando: false } : x)));
     }
   }
 
@@ -242,6 +255,12 @@ export default function App() {
               <p className="aviso">Verifica antes de usar: estos datos de la respuesta no aparecen en lo que el asistente consultó ({m.aviso.join(", ")}).</p>
             )}
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
+            {m.rol === "assistant" && m.id && (
+              <div className="feedback">
+                <button type="button" className={`valor positivo${m.valorado === 1 ? " activado" : ""}`} disabled={m.valorando} onClick={() => valorar(i, 1)} aria-pressed={m.valorado === 1} aria-label="Valorar la respuesta positivamente">👍</button>
+                <button type="button" className={`valor negativo${m.valorado === -1 ? " activado" : ""}`} disabled={m.valorando} onClick={() => valorar(i, -1)} aria-pressed={m.valorado === -1} aria-label="Valorar la respuesta negativamente">👎</button>
+              </div>
+            )}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
           </article>
         ))}

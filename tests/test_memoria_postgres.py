@@ -103,3 +103,15 @@ def test_la_aprobacion_pendiente_sobrevive_a_un_reinicio_y_se_radica_en_postgres
     guardados = almacen_de_largo_plazo(url=url).search(("reclamos", "cliente-pg"))
     assert texto == "Tu reclamo quedó radicado." and len(guardados) == 1
     assert pendiente_de_aprobacion("pg-aprob", agente=segundo) is None
+
+
+def test_el_store_de_feedback_funcista(url):
+    from taaml.agente import almacen_de_largo_plazo
+    from taaml.retroalimentacion import NAMESPACE, registrar
+
+    store = almacen_de_largo_plazo(url=url)
+    assert registrar("pg-feedback", "m1", 1, "cliente-pg", almacen=store) is True
+    assert registrar("pg-feedback", "m1", 1, "cliente-pg", almacen=store) is False  # duplicado
+    assert registrar("pg-feedback", "m2", -1, "cliente-pg", almacen=store) is True
+    item = store.get(NAMESPACE, "pg-feedback:m2")
+    assert item.value["valor"] == -1 and item.value["usuario"] == "cliente-pg"
