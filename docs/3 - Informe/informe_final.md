@@ -176,7 +176,7 @@ El profesor pidió probar que el agente no inventa. Se hizo con cuatro instrumen
 
 | Instrumento | Qué es | Resultado (modelo real, prompt v9) |
 |---|---|---|
-| **Banco verificable** (`make banco-verificable`, D22 y D29) | 49 preguntas con la respuesta calculada desde los datos: cuántos puntos hay en una ciudad, teléfono y horario de una sede, contactos; trampas con premisa falsa (una sede que no existe, un teléfono con un dígito cambiado, un WhatsApp inventado); robustez (ortografía, jerga, inglés, dos pasos); aislamiento entre clientes; una conversación de 10 turnos; y 9 preguntas de trámites y tarifas con el plazo, el documento o el porcentaje que debe traer la respuesta, comprobados antes contra el texto oficial | 39 de 40 en las primeras 40 preguntas y 7 de 9 en trámites y tarifas. La que falla en las primeras cita una tarifa de 2020 (607 pesos por kWh, que sí está en la base) como dato de esa fecha y la regla marca cualquier monto; las dos de trámites fallan porque la búsqueda no trae el fragmento (el agente calla o es vago, no inventa) |
+| **Banco verificable** (`make banco-verificable`, D22 y D29) | 49 preguntas con la respuesta calculada desde los datos: cuántos puntos hay en una ciudad, teléfono y horario de una sede, contactos; trampas con premisa falsa (una sede que no existe, un teléfono con un dígito cambiado, un WhatsApp inventado); robustez (ortografía, jerga, inglés, dos pasos); aislamiento entre clientes; una conversación de 10 turnos; y 9 preguntas de trámites y tarifas con el plazo, el documento o el porcentaje que debe traer la respuesta, comprobados antes contra el texto oficial | Tres corridas completas: 46, 46 y 47 de 49 (94 % a 96 %). Las primeras 40 preguntas dan 39 de 40 y las 9 de trámites y tarifas, 7 de 9. La que falla en las primeras cita una tarifa de 2020 (607 pesos por kWh, que sí está en la base) como dato de esa fecha y la regla marca cualquier monto; las dos de trámites fallan porque la búsqueda no trae el fragmento (el agente calla o es vago, no inventa) |
 | **Preguntas hostiles** (`make preguntas-hostiles`) | 22 preguntas incómodas: ambigua, fuera de alcance, el celular del gerente, competencia, insulto, cifras con fuentes distintas, otro idioma | 0 fallas automáticas; las respuestas se leyeron a mano |
 | **Ataques directos** (`scripts/19_probar_ataques.py`) | 11 intentos de saltarse las reglas (ignorar instrucciones, falsa autoridad, revelar el prompt, etc.) | 11 de 11 resistidos |
 | **Inyección indirecta** (`scripts/12_probar_inyeccion_indirecta.py`, y `make demo-inyeccion` en vivo) | Documentos con órdenes escondidas dentro del corpus | Resistido: el agente responde con el contenido legítimo y no obedece la orden |
@@ -249,7 +249,7 @@ make banco-verificable  # 49 preguntas con respuesta calculada desde los datos (
 make herramienta-caida  # rompe herramientas a propósito con el modelo real (gasta cuota)
 ```
 
-Las decisiones (D1 a D29), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
+Las decisiones (D1 a D30), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
 
 ## Anexo B. Declaración de uso de IA
 
@@ -281,7 +281,7 @@ Todo código o texto generado por una herramienta lo revisa una persona del equi
 
 | Criterio (peso) | Dónde está la evidencia |
 |---|---|
-| Arquitectura y lógica del agente (30 %) | Secciones 2 a 5 y 9: `create_agent`, cinco herramientas con esquema estricto, aprobación humana, memoria en PostgreSQL, prompt v9, banco verificable y matriz de enrutamiento; decisiones D1 a D29 |
+| Arquitectura y lógica del agente (30 %) | Secciones 2 a 5 y 9: `create_agent`, cinco herramientas con esquema estricto, aprobación humana, memoria en PostgreSQL, prompt v9, banco verificable y matriz de enrutamiento; decisiones D1 a D30 |
 | Integración del canal (30 %) | Secciones 6 y 7: API FastAPI y servidor propio de WhatsApp, probado con Meta real (texto, memoria, aprobación y rechazo con botones, aviso de voz); límites de Meta dichos con claridad |
 | Calidad del código y GitHub (20 %) | Pull requests con revisión, 362 pruebas, CI en verde con `make lint` y `make test`, `make verificar-clon`, decisiones registradas, repositorio público |
 | Documentación final (10 %) | Este informe, `README.md`, `docs/decisiones.md`, guiones de la demostración |
