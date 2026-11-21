@@ -1170,3 +1170,14 @@ def test_el_aviso_de_datos_dudosos_no_marca_la_linea_106_de_salud_mental():
     from taaml.agente import aviso_de_datos_dudosos
 
     assert aviso_de_datos_dudosos("h", "Puedes llamar a la Línea 106 o a la 123.", agente=_estado_falso([])) == ""
+
+
+def test_el_costo_del_turno_suma_el_ultimo_turno_y_no_rompe_si_falla():
+    from types import SimpleNamespace
+
+    from taaml.agente import costo_del_turno
+
+    hecho = [_mensaje("human", "hola"), SimpleNamespace(type="ai", usage_metadata={"input_tokens": 1000, "total_tokens": 1500})]
+    assert costo_del_turno("h", modelo="ollama:local", agente=_estado_falso(hecho)) == 0.0  # un modelo local no cuesta
+    roto = SimpleNamespace(get_state=lambda config: (_ for _ in ()).throw(RuntimeError("base caída")))
+    assert costo_del_turno("h", agente=roto) is None

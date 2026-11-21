@@ -34,8 +34,13 @@ def registrar(
     herramientas: list[str] | None = None,
     segundos: float | None = None,
     reloj=time.time,
+    nota: bool = False,
+    costo: float | None = None,
 ) -> dict[str, Any]:
-    """Agrega una fila y la devuelve. `estado` es uno de ESTADOS (cómo terminó el turno)."""
+    """Agrega una fila y la devuelve. `estado` es uno de ESTADOS (cómo terminó el turno).
+
+    `nota` dice si la respuesta llevó la nota de «dato sin respaldo»; `costo` es lo que costó el turno en dólares (None si no se pudo calcular).
+    """
     global _SIGUIENTE
     with _CERROJO:
         fila = {
@@ -47,6 +52,8 @@ def registrar(
             "estado": estado,
             "herramientas": list(herramientas or []),
             "segundos": None if segundos is None else round(segundos, 1),
+            "nota": bool(nota),
+            "costo": None if costo is None else round(costo, 5),
         }
         _SIGUIENTE += 1
         _FILAS.append(fila)
