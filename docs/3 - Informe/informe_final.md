@@ -164,11 +164,25 @@ El servidor de integración está construido directamente en FastAPI (`src/taaml
 | Con el almacén de memoria caído | 6 de 6 respuestas honestas |
 | Herramienta rota a propósito (script 42, modelo real) | 2 de 2 respuestas corteses, sin inventar y sin filtrar el error |
 | Recuperación (Módulo 1) | 89 % con embeddings (54 % por palabras, 74 % híbrido) |
-| Pruebas automáticas | 362, sin modelos ni red |
+| Banco verificable (49 casos con valor esperado, D29 a D31) | **48 de 49** con la búsqueda mezclada; antes 46, 46 y 47 en tres corridas (D30) |
+| Búsqueda a k=4: embeddings contra mezcla (35 preguntas, D34) | 25/35 contra 26/35; McNemar exacto p = 1,0: **sin diferencia significativa** |
+| Pruebas automáticas | 366 en `main` (369 con las del script de métricas), sin modelos ni red |
 | Latencia | WhatsApp real, 20 preguntas: mediana 6,4 s, p90 10,3 s, máximo 10,9 s. Módulo 2: mediana de 8,4 s (2,1 a 23 s); algunas corridas con muchas herramientas tardaron de 12 a 72 s |
 | Costo | Unos 0,02 USD por una conversación de cuatro turnos (Módulo 2) |
 
 **Lo que estas cifras no dicen.** El 89 % de recuperación se midió con las mismas preguntas que motivaron el diccionario de sinónimos; con preguntas nuevas sería menor. Las 33 preguntas de la matriz son pocas. Los 8 casos de energía y los 10 ajenos son listas chicas. Una respuesta de WhatsApp tarda de segundos a unas decenas de segundos, y el indicador «escribiendo…» ayuda pero no la acelera.
+
+### Mejoras posteriores al cierre del Módulo 3
+
+**Búsqueda mezclada (D31).** El agente recupera cuatro fragmentos: los tres primeros por significado y, al final, el mejor por palabras que no esté ya. Con eso dejaron de fallar los dos trámites que siempre fallaban (el plazo de un PQR y dónde encontrar el código de cuenta) y el banco verificable subió a 48 de 49. Con 35 preguntas no se puede decir que sea mejor en general: hit@4 pasó de 25 a 26, MRR@4 de 0,645 a 0,652 y nDCG@4 de 0,532 a 0,539, con McNemar exacto p = 1,0 y tres pares discordantes (la mezcla gana dos y pierde uno). A k=10 los dos métodos empatan (nDCG 0,535). La mejora comprobada son los dos trámites; lo demás es ruido de muestra (D34).
+
+**Servidor MCP propio (D32).** Las dos herramientas de consulta están expuestas por un servidor MCP de solo lectura (`src/taaml/servidor_mcp.py`, transporte stdio, sin puerto abierto). Se probó con un cliente MCP real y con OpenClaw.
+
+**Calidad del repositorio (D33).** `pre-commit` con las mismas revisiones del CI (ruff, `uv lock --check` y bloqueo de `.env`) y `make tipos` con `ty`, que informa 8 avisos y no bloquea.
+
+**OpenClaw como segundo cliente (D35, Taller 3).** Un agente OpenClaw con identidad «Asistente Celsia» (`SOUL.md`, `AGENTS.md`), el MCP anterior conectado y la configuración endurecida: perfil `messaging`, sin ejecución de comandos, sin acceso a archivos, sin permisos elevados ni navegador, un chat separado por persona y sandbox Docker donde solo se permite el MCP de Celsia. La batería de 4 pruebas del curso (identidad, archivos, memoria entre sesiones y Flash contra Pro) pasó las 4 antes de endurecer; después, crear archivos y ejecutar comandos quedan rechazados, la clave sigue sin imprimirse y las preguntas de Celsia se siguen respondiendo por el MCP. Costó tres lecciones: el Gateway debe estar apagado para registrar un MCP, el sandbox necesita su imagen y una lista explícita de herramientas permitidas (sin ella el agente perdía el MCP y decía «no tengo evidencia» sin inventar), y lanzar el Gateway desde una terminal de herramientas lo mataba al terminar el comando. La prueba desde el teléfono por Telegram queda pendiente.
+
+**Registros de conversación (D34).** De 114 conversaciones simuladas, el 46,5 % usó herramientas y el 17,5 % falló, ninguna pasó a revisión humana. Las 6 conversaciones reales son de compañeros y conocidos, no de clientes de Celsia: con n = 6 los intervalos de Wilson son enormes y no se presentan como tráfico real.
 
 ### Cómo intentamos hacerlo alucinar
 
@@ -224,7 +238,8 @@ Cada punto es una conversación; cerca significa parecida. El color es la catego
 - **Tres vacíos de la base de conocimiento** (precio del cargador, fecha límite de pago, facturación por estimación) no están publicados por Celsia. El agente dice «no tengo esa información» y da la línea 01 8000 112 115. El texto para llenarlos está preparado y no se aplicó porque cambiaría el corpus e invalidaría las mediciones.
 - **Una pregunta de enrutamiento falla (R31)** y la compuerta opcional System One (D9) sigue abierta.
 - **Latencia de segundos a decenas de segundos** por respuesta.
-- **Evaluaciones pequeñas** (33 y 59 preguntas, 8 y 10 casos): sirven para detectar fallos, no para dar tasas estadísticas.
+- **Evaluaciones pequeñas** (33, 35 y 59 preguntas, 8 y 10 casos): sirven para detectar fallos; en la comparación de la búsqueda mezclada McNemar no encontró diferencia significativa.
+- **Sandbox y Gateway de OpenClaw en un computador local.** El sandbox necesita Docker Desktop encendido y el inicio automático del Gateway no se pudo confirmar en este equipo; la prueba por Telegram no se hizo.
 - **t-SNE** con datos simulados (sección 10).
 
 **Lección del CI.** Seis pull requests se fusionaron con la verificación de GitHub en rojo porque el CI no instalaba un grupo de dependencias que en local ya estaba (D26). Se corrigió el CI, se acordó mirar el CI antes de fusionar y se creó `make verificar-clon`, que clona el repositorio en una carpeta vacía, instala y corre lint y pruebas. Las cruces antiguas se dejan como registro.
@@ -249,7 +264,7 @@ make banco-verificable  # 49 preguntas con respuesta calculada desde los datos (
 make herramienta-caida  # rompe herramientas a propósito con el modelo real (gasta cuota)
 ```
 
-Las decisiones (D1 a D30), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
+Las decisiones (D1 a D35), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
 
 ## Anexo B. Declaración de uso de IA
 
