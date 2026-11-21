@@ -9,7 +9,7 @@
 
 Celsia publica su información en más de mil páginas y un cliente no tiene dónde preguntar y recibir la respuesta con su fuente. El proyecto construyó, en tres módulos, un asistente que responde solo con el contenido oficial de celsia.com y dice «no tengo esa información» cuando la fuente no lo trae. El Módulo 1 armó el corpus (393 documentos, 1.690 fragmentos) y un sistema de preguntas y respuestas con RAG. El Módulo 2 lo convirtió en un agente con memoria, herramientas y enrutamiento. El Módulo 3, que este informe detalla, lo llevó a producción por la **Ruta A**: una API REST con FastAPI, cinco herramientas de LangChain con esquemas Pydantic estrictos, memoria en PostgreSQL, aprobación humana para los reclamos y un **servidor de integración propio** (Vía 2, sin N8N) que atiende a los clientes por WhatsApp con la API Cloud de Meta.
 
-El agente se midió con la matriz de enrutamiento (32 de 33 preguntas con la herramienta esperada), preguntas de energía (7 de 8 respondidas, la octava con «no hay información»), preguntas ajenas (10 de 10 rechazadas) y respuestas honestas con una herramienta caída (6 de 6). Hay 362 pruebas automáticas sin modelos ni red y un banco de 49 preguntas cuya respuesta correcta se calcula desde los datos para medir alucinaciones (sección 9). Como componente opcional, se analizaron 114 conversaciones simuladas con embeddings y t-SNE en 2D y 3D: los vectores recuperan la estructura por tema (índice de Rand ajustado de 0,45) y la lectura de las conversaciones marcadas como fallidas muestra que la tasa de fallo útil es de 4 %, no de 18 %.
+El agente se midió con la matriz de enrutamiento (42 de 43 preguntas con la herramienta esperada), preguntas de energía (7 de 8 respondidas, la octava con «no hay información»), preguntas ajenas (10 de 10 rechazadas) y respuestas honestas con una herramienta caída (6 de 6). Hay 362 pruebas automáticas sin modelos ni red y un banco de 49 preguntas cuya respuesta correcta se calcula desde los datos para medir alucinaciones (sección 9). Como componente opcional, se analizaron 114 conversaciones simuladas con embeddings y t-SNE en 2D y 3D: los vectores recuperan la estructura por tema (índice de Rand ajustado de 0,45) y la lectura de las conversaciones marcadas como fallidas muestra que la tasa de fallo útil es de 4 %, no de 18 %.
 
 Lo que **no** está probado se dice en la sección 11: el canal de WhatsApp se verificó con Meta real solo en parte, el número de prueba de Meta solo conversa con cinco destinatarios autorizados, y las conversaciones reales analizadas son seis, insuficientes para concluir algo sobre ellas.
 
@@ -158,7 +158,7 @@ El servidor de integración está construido directamente en FastAPI (`src/taaml
 
 | Medición | Resultado |
 |---|---|
-| Matriz de enrutamiento (herramienta esperada en 33 preguntas) | **32 de 33**; la que falla (R31) ya fallaba con versiones anteriores del prompt |
+| Matriz de enrutamiento (herramienta esperada en 43 preguntas, D36) | **42 de 43**; la que falla (R31) ya fallaba con versiones anteriores del prompt. Las 10 preguntas añadidas (trámites, inglés, mal escrito, ataques, fuera de dominio) enrutaron bien; en ellas solo se verifica la herramienta, no el texto |
 | Preguntas de energía, con búsqueda | 7 de 8 respondidas; la octava dijo con honestidad que no hay información |
 | Preguntas ajenas a Celsia | 10 de 10 rechazadas |
 | Con el almacén de memoria caído | 6 de 6 respuestas honestas |
@@ -238,7 +238,7 @@ Cada punto es una conversación; cerca significa parecida. El color es la catego
 - **Tres vacíos de la base de conocimiento** (precio del cargador, fecha límite de pago, facturación por estimación) no están publicados por Celsia. El agente dice «no tengo esa información» y da la línea 01 8000 112 115. El texto para llenarlos está preparado y no se aplicó porque cambiaría el corpus e invalidaría las mediciones.
 - **Una pregunta de enrutamiento falla (R31)** y la compuerta opcional System One (D9) sigue abierta.
 - **Latencia de segundos a decenas de segundos** por respuesta.
-- **Evaluaciones pequeñas** (33, 35 y 59 preguntas, 8 y 10 casos): sirven para detectar fallos; en la comparación de la búsqueda mezclada McNemar no encontró diferencia significativa.
+- **Evaluaciones pequeñas** (43, 35 y 59 preguntas, 8 y 10 casos): sirven para detectar fallos; en la comparación de la búsqueda mezclada McNemar no encontró diferencia significativa.
 - **Sandbox y Gateway de OpenClaw en un computador local.** El sandbox necesita Docker Desktop encendido y el inicio automático del Gateway no se pudo confirmar en este equipo; la prueba por Telegram no se hizo.
 - **t-SNE** con datos simulados (sección 10).
 
@@ -264,7 +264,7 @@ make banco-verificable  # 49 preguntas con respuesta calculada desde los datos (
 make herramienta-caida  # rompe herramientas a propósito con el modelo real (gasta cuota)
 ```
 
-Las decisiones (D1 a D35), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
+Las decisiones (D1 a D36), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
 
 ## Anexo B. Declaración de uso de IA
 
