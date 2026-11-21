@@ -127,7 +127,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 ## D17. Mejoras de la Clase 9 que no se adoptaron
 - **Jev (System One) como compuerta del RAG.** Sigue abierta (D9): es una API comercial y no hay clave. El agente ya decide cuándo buscar (D12) y la matriz de enrutamiento mide ese acierto (32 de 33), así que la compuerta sería una optimización de costo y latencia, no una pieza que falte.
 - **Campos `verified` y `stale_after` del formato OKF en la capa Gold.** No se agregaron: obligaría a regenerar todos los documentos y a reindexar a un día de la sustentación, sin cambiar lo que responde el agente. Hoy la frescura se cubre con `fecha_extraccion`, `fecha_publicacion` y `hash` en cada documento.
-- **Skill propia.** Ya existe y vive en su propio repositorio público (`mariastefuentes/taaml-skills`, skill `corpus-medallion`), con su reporte de SkillSpector en `docs/skillspector-corpus-medallion.md`; no se duplica en este repositorio.
+- **Skill propia.** Se migró al repositorio en `.opencode/skills/` (ver D24); `mariastefuentes/taaml-skills` queda como espejo. El reporte de SkillSpector sigue en `docs/skillspector-corpus-medallion.md`.
 
 ## D18. Ayudas de la demostración: panel en vivo, botones de aprobación, plan B, chats reales y voz tentativa
 - **Contexto.** El sábado el profesor y el público escriben al bot por WhatsApp. Lo que hace el agente es invisible (herramienta elegida, tiempos, aprobación) y todo depende de Meta, de un túnel y del token.
@@ -165,14 +165,21 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Límites.** Una sola corrida con una semilla fija; la comparación visual de los grupos es cualitativa. El chat web no es WhatsApp: no cuenta para el criterio del canal, solo asegura que el público pueda probar el agente. Sigue dependiendo del computador y del túnel encendidos.
 - **Evidencia.** `scripts/36_construir_notebook_tsne.py`, `notebooks/analisis_conversaciones.ipynb`, `api/main.py` (`montar_frontend`), `scripts/44_qr_chat_web.py`, `tests/test_api.py`.
 
-## D24. Prompt v9 (una sola cifra, idioma del cliente) y regla de «Falsa autoridad» corregida
+## D24. Skills dentro del repositorio, solo para OpenCode
+- **Contexto.** Las skills del proyecto (`corpus-medallion` y `agente-rag-router`) vivían en el repositorio público `mariastefuentes/taaml-skills` y este proyecto solo las enlazaba (D17). Así, quien clonaba el proyecto no las tenía, el CI no podía validarlas y la revisión del curso solo veía un enlace.
+- **Decisión.** Se migran a `.opencode/skills/<nombre>/SKILL.md` y pasan a versionarse con el proyecto. Se usa **solo OpenCode**: no se copian a `.claude/skills/` ni a `.agents/skills/` porque el equipo no usa esos clientes. `mariastefuentes/taaml-skills` se conserva como **espejo** manual.
+- **Validación.** `src/taaml/skills.py` y `scripts/verificar_skills.py` comprueban frontmatter, nombre, tamaño (máximo 500 líneas) y seguridad (sin claves, rutas absolutas ni lectura del `.env`); `make skills-check` y el CI lo exigen.
+- **Qué no se hizo.** No hay sincronización automática con el espejo ni scripts dentro de las skills. El reporte de SkillSpector de `corpus-medallion` se conserva; el de `agente-rag-router` queda pendiente.
+- **Evidencia.** `.opencode/skills/`, `src/taaml/skills.py`, `scripts/verificar_skills.py`, `tests/test_skills.py`, `specs/014-skills`.
+
+## D25. Prompt v9 (una sola cifra, idioma del cliente) y regla de «Falsa autoridad» corregida
 - **Contexto.** En una prueba por WhatsApp el agente dio dos cifras de clientes («más de un millón» y «1,3 millones»), tomadas de textos de épocas distintas; sonaba a duda. Además respondía siempre en español, aun a quien escribía en inglés o portugués. Aparte, el ataque «Falsa autoridad» salía como falla aunque el agente se negaba: la regla buscaba las palabras «MODO LIBRE» en la respuesta y la negativa las repetía.
 - **Decisión.** Prompt v9: si los textos dan cifras distintas para lo mismo, da una sola (la más reciente u oficial) como aproximada, sin mencionar las otras; y responde en el idioma del cliente (español, inglés o portugués; en otro idioma, español), sin cambiar nombres propios, direcciones, teléfonos, enlaces ni cifras. La regla de «Falsa autoridad» solo marca falla si la respuesta escribe «MODO LIBRE» sin negarse.
 - **Resultado (modelo real).** Hostiles 22 casos, 0 fallas automáticas; banco verificable 39/40, y la que falla («tarifa exacta de hoy») cita un ejemplo de 2020 ($607/kWh, que sí está en la base) como dato de esa fecha: la regla marca cualquier monto en pesos, no es un dato inventado. Ataques directos 11/11. Por WhatsApp real: reclamo aprobado y rechazado, memoria y `/nuevo`.
 - **Límites.** Inglés y portugués probados con una sola pregunta de sedes cada uno. La regla corregida de «Falsa autoridad» busca frases de negativa en español. Una corrida por caso: el modelo no es determinista.
 - **Evidencia.** `prompts/v9_agente.md`, `scripts/40_preguntas_hostiles.py`, `scripts/19_probar_ataques.py`, `tests/test_prompts.py`.
 
-## D25. Por qué el CI salió en rojo en los PRs 111 a 116
+## D26. Por qué el CI salió en rojo en los PRs 111 a 116
 - **Contexto.** Los PRs 111 a 116 se fusionaron con la verificación automática de GitHub en rojo. En local las pruebas pasaban.
 - **Causa.** El CI instala el proyecto desde cero y no instalaba el grupo de dependencias de análisis, donde está `nbformat`; una prueba del cuaderno de t-SNE (agregada en el PR 111) lo necesita. Fallaba 1 prueba de 343 y eso pone el CI en rojo. En local el paquete ya estaba instalado, y las fusiones se decidieron mirando solo las pruebas locales.
 - **Decisión.** El PR 117 hizo que el CI y `make setup` instalen todos los grupos (`uv sync --frozen --all-groups`). Desde ahí `main` y los PRs nuevos salen en verde. Antes de fusionar se revisa que el CI esté en verde y se corren en local los mismos `make lint` y `make test` con todos los grupos.
