@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida test lint tipos skills-check check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida test lint tipos skills-check check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -156,6 +156,10 @@ skills-check:
 # Revisión de tipos con ty (Astral). Informa, no bloquea: hoy da 8 avisos, casi todos de tipos de LangChain.
 tipos:
 	-uvx ty check --python .venv src
+
+# Servidor MCP propio (solo lectura, por stdio): lo lanza el cliente MCP; a mano sirve para ver que arranca.
+mcp:
+	uv run python -m taaml.servidor_mcp
 
 check: lint test skills-check
 
