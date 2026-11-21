@@ -55,7 +55,7 @@ ayuda:
 	@:
 
 setup:
-	uv sync
+	uv sync --all-groups
 	uv run python -c "import pathlib, shutil; p = pathlib.Path('.env'); p.exists() or shutil.copy('.env.example', p); print('Listo: .env disponible (completa GOOGLE_API_KEY si esta vacio)')"
 	$(info Descargando los modelos de Ollama (si ya estan, no hace nada):)
 	-ollama --version
