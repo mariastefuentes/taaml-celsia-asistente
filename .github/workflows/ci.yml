@@ -12,8 +12,10 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.3
       - name: Instalar dependencias del lock
-        run: uv sync --frozen
+        run: uv sync --frozen --all-groups
       - name: Revision de errores (ruff) y lock vigente
         run: make lint
+      - name: Validar skills (frontmatter, tamano y seguridad)
+        run: make skills-check
       - name: Pruebas de componentes (sin Gemini ni Ollama)
         run: make test

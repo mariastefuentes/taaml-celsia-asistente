@@ -89,7 +89,7 @@ Un reclamo no se radica solo: `radicar_reclamo` pausa el flujo con `HumanInTheLo
 | Base vectorial | Qdrant local con alias `celsia` sobre colecciones versionadas (migración blue/green y `revertir_qdrant`), payload filtrable por `categoria` y `region`; `scripts/26_explorar_ann_y_filtros.py` mide IVF, PQ y pre/post-filtrado frente a la búsqueda exacta; `scripts/29_medir_hnsw_en_servidor.py` mide HNSW (`m`, `ef_construct`, `ef`) contra un servidor Qdrant en Docker |
 | Exploración de embeddings | `scripts/25_explorar_embeddings.py`: coseno, producto punto y L2 (mismo orden con vectores de norma 1), recorte Matryoshka (512 dimensiones casi no pierde calidad) y mapa t-SNE en `docs/3 - Informe/tsne_corpus.svg` |
 | Validación de la respuesta | `datos_dudosos` revisa que cada cifra, correo o enlace de la respuesta aparezca en lo que devolvieron las herramientas, lo que dijo el cliente o la fecha de hoy; si no, el frontend avisa «Verifica antes de usar» |
-| Blindaje | Limpieza de caracteres invisibles, reglas del prompt y delimitadores `<documentos_recuperados>`. Con DeepSeek y el prompt v7 el detector automático dio 10 de 11 ataques directos y 6 de 8 indirectos; en los 3 marcados el agente rechazó el ataque y solo citó su texto (falsos positivos del detector, ver D6 en `docs/decisiones.md`), así que leídos a mano son 11 de 11 y 8 de 8 |
+| Blindaje | Limpieza de caracteres invisibles, reglas del prompt y delimitadores `<documentos_recuperados>`. Con DeepSeek y el prompt v7 el detector automático dio 10 de 11 ataques directos y 6 de 8 indirectos; en los 3 marcados el agente rechazó el ataque y solo citó su texto (falsos positivos del detector, ver D6 en `docs/decisiones.md`), así que leídos a mano son 11 de 11 y 8 de 8. Con el prompt v9 y la regla de «Falsa autoridad» corregida (antes marcaba falla cuando el agente se negaba repitiendo «modo libre»), los 11 ataques directos salen 11 de 11 también en automático; los indirectos no se volvieron a correr |
 | Respaldo | Si DeepSeek falla: `gemini-3.8-flash` y después `llama3.2` local |
 | Límite por teléfono | `src/taaml/limite.py`: 8 mensajes por minuto por teléfono (`LIMITE_MENSAJES`, `LIMITE_VENTANA_S`); `/chat` responde 429 con `Retry-After` y por WhatsApp se avisa una sola vez por ventana, sin llamar al modelo. Protege la cuota cuando el bot es público. `/api/chat` se limita por origen y `/chat` pide `X-Api-Key` si el servidor define `CHAT_TOKEN` |
 | Panel en vivo | `GET /panel` (página) y `GET /api/actividad` (datos, con el token del aprobador): cada turno con canal, mensaje, herramientas, tiempo y estado. En memoria (últimos 200), con un identificador corto y nunca el número (`src/taaml/actividad.py`) |
@@ -238,7 +238,12 @@ app/        Taller 1 (material histórico, el agente vigente no lo usa): aplicac
 
 ## Skills
 
-Las skills del proyecto (`corpus-medallion` y `agente-rag-router`) viven en su propio repositorio público: [mariastefuentes/taaml-skills](https://github.com/mariastefuentes/taaml-skills). Se instalan con `npx skills add mariastefuentes/taaml-skills --skill corpus-medallion`. La revisión de seguridad de `corpus-medallion` está en [docs/skillspector-corpus-medallion.md](docs/skillspector-corpus-medallion.md).
+Las skills del proyecto viven en este repositorio, en `.opencode/skills/` (una carpeta por skill con `SKILL.md`):
+
+- `corpus-medallion`: construir el corpus de una empresa en capas Bronze, Silver y Gold, listo para RAG.
+- `agente-rag-router`: armar un asistente con memoria por hilo y un enrutador entre RAG y datos estructurados.
+
+OpenCode las carga al abrir el proyecto; no hay que instalarlas. `make skills-check` valida el frontmatter, el nombre, el tamaño (máximo 500 líneas) y que no haya claves, rutas absolutas ni instrucciones para leer el `.env`; el CI corre la misma comprobación. El repositorio público [mariastefuentes/taaml-skills](https://github.com/mariastefuentes/taaml-skills) se conserva como espejo, y la revisión de seguridad de `corpus-medallion` está en [docs/skillspector-corpus-medallion.md](docs/skillspector-corpus-medallion.md).
 
 ## Licencia
 

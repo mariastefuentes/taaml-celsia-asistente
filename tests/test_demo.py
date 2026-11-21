@@ -201,3 +201,10 @@ def test_transcribir_rechaza_audios_enormes_y_tolera_que_falte_la_biblioteca(mon
 
     monkeypatch.setattr(voz, "_modelo", sin_biblioteca)
     assert voz.transcribir(b"audio") is None
+
+
+def test_la_actividad_guarda_si_hubo_nota_de_dato_sin_respaldo_y_el_costo():
+    sin = actividad.registrar("whatsapp", CLIENTE, "hola", "respondido")
+    assert sin["nota"] is False and sin["costo"] is None  # sin datos, el panel no muestra nada
+    con = actividad.registrar("whatsapp", CLIENTE, "dame un dato", "respondido", ["buscar_en_base"], 2.0, nota=True, costo=0.0012345678)
+    assert con["nota"] is True and con["costo"] == 0.00123

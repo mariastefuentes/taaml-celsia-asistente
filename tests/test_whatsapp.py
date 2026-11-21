@@ -189,3 +189,14 @@ def test_el_registro_de_avisos_vistos_tiene_tope(monkeypatch):
     for i in range(10):
         api_main._ya_atendido(f"id{i}")
     assert len(api_main._AVISOS_VISTOS) == 3 and api_main._ya_atendido("id9") is True
+
+
+def test_el_webhook_registra_el_id_corto_y_si_el_mensaje_es_repetido(caplog):
+    cuerpo = _aviso(id_mensaje="wamid.HBgMNTczMDAxMjM0NTY3", texto="hola")
+    with caplog.at_level("INFO", logger="taaml.api"):
+        for _ in range(2):
+            cliente.post("/webhook/whatsapp", content=cuerpo, headers=_firmar(cuerpo))
+    lineas = [r.getMessage() for r in caplog.records if "mensaje de WhatsApp" in r.getMessage()]
+    assert len(lineas) == 2 and "repetido: no" in lineas[0] and "repetido: sí" in lineas[1]
+    assert all("NTczMDAxMjM0NTY3"[-8:] in l for l in lineas)
+    assert not any("573001234567" in l or "hola" in l for l in lineas)  # ni el teléfono ni el texto van al registro

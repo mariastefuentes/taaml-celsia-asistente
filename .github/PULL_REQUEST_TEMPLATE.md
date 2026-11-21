@@ -24,6 +24,7 @@ Marca las áreas que toca esta PR:
 - [ ] **Aplicación** (`app/asistente.py`, `app/modulo1.py`)
 - [ ] **Pruebas** (`tests/`)
 - [ ] **Gobernanza** (`.specify/memory/constitution.md`, `specs/`, `.github/`)
+- [ ] **Skills** (`.opencode/skills/`)
 - [ ] **Documentación** (`README.md`, `AGENTS.md`, `docs/`)
 - [ ] **Infraestructura** (`pyproject.toml`, `uv.lock`, `Makefile`, `.gitignore`, CI)
 

@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida test lint check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida test lint skills-check check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -43,7 +43,8 @@ ayuda:
 	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas al modelo))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
 	$(info     make lint            errores de codigo con ruff y lock vigente)
-	$(info     make check           lint + pruebas: lo que corre el CI; correrlo antes de subir)
+	$(info     make skills-check    valida las skills de .opencode/skills (gratis))
+	$(info     make check           lint + pruebas + skills: lo que corre el CI; correrlo antes de subir)
 	$(info     make recuperacion    mide la recuperacion de fragmentos (gratis; necesita Ollama))
 	$(info )
 	$(info   OTROS)
@@ -55,7 +56,7 @@ ayuda:
 	@:
 
 setup:
-	uv sync
+	uv sync --all-groups
 	uv run python -c "import pathlib, shutil; p = pathlib.Path('.env'); p.exists() or shutil.copy('.env.example', p); print('Listo: .env disponible (completa GOOGLE_API_KEY si esta vacio)')"
 	$(info Descargando los modelos de Ollama (si ya estan, no hace nada):)
 	-ollama --version
@@ -89,6 +90,13 @@ api-sqlite:
 frontend:
 	cd frontend && npm install && npm run dev
 
+# Compila el chat web para que la API lo sirva en «/» (respaldo de WhatsApp para el público); luego `make api` y `make qr-chat-web ARGS="https://..."`.
+chat-web:
+	cd frontend && npm install && npm run build
+
+qr-chat-web:
+	uv run python scripts/44_qr_chat_web.py $(ARGS)
+
 db-up:
 	uv run python scripts/34_postgres_local.py
 
@@ -115,6 +123,14 @@ ensayo-whatsapp:
 preguntas-hostiles:
 	uv run python scripts/40_preguntas_hostiles.py $(ARGS)
 
+# Banco verificable: respuestas esperadas calculadas desde los datos (datos, trampas, robustez, aislamiento, conversación larga). Gasta cuota.
+banco-verificable:
+	uv run python scripts/43_banco_verificable.py $(ARGS)
+
+# Clona el repositorio de GitHub en una carpeta vacía y comprueba que instala, pasa lint y pruebas, y que el README cita comandos que existen. No gasta cuota; tarda unos minutos.
+verificar-clon:
+	uv run python scripts/45_verificar_clon.py $(ARGS)
+
 # Herramientas que fallan de verdad con el modelo real (gasta cuota).
 herramienta-caida:
 	uv run python scripts/42_herramienta_caida.py
@@ -133,7 +149,11 @@ lint:
 	uvx ruff@0.17.3 check --select F,E9 src tests scripts app
 	uv lock --check
 
-check: lint test
+# Valida frontmatter, nombre, tamaño y seguridad de las skills; no las ejecuta.
+skills-check:
+	uv run python scripts/verificar_skills.py
+
+check: lint test skills-check
 
 format:
 	uvx ruff@0.17.3 format src tests scripts app

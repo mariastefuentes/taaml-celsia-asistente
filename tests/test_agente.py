@@ -594,7 +594,7 @@ def test_el_prompt_de_sistema_se_arma_en_cada_turno_con_la_fecha_de_hoy():
     modelo = ModeloQueLeeElPrompt(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[], sistemas=[])
     conversar("hola", "hilo-fecha", agente=crear_agente(llm=modelo))
     assert f"Fecha de hoy: {date.today().isoformat()}" in modelo.sistemas[0]
-    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v7_agente.md
+    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v9_agente.md
 
 
 def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
@@ -1125,3 +1125,59 @@ def test_el_esquema_del_reclamo_rechaza_tipo_invalido_y_valores_fuera_de_rango()
     for malo in ({"tipo": "queja"}, {"descripcion": ""}, {"ciudad": "x" * 81}):  # los campos extra los rechaza `args_schema` (prueba anterior)
         with pytest.raises(ValidationError):
             esquema(**{**bueno, **malo})
+
+
+def _estado_falso(mensajes):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(get_state=lambda config: SimpleNamespace(values={"messages": mensajes}))
+
+
+def _mensaje(tipo, texto):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(type=tipo, text=texto)
+
+
+def test_el_aviso_de_datos_dudosos_marca_lo_inventado_y_calla_lo_respaldado():
+    from taaml.agente import aviso_de_datos_dudosos
+
+    soporte = [_mensaje("human", "¿Cuál es el WhatsApp?"), _mensaje("tool", "- whatsapp: 311 321 0000. Atención")]
+    agente = _estado_falso(soporte)
+    assert aviso_de_datos_dudosos("h", "Escribe al 311 321 0000.", agente=agente) == ""
+    nota = aviso_de_datos_dudosos("h", "Escribe al 300 555 1234 o a inventado@celsia.com.", agente=agente)
+    assert nota.startswith("\n\nNota:") and "300 555 1234" in nota and "inventado@celsia.com" in nota and "estos datos" in nota
+    assert "01 8000 112 115" in nota
+
+
+def test_el_aviso_de_datos_dudosos_no_rompe_la_respuesta_si_la_revision_falla():
+    from types import SimpleNamespace
+
+    from taaml.agente import MENSAJE_EN_REVISION, aviso_de_datos_dudosos
+
+    roto = SimpleNamespace(get_state=lambda config: (_ for _ in ()).throw(RuntimeError("base caída")))
+    assert aviso_de_datos_dudosos("h", "Escribe al 300 555 1234.", agente=roto) == ""
+    assert aviso_de_datos_dudosos("h", MENSAJE_EN_REVISION, agente=_estado_falso([])) == ""
+
+
+def test_el_aviso_de_datos_dudosos_no_marca_la_linea_de_emergencias():
+    from taaml.agente import aviso_de_datos_dudosos
+
+    assert aviso_de_datos_dudosos("h", "Si es una emergencia llama al 123 o al 01 8000 112 115.", agente=_estado_falso([])) == ""
+
+
+def test_el_aviso_de_datos_dudosos_no_marca_la_linea_106_de_salud_mental():
+    from taaml.agente import aviso_de_datos_dudosos
+
+    assert aviso_de_datos_dudosos("h", "Puedes llamar a la Línea 106 o a la 123.", agente=_estado_falso([])) == ""
+
+
+def test_el_costo_del_turno_suma_el_ultimo_turno_y_no_rompe_si_falla():
+    from types import SimpleNamespace
+
+    from taaml.agente import costo_del_turno
+
+    hecho = [_mensaje("human", "hola"), SimpleNamespace(type="ai", usage_metadata={"input_tokens": 1000, "total_tokens": 1500})]
+    assert costo_del_turno("h", modelo="ollama:local", agente=_estado_falso(hecho)) == 0.0  # un modelo local no cuesta
+    roto = SimpleNamespace(get_state=lambda config: (_ for _ in ()).throw(RuntimeError("base caída")))
+    assert costo_del_turno("h", agente=roto) is None

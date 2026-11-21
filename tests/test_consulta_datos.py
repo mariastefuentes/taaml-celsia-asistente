@@ -1,3 +1,5 @@
+import re
+
 from taaml.consulta_datos import SIN_RESULTADOS, catalogo, consultar, contactos, sedes
 
 
@@ -67,3 +69,14 @@ def test_varios_departamentos_y_tipos_se_combinan_y_un_filtro_vacio_no_filtra():
         sedes(departamento="Valle del Cauca")
     )
     assert len(sedes(ciudad=" , ")) == len(sedes())
+
+
+def test_un_mismo_numero_escrito_de_dos_formas_sale_una_sola_vez():
+    from taaml.consulta_datos import _clave_de_contacto
+
+    assert _clave_de_contacto({"tipo": "whatsapp", "valor": "311 321 0000"}) == _clave_de_contacto({"tipo": "whatsapp", "valor": "3113210000"})
+    assert _clave_de_contacto({"tipo": "telefono", "valor": "01 8000 112 115"}) == _clave_de_contacto({"tipo": "telefono", "valor": "018000112115"})
+    assert _clave_de_contacto({"tipo": "whatsapp", "valor": "3113210000"}) != _clave_de_contacto({"tipo": "telefono", "valor": "3113210000"})
+    for tipo in ("whatsapp", "telefono"):
+        digitos = [re.sub(r"\D", "", f["valor"]) for f in contactos(tipo=tipo)]
+        assert len(digitos) == len(set(digitos))  # ya no hay dos filas con el mismo número

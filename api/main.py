@@ -12,6 +12,7 @@ Endpoints:
   DELETE /api/usuarios/{usuario}/datos  borra todo lo que el agente recuerda del cliente
   GET  /panel                        página del panel en vivo de la demostración (pide el token del aprobador en la pantalla)
   GET  /api/actividad                lo que hizo el agente en los últimos turnos (necesita X-Aprobador; lo lee el panel)
+  GET  /                             el chat web (frontend compilado en frontend/dist), si existe y SERVIR_FRONTEND no es 0: el público lo abre desde su celular
 Uso:  uv run uvicorn api.main:app --reload --port 8000
 """
 
@@ -33,11 +34,15 @@ from uuid import uuid4
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, PlainTextResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as ErrorHTTP
 from pydantic import BaseModel, Field, model_validator
 
 from taaml.agente import (
     MODELO_AGENTE,
+    aviso_de_datos_dudosos,
     calentar,
+    costo_del_turno,
     conversar,
     conversar_en_vivo,
     datos_del_cliente,
@@ -214,11 +219,13 @@ def responder_a_telefono(telefono: str, mensaje: str, canal: str = "chat") -> Re
         actividad.registrar(canal, telefono, mensaje, "error", segundos=time.monotonic() - inicio)
         return RespuestaDelAgente(respuesta=MENSAJE_DE_FALLO, herramientas=[], ok=False)
     pendiente = pendiente_de_aprobacion(hilo)
+    nota = "" if pendiente else aviso_de_datos_dudosos(hilo, texto)  # un dato sin respaldo en la respuesta queda avisado (por WhatsApp no hay otro lugar)
+    texto += nota
     if pendiente:
         log.info("pendiente de aprobación en el hilo %s: %s", hilo, pendiente["herramienta"])
     herramientas = [ll["herramienta"] for ll in llamadas]
     estado = "pendiente de aprobación" if pendiente else "respondido"
-    actividad.registrar(canal, telefono, mensaje, estado, herramientas, time.monotonic() - inicio)
+    actividad.registrar(canal, telefono, mensaje, estado, herramientas, time.monotonic() - inicio, nota=bool(nota), costo=costo_del_turno(hilo))
     return RespuestaDelAgente(respuesta=texto, herramientas=herramientas, pendiente=pendiente)
 
 
@@ -475,8 +482,43 @@ async def recibir_de_whatsapp(peticion: Request, segundo_plano: BackgroundTasks)
         log.error("Meta no pudo entregar un mensaje (%s)", fallo)
     nuevos = 0
     for m in mensajes_entrantes(carga if isinstance(carga, dict) else {}):
-        if _ya_atendido(m["id"]):
+        repetido = _ya_atendido(m["id"])
+        # Solo el final del identificador (no el teléfono ni el texto): sirve para distinguir un reintento de Meta de un mensaje nuevo
+        log.info("mensaje de WhatsApp ...%s (tipo %s), repetido: %s", m["id"][-8:], m["tipo"] or "?", "sí" if repetido else "no")
+        if repetido:
             continue
         nuevos += 1
         segundo_plano.add_task(atender_mensaje_de_whatsapp, m["telefono"], m["tipo"], m["texto"], m.get("audio", ""), m["id"])
     return {"ok": True, "mensajes": nuevos}
+
+
+FRONTEND = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+
+
+class _PaginaUnica(StaticFiles):
+    """Archivos estáticos con respaldo a `index.html`: el chat cambia su dirección a `/c/<hilo>` y, si la persona recarga, el servidor debe devolver la misma página. Lo que empieza por `api/` sigue dando 404."""
+
+    async def get_response(self, path: str, scope):
+        try:
+            respuesta = await super().get_response(path, scope)
+        except ErrorHTTP as e:
+            if e.status_code != 404 or path.replace("\\", "/").startswith("api/"):
+                raise
+            return await super().get_response("index.html", scope)
+        return respuesta
+
+
+def montar_frontend(aplicacion: FastAPI, carpeta: Path = FRONTEND) -> bool:
+    """Sirve el chat web (el frontend compilado) desde la misma dirección de la API, para que el público lo abra con un QR.
+
+    Es el respaldo de WhatsApp: no tiene el límite de 5 destinatarios del número de prueba de Meta. El frontend llama a `/api/...` con rutas
+    relativas, así que desde la misma dirección no necesita CORS. Se monta en «/» **al final del archivo**, después de todas las rutas, para
+    no taparlas. No se monta si falta `index.html` (hay que correr `make chat-web`) o si `SERVIR_FRONTEND=0`.
+    """
+    if os.environ.get("SERVIR_FRONTEND", "1") == "0" or not (carpeta / "index.html").is_file():
+        return False
+    aplicacion.mount("/", _PaginaUnica(directory=carpeta, html=True), name="chat-web")
+    return True
+
+
+montar_frontend(app)
