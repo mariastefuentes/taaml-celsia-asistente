@@ -1,0 +1,21 @@
+# Revisiones que corren solas antes de cada commit. Instalar una vez: uvx pre-commit install
+# Son las mismas que corre CI (make lint), para que un error se vea antes de subirlo.
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: ruff (errores graves)
+        entry: uvx ruff@0.17.3 check --select F,E9
+        language: system
+        types: [python]
+      - id: uv-lock
+        name: uv lock vigente
+        entry: uv lock --check
+        language: system
+        pass_filenames: false
+        files: ^(pyproject\.toml|uv\.lock)$
+      - id: sin-secretos
+        name: no subir .env
+        entry: bash -c 'echo "No subas archivos .env"; exit 1'
+        language: system
+        files: (^|/)\.env$
