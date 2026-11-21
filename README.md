@@ -203,6 +203,10 @@ Los datos que el sitio muestra solo como enlaces (WhatsApp, PQR, pagos) están e
 
 </details>
 
+## Servidor MCP propio
+
+Las dos herramientas de consulta del agente (`buscar_informacion_celsia` y `consultar_datos_celsia`) están expuestas por un servidor MCP en `src/taaml/servidor_mcp.py`, para que cualquier cliente MCP (por ejemplo OpenClaw) las reutilice sin tocar el código del agente. Es de solo lectura y usa stdio: el cliente lo lanza como proceso hijo y no queda ningún puerto abierto. Prueba con cliente MCP real: `tests/test_servidor_mcp.py`. Para lanzarlo a mano: `make mcp`.
+
 ## Análisis de conversaciones con t-SNE (Ruta Transversal A)
 
 La API ya guarda cada conversación completa en PostgreSQL (el checkpointer, bajo un hash del teléfono). `taaml.conversaciones` las lee, marca cuáles terminaron mal y arma el texto de cada una; el cuaderno `notebooks/analisis_conversaciones.ipynb` las convierte en vectores, las proyecta con t-SNE (2D y 3D), las agrupa y analiza dónde falla el asistente. **Los datos del cuaderno son simulados** (114 conversaciones escritas por el equipo y pasadas por el agente real), no clientes de Celsia.
