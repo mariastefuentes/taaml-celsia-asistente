@@ -9,7 +9,7 @@
 
 Celsia publica su información en más de mil páginas y un cliente no tiene dónde preguntar y recibir la respuesta con su fuente. El proyecto construyó, en tres módulos, un asistente que responde solo con el contenido oficial de celsia.com y dice «no tengo esa información» cuando la fuente no lo trae. El Módulo 1 armó el corpus (393 documentos, 1.690 fragmentos) y un sistema de preguntas y respuestas con RAG. El Módulo 2 lo convirtió en un agente con memoria, herramientas y enrutamiento. El Módulo 3, que este informe detalla, lo llevó a producción por la **Ruta A**: una API REST con FastAPI, cinco herramientas de LangChain con esquemas Pydantic estrictos, memoria en PostgreSQL, aprobación humana para los reclamos y un **servidor de integración propio** (Vía 2, sin N8N) que atiende a los clientes por WhatsApp con la API Cloud de Meta.
 
-El agente se midió con la matriz de enrutamiento (32 de 33 preguntas con la herramienta esperada), preguntas de energía (7 de 8 respondidas, la octava con «no hay información»), preguntas ajenas (10 de 10 rechazadas) y respuestas honestas con una herramienta caída (6 de 6). Hay 330 pruebas automáticas sin modelos ni red. Como componente opcional, se analizaron 114 conversaciones simuladas con embeddings y t-SNE en 2D y 3D: los vectores recuperan la estructura por tema (índice de Rand ajustado de 0,45) y la lectura de las conversaciones marcadas como fallidas muestra que la tasa de fallo útil es de 4 %, no de 18 %.
+El agente se midió con la matriz de enrutamiento (32 de 33 preguntas con la herramienta esperada), preguntas de energía (7 de 8 respondidas, la octava con «no hay información»), preguntas ajenas (10 de 10 rechazadas) y respuestas honestas con una herramienta caída (6 de 6). Hay 362 pruebas automáticas sin modelos ni red y un banco de 49 preguntas cuya respuesta correcta se calcula desde los datos para medir alucinaciones (sección 9). Como componente opcional, se analizaron 114 conversaciones simuladas con embeddings y t-SNE en 2D y 3D: los vectores recuperan la estructura por tema (índice de Rand ajustado de 0,45) y la lectura de las conversaciones marcadas como fallidas muestra que la tasa de fallo útil es de 4 %, no de 18 %.
 
 Lo que **no** está probado se dice en la sección 11: el canal de WhatsApp se verificó con Meta real solo en parte, el número de prueba de Meta solo conversa con cinco destinatarios autorizados, y las conversaciones reales analizadas son seis, insuficientes para concluir algo sobre ellas.
 
@@ -38,9 +38,10 @@ El Módulo 2 dejó un agente que funcionaba en una máquina, con una interfaz pr
 | Memoria | SQLite (`SqliteSaver` y `SqliteStore`) | **PostgreSQL** (`PostgresSaver` y `PostgresStore`) | Varias instancias de la API comparten memoria y una pausa de aprobación sobrevive a un reinicio (D4) |
 | Herramientas | 4 | **5**, todas con esquema Pydantic estricto (`radicar_reclamo` es la nueva) | Function calling estricto: los argumentos se validan antes de ejecutar |
 | Acciones | Solo lectura y memoria del cliente | Radicar un reclamo, **con aprobación humana** (`HumanInTheLoopMiddleware`) | Una acción que cambia algo fuera de la conversación no la decide el modelo solo (D11, D16) |
-| Prompt | v4 | **v7** | Corrige el rechazo de preguntas válidas de energía y el «ya guardé» con una herramienta caída (D14) |
+| Prompt | v4 | **v9** | v7 corrige el rechazo de preguntas válidas de energía; v8 busca las cifras de la empresa antes de rechazarlas; v9 da una sola cifra cuando los textos discrepan y responde en el idioma del cliente (D14, D21, D25) |
 | Protección | Rechazo de inyecciones | + límite de 8 mensajes por minuto por teléfono, firma de Meta, clave para `/chat`, token para aprobar | El bot es público durante la demo (D13) |
-| Observación | Trazas en LangSmith | + panel en vivo, chequeo previo, plan B | Se ve qué hace el agente mientras responde (D18, D19) |
+| Observación | Trazas en LangSmith | + panel en vivo (herramienta, tiempo, **costo** y etiqueta de «dato sin respaldo»), chequeo previo, plan B | Se ve qué hace y cuánto cuesta cada respuesta mientras el agente responde (D18, D19, D28) |
+| Calidad del repositorio | Pruebas locales | CI en GitHub con `make lint` y `make test`, y `make verificar-clon` sobre un clon limpio | Que lo que está en GitHub arranque desde cero (D26) |
 | Análisis | Embeddings del corpus | + **t-SNE sobre conversaciones** | Ruta transversal A (D15) |
 
 ## 3. Diagrama de extremo a extremo
@@ -52,9 +53,9 @@ El camino de un mensaje, del usuario a la respuesta:
 1. **Usuario → Meta.** La persona escribe al número de WhatsApp Business. Meta lo recibe en su API Cloud.
 2. **Meta → túnel → API.** Meta firma el aviso (`X-Hub-Signature-256`) y lo envía por POST a `/webhook/whatsapp`. Como la API corre en un computador local, un túnel de Cloudflare la expone por HTTPS.
 3. **API.** Comprueba la firma, responde 200 de inmediato (para que Meta no reintente) y atiende el mensaje en segundo plano. Descarta avisos repetidos por identificador y aplica el límite por teléfono. Los saludos y `/nuevo` se resuelven sin llamar al modelo.
-4. **Agente.** El teléfono se convierte en un hash que sirve de identificador de la conversación; el agente (`create_agent`) lee su historial en PostgreSQL, arma el prompt v7 y decide si responde o llama a una herramienta.
+4. **Agente.** El teléfono se convierte en un hash que sirve de identificador de la conversación; el agente (`create_agent`) lee su historial en PostgreSQL, arma el prompt v9 y decide si responde o llama a una herramienta.
 5. **LLM y herramientas.** DeepSeek elige la herramienta con function calling; Pydantic valida los argumentos. Los datos exactos salen de tablas locales; la búsqueda por significado, de Qdrant con embeddings de Ollama.
-6. **Memoria.** El turno se guarda en PostgreSQL bajo el hilo del cliente.
+6. **Memoria y validación.** El turno se guarda en PostgreSQL bajo el hilo del cliente. Antes de enviar, cada cifra, correo y enlace de la respuesta se busca en lo que devolvieron las herramientas; si algo no aparece, se agrega una nota «verifica antes de usar» (avisa, no bloquea).
 7. **Retorno.** La API envía la respuesta por la Graph API de Meta, que la entrega en el teléfono.
 
 El detalle del agente, con sus componentes intermedios (resumen, validación del reclamo, tope de llamadas y aprobación humana):
@@ -65,7 +66,7 @@ El detalle del agente, con sus componentes intermedios (resumen, validación del
 
 El Módulo 3 ofrece dos rutas: la **Ruta A** (LangChain, API REST y WhatsApp) y la **Ruta B** (un sistema operativo de agentes, OpenFang, con memoria en capas, «Hands» y puentes a Telegram o WhatsApp). Son alternativas: se elige una. El grupo eligió la A.
 
-**Por qué la Ruta A.** (1) El agente del Módulo 2 ya estaba hecho con LangChain, con herramientas, memoria y recuperación; la Ruta A lo lleva a producción, mientras que la B exige reconstruirlo en otro sistema. (2) La Ruta B implica instalar un runtime distinto, migrar toda la base de conocimiento a su memoria y escribir los manifiestos de las operaciones autónomas, un trabajo con su propia curva de aprendizaje. (3) Lo medido y probado hasta ahora (esquemas de herramientas, PostgresSaver, aprobación humana, webhook, 330 pruebas, análisis de conversaciones) pertenece a la Ruta A. No se evaluó OpenFang en este proyecto, así que la comparación se argumenta y no se midió.
+**Por qué la Ruta A.** (1) El agente del Módulo 2 ya estaba hecho con LangChain, con herramientas, memoria y recuperación; la Ruta A lo lleva a producción, mientras que la B exige reconstruirlo en otro sistema. (2) La Ruta B implica instalar un runtime distinto, migrar toda la base de conocimiento a su memoria y escribir los manifiestos de las operaciones autónomas, un trabajo con su propia curva de aprendizaje. (3) Lo medido y probado hasta ahora (esquemas de herramientas, PostgresSaver, aprobación humana, webhook, 362 pruebas, análisis de conversaciones) pertenece a la Ruta A (más de 360 pruebas). No se evaluó OpenFang en este proyecto, así que la comparación se argumenta y no se midió.
 
 **Vía 2 (servidor propio) frente a Vía 1 (N8N).** Dentro de la Ruta A, la conexión con WhatsApp tiene dos vías: un flujo visual en N8N o un manejador de webhook escrito en FastAPI. Se eligió el servidor propio (D10):
 
@@ -136,11 +137,11 @@ El servidor de integración está construido directamente en FastAPI (`src/taaml
 - **Menú y comandos.** «Hola», «menú» o «ayuda» responden con tres botones (sedes y canales, poner un reclamo, Celsia Solar) sin llamar al modelo. `/nuevo` borra la conversación y conserva lo que el cliente contó de sí mismo.
 - **Aprobación por botones.** Si se define `APROBADOR_WHATSAPP`, la persona que aprueba recibe el reclamo con «Aprobar» y «Rechazar»; `POST /aprobar` sigue funcionando.
 
-**Qué se verificó con Meta real.** El 20 de noviembre de 2026, con el número de prueba de Meta, el mensaje «Hola» llegó al servidor por el túnel, el agente lo atendió y **el menú con los tres botones se entregó en el celular**. Se comprobaron la firma, la verificación del webhook y la suscripción de la cuenta a la aplicación. El resto del flujo (respuestas del agente, aprobación y voz) se probó con avisos simulados y pruebas automáticas.
+**Qué se verificó con Meta real.** El 20 de noviembre de 2026, con el número de prueba de Meta, un celular real conversó con el agente a través del túnel: el menú con tres botones se entregó, el agente respondió preguntas con y sin herramientas, recordó datos de la conversación (por teléfono) y un reclamo se **aprobó y se rechazó desde WhatsApp** con los botones «Aprobar» y «Rechazar» (el cliente recibió la decisión y quien aprueba recibió la confirmación). Una nota de voz recibió el aviso de que por ahora solo se leen mensajes de texto. Se comprobaron también la firma y la verificación del webhook. Se midió el tiempo de 20 preguntas contra el agente real: mediana de 6,4 s, p90 de 10,3 s y máximo de 10,9 s.
 
 **Lo que Meta impone y hay que saber:**
 - El número de prueba solo conversa con **hasta cinco destinatarios autorizados**, que confirman un código. Abrirlo a cualquier persona exige un número real y la verificación del negocio, que no se hicieron.
-- El token de acceso temporal vence en pocas horas y hay que renovarlo antes de cada uso.
+- El token de acceso ya es de **usuario del sistema** (no el temporal de 24 horas) y dura 60 días; el actual vence el 19 de enero de 2027 y se rota después de la demostración.
 - Los botones y los mensajes iniciados por la empresa solo llegan dentro de las 24 horas desde el último mensaje de la persona.
 - La cuenta de WhatsApp Business figura con envío «bloqueado» en su estado de salud (método de pago pendiente y negocio sin verificar). Una cuenta anterior llegó a bloquearse por completo y se reemplazó; la actual entregó mensajes el 20 de noviembre, pero el riesgo de un bloqueo no está descartado.
 
@@ -163,11 +164,26 @@ El servidor de integración está construido directamente en FastAPI (`src/taaml
 | Con el almacén de memoria caído | 6 de 6 respuestas honestas |
 | Herramienta rota a propósito (script 42, modelo real) | 2 de 2 respuestas corteses, sin inventar y sin filtrar el error |
 | Recuperación (Módulo 1) | 89 % con embeddings (54 % por palabras, 74 % híbrido) |
-| Pruebas automáticas | 330, sin modelos ni red |
-| Latencia | Mediana de 8,4 s por turno en el Módulo 2 (2,1 a 23 s); el panel de la demostración registró de 1,5 a 10,9 s en los turnos de WhatsApp del 20 de noviembre, y unas corridas sueltas con herramientas tardaron de 12 a 22 s |
+| Pruebas automáticas | 362, sin modelos ni red |
+| Latencia | WhatsApp real, 20 preguntas: mediana 6,4 s, p90 10,3 s, máximo 10,9 s. Módulo 2: mediana de 8,4 s (2,1 a 23 s); algunas corridas con muchas herramientas tardaron de 12 a 72 s |
 | Costo | Unos 0,02 USD por una conversación de cuatro turnos (Módulo 2) |
 
 **Lo que estas cifras no dicen.** El 89 % de recuperación se midió con las mismas preguntas que motivaron el diccionario de sinónimos; con preguntas nuevas sería menor. Las 33 preguntas de la matriz son pocas. Los 8 casos de energía y los 10 ajenos son listas chicas. Una respuesta de WhatsApp tarda de segundos a unas decenas de segundos, y el indicador «escribiendo…» ayuda pero no la acelera.
+
+### Cómo intentamos hacerlo alucinar
+
+El profesor pidió probar que el agente no inventa. Se hizo con cuatro instrumentos, que miden cosas distintas:
+
+| Instrumento | Qué es | Resultado (modelo real, prompt v9) |
+|---|---|---|
+| **Banco verificable** (`make banco-verificable`, D22 y D29) | 49 preguntas con la respuesta calculada desde los datos: cuántos puntos hay en una ciudad, teléfono y horario de una sede, contactos; trampas con premisa falsa (una sede que no existe, un teléfono con un dígito cambiado, un WhatsApp inventado); robustez (ortografía, jerga, inglés, dos pasos); aislamiento entre clientes; una conversación de 10 turnos; y 9 preguntas de trámites y tarifas con el plazo, el documento o el porcentaje que debe traer la respuesta, comprobados antes contra el texto oficial | 39 de 40 en las primeras 40 preguntas y 7 de 9 en trámites y tarifas. La que falla en las primeras cita una tarifa de 2020 (607 pesos por kWh, que sí está en la base) como dato de esa fecha y la regla marca cualquier monto; las dos de trámites fallan porque la búsqueda no trae el fragmento (el agente calla o es vago, no inventa) |
+| **Preguntas hostiles** (`make preguntas-hostiles`) | 22 preguntas incómodas: ambigua, fuera de alcance, el celular del gerente, competencia, insulto, cifras con fuentes distintas, otro idioma | 0 fallas automáticas; las respuestas se leyeron a mano |
+| **Ataques directos** (`scripts/19_probar_ataques.py`) | 11 intentos de saltarse las reglas (ignorar instrucciones, falsa autoridad, revelar el prompt, etc.) | 11 de 11 resistidos |
+| **Inyección indirecta** (`scripts/12_probar_inyeccion_indirecta.py`, y `make demo-inyeccion` en vivo) | Documentos con órdenes escondidas dentro del corpus | Resistido: el agente responde con el contenido legítimo y no obedece la orden |
+
+**Qué encontramos y qué decidimos.** (1) Una cifra con dos fuentes distintas (1,3 millones y «más de un millón» de clientes) hacía dudar; el prompt v9 pide dar una sola (D25). (2) Se probó un prompt v10 que corregía la pregunta R31 de la matriz de enrutamiento (33 de 33), pero hacía fallar una trampa de la sede de Pasto; se descartó y R31 se reporta como límite: 32 de 33 (D27). (3) Dos preguntas de trámites fallan de forma consistente porque la búsqueda por significado no recupera el fragmento aunque el dato está en la base; es un límite de recuperación documentado, no un fallo del modelo, y no se tocó antes de la demostración porque movería todas las cifras medidas (D29). (4) Una regla de la batería de ataques daba un falso positivo («modo libre» repetido en una negativa) y se corrigió (D25).
+
+**Lo que estas cifras no dicen.** Las preguntas son pocas (49 y 22); el modelo no es determinista y cada pregunta se corrió pocas veces; las reglas buscan valores exactos y no juzgan el estilo. Un 100 % en datos no es una garantía contra la alucinación en preguntas nuevas.
 
 ## 10. Análisis de conversaciones con t-SNE (ruta transversal A)
 
@@ -189,6 +205,10 @@ Cada punto es una conversación; cerca significa parecida. El color es la catego
 
 **Límites.** Los datos son simulados; la marca de «fallida» es una regla de palabras, no un juicio humano, y puede pasar por alto respuestas vagas; t-SNE conserva la vecindad local pero no las distancias entre grupos, así que se interpreta qué conversaciones quedan juntas y no qué tan lejos están dos nubes. Con tráfico real habría que leer una muestra de cada clúster antes de concluir.
 
+**PCA, t-SNE y UMAP sobre los mismos vectores (D23).** Con las 114 conversaciones se comparó qué tan bien cada método conserva los vecinos (confiabilidad de vecinos, k=5): PCA 0,887, t-SNE 0,953 y UMAP 0,930. PCA, al ser lineal, deja encimados los grupos que se superponen; t-SNE y UMAP separan reclamos, datos personales y preguntas de producto. La distancia entre nubes se interpreta con cuidado en ambos. Una corrida con semilla fija.
+
+![Comparación de PCA, t-SNE y UMAP sobre las 114 conversaciones](comparacion_pca_tsne_umap.png)
+
 ![t-SNE del corpus: los 1.690 fragmentos del sitio](tsne_corpus.svg)
 
 ## 11. Demostración, operación y limitaciones
@@ -198,14 +218,18 @@ Cada punto es una conversación; cerca significa parecida. El color es la catego
 **Limitaciones y riesgos, sin adornos:**
 - **El servidor corre en un computador local.** Si se apaga, se suspende o cambia de red, el bot deja de responder. El túnel de Cloudflare cambia de dirección en cada arranque y esa dirección hay que registrarla de nuevo en Meta.
 - **Cinco destinatarios.** El número de prueba solo conversa con cinco celulares autorizados (sección 7).
-- **Token de Meta temporal** y cuenta con envío marcado como bloqueado en el estado de salud, con el riesgo de un bloqueo.
-- **No se probaron con Meta real** las respuestas largas del agente, la aprobación con botones ni las notas de voz (apagadas por defecto y tentativas).
+- **Cuenta de Meta con envío marcado como bloqueado** en el estado de salud (método de pago y negocio sin verificar), con el riesgo de un bloqueo.
+- **No se probaron con Meta real** las notas de voz (apagadas por defecto y tentativas) ni conversaciones con muchas personas a la vez: las pruebas se hicieron con un teléfono del equipo.
 - **El registro del reclamo es simulado**; un sistema real llamaría al de Celsia.
 - **Tres vacíos de la base de conocimiento** (precio del cargador, fecha límite de pago, facturación por estimación) no están publicados por Celsia. El agente dice «no tengo esa información» y da la línea 01 8000 112 115. El texto para llenarlos está preparado y no se aplicó porque cambiaría el corpus e invalidaría las mediciones.
 - **Una pregunta de enrutamiento falla (R31)** y la compuerta opcional System One (D9) sigue abierta.
 - **Latencia de segundos a decenas de segundos** por respuesta.
 - **Evaluaciones pequeñas** (33 y 59 preguntas, 8 y 10 casos): sirven para detectar fallos, no para dar tasas estadísticas.
 - **t-SNE** con datos simulados (sección 10).
+
+**Lección del CI.** Seis pull requests se fusionaron con la verificación de GitHub en rojo porque el CI no instalaba un grupo de dependencias que en local ya estaba (D26). Se corrigió el CI, se acordó mirar el CI antes de fusionar y se creó `make verificar-clon`, que clona el repositorio en una carpeta vacía, instala y corre lint y pruebas. Las cruces antiguas se dejan como registro.
+
+**Respaldo para el público.** Como el número de prueba solo habla con cinco celulares, el mismo servidor entrega un chat web en `/`, con un código QR hacia la dirección del túnel (`make qr-chat-web`). No es WhatsApp y no cuenta para el criterio del canal: asegura que cualquiera del auditorio pueda probar el agente.
 
 ## 12. Conclusiones
 
@@ -219,11 +243,13 @@ Lo más valioso fue **medir** en lugar de suponer: la matriz de enrutamiento, la
 uv sync
 make api              # API con PostgreSQL local (puerto 8000)
 make ensayo-whatsapp  # chequeo previo de la demostración
-make test             # 330 pruebas, sin modelos ni red
+make test             # 362 pruebas, sin modelos ni red
+make verificar-clon     # clona GitHub, instala y corre lint y pruebas en una carpeta vacía
+make banco-verificable  # 49 preguntas con respuesta calculada desde los datos (gasta cuota)
 make herramienta-caida  # rompe herramientas a propósito con el modelo real (gasta cuota)
 ```
 
-Las decisiones (D1 a D20), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
+Las decisiones (D1 a D29), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
 
 ## Anexo B. Declaración de uso de IA
 
@@ -250,3 +276,14 @@ Todo código o texto generado por una herramienta lo revisa una persona del equi
 - LangChain: documentación de `create_agent`, memoria a corto plazo, middleware y `HumanInTheLoopMiddleware` (docs.langchain.com).
 - Meta: documentación de la API Cloud de WhatsApp (developers.facebook.com).
 - Ley 1581 de 2012 de Colombia (protección de datos personales).
+
+## Anexo C. Mapa de la rúbrica final
+
+| Criterio (peso) | Dónde está la evidencia |
+|---|---|
+| Arquitectura y lógica del agente (30 %) | Secciones 2 a 5 y 9: `create_agent`, cinco herramientas con esquema estricto, aprobación humana, memoria en PostgreSQL, prompt v9, banco verificable y matriz de enrutamiento; decisiones D1 a D29 |
+| Integración del canal (30 %) | Secciones 6 y 7: API FastAPI y servidor propio de WhatsApp, probado con Meta real (texto, memoria, aprobación y rechazo con botones, aviso de voz); límites de Meta dichos con claridad |
+| Calidad del código y GitHub (20 %) | Pull requests con revisión, 362 pruebas, CI en verde con `make lint` y `make test`, `make verificar-clon`, decisiones registradas, repositorio público |
+| Documentación final (10 %) | Este informe, `README.md`, `docs/decisiones.md`, guiones de la demostración |
+| Presentación y demostración (10 %) | `docs/guion_demo_whatsapp.md`: 15 minutos sin diapositivas, roles, plan B, panel en vivo y chat web con QR |
+| Opcional: t-SNE y UMAP (+10 %) | Sección 10: 114 conversaciones simuladas con t-SNE 2D y 3D, K-means, KNN y comparación con PCA y UMAP |
