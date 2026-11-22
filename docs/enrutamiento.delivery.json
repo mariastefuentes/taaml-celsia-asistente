@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "6586fe63-b196-470e-9199-6132d67fcd6e",
+  "receiptId": "9b501cec-a542-43cb-b083-17b5a2ec125a",
   "status": "current",
   "command": "deliver",
   "type": "architecture",
   "input": "C:\\taaml\\docs\\enrutamiento.json",
   "output": "C:\\taaml\\docs\\enrutamiento.html",
   "specification": {
-    "sha256": "0aa7ec0db09b49c4ef1b3ec75ad0b79fd21b812bc14c42e15c5afd68a9e97232",
-    "bytes": 3700
+    "sha256": "82da3b59a17d2ce545470e208db7313c439dabbf4a6d534f4781573d34bee7f9",
+    "bytes": 3926
   },
   "artifact": {
-    "sha256": "102aa1c057ffa836b208fdf3d0c5a252f26a878ad57042915e5e0ea9a56cee91",
-    "bytes": 851530
+    "sha256": "5758e62b4e843b17bd9613f00ba4092c009f317b812941094e95650f354a94bd",
+    "bytes": 851904
   }
 }
