@@ -37,6 +37,6 @@
   "cards": [
     { "dot": "emerald", "title": "Descarga", "items": ["Respeta robots.txt y pausa entre páginas", "1.272 respuestas HTTP 200 y 1 error 500 del sitio"] },
     { "dot": "cyan", "title": "Curaduría", "items": ["Quita contenido en inglés, casi duplicado y noticias viejas", "De 1.101 documentos quedan 393"] },
-    { "dot": "rose", "title": "Índice", "items": ["1.690 fragmentos con su vector", "La aplicación busca por coseno en Qdrant"] }
+    { "dot": "rose", "title": "Índice", "items": ["1.690 fragmentos con su vector", "El agente trae 4 fragmentos: 3 por significado (coseno en Qdrant) y 1 por palabras (D31)"] }
   ]
 }
