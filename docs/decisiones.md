@@ -261,3 +261,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Resultado.** 42 de 43 con el modelo real, el prompt v9 y la búsqueda mezclada; costo total de la corrida: 0,064 USD. Las diez nuevas enrutaron bien; el único fallo sigue siendo R31, igual que en 32/33.
 - **Límites.** En las filas nuevas solo se verifica la herramienta elegida y los parámetros, no el texto de la respuesta (eso lo cubre el banco verificable, D29 y D30). Una sola corrida: no se midió la variación entre corridas. Las cifras de D9, D26 y las demás decisiones anteriores se dejan como estaban en su fecha.
 - **Evidencia.** `docs/2 - Conjunto de prueba/matriz_enrutamiento.csv`, `docs/2 - Conjunto de prueba/resultados/matriz_enrutamiento_resultados.csv`, `scripts/22_matriz_enrutamiento.py`.
+
+## D37. Asesor humano: no se construyó una herramienta nueva
+- **Contexto.** Quedó pendiente un «asesor humano» para quien pide hablar con una persona.
+- **Medición.** Tres peticiones al agente real («quiero hablar con una persona», «pásame con un asesor humano, es urgente» y «necesito que un humano me llame ya»). En las tres entregó los canales oficiales (línea 01 8000 112 115, WhatsApp, correo) leídos de la tabla de contactos, y en una ofreció radicar un reclamo. No inventó teléfonos ni prometió una llamada.
+- **Decisión.** No añadir una sexta herramienta: obligaría a cambiar el prompt v9 (el v10 se probó y se descartó, D27) y el camino en vivo de WhatsApp, que no se puede probar con Meta real sin el equipo, por una ganancia pequeña.
+- **Límites.** Es una derivación a los canales oficiales, no una transferencia: no hay cola de atención, ni registro de que la persona pidió un humano, ni aviso a un asesor. Tres pruebas no son estadística.
+- **Evidencia.** Respuestas de la API del 21/11/2026 (salidas no guardadas en el repositorio); `prompts/v9_agente.md`.
