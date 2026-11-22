@@ -21,7 +21,7 @@ VENTANA_POR_DEFECTO = 60.0
 MAX_TELEFONOS_RECORDADOS = 5000  # tope de memoria: se olvidan primero los que llevan más tiempo sin escribir
 
 TEXTO_LIMITE = (
-    "Estás escribiendo muy rápido y necesito un momento. Vuelve a intentarlo en unos segundos; "
+    "Dame un momento: recibí varios mensajes seguidos. Escríbeme de nuevo en unos segundos; "
     "si es urgente, llama a la línea 01 8000 112 115."
 )
 

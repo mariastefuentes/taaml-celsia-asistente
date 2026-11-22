@@ -361,10 +361,10 @@ APROBACION_HUMANA = {
     }
 }
 MENSAJE_EN_REVISION = (
-    "Tu reclamo quedó en revisión: una persona de Celsia debe aprobarlo antes de radicarlo. "
-    "Cuando lo haga, te daremos el número de radicado."
+    "Recibí tu reclamo y una persona de Celsia lo está revisando antes de radicarlo. "
+    "Apenas lo apruebe, te escribo aquí con el número de radicado. Si es urgente, puedes llamar a la línea 01 8000 112 115."
 )
-MENSAJE_RECHAZADO = "Una persona de Celsia revisó el reclamo y no lo aprobó, así que no se radicó. Puedes llamar a la línea 01 8000 112 115."
+MENSAJE_RECHAZADO = "Una persona de Celsia revisó tu reclamo y por ahora no lo aprobó, así que todavía no está radicado. Puedes escribirme de nuevo con más detalles (ciudad, qué pasó y desde cuándo) para intentarlo otra vez, o llamar a la línea 01 8000 112 115."
 
 
 MENSAJE_HERRAMIENTA_CAIDA = (
@@ -399,8 +399,8 @@ def errores_amables(request: Any, handler: Any) -> Any:
 
 MAX_REINTENTOS_RECLAMO = 2
 MENSAJE_RECLAMO_INCOMPLETO = (
-    "No pude dejar listo tu reclamo con los datos que tengo. Cuéntame de nuevo en qué ciudad ocurre y qué pasó, "
-    "o llama a la línea 01 8000 112 115."
+    "Todavía me falta información para dejar listo tu reclamo. Dime en qué ciudad ocurre y qué pasó (solo lo que falte) "
+    "y lo intento de nuevo, o llama a la línea 01 8000 112 115."
 )
 
 
