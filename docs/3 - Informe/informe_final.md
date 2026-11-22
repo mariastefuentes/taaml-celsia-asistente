@@ -9,7 +9,7 @@
 
 Celsia publica su información en más de mil páginas y un cliente no tiene dónde preguntar y recibir la respuesta con su fuente. El proyecto construyó, en tres módulos, un asistente que responde solo con el contenido oficial de celsia.com y dice «no tengo esa información» cuando la fuente no lo trae. El Módulo 1 armó el corpus (393 documentos, 1.690 fragmentos) y un sistema de preguntas y respuestas con RAG. El Módulo 2 lo convirtió en un agente con memoria, herramientas y enrutamiento. El Módulo 3, que este informe detalla, lo llevó a producción por la **Ruta A**: una API REST con FastAPI, cinco herramientas de LangChain con esquemas Pydantic estrictos, memoria en PostgreSQL, aprobación humana para los reclamos y un **servidor de integración propio** (Vía 2, sin N8N) que atiende a los clientes por WhatsApp con la API Cloud de Meta.
 
-El agente se midió con la matriz de enrutamiento (42 de 43 preguntas con la herramienta esperada), preguntas de energía (7 de 8 respondidas, la octava con «no hay información»), preguntas ajenas (10 de 10 rechazadas) y respuestas honestas con una herramienta caída (6 de 6). Hay 362 pruebas automáticas sin modelos ni red y un banco de 49 preguntas cuya respuesta correcta se calcula desde los datos para medir alucinaciones (sección 9). Como componente opcional, se analizaron 114 conversaciones simuladas con embeddings y t-SNE en 2D y 3D: los vectores recuperan la estructura por tema (índice de Rand ajustado de 0,45) y la lectura de las conversaciones marcadas como fallidas muestra que la tasa de fallo útil es de 4 %, no de 18 %.
+El agente se midió con la matriz de enrutamiento (42 de 43 preguntas con la herramienta esperada), preguntas de energía (7 de 8 respondidas, la octava con «no hay información»), preguntas ajenas (10 de 10 rechazadas) y respuestas honestas con una herramienta caída (6 de 6). Hay 368 pruebas automáticas sin modelos ni red y un banco de 49 preguntas cuya respuesta correcta se calcula desde los datos para medir alucinaciones (sección 9). Como componente opcional, se analizaron 114 conversaciones simuladas con embeddings y t-SNE en 2D y 3D: los vectores recuperan la estructura por tema (índice de Rand ajustado de 0,45) y la lectura de las conversaciones marcadas como fallidas muestra que la tasa de fallo útil es de 4 %, no de 18 %.
 
 Lo que **no** está probado se dice en la sección 11: el canal de WhatsApp se verificó con Meta real solo en parte, el número de prueba de Meta solo conversa con cinco destinatarios autorizados, y las conversaciones reales analizadas son seis, insuficientes para concluir algo sobre ellas.
 
@@ -68,7 +68,7 @@ El diagrama es la versión actual (prompt v9, búsqueda mezclada, servidor MCP �
 
 El Módulo 3 ofrece dos rutas: la **Ruta A** (LangChain, API REST y WhatsApp) y la **Ruta B** (un sistema operativo de agentes, OpenFang, con memoria en capas, «Hands» y puentes a Telegram o WhatsApp). Son alternativas: se elige una. El grupo eligió la A.
 
-**Por qué la Ruta A.** (1) El agente del Módulo 2 ya estaba hecho con LangChain, con herramientas, memoria y recuperación; la Ruta A lo lleva a producción, mientras que la B exige reconstruirlo en otro sistema. (2) La Ruta B implica instalar un runtime distinto, migrar toda la base de conocimiento a su memoria y escribir los manifiestos de las operaciones autónomas, un trabajo con su propia curva de aprendizaje. (3) Lo medido y probado hasta ahora (esquemas de herramientas, PostgresSaver, aprobación humana, webhook, 362 pruebas, análisis de conversaciones) pertenece a la Ruta A (más de 360 pruebas). No se evaluó OpenFang en este proyecto, así que la comparación se argumenta y no se midió.
+**Por qué la Ruta A.** (1) El agente del Módulo 2 ya estaba hecho con LangChain, con herramientas, memoria y recuperación; la Ruta A lo lleva a producción, mientras que la B exige reconstruirlo en otro sistema. (2) La Ruta B implica instalar un runtime distinto, migrar toda la base de conocimiento a su memoria y escribir los manifiestos de las operaciones autónomas, un trabajo con su propia curva de aprendizaje. (3) Lo medido y probado hasta ahora (esquemas de herramientas, PostgresSaver, aprobación humana, webhook, 368 pruebas, análisis de conversaciones) pertenece a la Ruta A (más de 360 pruebas). No se evaluó OpenFang en este proyecto, así que la comparación se argumenta y no se midió.
 
 **Vía 2 (servidor propio) frente a Vía 1 (N8N).** Dentro de la Ruta A, la conexión con WhatsApp tiene dos vías: un flujo visual en N8N o un manejador de webhook escrito en FastAPI. Se eligió el servidor propio (D10):
 
@@ -168,7 +168,7 @@ El servidor de integración está construido directamente en FastAPI (`src/taaml
 | Recuperación (Módulo 1) | 89 % con embeddings (54 % por palabras, 74 % híbrido) |
 | Banco verificable (49 casos con valor esperado, D29 a D31) | **48 de 49** con la búsqueda mezclada; antes 46, 46 y 47 en tres corridas (D30) |
 | Búsqueda a k=4: embeddings contra mezcla (35 preguntas, D34) | 25/35 contra 26/35; McNemar exacto p = 1,0: **sin diferencia significativa** |
-| Pruebas automáticas | 366 en `main` (369 con las del script de métricas), sin modelos ni red |
+| Pruebas automáticas | 368 pasan y 2 se omiten en `main`, sin modelos ni red |
 | Latencia | WhatsApp real, 20 preguntas: mediana 6,4 s, p90 10,3 s, máximo 10,9 s. Módulo 2: mediana de 8,4 s (2,1 a 23 s); algunas corridas con muchas herramientas tardaron de 12 a 72 s |
 | Costo | Unos 0,02 USD por una conversación de cuatro turnos (Módulo 2) |
 
@@ -264,7 +264,7 @@ Lo más valioso fue **medir** en lugar de suponer: la matriz de enrutamiento, la
 uv sync
 make api              # API con PostgreSQL local (puerto 8000)
 make ensayo-whatsapp  # chequeo previo de la demostración
-make test             # 362 pruebas, sin modelos ni red
+make test             # 368 pruebas, sin modelos ni red
 make verificar-clon     # clona GitHub, instala y corre lint y pruebas en una carpeta vacía
 make banco-verificable  # 49 preguntas con respuesta calculada desde los datos (gasta cuota)
 make herramienta-caida  # rompe herramientas a propósito con el modelo real (gasta cuota)
@@ -304,7 +304,7 @@ Todo código o texto generado por una herramienta lo revisa una persona del equi
 |---|---|
 | Arquitectura y lógica del agente (30 %) | Secciones 2 a 5 y 9: `create_agent`, cinco herramientas con esquema estricto, aprobación humana, memoria en PostgreSQL, prompt v9, banco verificable y matriz de enrutamiento; decisiones D1 a D30 |
 | Integración del canal (30 %) | Secciones 6 y 7: API FastAPI y servidor propio de WhatsApp, probado con Meta real (texto, memoria, aprobación y rechazo con botones, aviso de voz); límites de Meta dichos con claridad |
-| Calidad del código y GitHub (20 %) | Pull requests con revisión, 362 pruebas, CI en verde con `make lint` y `make test`, `make verificar-clon`, decisiones registradas, repositorio público |
+| Calidad del código y GitHub (20 %) | Pull requests con revisión, 368 pruebas, CI en verde con `make lint` y `make test`, `make verificar-clon`, decisiones registradas, repositorio público |
 | Documentación final (10 %) | Este informe, `README.md`, `docs/decisiones.md`, guiones de la demostración |
 | Presentación y demostración (10 %) | `docs/guion_demo_whatsapp.md`: 15 minutos sin diapositivas, roles, plan B, panel en vivo y chat web con QR |
 | Opcional: t-SNE y UMAP (+10 %) | Sección 10: 114 conversaciones simuladas con t-SNE 2D y 3D, K-means, KNN y comparación con PCA y UMAP |
