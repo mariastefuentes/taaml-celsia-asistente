@@ -52,8 +52,8 @@ def test_detalle_ok_exige_parametros_y_texto_solo_cuando_la_matriz_los_pide():
     assert ev.detalle_ok({"id": "R23"}, _salida(), sin_exigencias)["score"] == 1
     assert (
         ev.detalle_ok({"id": "R20"}, _salida(respuesta="Sí hay"), sin_exigencias)["score"] == 0
-    )  # R20 exige «No tengo esa información»
-    assert ev.detalle_ok({"id": "R20"}, _salida(respuesta="No tengo esa información."), sin_exigencias)["score"] == 1
+    )  # R20 exige «solo atiendo temas de Celsia»
+    assert ev.detalle_ok({"id": "R20"}, _salida(respuesta="Eso se sale de lo que puedo ayudarte: solo atiendo temas de Celsia."), sin_exigencias)["score"] == 1
 
 
 def test_n_llamadas_cuenta_las_herramientas_pedidas():

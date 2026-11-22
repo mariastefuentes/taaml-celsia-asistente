@@ -5307,20 +5307,20 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <text data-detail="context" x="110" y="344" class="t-muted" font-size="8.1" text-anchor="middle">texto + historial recortado</text>
         </g>
 
-        <g id="node-modelo" data-node-id="modelo" data-node-label="Modelo + prompt v7" tabindex="0" role="button" aria-label="Enfocar Modelo + prompt v7, function calling, Componente de arquitectura" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="function calling" data-node-tag="elige por esquema" data-node-context="Componente de arquitectura">
-          <title>Modelo + prompt v7 · function calling · Componente de arquitectura · elige por esquema</title>
+        <g id="node-modelo" data-node-id="modelo" data-node-label="Modelo + prompt v11" tabindex="0" role="button" aria-label="Enfocar Modelo + prompt v11, function calling, Componente de arquitectura" aria-pressed="false" data-node-kind="cloud" data-node-sublabel="function calling" data-node-tag="elige por esquema" data-node-context="Componente de arquitectura">
+          <title>Modelo + prompt v11 · function calling · Componente de arquitectura · elige por esquema</title>
           <rect x="260" y="300" width="150" height="60" rx="8" class="c-mask"/>
           <rect x="260" y="300" width="150" height="60" rx="8" class="c-cloud" data-animate="node" style="--step:1" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="cloud" class="semantic-sigil s-cloud" transform="translate(266 306) scale(0.6875)">
             <path d="M4.3 12.5h7.3a2.4 2.4 0 0 0 .2-4.8 4 4 0 0 0-7.5-1.3A3.1 3.1 0 0 0 4.3 12.5Z"/>
           </g>
-          <text data-node-label="" data-detail-anchor="" x="335" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Modelo + prompt v7</text>
+          <text data-node-label="" data-detail-anchor="" x="335" y="328" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Modelo + prompt v11</text>
         <text data-detail="context" x="335" y="344" class="t-muted" font-size="9" text-anchor="middle">function calling</text>
         <text data-detail="fine" x="335" y="352" class="t-cloud" font-size="7" text-anchor="middle">elige por esquema</text>
         </g>
 
-        <g id="node-buscar" data-node-id="buscar" data-node-label="buscar_en_base" tabindex="0" role="button" aria-label="Enfocar buscar_en_base, trámites, tarifas, noticias, Componente de arquitectura" aria-pressed="false" data-node-kind="database" data-node-sublabel="trámites, tarifas, noticias" data-node-context="Componente de arquitectura">
-          <title>buscar_en_base · trámites, tarifas, noticias · Componente de arquitectura</title>
+        <g id="node-buscar" data-node-id="buscar" data-node-label="buscar_en_base" tabindex="0" role="button" aria-label="Enfocar buscar_en_base, trámites, tarifas, noticias, Componente de arquitectura" aria-pressed="false" data-node-kind="database" data-node-sublabel="trámites, tarifas, noticias" data-node-tag="significado + palabras" data-node-context="Componente de arquitectura">
+          <title>buscar_en_base · trámites, tarifas, noticias · Componente de arquitectura · significado + palabras</title>
           <rect x="520" y="120" width="170" height="60" rx="8" class="c-mask"/>
           <rect x="520" y="120" width="170" height="60" rx="8" class="c-database" data-animate="node" style="--step:2" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="database" class="semantic-sigil s-database" transform="translate(526 126) scale(0.6875)">
@@ -5329,6 +5329,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           </g>
           <text data-node-label="" data-detail-anchor="" x="605" y="148" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">buscar_en_base</text>
         <text data-detail="context" x="605" y="164" class="t-muted" font-size="9" text-anchor="middle">trámites, tarifas, noticias</text>
+        <text data-detail="fine" x="605" y="172" class="t-database" font-size="7" text-anchor="middle">significado + palabras</text>
         </g>
 
         <g id="node-consultar" data-node-id="consultar" data-node-label="consultar_datos" tabindex="0" role="button" aria-label="Enfocar consultar_datos, sedes, contactos, catálogo, Componente de arquitectura" aria-pressed="false" data-node-kind="database" data-node-sublabel="sedes, contactos, catálogo" data-node-context="Componente de arquitectura">
@@ -5673,6 +5674,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
           <li>El modelo ve las 5 herramientas con su esquema Pydantic y responde con una llamada estructurada</li>
           <li>El prompt guía la elección; no hay enrutamiento por texto libre</li>
           <li>Un pedido mixto (trámite y lugar) usa dos herramientas en el mismo turno</li>
+          <li>Medido con la matriz de 43 preguntas: 42 enrutan a la herramienta esperada (D36)</li>
         </ul>
       </div>
 
@@ -5684,7 +5686,7 @@ OTHER DEALINGS IN THE FONT SOFTWARE.
         <ul>
           <li>Sin resultados en consultar_datos: prueba buscar_en_base antes de rendirse</li>
           <li>Una pregunta corta retoma el turno anterior</li>
-          <li>Sin dato en ninguna herramienta: dice que no sabe y da la línea de atención</li>
+          <li>Sin dato en ninguna herramienta: dice que no sabe y da la línea de atención; ante «quiero hablar con una persona» entrega los canales oficiales (D37)</li>
         </ul>
       </div>
     </div>

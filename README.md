@@ -25,7 +25,7 @@ Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energ�
 | Respuestas correctas (Taller 1, con `gemini-3.5-flash`) | Según el juez automático: 31 de 35 con respuesta y 21 de 24 negativas bien resueltas. Con la revisión asistida: 29 de 35 y 19 de 24. Los veredictos de la revisión los propuso el asistente de código y los ratificó María Stella Fuentes |
 | Costo frente a pegar toda la base en el prompt | unas 80 veces menor por pregunta |
 
-El detalle y las limitaciones están en el [informe del Taller 1](docs/3%20-%20Informe/informe_taller1.md); el agente del Taller 2, en su [informe](docs/3%20-%20Informe/informe_taller2.md); y las decisiones de arquitectura (D1 a D19), con su porqué, en [docs/decisiones.md](docs/decisiones.md).
+El detalle y las limitaciones están en el [informe del Taller 1](docs/3%20-%20Informe/informe_taller1.md); el agente del Taller 2, en su [informe](docs/3%20-%20Informe/informe_taller2.md); y las decisiones de arquitectura (D1 a D38), con su porqué, en [docs/decisiones.md](docs/decisiones.md).
 
 ## Arquitectura
 
@@ -225,7 +225,7 @@ uv run python scripts/36_construir_notebook_tsne.py --reales   # genera notebook
 Equivalencias de datos: `data/1_bronze/` es el crudo (raw), `data/2_silver/` el procesado (processed) y `data/3_gold/` el corpus con metadatos (gold). Cada documento de Gold lleva `url`, `title`, `categoria` (la sección del sitio), `fecha_extraccion` (captura), `fecha_publicacion`, `section` (el sitemap de origen) y `hash`; Silver conserva `url`, `title`, `section`, `fecha_publicacion` y `hash`.
 
 ```
-docs/        análisis de la empresa, conjunto de prueba, informes, capturas, diagramas de Archify (el `.json` es la fuente; los `*.delivery.json` los genera Archify para la entrega), decisiones.md (D1 a D19), guion_demo_whatsapp.md, politica_de_privacidad.md (la URL que pide Meta para publicar la app), vacios_de_la_base.md, la declaración de uso de IA del Módulo 3 y skillspector-corpus-medallion.md (reporte de seguridad de la skill)
+docs/        análisis de la empresa, conjunto de prueba, informes, capturas, diagramas de Archify (el `.json` es la fuente; los `*.delivery.json` los genera Archify para la entrega), decisiones.md (D1 a D38), guion_demo_whatsapp.md, politica_de_privacidad.md (la URL que pide Meta para publicar la app), vacios_de_la_base.md, la declaración de uso de IA del Módulo 3 y skillspector-corpus-medallion.md (reporte de seguridad de la skill)
 scripts/     01 a 41: etapas del pipeline y pruebas en el orden en que se usan (34 PostgreSQL local, 35 y 36 análisis de conversaciones, 37 plan B de la demostración, 38 exporta los chats reales, 39 chequeo previo de WhatsApp, 40 preguntas hostiles, 41 borrador del informe); utilidades/: herramientas sueltas
 data/        0_manual/ 1_bronze/ 2_silver/ 3_gold/ 4_curaduria/ 5_extraccion/
 src/taaml/   código del asistente (base.py, recuperacion.py, vectorstore.py, sinonimos.py, reordenar.py, validacion.py, respaldo.py, agente.py, consulta_datos.py, prompts.py, tareas.py, whatsapp.py, limite.py, conversaciones.py, actividad.py, voz.py)

@@ -24,7 +24,7 @@ CONVERSACION = [
         "608 277 08 22",
     ),  # basta la memoria: el dato ya está en el turno 1
     ("¿Cómo cancelo mi servicio?", "buscar_en_base", None),
-    ("¿Cuánto cuesta un viaje a Cartagena?", None, "No tengo esa información"),  # puede buscar antes de rendirse
+    ("¿Cuánto cuesta un viaje a Cartagena?", None, "se sale de lo que puedo ayudarte"),  # puede buscar antes de rendirse
 ]
 
 
