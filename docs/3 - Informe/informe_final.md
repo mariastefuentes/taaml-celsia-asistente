@@ -62,6 +62,8 @@ El detalle del agente, con sus componentes intermedios (resumen, validación del
 
 ![Arquitectura de punta a punta del agente](../capturas/arquitectura_agente.png)
 
+El diagrama es la versión actual (prompt v9, búsqueda mezclada, servidor MCP «celsia» y OpenClaw como segundo cliente), hecha con Archify.
+
 ## 4. Ruta A y justificación de las decisiones
 
 El Módulo 3 ofrece dos rutas: la **Ruta A** (LangChain, API REST y WhatsApp) y la **Ruta B** (un sistema operativo de agentes, OpenFang, con memoria en capas, «Hands» y puentes a Telegram o WhatsApp). Son alternativas: se elige una. El grupo eligió la A.
@@ -174,9 +176,7 @@ El servidor de integración está construido directamente en FastAPI (`src/taaml
 
 ### Mejoras posteriores al cierre del Módulo 3
 
-Las piezas añadidas se ven así: las mismas herramientas de consulta sirven al agente de WhatsApp y, a través de un servidor MCP, a un segundo cliente (OpenClaw) endurecido.
-
-![Dos clientes para las mismas herramientas de consulta](diagrama_mcp_openclaw.svg)
+Las piezas añadidas aparecen en el diagrama de la sección 3: las mismas herramientas de consulta sirven al agente de WhatsApp y, a través de un servidor MCP, a un segundo cliente (OpenClaw) endurecido.
 
 **Búsqueda mezclada (D31).** El agente recupera cuatro fragmentos: los tres primeros por significado y, al final, el mejor por palabras que no esté ya. Con eso dejaron de fallar los dos trámites que siempre fallaban (el plazo de un PQR y dónde encontrar el código de cuenta) y el banco verificable subió a 48 de 49. Con 35 preguntas no se puede decir que sea mejor en general: hit@4 pasó de 25 a 26, MRR@4 de 0,645 a 0,652 y nDCG@4 de 0,532 a 0,539, con McNemar exacto p = 1,0 y tres pares discordantes (la mezcla gana dos y pierde uno). A k=10 los dos métodos empatan (nDCG 0,535). La mejora comprobada son los dos trámites; lo demás es ruido de muestra (D34).
 
@@ -270,7 +270,7 @@ make banco-verificable  # 49 preguntas con respuesta calculada desde los datos (
 make herramienta-caida  # rompe herramientas a propósito con el modelo real (gasta cuota)
 ```
 
-Las decisiones (D1 a D37), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
+Las decisiones (D1 a D38), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
 
 ## Anexo B. Declaración de uso de IA
 
