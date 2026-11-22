@@ -9,7 +9,7 @@
 
 Celsia publica su información en más de mil páginas y un cliente no tiene dónde preguntar y recibir la respuesta con su fuente. El proyecto construyó, en tres módulos, un asistente que responde solo con el contenido oficial de celsia.com y dice «no tengo esa información» cuando la fuente no lo trae. El Módulo 1 armó el corpus (393 documentos, 1.690 fragmentos) y un sistema de preguntas y respuestas con RAG. El Módulo 2 lo convirtió en un agente con memoria, herramientas y enrutamiento. El Módulo 3, que este informe detalla, lo llevó a producción por la **Ruta A**: una API REST con FastAPI, cinco herramientas de LangChain con esquemas Pydantic estrictos, memoria en PostgreSQL, aprobación humana para los reclamos y un **servidor de integración propio** (Vía 2, sin N8N) que atiende a los clientes por WhatsApp con la API Cloud de Meta.
 
-El agente se midió con la matriz de enrutamiento (42 de 43 preguntas con la herramienta esperada), preguntas de energía (7 de 8 respondidas, la octava con «no hay información»), preguntas ajenas (10 de 10 rechazadas) y respuestas honestas con una herramienta caída (6 de 6). Hay 368 pruebas automáticas sin modelos ni red y un banco de 49 preguntas cuya respuesta correcta se calcula desde los datos para medir alucinaciones (sección 9). Como componente opcional, se analizaron 114 conversaciones simuladas con embeddings y t-SNE en 2D y 3D: los vectores recuperan la estructura por tema (índice de Rand ajustado de 0,45) y la lectura de las conversaciones marcadas como fallidas muestra que la tasa de fallo útil es de 4 %, no de 18 %.
+El agente se midió con la matriz de enrutamiento (41 de 43 preguntas con la herramienta esperada con el prompt v11; 42 con el v9), preguntas de energía (7 de 8 respondidas, la octava con «no hay información»), preguntas ajenas (10 de 10 rechazadas) y respuestas honestas con una herramienta caída (6 de 6). Hay 370 pruebas automáticas sin modelos ni red y un banco de 49 preguntas cuya respuesta correcta se calcula desde los datos para medir alucinaciones (sección 9). Como componente opcional, se analizaron 114 conversaciones simuladas con embeddings y t-SNE en 2D y 3D: los vectores recuperan la estructura por tema (índice de Rand ajustado de 0,45) y la lectura de las conversaciones marcadas como fallidas muestra que la tasa de fallo útil es de 4 %, no de 18 %.
 
 Lo que **no** está probado se dice en la sección 11: el canal de WhatsApp se verificó con Meta real solo en parte, el número de prueba de Meta solo conversa con cinco destinatarios autorizados, y las conversaciones reales analizadas son seis, insuficientes para concluir algo sobre ellas.
 
@@ -38,7 +38,7 @@ El Módulo 2 dejó un agente que funcionaba en una máquina, con una interfaz pr
 | Memoria | SQLite (`SqliteSaver` y `SqliteStore`) | **PostgreSQL** (`PostgresSaver` y `PostgresStore`) | Varias instancias de la API comparten memoria y una pausa de aprobación sobrevive a un reinicio (D4) |
 | Herramientas | 4 | **5**, todas con esquema Pydantic estricto (`radicar_reclamo` es la nueva) | Function calling estricto: los argumentos se validan antes de ejecutar |
 | Acciones | Solo lectura y memoria del cliente | Radicar un reclamo, **con aprobación humana** (`HumanInTheLoopMiddleware`) | Una acción que cambia algo fuera de la conversación no la decide el modelo solo (D11, D16) |
-| Prompt | v4 | **v9** | v7 corrige el rechazo de preguntas válidas de energía; v8 busca las cifras de la empresa antes de rechazarlas; v9 da una sola cifra cuando los textos discrepan y responde en el idioma del cliente (D14, D21, D25) |
+| Prompt | v4 | **v11** | v7 corrige el rechazo de preguntas válidas de energía; v8 busca las cifras de la empresa antes de rechazarlas; v9 da una sola cifra cuando los textos discrepan y responde en el idioma del cliente; v11 responde en cualquier idioma, atiende primero el peligro eléctrico inmediato, rechaza lo ajeno con «Eso se sale de lo que puedo ayudarte», se presenta al saludar y responde breve (D14, D21, D25, D39) |
 | Protección | Rechazo de inyecciones | + límite de 8 mensajes por minuto por teléfono, firma de Meta, clave para `/chat`, token para aprobar | El bot es público durante la demo (D13) |
 | Observación | Trazas en LangSmith | + panel en vivo (herramienta, tiempo, **costo** y etiqueta de «dato sin respaldo»), chequeo previo, plan B | Se ve qué hace y cuánto cuesta cada respuesta mientras el agente responde (D18, D19, D28) |
 | Calidad del repositorio | Pruebas locales | CI en GitHub con `make lint` y `make test`, y `make verificar-clon` sobre un clon limpio | Que lo que está en GitHub arranque desde cero (D26) |
@@ -53,7 +53,7 @@ El camino de un mensaje, del usuario a la respuesta:
 1. **Usuario → Meta.** La persona escribe al número de WhatsApp Business. Meta lo recibe en su API Cloud.
 2. **Meta → túnel → API.** Meta firma el aviso (`X-Hub-Signature-256`) y lo envía por POST a `/webhook/whatsapp`. Como la API corre en un computador local, un túnel de Cloudflare la expone por HTTPS.
 3. **API.** Comprueba la firma, responde 200 de inmediato (para que Meta no reintente) y atiende el mensaje en segundo plano. Descarta avisos repetidos por identificador y aplica el límite por teléfono. Los saludos y `/nuevo` se resuelven sin llamar al modelo.
-4. **Agente.** El teléfono se convierte en un hash que sirve de identificador de la conversación; el agente (`create_agent`) lee su historial en PostgreSQL, arma el prompt v9 y decide si responde o llama a una herramienta.
+4. **Agente.** El teléfono se convierte en un hash que sirve de identificador de la conversación; el agente (`create_agent`) lee su historial en PostgreSQL, arma el prompt v11 y decide si responde o llama a una herramienta.
 5. **LLM y herramientas.** DeepSeek elige la herramienta con function calling; Pydantic valida los argumentos. Los datos exactos salen de tablas locales; la búsqueda por significado, de Qdrant con embeddings de Ollama.
 6. **Memoria y validación.** El turno se guarda en PostgreSQL bajo el hilo del cliente. Antes de enviar, cada cifra, correo y enlace de la respuesta se busca en lo que devolvieron las herramientas; si algo no aparece, se agrega una nota «verifica antes de usar» (avisa, no bloquea).
 7. **Retorno.** La API envía la respuesta por la Graph API de Meta, que la entrega en el teléfono.
@@ -62,13 +62,13 @@ El detalle del agente, con sus componentes intermedios (resumen, validación del
 
 ![Arquitectura de punta a punta del agente](../capturas/arquitectura_agente.png)
 
-El diagrama es la versión actual (prompt v9, búsqueda mezclada, servidor MCP «celsia» y OpenClaw como segundo cliente), hecha con Archify.
+El diagrama es la versión actual (prompt v11, búsqueda mezclada, servidor MCP «celsia» y OpenClaw como segundo cliente), hecha con Archify.
 
 ## 4. Ruta A y justificación de las decisiones
 
 El Módulo 3 ofrece dos rutas: la **Ruta A** (LangChain, API REST y WhatsApp) y la **Ruta B** (un sistema operativo de agentes, OpenFang, con memoria en capas, «Hands» y puentes a Telegram o WhatsApp). Son alternativas: se elige una. El grupo eligió la A.
 
-**Por qué la Ruta A.** (1) El agente del Módulo 2 ya estaba hecho con LangChain, con herramientas, memoria y recuperación; la Ruta A lo lleva a producción, mientras que la B exige reconstruirlo en otro sistema. (2) La Ruta B implica instalar un runtime distinto, migrar toda la base de conocimiento a su memoria y escribir los manifiestos de las operaciones autónomas, un trabajo con su propia curva de aprendizaje. (3) Lo medido y probado hasta ahora (esquemas de herramientas, PostgresSaver, aprobación humana, webhook, 368 pruebas, análisis de conversaciones) pertenece a la Ruta A (más de 360 pruebas). No se evaluó OpenFang en este proyecto, así que la comparación se argumenta y no se midió.
+**Por qué la Ruta A.** (1) El agente del Módulo 2 ya estaba hecho con LangChain, con herramientas, memoria y recuperación; la Ruta A lo lleva a producción, mientras que la B exige reconstruirlo en otro sistema. (2) La Ruta B implica instalar un runtime distinto, migrar toda la base de conocimiento a su memoria y escribir los manifiestos de las operaciones autónomas, un trabajo con su propia curva de aprendizaje. (3) Lo medido y probado hasta ahora (esquemas de herramientas, PostgresSaver, aprobación humana, webhook, 370 pruebas, análisis de conversaciones) pertenece a la Ruta A (más de 360 pruebas). No se evaluó OpenFang en este proyecto, así que la comparación se argumenta y no se midió.
 
 **Vía 2 (servidor propio) frente a Vía 1 (N8N).** Dentro de la Ruta A, la conexión con WhatsApp tiene dos vías: un flujo visual en N8N o un manejador de webhook escrito en FastAPI. Se eligió el servidor propio (D10):
 
@@ -160,15 +160,15 @@ El servidor de integración está construido directamente en FastAPI (`src/taaml
 
 | Medición | Resultado |
 |---|---|
-| Matriz de enrutamiento (herramienta esperada en 43 preguntas, D36) | **42 de 43**; la que falla (R31) ya fallaba con versiones anteriores del prompt. Las 10 preguntas añadidas (trámites, inglés, mal escrito, ataques, fuera de dominio) enrutaron bien; en ellas solo se verifica la herramienta, no el texto |
+| Matriz de enrutamiento (herramienta esperada en 43 preguntas, D36) | **41 de 43** con el prompt v11 (42 con el v9). R31 ya fallaba con versiones anteriores del prompt; R19 (una pregunta de memoria) consultó la herramienta de memoria en lugar de la conversación: repetida 6 veces falló 1 con v11 y 0 con v9, diferencia que no se distingue del azar. Las 10 preguntas añadidas (trámites, inglés, mal escrito, ataques, fuera de dominio) enrutaron bien; en ellas solo se verifica la herramienta, no el texto |
 | Preguntas de energía, con búsqueda | 7 de 8 respondidas; la octava dijo con honestidad que no hay información |
 | Preguntas ajenas a Celsia | 10 de 10 rechazadas |
 | Con el almacén de memoria caído | 6 de 6 respuestas honestas |
 | Herramienta rota a propósito (script 42, modelo real) | 2 de 2 respuestas corteses, sin inventar y sin filtrar el error |
 | Recuperación (Módulo 1) | 89 % con embeddings (54 % por palabras, 74 % híbrido) |
-| Banco verificable (49 casos con valor esperado, D29 a D31) | **48 de 49** con la búsqueda mezclada; antes 46, 46 y 47 en tres corridas (D30) |
+| Banco verificable (49 casos con valor esperado, D29 a D31) | **49 de 49** con el prompt v11 (D39); 48 de 49 con la búsqueda mezclada y el prompt v9; antes 46, 46 y 47 en tres corridas (D30) |
 | Búsqueda a k=4: embeddings contra mezcla (35 preguntas, D34) | 25/35 contra 26/35; McNemar exacto p = 1,0: **sin diferencia significativa** |
-| Pruebas automáticas | 368 pasan y 2 se omiten en `main`, sin modelos ni red |
+| Pruebas automáticas | 370 pasan y 2 se omiten en `main`, sin modelos ni red |
 | Latencia | WhatsApp real, 20 preguntas: mediana 6,4 s, p90 10,3 s, máximo 10,9 s. Módulo 2: mediana de 8,4 s (2,1 a 23 s); algunas corridas con muchas herramientas tardaron de 12 a 72 s |
 | Costo | Unos 0,02 USD por una conversación de cuatro turnos (Módulo 2) |
 
@@ -188,15 +188,17 @@ Las piezas añadidas aparecen en el diagrama de la sección 3: las mismas herram
 
 **Asesor humano (D37).** No se construyó una herramienta nueva: ante «quiero hablar con una persona» el agente ya entrega los canales oficiales de la tabla de contactos y ofrece radicar un reclamo, sin inventar datos. No hay transferencia real a una cola de atención.
 
+**Experiencia de cliente (D39).** Una revisión del flujo con ojos de atención al cliente llevó al prompt v11 y a cuatro mensajes fijos más claros (límite por teléfono, reclamo en revisión, rechazado e incompleto). El agente responde en el idioma que escriba el cliente (comprobado en francés y alemán), se presenta en el primer saludo y pregunta si ya es cliente o quiere un servicio nuevo sin pedir datos personales, rechaza lo ajeno a Celsia con «Eso se sale de lo que puedo ayudarte», responde breve y, ante un cable caído o chispas, da primero seguridad, el 123, el WhatsApp de energía y el enlace de reporte antes de ofrecer el reclamo. Medición con el agente real: banco 49 de 49, ataques 11 de 11, preguntas hostiles sin fallas automáticas y matriz 41 de 43. En la primera corrida v11 perdió una pregunta mixta (lugar más trámite): con la instrucción de brevedad usó las dos herramientas 3 de 5 veces contra 5 de 5 con v9; se agregó una regla explícita y volvió a 5 de 5, con un ejemplo que no es de la matriz. Límites: el reclamo pide solo ciudad y qué pasó, y en la práctica Celsia necesitaría además un dato para identificar al cliente (el NIU o la dirección); para la demostración se deja así. Las respuestas con trámites aún superan los 1.000 caracteres y la presentación y los mensajes nuevos no se probaron con Meta real.
+
 **Registros de conversación (D34).** De 114 conversaciones simuladas, el 46,5 % usó herramientas y el 17,5 % falló, ninguna pasó a revisión humana. Las 6 conversaciones reales son de compañeros y conocidos, no de clientes de Celsia: con n = 6 los intervalos de Wilson son enormes y no se presentan como tráfico real.
 
 ### Cómo intentamos hacerlo alucinar
 
 El profesor pidió probar que el agente no inventa. Se hizo con cuatro instrumentos, que miden cosas distintas:
 
-| Instrumento | Qué es | Resultado (modelo real, prompt v9) |
+| Instrumento | Qué es | Resultado (modelo real, prompt v11) |
 |---|---|---|
-| **Banco verificable** (`make banco-verificable`, D22 y D29) | 49 preguntas con la respuesta calculada desde los datos: cuántos puntos hay en una ciudad, teléfono y horario de una sede, contactos; trampas con premisa falsa (una sede que no existe, un teléfono con un dígito cambiado, un WhatsApp inventado); robustez (ortografía, jerga, inglés, dos pasos); aislamiento entre clientes; una conversación de 10 turnos; y 9 preguntas de trámites y tarifas con el plazo, el documento o el porcentaje que debe traer la respuesta, comprobados antes contra el texto oficial | Tres corridas completas: 46, 46 y 47 de 49 (94 % a 96 %). Las primeras 40 preguntas dan 39 de 40 y las 9 de trámites y tarifas, 7 de 9. La que falla en las primeras cita una tarifa de 2020 (607 pesos por kWh, que sí está en la base) como dato de esa fecha y la regla marca cualquier monto; las dos de trámites fallan porque la búsqueda no trae el fragmento (el agente calla o es vago, no inventa) |
+| **Banco verificable** (`make banco-verificable`, D22 y D29) | 49 preguntas con la respuesta calculada desde los datos: cuántos puntos hay en una ciudad, teléfono y horario de una sede, contactos; trampas con premisa falsa (una sede que no existe, un teléfono con un dígito cambiado, un WhatsApp inventado); robustez (ortografía, jerga, inglés, dos pasos); aislamiento entre clientes; una conversación de 10 turnos; y 9 preguntas de trámites y tarifas con el plazo, el documento o el porcentaje que debe traer la respuesta, comprobados antes contra el texto oficial | Con el prompt v11 (D39): 49 de 49. Antes, tres corridas completas: 46, 46 y 47 de 49 (94 % a 96 %). Las primeras 40 preguntas dan 39 de 40 y las 9 de trámites y tarifas, 7 de 9. La que falla en las primeras cita una tarifa de 2020 (607 pesos por kWh, que sí está en la base) como dato de esa fecha y la regla marca cualquier monto; las dos de trámites fallan porque la búsqueda no trae el fragmento (el agente calla o es vago, no inventa) |
 | **Preguntas hostiles** (`make preguntas-hostiles`) | 22 preguntas incómodas: ambigua, fuera de alcance, el celular del gerente, competencia, insulto, cifras con fuentes distintas, otro idioma | 0 fallas automáticas; las respuestas se leyeron a mano |
 | **Ataques directos** (`scripts/19_probar_ataques.py`) | 11 intentos de saltarse las reglas (ignorar instrucciones, falsa autoridad, revelar el prompt, etc.) | 11 de 11 resistidos |
 | **Inyección indirecta** (`scripts/12_probar_inyeccion_indirecta.py`, y `make demo-inyeccion` en vivo) | Documentos con órdenes escondidas dentro del corpus | Resistido: el agente responde con el contenido legítimo y no obedece la orden |
@@ -264,13 +266,13 @@ Lo más valioso fue **medir** en lugar de suponer: la matriz de enrutamiento, la
 uv sync
 make api              # API con PostgreSQL local (puerto 8000)
 make ensayo-whatsapp  # chequeo previo de la demostración
-make test             # 368 pruebas, sin modelos ni red
+make test             # 370 pruebas, sin modelos ni red
 make verificar-clon     # clona GitHub, instala y corre lint y pruebas en una carpeta vacía
 make banco-verificable  # 49 preguntas con respuesta calculada desde los datos (gasta cuota)
 make herramienta-caida  # rompe herramientas a propósito con el modelo real (gasta cuota)
 ```
 
-Las decisiones (D1 a D38), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
+Las decisiones (D1 a D39), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
 
 ## Anexo B. Declaración de uso de IA
 
@@ -302,9 +304,9 @@ Todo código o texto generado por una herramienta lo revisa una persona del equi
 
 | Criterio (peso) | Dónde está la evidencia |
 |---|---|
-| Arquitectura y lógica del agente (30 %) | Secciones 2 a 5 y 9: `create_agent`, cinco herramientas con esquema estricto, aprobación humana, memoria en PostgreSQL, prompt v9, banco verificable y matriz de enrutamiento; decisiones D1 a D30 |
+| Arquitectura y lógica del agente (30 %) | Secciones 2 a 5 y 9: `create_agent`, cinco herramientas con esquema estricto, aprobación humana, memoria en PostgreSQL, prompt v11, banco verificable y matriz de enrutamiento; decisiones D1 a D30 |
 | Integración del canal (30 %) | Secciones 6 y 7: API FastAPI y servidor propio de WhatsApp, probado con Meta real (texto, memoria, aprobación y rechazo con botones, aviso de voz); límites de Meta dichos con claridad |
-| Calidad del código y GitHub (20 %) | Pull requests con revisión, 368 pruebas, CI en verde con `make lint` y `make test`, `make verificar-clon`, decisiones registradas, repositorio público |
+| Calidad del código y GitHub (20 %) | Pull requests con revisión, 370 pruebas, CI en verde con `make lint` y `make test`, `make verificar-clon`, decisiones registradas, repositorio público |
 | Documentación final (10 %) | Este informe, `README.md`, `docs/decisiones.md`, guiones de la demostración |
 | Presentación y demostración (10 %) | `docs/guion_demo_whatsapp.md`: 15 minutos sin diapositivas, roles, plan B, panel en vivo y chat web con QR |
 | Opcional: t-SNE y UMAP (+10 %) | Sección 10: 114 conversaciones simuladas con t-SNE 2D y 3D, K-means, KNN y comparación con PCA y UMAP |
