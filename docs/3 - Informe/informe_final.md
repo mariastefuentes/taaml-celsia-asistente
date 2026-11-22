@@ -174,6 +174,10 @@ El servidor de integración está construido directamente en FastAPI (`src/taaml
 
 ### Mejoras posteriores al cierre del Módulo 3
 
+Las piezas añadidas se ven así: las mismas herramientas de consulta sirven al agente de WhatsApp y, a través de un servidor MCP, a un segundo cliente (OpenClaw) endurecido.
+
+![Dos clientes para las mismas herramientas de consulta](diagrama_mcp_openclaw.svg)
+
 **Búsqueda mezclada (D31).** El agente recupera cuatro fragmentos: los tres primeros por significado y, al final, el mejor por palabras que no esté ya. Con eso dejaron de fallar los dos trámites que siempre fallaban (el plazo de un PQR y dónde encontrar el código de cuenta) y el banco verificable subió a 48 de 49. Con 35 preguntas no se puede decir que sea mejor en general: hit@4 pasó de 25 a 26, MRR@4 de 0,645 a 0,652 y nDCG@4 de 0,532 a 0,539, con McNemar exacto p = 1,0 y tres pares discordantes (la mezcla gana dos y pierde uno). A k=10 los dos métodos empatan (nDCG 0,535). La mejora comprobada son los dos trámites; lo demás es ruido de muestra (D34).
 
 **Servidor MCP propio (D32).** Las dos herramientas de consulta están expuestas por un servidor MCP de solo lectura (`src/taaml/servidor_mcp.py`, transporte stdio, sin puerto abierto). Se probó con un cliente MCP real y con OpenClaw.
@@ -181,6 +185,8 @@ El servidor de integración está construido directamente en FastAPI (`src/taaml
 **Calidad del repositorio (D33).** `pre-commit` con las mismas revisiones del CI (ruff, `uv lock --check` y bloqueo de `.env`) y `make tipos` con `ty`, que informa 8 avisos y no bloquea.
 
 **OpenClaw como segundo cliente (D35, Taller 3).** Un agente OpenClaw con identidad «Asistente Celsia» (`SOUL.md`, `AGENTS.md`), el MCP anterior conectado y la configuración endurecida: perfil `messaging`, sin ejecución de comandos, sin acceso a archivos, sin permisos elevados ni navegador, un chat separado por persona y sandbox Docker donde solo se permite el MCP de Celsia. La batería de 4 pruebas del curso (identidad, archivos, memoria entre sesiones y Flash contra Pro) pasó las 4 antes de endurecer; después, crear archivos y ejecutar comandos quedan rechazados, la clave sigue sin imprimirse y las preguntas de Celsia se siguen respondiendo por el MCP. Costó tres lecciones: el Gateway debe estar apagado para registrar un MCP, el sandbox necesita su imagen y una lista explícita de herramientas permitidas (sin ella el agente perdía el MCP y decía «no tengo evidencia» sin inventar), y lanzar el Gateway desde una terminal de herramientas lo mataba al terminar el comando. La prueba desde el teléfono por Telegram queda pendiente.
+
+**Asesor humano (D37).** No se construyó una herramienta nueva: ante «quiero hablar con una persona» el agente ya entrega los canales oficiales de la tabla de contactos y ofrece radicar un reclamo, sin inventar datos. No hay transferencia real a una cola de atención.
 
 **Registros de conversación (D34).** De 114 conversaciones simuladas, el 46,5 % usó herramientas y el 17,5 % falló, ninguna pasó a revisión humana. Las 6 conversaciones reales son de compañeros y conocidos, no de clientes de Celsia: con n = 6 los intervalos de Wilson son enormes y no se presentan como tráfico real.
 
@@ -264,7 +270,7 @@ make banco-verificable  # 49 preguntas con respuesta calculada desde los datos (
 make herramienta-caida  # rompe herramientas a propósito con el modelo real (gasta cuota)
 ```
 
-Las decisiones (D1 a D36), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
+Las decisiones (D1 a D37), con su porqué y sus límites, están en `docs/decisiones.md`; las especificaciones, en `specs/`.
 
 ## Anexo B. Declaración de uso de IA
 
