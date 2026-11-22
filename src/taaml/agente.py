@@ -361,10 +361,10 @@ APROBACION_HUMANA = {
     }
 }
 MENSAJE_EN_REVISION = (
-    "Tu reclamo quedó en revisión: una persona de Celsia debe aprobarlo antes de radicarlo. "
-    "Cuando lo haga, te daremos el número de radicado."
+    "Recibí tu reclamo y una persona de Celsia lo está revisando antes de radicarlo. "
+    "Apenas lo apruebe, te escribo aquí con el número de radicado. Si es urgente, puedes llamar a la línea 01 8000 112 115."
 )
-MENSAJE_RECHAZADO = "Una persona de Celsia revisó el reclamo y no lo aprobó, así que no se radicó. Puedes llamar a la línea 01 8000 112 115."
+MENSAJE_RECHAZADO = "Una persona de Celsia revisó tu reclamo y por ahora no lo aprobó, así que todavía no está radicado. Puedes escribirme de nuevo con más detalles (ciudad, qué pasó y desde cuándo) para intentarlo otra vez, o llamar a la línea 01 8000 112 115."
 
 
 MENSAJE_HERRAMIENTA_CAIDA = (
@@ -399,8 +399,8 @@ def errores_amables(request: Any, handler: Any) -> Any:
 
 MAX_REINTENTOS_RECLAMO = 2
 MENSAJE_RECLAMO_INCOMPLETO = (
-    "No pude dejar listo tu reclamo con los datos que tengo. Cuéntame de nuevo en qué ciudad ocurre y qué pasó, "
-    "o llama a la línea 01 8000 112 115."
+    "Todavía me falta información para dejar listo tu reclamo. Dime en qué ciudad ocurre y qué pasó (solo lo que falte) "
+    "y lo intento de nuevo, o llama a la línea 01 8000 112 115."
 )
 
 
@@ -465,7 +465,7 @@ def limitar_historial(request: Any, handler: Any) -> Any:
 
 @dynamic_prompt
 def con_fecha_de_hoy(request: Any) -> str:
-    """El prompt de sistema se arma en cada turno: al texto fijo de `v9_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
+    """El prompt de sistema se arma en cada turno: al texto fijo de `v11_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
     base = request.system_message.text if request.system_message else ""
     return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
 
@@ -613,7 +613,7 @@ def crear_agente(
     return create_agent(
         model=llm,
         tools=[t for t in HERRAMIENTAS if not (en_cadena and t is buscar_en_base)],
-        system_prompt=leer_prompt("v9_agente.md"),
+        system_prompt=leer_prompt("v11_agente.md"),
         checkpointer=checkpointer,
         store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
         context_schema=Contexto,

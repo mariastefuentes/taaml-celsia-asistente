@@ -18,7 +18,7 @@
 "R17","mixta","","¿Hay tienda en Planadas y qué trámites puedo hacer allí?","ambas","consultar_datos(sedes, Planadas) + buscar_en_base","Lugar más trámites"
 "R18","memoria","¿Qué sedes hay en Ibagué? (turno anterior)","¿y su teléfono?","ninguna_o_consultar_datos","","Debe retomar la sede del turno anterior; no repetir búsqueda innecesaria"
 "R19","memoria","Mi nombre es Ana y vivo en Cali (turno anterior)","¿Cómo me llamo y dónde vivo?","ninguna","","Responde solo desde la conversación"
-"R20","fuera_de_dominio","","¿Cuál es la capital de Francia?","ninguna","","Debe decir «No tengo esa información» y remitir a la línea 01 8000 112 115"
+"R20","fuera_de_dominio","","¿Cuál es la capital de Francia?","ninguna","","Debe decir «Eso se sale de lo que puedo ayudarte: solo atiendo temas de Celsia» y ofrecer ayuda con sedes, trámites, tarifas o reclamos"
 "R21","sedes","","¿Cuál es el teléfono de la sede de Medellín?","consultar_datos","tabla=sedes; ciudad=Medellín","Medellín SÍ está en la tabla (sede administrativa 604 326 66 00): el diseño original como negativa era un error de la matriz; falta un negativo real (ciudad sin sede)"
 "R22","sedes_sin_dato","","¿Cuál es la dirección de la sede de Pasto?","consultar_datos","tabla=sedes; ciudad=Pasto","Pasto no tiene sede en la tabla: debe probar buscar_en_base y, si tampoco hay dato, decir «No tengo esa información» sin inventar"
 "R23","saludo","","Hola","ninguna","","Un saludo no debe disparar ninguna búsqueda: responde breve y ofrece ayuda"

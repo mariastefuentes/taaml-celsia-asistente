@@ -35,7 +35,7 @@ ALTERNAS = {
 }  # un enlace de pago puede estar en las tablas o en el texto: cualquiera de las dos vale
 TEXTO_ESPERADO = {
     "R19": ["Ana", "Cali"],
-    "R20": ["No tengo esa información"],
+    "R20": ["solo atiendo temas de Celsia"],
     "R21": ["604 326 66 00"],
     "R22": ["No tengo esa información"],
     "R26": ["6"],
