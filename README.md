@@ -20,7 +20,7 @@ Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energ�
 | Resultado medido | Valor |
 |---|---|
 | Corpus curado | 393 documentos, 1.690 fragmentos, ~316.800 tokens |
-| Recuperación (la respuesta está entre los 12 fragmentos) | 89 % con embeddings (54 % por palabras, 74 % híbrido). El 89 % se midió con las mismas preguntas que motivaron el diccionario de sinónimos: con preguntas nuevas sería menor |
+| Recuperación (la respuesta está entre los 12 fragmentos) | 89 % con embeddings (54 % por palabras, 74 % híbrido). El 89 % se midió con las mismas preguntas que motivaron el diccionario de sinónimos: con preguntas nuevas sería menor. Estas cifras son del Q&A (12 fragmentos); el agente usa una mezcla de significado y palabras, medida aparte en `docs/2 - Conjunto de prueba/resultados/ranking_k10.csv` |
 | Preguntas de prueba | 59 (35 con respuesta y 24 que no deben responderse), 4 de inyección |
 | Respuestas correctas (Taller 1, con `gemini-3.5-flash`) | Según el juez automático: 31 de 35 con respuesta y 21 de 24 negativas bien resueltas. Con la revisión asistida: 29 de 35 y 19 de 24. Los veredictos de la revisión los propuso el asistente de código y los ratificó María Stella Fuentes |
 | Costo frente a pegar toda la base en el prompt | unas 80 veces menor por pregunta |
@@ -203,6 +203,10 @@ Los datos que el sitio muestra solo como enlaces (WhatsApp, PQR, pagos) están e
 
 </details>
 
+## Servidor MCP propio
+
+Las dos herramientas de consulta del agente (`buscar_informacion_celsia` y `consultar_datos_celsia`) están expuestas por un servidor MCP en `src/taaml/servidor_mcp.py`, para que cualquier cliente MCP (por ejemplo OpenClaw) las reutilice sin tocar el código del agente. Es de solo lectura y usa stdio: el cliente lo lanza como proceso hijo y no queda ningún puerto abierto. Prueba con cliente MCP real: `tests/test_servidor_mcp.py`. Para lanzarlo a mano: `make mcp`.
+
 ## Análisis de conversaciones con t-SNE (Ruta Transversal A)
 
 La API ya guarda cada conversación completa en PostgreSQL (el checkpointer, bajo un hash del teléfono). `taaml.conversaciones` las lee, marca cuáles terminaron mal y arma el texto de cada una; el cuaderno `notebooks/analisis_conversaciones.ipynb` las convierte en vectores, las proyecta con t-SNE (2D y 3D), las agrupa y analiza dónde falla el asistente. **Los datos del cuaderno son simulados** (114 conversaciones escritas por el equipo y pasadas por el agente real), no clientes de Celsia.
@@ -242,8 +246,10 @@ Las skills del proyecto viven en este repositorio, en `.opencode/skills/` (una c
 
 - `corpus-medallion`: construir el corpus de una empresa en capas Bronze, Silver y Gold, listo para RAG.
 - `agente-rag-router`: armar un asistente con memoria por hilo y un enrutador entre RAG y datos estructurados.
+- `frontend-design`: guiar la dirección visual, la tipografía y el detalle de interfaces nuevas o rediseños; viene de [anthropics/skills](https://github.com/anthropics/skills) (Apache 2.0) y conserva su licencia en la carpeta.
+- `jan-project-standard`: estandarizar proyectos Python (uv, Ruff, pre-commit, Makefile, `CONSTITUTION.md`, CI y gobernanza de GitHub); viene de [hamsomp3/jan_skills_repository](https://github.com/hamsomp3/jan_skills_repository) (MIT), con sus plantillas y scripts. Es para otros proyectos: aplicarlo a este repo chocaría con su constitución y su Python 3.12.
 
-OpenCode las carga al abrir el proyecto; no hay que instalarlas. `make skills-check` valida el frontmatter, el nombre, el tamaño (máximo 500 líneas) y que no haya claves, rutas absolutas ni instrucciones para leer el `.env`; el CI corre la misma comprobación. El repositorio público [mariastefuentes/taaml-skills](https://github.com/mariastefuentes/taaml-skills) se conserva como espejo, y la revisión de seguridad de `corpus-medallion` está en [docs/skillspector-corpus-medallion.md](docs/skillspector-corpus-medallion.md).
+OpenCode las carga al abrir el proyecto; no hay que instalarlas. `make skills-check` valida el frontmatter, el nombre, el tamaño (máximo 500 líneas) y que no haya claves, rutas absolutas ni instrucciones para leer el `.env`; el CI corre la misma comprobación. El repositorio público [mariastefuentes/taaml-skills](https://github.com/mariastefuentes/taaml-skills) se conserva como espejo, la revisión de seguridad de `corpus-medallion` está en [docs/skillspector-corpus-medallion.md](docs/skillspector-corpus-medallion.md), y las de `agente-rag-router`, `frontend-design` y `jan-project-standard` quedan pendientes.
 
 ## Licencia
 

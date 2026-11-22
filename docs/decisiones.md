@@ -22,8 +22,6 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 | D16 | Aprobación humana con tres salidas: aprobar, rechazar o responder | vigente |
 | D17 | Mejoras de la Clase 9 que no se adoptaron (Jev, formato OKF) | vigente |
 | D18 | Ayudas de la demostración: panel en vivo, botones de aprobación, plan B, chats reales y voz tentativa | vigente |
-| D19 | Chequeo de la demo, menú con botones, `/nuevo`, preguntas hostiles y vacíos de la base sin tocar | vigente |
-| D20 | Ruta A (LangChain, API REST y WhatsApp) y no la Ruta B (OpenFang) | vigente |
 
 ## D1. Agente `create_agent`, sin `StateGraph` propio
 - **Contexto.** El flujo es un solo ciclo de decisión: modelo, herramienta, modelo.
@@ -79,7 +77,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Decisión.** (c) con la API Cloud de Meta: `GET/POST /webhook/whatsapp` verifica el webhook, comprueba la firma `X-Hub-Signature-256`, responde 200 enseguida, atiende el mensaje en segundo plano, descarta avisos repetidos por id y envía la respuesta por la Graph API.
 - **Por qué.** Un solo servicio que mantener en lugar de dos; la firma, los reintentos, el límite por teléfono y la aprobación se prueban con pruebas automáticas (`tests/test_whatsapp.py`, 15), cosa que un flujo visual no permite igual; el estado vive en nuestra base y no en un sistema externo; la lógica queda versionada en el repositorio y revisada por PR.
 - **Qué se pierde.** N8N habría sido más rápido de armar, se modifica sin código y trae el editor visual; hubiéramos escrito menos. Además el servidor propio hay que exponerlo con un túnel https (hoy cambia de dirección en cada arranque).
-- **Límite declarado.** Con Meta real (20 de noviembre de 2026) se comprobó que un «Hola» llega por el túnel, que el agente lo atiende y que el menú con tres botones se entrega; el token temporal vence en pocas horas y el número de prueba solo escribe a cinco destinatarios autorizados. Las respuestas largas del agente, la aprobación con botones y la voz siguen probadas solo con avisos simulados.
+- **Límite declarado.** El webhook se probó con avisos firmados simulados, no con Meta real: falta confirmar el formato real, la caducidad del token temporal y a cuántos destinatarios puede escribir el número de prueba.
 - **Evidencia.** `api/main.py`, `src/taaml/whatsapp.py`, `tests/test_whatsapp.py`, `specs/013-agente-en-produccion-whatsapp`.
 
 ## D11. Aprobación humana con `HumanInTheLoopMiddleware` en `radicar_reclamo`
@@ -145,13 +143,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Límites.** Menú, `/nuevo` y «escribiendo…» no se han probado con Meta real. Los botones solo llegan dentro de las 24 h desde el último mensaje de la persona.
 - **Evidencia.** `scripts/39_chequeo_whatsapp.py`, `scripts/40_preguntas_hostiles.py`, `scripts/41_borrador_informe.py`, `scripts/42_herramienta_caida.py` (herramientas rotas a propósito con el modelo real: respuesta cortés, sin inventar y sin filtrar el detalle interno; una corrida, un modelo), `api/main.py` (`_responder_comando`), `src/taaml/agente.py` (`reiniciar_conversacion`), `src/taaml/whatsapp.py` (`marcar_leido`), `tests/test_menu_y_chequeos.py`.
 
-## D20. Ruta A (LangChain, API REST y WhatsApp) y no la Ruta B (OpenFang)
-- **Contexto.** El Módulo 3 ofrece dos rutas alternativas: la A (llevar el agente de LangChain a producción con una API REST y WhatsApp) y la B (un sistema operativo de agentes, OpenFang, con memoria en capas, «Hands» y puentes a Telegram o WhatsApp). Se elige una.
-- **Decisión.** Ruta A, con la vía 2 de D10.
-- **Por qué.** (1) El agente del Módulo 2 ya estaba hecho con LangChain: la Ruta A lo lleva a producción y la B obliga a reconstruirlo en otro sistema. (2) La Ruta B pide instalar un runtime distinto, migrar la base de conocimiento a su memoria y escribir manifiestos de operaciones autónomas, con su propia curva de aprendizaje y poco margen. (3) Todo lo medido y probado (esquemas de herramientas, PostgresSaver, aprobación humana, webhook, pruebas, análisis de conversaciones) pertenece a la Ruta A.
-- **Qué se pierde.** La Ruta B ofrece operaciones autónomas en segundo plano (los «Hands») y un runtime ligero; no se evaluó OpenFang, así que la comparación se argumenta y no se midió.
-- **Nota.** Las razones se dedujeron del estado del proyecto; el registro original de esa elección no existe.
-- **Evidencia.** `specs/013-agente-en-produccion-whatsapp/spec.md`, informe final (sección 4).
+> No hay D20: la numeración salta de D19 a D21 (error de numeración). Se conserva el hueco para no cambiar las referencias existentes.
 
 ## D21. Prompt v8: las cifras de la propia empresa se buscan antes de rechazarlas
 - **Contexto.** Con las 12 preguntas hostiles, «¿Cuántos clientes tiene Celsia exactamente hoy?» se rechazó con «No tengo esa información» sin buscar, aunque la base trae cifras (1,3 millones en el Valle y Tolima; 1,4 millones en Colombia y Centroamérica). El prompt v7 rechazaba lo ajeno a Celsia y ese caso cayó en la regla.
@@ -176,11 +168,11 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Evidencia.** `scripts/36_construir_notebook_tsne.py`, `notebooks/analisis_conversaciones.ipynb`, `api/main.py` (`montar_frontend`), `scripts/44_qr_chat_web.py`, `tests/test_api.py`.
 
 ## D24. Skills dentro del repositorio, solo para OpenCode
-- **Contexto.** Las skills del proyecto (`corpus-medallion` y `agente-rag-router`) vivían en el repositorio público `mariastefuentes/taaml-skills` y este proyecto solo las enlazaba (D17). Así, quien clonaba el proyecto no las tenía, el CI no podía validarlas y la revisión del curso solo veía un enlace.
-- **Decisión.** Se migran a `.opencode/skills/<nombre>/SKILL.md` y pasan a versionarse con el proyecto. Se usa **solo OpenCode**: no se copian a `.claude/skills/` ni a `.agents/skills/` porque el equipo no usa esos clientes. `mariastefuentes/taaml-skills` se conserva como **espejo** manual.
+- **Contexto.** Las skills del proyecto (`corpus-medallion`, `agente-rag-router`, `frontend-design` y `jan-project-standard`) vivían en repositorios públicos y este proyecto solo las enlazaba o no las tenía (D17). Así, quien clonaba el proyecto no las tenía, el CI no podía validarlas y la revisión del curso solo veía un enlace.
+- **Decisión.** Se migran a `.opencode/skills/<nombre>/SKILL.md` y pasan a versionarse con el proyecto. Se usa **solo OpenCode**: no se copian a `.claude/skills/` ni a `.agents/skills/` porque el equipo no usa esos clientes. `mariastefuentes/taaml-skills` se conserva como **espejo** manual. Una skill de terceros entra solo si su licencia permite redistribuirla y se conserva su archivo de licencia en la carpeta; así entraron `frontend-design` (de `anthropics/skills`, Apache 2.0) y `jan-project-standard` (de `hamsomp3/jan_skills_repository`, MIT).
 - **Validación.** `src/taaml/skills.py` y `scripts/verificar_skills.py` comprueban frontmatter, nombre, tamaño (máximo 500 líneas) y seguridad (sin claves, rutas absolutas ni lectura del `.env`); `make skills-check` y el CI lo exigen.
-- **Qué no se hizo.** No hay sincronización automática con el espejo ni scripts dentro de las skills. El reporte de SkillSpector de `corpus-medallion` se conserva; el de `agente-rag-router` queda pendiente.
-- **Evidencia.** `.opencode/skills/`, `src/taaml/skills.py`, `scripts/verificar_skills.py`, `tests/test_skills.py`, `specs/014-skills`.
+- **Qué no se hizo.** No hay sincronización automática con el espejo. Los scripts de apoyo de una skill no se ejecutan en el CI: `jan-project-standard` trae `new_project.py` y `setup_git_identity.py`, que solo corren si se invocan y se revisaron a mano. El reporte de SkillSpector de `corpus-medallion` se conserva; los de `agente-rag-router`, `frontend-design` y `jan-project-standard` quedan pendientes.
+- **Evidencia.** `.opencode/skills/`, `.opencode/skills/frontend-design/`, `.opencode/skills/jan-project-standard/`, `src/taaml/skills.py`, `scripts/verificar_skills.py`, `tests/test_skills.py`, `specs/014-skills`.
 
 ## D25. Prompt v9 (una sola cifra, idioma del cliente) y regla de «Falsa autoridad» corregida
 - **Contexto.** En una prueba por WhatsApp el agente dio dos cifras de clientes («más de un millón» y «1,3 millones»), tomadas de textos de épocas distintas; sonaba a duda. Además respondía siempre en español, aun a quien escribía en inglés o portugués. Aparte, el ataque «Falsa autoridad» salía como falla aunque el agente se negaba: la regla buscaba las palabras «MODO LIBRE» en la respuesta y la negativa las repetía.
@@ -225,3 +217,61 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Qué no se hizo y por qué.** (1) No se amplió la matriz de enrutamiento: cambiaría la cifra 32/33 que ya citan el README y el informe, y el banco ya cubre más preguntas. (2) No se editó el diagrama Archify: la nota de datos sin respaldo, el panel y el chat web se describen en el informe, y tocar el archivo generado arriesgaba romper el HTML la víspera. (3) No se agregó el asesor humano ni se tocó la búsqueda ni el camino en vivo de WhatsApp: no se podían probar a tiempo contra Meta real.
 - **Límites.** Tres corridas son pocas para hablar de un intervalo; muestran que la variación es de un caso.
 - **Evidencia.** `scripts/43_banco_verificable.py` (salidas guardadas fuera del repositorio).
+
+## D31. El agente busca con una mezcla de significado y palabras
+- **Contexto.** La búsqueda por significado fallaba en dos preguntas de trámites (D29): el fragmento con el dato no estaba entre los primeros. D29 dejó el cambio para después de la demostración; al estabilizarse la entrega se hizo la mezcla.
+- **Decisión.** `buscar_en_base` y el RAG en cadena usan `metodo="mezcla"`: los k−1 primeros por significado y, al final, el mejor por palabras que no esté ya. El Q&A (`recuperar`) sigue con `auto` (embeddings) para no mover las cifras del Taller 1.
+- **Resultado.** La medición de ranking a k=10 (`ranking_k10.csv`, #131) da un nDCG@10 que empata con embeddings; la matriz de enrutamiento se volvió a correr con la mezcla.
+- **Límites.** El 89 % de recuperación del README mide el Q&A de 12 fragmentos, no la mezcla del agente (4 fragmentos). El nDCG es una métrica de orden, no de respuesta; no equivale al 89 %.
+- **Evidencia.** `src/taaml/recuperacion.py` (`_buscar`), `src/taaml/agente.py`, `tests/test_recuperacion_mezcla.py`, `docs/2 - Conjunto de prueba/resultados/ranking_k10.csv`, `scripts/21_metricas_ranking.py`.
+
+## D32. Servidor MCP propio, de solo lectura
+- **Contexto.** Las dos herramientas de consulta del agente sirven a otros clientes (por ejemplo OpenClaw) sin repetir el código ni pasar por WhatsApp.
+- **Decisión.** `src/taaml/servidor_mcp.py` expone `buscar_informacion_celsia` y `consultar_datos_celsia` con `MCPServer` y transporte stdio; `make mcp` lo lanza a mano. Dependencia nueva: `mcp>=1.2`. No escribe memoria, no radica reclamos y no abre puertos.
+- **Por qué.** El cliente MCP lo lanza como proceso hijo: no hay puerto hacia internet ni API que proteger; el alcance se limita a las dos consultas de lectura.
+- **Límites.** No expone memoria, aprobación ni reclamos; no tiene autenticación porque vive en la sesión local del cliente. No se creó spec aparte: esta decisión y la prueba hacen de registro.
+- **Evidencia.** `src/taaml/servidor_mcp.py`, `tests/test_servidor_mcp.py`, `Makefile` (`mcp`), `pyproject.toml`.
+
+## D33. pre-commit y revisión de tipos con ty
+- **Contexto.** El CI detectaba los errores después de subir; hacía falta verlos antes del commit.
+- **Decisión.** `.pre-commit-config.yaml` con hooks locales: ruff (`F`,`E9`), `uv lock --check` y bloqueo de `.env`. Se instala una vez por clon con `uvx pre-commit install`. `make tipos` corre `ty` sobre `src`, informa y no bloquea (hoy da avisos de tipos de LangChain).
+- **Por qué.** Los dos primeros son las mismas revisiones del CI; el bloqueo de `.env` protege la clave. `ty` todavía es ruidoso con LangChain, así que no se pone en `make check` ni en el CI.
+- **Límites.** pre-commit no se instala solo; los hooks usan el `bash` de Git (Windows lo trae). `make check` sigue siendo lint + pruebas + skills, sin ty.
+- **Evidencia.** `.pre-commit-config.yaml`, `Makefile` (`tipos`), `.github/workflows/ci.yml`.
+
+## D34. Métricas de la Parte 1 con McNemar y Wilson: la mezcla no se distingue de embeddings en 35 preguntas
+- **Contexto.** Para el reto del Taller 3 había que analizar con las métricas de la Parte 1 y comparar con rigor, no por impresión.
+- **Medición.** `scripts/46_metricas_logs.py`, a k=4 (lo que ve el agente) sobre las 35 preguntas con respuesta: embeddings 25/35 (Wilson 95 %: 0,549 a 0,837, MRR 0,645, nDCG 0,532) y mezcla 26/35 (0,579 a 0,858, MRR 0,652, nDCG 0,539). McNemar exacto: embeddings acierta solo en 1, mezcla solo en 2, p = 1,0.
+- **Corrección.** La nota del PR 128 decía que cambió una sola pregunta: fueron tres pares discordantes (la mezcla gana 2 y pierde 1; neto +1). La mejora nítida son los dos trámites del banco (D29), no el conjunto de 35.
+- **Registros.** 114 conversaciones simuladas: 46,5 % usó herramientas, 17,5 % falló, 0 % pasó a revisión. Las 6 reales son de compañeros y conocidos, no de clientes: con n = 6 los intervalos son enormes (por ejemplo 1 fallo en 6 = 3 % a 56 %) y no se pueden presentar como tráfico de clientes.
+- **Límites.** El criterio de relevante es el `regex_cobertura` de la intención (el mismo del script 21); 35 preguntas dan poca potencia para ver diferencias pequeñas.
+- **Evidencia.** `scripts/46_metricas_logs.py`, `tests/test_metricas_logs.py`, `docs/2 - Conjunto de prueba/resultados/metricas_logs.csv`.
+
+## D35. OpenClaw como segundo cliente del MCP: identidad, endurecimiento y sandbox
+- **Contexto.** El Taller 3 pide un agente OpenClaw con identidad propia, un servidor MCP propio, el sandbox endurecido y una batería de 4 pruebas.
+- **Decisión.** Identidad «Asistente Celsia» en `SOUL.md` e `IDENTITY.md`, y líneas rojas en `AGENTS.md`. El servidor MCP de D32 se registra como `celsia` mostrando solo las dos herramientas de lectura. Configuración endurecida: perfil `messaging`; negados `group:automation`, `group:runtime`, `group:fs` y `sessions_spawn`; `exec` negado con aprobación siempre; permisos elevados y navegador apagados; un chat separado por persona (`dmScope per-channel-peer`); sandbox Docker en modo `all` con `workspaceAccess: none`; dentro del sandbox solo se permite `celsia__*`.
+- **Antes y después.** Batería antes: identidad, archivo en el workspace, memoria entre sesiones y Flash contra Pro pasaron las 4 (Flash 17 s y Pro 16 s en una pregunta corta). Después: crear archivos y ejecutar `whoami` quedan rechazados, la petición de la clave se rechaza (ya lo hacía) y la pregunta de Celsia sigue respondiéndose por el MCP.
+- **Lo que costó.** (1) `mcp add` exige el Gateway apagado. (2) Con el sandbox activo faltaba la imagen `openclaw-sandbox:trixie-slim` (se construye con el comando de la documentación) y, sin `tools.sandbox.tools.alsoAllow`, el agente perdía el MCP y respondía «no tengo evidencia» sin inventar. (3) Lanzar el Gateway desde una terminal de herramientas lo mataba al terminar el comando (código 143); a mano y por el script `gateway.cmd` funciona.
+- **Límites.** Con 4 pruebas por estado no hay estadística. El instalador ofreció importar las memorias de Claude, se aceptó y esas copias se borraron del workspace de OpenClaw (las de las pruebas también); el plugin de DeepSeek sigue sin versión fijada (aviso de la auditoría). La prueba desde el teléfono por Telegram queda pendiente de que se cree el bot.
+- **Evidencia.** `~/.openclaw/openclaw.json` (respaldos en la carpeta temporal de la sesión), `openclaw security audit` (elevados: de activo a desactivado), `src/taaml/servidor_mcp.py`.
+
+## D36. Matriz de enrutamiento ampliada de 33 a 43 preguntas
+- **Contexto.** D30 había dejado la ampliación pendiente porque cambia la cifra 32/33. Con la búsqueda mezclada (D31) y el banco verificable ya medidos, se amplió para cubrir lo que la matriz no probaba.
+- **Decisión.** Diez preguntas nuevas (R34 a R43): dos trámites que antes fallaban (plazo de un PQR y código de cuenta), cómo radicar un PQR, factura digital, una consulta de sedes en inglés, una mal escrita, un conteo más un dato, un intento de sacar el prompt, un celular personal inventado y una pregunta fuera del dominio.
+- **Resultado.** 42 de 43 con el modelo real, el prompt v9 y la búsqueda mezclada; costo total de la corrida: 0,064 USD. Las diez nuevas enrutaron bien; el único fallo sigue siendo R31, igual que en 32/33.
+- **Límites.** En las filas nuevas solo se verifica la herramienta elegida y los parámetros, no el texto de la respuesta (eso lo cubre el banco verificable, D29 y D30). Una sola corrida: no se midió la variación entre corridas. Las cifras de D9, D26 y las demás decisiones anteriores se dejan como estaban en su fecha.
+- **Evidencia.** `docs/2 - Conjunto de prueba/matriz_enrutamiento.csv`, `docs/2 - Conjunto de prueba/resultados/matriz_enrutamiento_resultados.csv`, `scripts/22_matriz_enrutamiento.py`.
+
+## D37. Asesor humano: no se construyó una herramienta nueva
+- **Contexto.** Quedó pendiente un «asesor humano» para quien pide hablar con una persona.
+- **Medición.** Tres peticiones al agente real («quiero hablar con una persona», «pásame con un asesor humano, es urgente» y «necesito que un humano me llame ya»). En las tres entregó los canales oficiales (línea 01 8000 112 115, WhatsApp, correo) leídos de la tabla de contactos, y en una ofreció radicar un reclamo. No inventó teléfonos ni prometió una llamada.
+- **Decisión.** No añadir una sexta herramienta: obligaría a cambiar el prompt v9 (el v10 se probó y se descartó, D27) y el camino en vivo de WhatsApp, que no se puede probar con Meta real sin el equipo, por una ganancia pequeña.
+- **Límites.** Es una derivación a los canales oficiales, no una transferencia: no hay cola de atención, ni registro de que la persona pidió un humano, ni aviso a un asesor. Tres pruebas no son estadística.
+- **Evidencia.** Respuestas de la API del 21/11/2026 (salidas no guardadas en el repositorio); `prompts/v9_agente.md`.
+
+## D38. Diagrama de arquitectura actualizado con Archify
+- **Contexto.** El diagrama de punta a punta (`docs/arquitectura_agente.*`) decía «prompt v7» y no mostraba la búsqueda mezclada, el servidor MCP ni OpenClaw. D30 había dejado esto sin hacer por riesgo de romper el HTML.
+- **Decisión.** Se editó la fuente `docs/arquitectura_agente.json` (prompt v9; Qdrant con «significado + palabras»; dos componentes nuevos, OpenClaw y el servidor MCP «celsia», con sus conexiones; dos tarjetas: segundo cliente y panel/respaldo) y se regeneró el HTML con Archify 3.2.0, descargado a una carpeta aparte (no se instaló globalmente) tras revisar que solo lee y dibuja. La captura del informe (`docs/capturas/arquitectura_agente.png`) se tomó del HTML nuevo.
+- **Verificación.** `validate` con perfil showcase: 9 de 9 comprobaciones; `finalize`: pasan validate, deliver y check. **Falló** la revisión automática en navegador (`browser-check`) porque Chrome no cerró su perfil temporal; es una falla del entorno, no del diagrama, y no se subió ese recibo. Se revisó a ojo con una captura de Edge sin ventana: se ven todos los componentes, sin cruces ni textos cortados.
+- **Límites.** La captura salió en tema claro (la anterior era oscura). Las etiquetas `tag` de los componentes no se muestran en esta vista. No se actualizaron los otros diagramas (enrutamiento, memoria, grafo, pipeline).
+- **Evidencia.** `docs/arquitectura_agente.json`, `docs/arquitectura_agente.html`, `docs/arquitectura_agente.delivery.json`, `docs/capturas/arquitectura_agente.png`.

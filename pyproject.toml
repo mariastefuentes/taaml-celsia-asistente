@@ -37,6 +37,7 @@ dependencies = [
     "langchain-qdrant>=1.1.0",
     "umap-learn>=0.6.0",
     "qrcode>=8.2",
+    "mcp>=1.2",
 ]
 
 [build-system]

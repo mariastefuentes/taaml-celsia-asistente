@@ -83,7 +83,7 @@
       "id": "agente",
       "type": "backend",
       "label": "Agente",
-      "sublabel": "create_agent · prompt v7",
+      "sublabel": "create_agent · prompt v9",
       "pos": [
         680,
         300
@@ -149,7 +149,7 @@
         150,
         60
       ],
-      "tag": "coseno"
+      "tag": "significado + palabras"
     },
     {
       "id": "postgres",
@@ -159,6 +159,35 @@
       "pos": [
         680,
         460
+      ],
+      "size": [
+        150,
+        60
+      ]
+    },
+    {
+      "id": "openclaw",
+      "type": "external",
+      "label": "OpenClaw",
+      "sublabel": "Taller 3 · sandbox Docker",
+      "pos": [
+        1180,
+        140
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "solo celsia__*"
+    },
+    {
+      "id": "mcp",
+      "type": "backend",
+      "label": "Servidor MCP «celsia»",
+      "sublabel": "stdio · solo lectura",
+      "pos": [
+        1180,
+        300
       ],
       "size": [
         150,
@@ -256,6 +285,23 @@
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top"
+    },
+    {
+      "id": "openclaw-mcp",
+      "from": "openclaw",
+      "to": "mcp",
+      "label": "MCP",
+      "variant": "emphasis",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "mcp-herramientas",
+      "from": "mcp",
+      "to": "herramientas",
+      "label": "mismas consultas",
+      "variant": "dashed",
+      "labelDy": 19
     }
   ],
   "cards": [
@@ -284,6 +330,24 @@
         "Una conversación por teléfono (se guarda su hash, no el número)",
         "PostgreSQL guarda la conversación y lo que el cliente cuenta de sí mismo",
         "Qdrant responde las preguntas sobre el sitio de Celsia"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Segundo cliente (Taller 3)",
+      "items": [
+        "OpenClaw usa las dos consultas por un servidor MCP de solo lectura",
+        "Perfil messaging, sandbox Docker y sin comandos ni archivos",
+        "Un chat separado por persona; permisos elevados apagados"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Panel y respaldo",
+      "items": [
+        "El panel en vivo (/panel) muestra la herramienta, el tiempo y el costo de cada respuesta",
+        "Si una cifra no aparece en lo que devolvieron las herramientas, la respuesta lo avisa",
+        "Chat web con QR cuando Meta limita a cinco celulares"
       ]
     }
   ]

@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "aac2aeea-d497-4194-8f35-1f6ac2d23b27",
+  "receiptId": "705559a5-daf0-4b95-9b0c-b0afd75cc8c9",
   "status": "current",
   "command": "deliver",
   "type": "architecture",
   "input": "C:\\taaml\\docs\\arquitectura_agente.json",
   "output": "C:\\taaml\\docs\\arquitectura_agente.html",
   "specification": {
-    "sha256": "fdce63354341a5d999f80287d9748ff3f9092666e517ac82b51bc44985b31ae2",
-    "bytes": 5982
+    "sha256": "b6b4daa75fa552ac8bd35b3a7a84a4109f61283fe4e6e317d10b8c5f5ac151e8",
+    "bytes": 7607
   },
   "artifact": {
-    "sha256": "481f1fee77356adde60ccba5b88a483340e74ce5ad6b2eb2217e767846487f75",
-    "bytes": 853873
+    "sha256": "4e35b2c62825834dd862aaee8e312deae643c55b0016d9ce873d66fb647da0e2",
+    "bytes": 859574
   }
 }

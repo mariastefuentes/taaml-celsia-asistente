@@ -90,7 +90,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
 | **Base vectorial** | Qdrant en modo local (persistente, sin servidor), similitud del coseno |
 | **Interfaz** | API FastAPI + frontend React (`api/`, `frontend/`, Módulo 2); Streamlit solo para el Taller 1 (`app/`) |
-| **Testing** | `pytest` (353 pruebas, sin modelos ni red) |
+| **Testing** | `pytest` (365 pruebas, sin modelos ni red) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
 | **CI/CD** | GitHub Actions (`.github/workflows/ci.yml`) |
 
@@ -234,7 +234,7 @@ git push -u origin feat/mi-cambio
 | 2026-11-07 | `.mailmap` con una identidad por persona | `git shortlog` muestra cuatro contribuidores, sin duplicados |
 | 2026-11-07 | Diagramas con Archify (`docs/arquitectura.*` y `docs/pipeline.*`) en lugar de Mermaid | Estándar del curso (skill `jan-project-standard`): un diagrama por pregunta, JSON como fuente |
 | 2026-11-07 | Adoptar de la skill la gobernanza (plantillas de issues, Dependabot, etiquetas, CONTRIBUTING, código de conducta) y `make check` | Cumple el estándar sin tocar el código |
-| 2026-11-07 | No adoptar pre-commit, Python 3.13, Ruff completo ni Squash & Merge | GGA es el guardián de commits del curso; 3.12 es válido; la rúbrica evalúa los commits individuales (se fusiona con merge commit) |
+| 2026-11-07 | No adoptar Python 3.13, Ruff completo ni Squash & Merge | GGA es el guardián de commits del curso; 3.12 es válido; la rúbrica evalúa los commits individuales (se fusiona con merge commit) |
 | 2026-11-08 | El agente usa `gemini-3.8-flash` (API de pago) con respaldo `ollama:llama3.2`; las tres tareas del Taller 1 siguen con 3.5 | Indicación del profesor de usar API de pago y un modelo reciente; el 3.5 es el que se evaluó |
 | 2026-11-08 | Memoria con `InMemorySaver` y `thread_id` por conversación (en RAM) | Cumple la Fase 2; guardarla en disco es de la Fase 3 |
 | 2026-11-08 | Router por prompt (`prompts/v2_agente.md`): el agente elige entre `buscar_en_base` y `consultar_datos` | Más simple que un clasificador aparte y coincide con el RAG Agent de la Clase 9 |
@@ -246,6 +246,9 @@ git push -u origin feat/mi-cambio
 | 2026-11-18 | Prompt del agente v6 (`prompts/v6_agente.md`): las preguntas ajenas a Celsia no se responden, aunque sean sencillas | Con v5 el agente contestaba trivias con su conocimiento propio (3 de 10 preguntas ajenas: una capital, una suma). Con v6 se rechazaron 10 de 10, en los dos modos de RAG, y 8 de 8 preguntas de Celsia, saludos y despedidas siguieron bien. Matriz de enrutamiento con v6: 32 de 33 (igual que con v5) |
 | 2026-11-18 | Prompt del agente v7 (`prompts/v7_agente.md`): los temas de energía se buscan aunque no nombren a Celsia, y si una herramienta falla no se dice que algo quedó guardado | El análisis de conversaciones simuladas (PR de t-SNE) mostró 2 de 114 rechazos erróneos de preguntas de energía («¿Qué es la energía renovable?» se rechazó sin buscar) y una prueba anterior con el Store caído en la que el agente dijo «ya guardé». Con v7 y el agente real: 7 de 8 preguntas de energía respondidas con búsqueda (la octava, sobre medidores inteligentes, dijo con honestidad que no hay información), 10 de 10 preguntas ajenas rechazadas, 6 de 6 respuestas honestas con el Store caído y matriz de enrutamiento 32 de 33 (igual que con v6) |
 | 2026-11-21 | Las skills (`corpus-medallion` y `agente-rag-router`) se migran a `.opencode/skills/` y se validan con `make skills-check` y el CI; solo OpenCode, y `mariastefuentes/taaml-skills` queda como espejo | Quien clona el proyecto debe tener las skills, el CI debe validarlas y la revisión del curso debe verlas; el equipo usa solo OpenCode (D24) |
+| 2026-11-21 | El agente busca con mezcla de significado y palabras; ranking k=10 medido | Rescata el dato que el significado deja lejos; nDCG@10 empata con embeddings (D31) |
+| 2026-11-21 | Servidor MCP propio (solo lectura, stdio) con las dos herramientas de consulta | Reutilizar el agente en clientes MCP sin abrir puertos (D32) |
+| 2026-11-21 | pre-commit (ruff, lock, `.env`) y `make tipos` con ty informativo | Detectar en local lo que el CI ve tarde; ty aún no bloquea (D33) |
 
 ## 10. Notas y tareas pendientes
 

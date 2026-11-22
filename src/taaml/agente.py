@@ -203,7 +203,7 @@ def buscar_en_base(
 ) -> tuple[str, list[dict]]:
     """Busca en la información oficial de Celsia los fragmentos que responden la pregunta del cliente. Opcionalmente filtra por categoría o región del documento."""
     filtro = {campo: valor for campo, valor in (("categoria", categoria), ("region", region)) if valor}
-    fragmentos = buscar(pregunta, k=FRAGMENTOS_AGENTE, **({"filtro": filtro} if filtro else {}))
+    fragmentos = buscar(pregunta, k=FRAGMENTOS_AGENTE, metodo="mezcla", **({"filtro": filtro} if filtro else {}))
     if filtro and not fragmentos:  # el filtro dejó la búsqueda vacía: se le dice al modelo que repita sin él
         return "Sin resultados con ese filtro. Repite la búsqueda sin categoria ni region.", []
     texto = delimitar_como_datos(formatear_contexto(fragmentos))
@@ -488,7 +488,7 @@ def modo_rag() -> str:
 @lru_cache(maxsize=64)
 def _contexto_recuperado(pregunta: str) -> str:
     """El contexto de una pregunta, ya delimitado como datos. Se guarda por pregunta: el modelo se llama varias veces por turno (tras cada herramienta) y no hay que buscar de nuevo."""
-    fragmentos = buscar(pregunta, k=FRAGMENTOS_AGENTE)
+    fragmentos = buscar(pregunta, k=FRAGMENTOS_AGENTE, metodo="mezcla")
     texto = delimitar_como_datos(formatear_contexto(fragmentos))
     return AVISO_CONFIANZA_BAJA + "\n\n" + texto if confianza_baja(fragmentos) else texto
 

@@ -259,11 +259,13 @@ def _por_rango(puntajes: np.ndarray) -> np.ndarray:
 def _buscar(pregunta: str, k: int, metodo: str, filtro: dict | None = None) -> tuple[list[dict], str]:
     """Los k fragmentos más relevantes para la pregunta, del más al menos parecido, con su puntaje, y el método con el que se encontraron.
 
-    metodo: «embeddings» (significado), «palabras» (coincidencia de palabras) o «hibrido» (las dos combinadas por posición).
+    metodo: «embeddings» (significado), «palabras» (coincidencia de palabras), «hibrido» (las dos combinadas por posición) o «mezcla» (k-1 por significado más la mejor por palabras).
     filtro: opcional, por campos del payload (`categoria`, `region`); solo se devuelven fragmentos que lo cumplen (pueden ser menos de k).
     «auto» usa embeddings (en la medición superó al híbrido); si no hay índice vigente o Ollama no responde, cae a palabras.
     """
     fragmentos, matriz = cargar_fragmentos(), _matriz()
+    mezcla = metodo == "mezcla"  # significado + la mejor por palabras (ver más abajo); se comporta como «embeddings» en el resto
+    metodo = "embeddings" if mezcla else metodo
     pregunta = ampliar_consulta(pregunta)  # agrega el vocabulario del sitio a ciertos temas (ver sinonimos.py)
     mascara = _mascara(filtro)
     por_palabras = _puntajes_por_palabras(pregunta) if metodo in ("palabras", "hibrido") else None
@@ -288,6 +290,16 @@ def _buscar(pregunta: str, k: int, metodo: str, filtro: dict | None = None) -> t
     orden = [
         i for i in np.argsort(-puntajes)[:k] if np.isfinite(puntajes[i])
     ]  # un fragmento filtrado (-inf) nunca se devuelve
+    if mezcla and metodo == "embeddings" and k > 1:
+        # los k-1 primeros por significado y, al final, la mejor por palabras que no esté ya: rescata el dato que el significado deja lejos
+        orden = orden[: k - 1]
+        lexico = _puntajes_por_palabras(pregunta)
+        lexico = lexico if mascara is None else np.where(mascara, lexico, -np.inf)
+        extra = next((i for i in np.argsort(-lexico) if lexico[i] > 0 and i not in orden), None)
+        resultado = [{**fragmentos[i], "puntaje": float(puntajes[i]), "metodo": "embeddings"} for i in orden]
+        if extra is not None:
+            resultado.append({**fragmentos[extra], "puntaje": float(lexico[extra]), "metodo": "palabras"})
+        return resultado, "mezcla"
     return [{**fragmentos[i], "puntaje": float(puntajes[i]), "metodo": metodo} for i in orden], metodo
 
 
