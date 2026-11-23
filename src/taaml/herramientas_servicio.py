@@ -183,3 +183,30 @@ def verificar_canal_oficial(canal: str) -> str:
     pregunte si un número, correo o página es de Celsia, o cuando desconfíe de un mensaje o una llamada (posible fraude).
     Responde solo «sí figura» o «no figura»: no digas que algo es falso ni verdadero; si no figura, recomienda llamar a la línea oficial."""
     return verificar_canal(quitar_invisibles(canal))
+
+
+LINEA_EMERGENCIAS = "123"  # línea nacional de emergencias de Colombia: no sale de los datos de Celsia, es la que el agente da ante un peligro
+
+
+def canales_de_emergencia_texto() -> str:
+    """Los canales para un peligro o una falla eléctrica: la 123 más el WhatsApp de energía, el enlace para reportar un daño y la línea de servicio, sacados de los contactos oficiales."""
+    lineas = [f"- Peligro inmediato (cable caído, chispas, humo, descarga): llama a la línea nacional de emergencias {LINEA_EMERGENCIAS}."]
+    for c in contactos(tipo="whatsapp", tema="energía")[:1]:
+        lineas.append(f"- WhatsApp de atención de energía de Celsia: {c['valor']}.")
+    for c in contactos(tipo="enlace", tema="daño")[:1]:
+        lineas.append(f"- Reportar un daño o falla del servicio: {c['valor']}")
+    for c in contactos(tipo="telefono", tema="servicio al cliente")[:1]:
+        lineas.append(f"- Línea de servicio al cliente de Celsia: {c['valor']}.")
+    return "\n".join(lineas)
+
+
+class SinParametros(EsquemaEstricto):
+    """Esquema de las herramientas que no piden nada al modelo."""
+
+
+@tool(args_schema=SinParametros)
+def canales_de_emergencia() -> str:
+    """Da los canales para un peligro o una falla eléctrica: la línea 123, el WhatsApp de energía de Celsia, el enlace para reportar
+    un daño y la línea de servicio. Úsala cuando el cliente describa un peligro eléctrico (cable caído, chispas, humo, descarga) o
+    pida cómo reportar una falla o un corte; antes dile qué hacer para estar seguro. No radica nada: para radicar usa `radicar_reclamo`."""
+    return canales_de_emergencia_texto()

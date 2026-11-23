@@ -159,3 +159,14 @@ def test_v13_manda_las_ciudades_con_atencion_a_su_herramienta():
 def test_v13_manda_verificar_canales_sin_decir_que_algo_es_falso():
     texto = leer_prompt("v13_agente.md")
     assert "`verificar_canal_oficial`" in texto and "nunca «es falso»" in texto
+
+
+def test_v13_usa_canales_de_emergencia_ante_el_peligro_electrico_y_conserva_la_seguridad_primero():
+    texto = leer_prompt("v13_agente.md")
+    assert "llama a `canales_de_emergencia`" in texto and "peligro eléctrico inmediato" in texto and "123" in texto
+    assert "Solo después ofrece radicar el reclamo" in texto
+
+
+def test_v13_pide_repetir_la_seguridad_en_la_respuesta_final_porque_el_cliente_solo_recibe_el_ultimo_mensaje():
+    texto = leer_prompt("v13_agente.md")
+    assert "El cliente solo recibe tu último mensaje" in texto and "repite en una frase la seguridad" in texto

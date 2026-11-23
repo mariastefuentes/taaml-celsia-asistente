@@ -125,3 +125,30 @@ def test_esquema_y_herramienta_de_verificar_canal():
         CanalAVerificar(canal="3103903468", otro="x")
     assert verificar_canal_oficial.invoke({"canal": "01 8000 112 115"}).startswith("Sí figura")
     assert set(verificar_canal_oficial.tool_call_schema.model_json_schema()["properties"]) == {"canal"}
+
+
+from taaml.herramientas_servicio import SinParametros, canales_de_emergencia, canales_de_emergencia_texto  # noqa: E402
+
+
+def test_los_canales_de_emergencia_traen_la_123_y_los_datos_oficiales_de_los_contactos():
+    texto = canales_de_emergencia_texto()
+    assert "123" in texto and "+57 310 390 3468" in texto and "reporta-un-dano" in texto and "01 8000 112 115" in texto
+    assert len(texto.splitlines()) == 4
+
+
+def test_el_whatsapp_de_emergencia_es_el_de_energia_y_no_el_de_internet():
+    assert "311 321 0000" not in canales_de_emergencia_texto()
+
+
+def test_si_faltan_los_contactos_igual_da_la_123(monkeypatch):
+    monkeypatch.setattr("taaml.herramientas_servicio.contactos", lambda **filtros: [])
+    assert canales_de_emergencia_texto().splitlines() == [
+        "- Peligro inmediato (cable caído, chispas, humo, descarga): llama a la línea nacional de emergencias 123."
+    ]
+
+
+def test_la_herramienta_no_pide_nada_al_modelo():
+    with pytest.raises(ValidationError):
+        SinParametros(algo="x")
+    assert canales_de_emergencia.invoke({}) == canales_de_emergencia_texto()
+    assert canales_de_emergencia.tool_call_schema.model_json_schema()["properties"] == {}
