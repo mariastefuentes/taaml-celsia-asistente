@@ -42,7 +42,7 @@ from langgraph.store.memory import InMemoryStore
 from langgraph.store.sqlite import SqliteStore
 from langgraph.types import Command
 
-from taaml.consulta_datos import consultar, sedes
+from taaml.consulta_datos import consultar, contactos, sedes
 from taaml.flujo_reclamo import radicar_simulado
 from taaml.informacion_manual import politica_de_datos, tramites_en_linea
 from taaml.prompts import leer_prompt
@@ -687,6 +687,74 @@ def cancelar_reclamo(radicado: str, runtime: ToolRuntime[Contexto], motivo: str 
     return "No encontré un reclamo con ese número entre los de este cliente. Ofrécele listar sus reclamos antes de cancelar."
 
 
+class Derivacion(EsquemaConRuntime):
+    """Esquema de entrada de `derivar_a_asesor`."""
+
+    motivo: str = Field(
+        min_length=1,
+        max_length=300,
+        description="Qué necesita resolver el cliente con una persona, con sus palabras.",
+    )
+    urgente: bool = Field(default=False, description="Verdadero solo si el cliente dice que es urgente o hay un peligro.")
+
+
+@tool(args_schema=Derivacion)
+def derivar_a_asesor(motivo: str, runtime: ToolRuntime[Contexto], urgente: bool = False) -> str:
+    """Registra que el cliente pidió hablar con una persona de Celsia y le entrega los canales oficiales de atención.
+    Úsala cuando pida un asesor humano, una llamada o algo que no puedes resolver. No prometas una llamada ni un horario:
+    el registro queda para el equipo, pero la atención la hace el cliente por los canales oficiales."""
+    canales = [c for c in contactos(tipo="telefono") + contactos(tipo="whatsapp") + contactos(tipo="correo")][:5]
+    if runtime.context.usuario != ANONIMO:
+        _almacen(runtime).put(
+            ("derivaciones", runtime.context.usuario),
+            uuid4().hex,
+            {"motivo": quitar_invisibles(motivo).strip()[:300], "urgente": bool(urgente)},
+        )
+    lineas = [f"- {c['tipo']}: {c['valor']}. {c['para_que_sirve']}" for c in canales]
+    aviso = "Es urgente: si hay peligro, que llame primero a la línea 123. " if urgente else ""
+    return (
+        f"{aviso}Quedó registrado que el cliente pidió hablar con una persona (no significa que alguien vaya a llamarlo). "
+        "Dale estos canales oficiales y dile que por ahí lo atiende una persona:\n" + "\n".join(lineas)
+    )
+
+
+class ReporteDeDano(EsquemaConRuntime):
+    """Esquema de entrada de `reportar_dano_electrico`."""
+
+    ciudad: str = Field(min_length=1, max_length=80, description="Ciudad donde está el daño.")
+    descripcion: str = Field(min_length=1, max_length=500, description="Qué se observa: cable caído, poste con chispas, transformador con humo…")
+    referencia: str = Field(
+        default="",
+        max_length=120,
+        description="Dirección del servicio o NIU para ubicar el punto; vacío si el cliente no lo tiene a mano.",
+    )
+
+
+@tool(args_schema=ReporteDeDano)
+def reportar_dano_electrico(
+    ciudad: str, descripcion: str, runtime: ToolRuntime[Contexto], referencia: str = ""
+) -> str:
+    """Reporta un daño o una falla eléctrica (cable caído, poste o medidor con chispas, humo, apagón en la cuadra) para que
+    una persona de Celsia lo revise. Úsala después de dar las instrucciones de seguridad cuando haya peligro. Una persona debe
+    aprobar el reporte antes de que quede radicado: el sistema pausa esta herramienta hasta que decida."""
+    if runtime.context.usuario == ANONIMO:
+        return "No se reportó: no hay un cliente identificado para asociar el reporte."
+    reporte = {
+        "tipo": "dano_electrico",
+        "ciudad": quitar_invisibles(ciudad).strip()[:80],
+        "descripcion": quitar_invisibles(descripcion).strip()[:500],
+        "estado": "reportado",
+    }
+    if referencia.strip():
+        reporte["referencia"] = quitar_invisibles(referencia).strip()[:120]
+    numero = f"DAN-{uuid4().hex[:8].upper()}"
+    # Igual que en el reclamo: la referencia va al reporte y a la aprobación, pero no se guarda en el Store.
+    _almacen(runtime).put(
+        ("reclamos", runtime.context.usuario), numero, {k: v for k, v in reporte.items() if k != "referencia"}
+    )
+    return f"Daño reportado con el número {numero}."
+
+
 HERRAMIENTAS = [
     buscar_en_base,
     consultar_datos,
@@ -707,6 +775,8 @@ HERRAMIENTAS = [
     consultar_mis_reclamos,
     consultar_estado_reclamo,
     cancelar_reclamo,
+    derivar_a_asesor,
+    reportar_dano_electrico,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
@@ -718,6 +788,10 @@ APROBACION_HUMANA = {
     "cancelar_reclamo": {
         "allowed_decisions": ["approve", "reject", "respond"],
         "description": "Un cliente pidió cancelar un reclamo radicado: apruébalo, recházalo o responde por la herramienta.",
+    },
+    "reportar_dano_electrico": {
+        "allowed_decisions": ["approve", "edit", "reject", "respond"],
+        "description": "Un cliente reportó un daño eléctrico: apruébalo, edítalo, recházalo o responde por la herramienta.",
     },
 }
 MENSAJE_EN_REVISION = (
@@ -1275,6 +1349,10 @@ def etiqueta_herramientas(llamadas: list[dict]) -> str:
             partes.append("consultó el estado de un reclamo")
         elif ll["herramienta"] == "cancelar_reclamo":
             partes.append("pidió cancelar un reclamo")
+        elif ll["herramienta"] == "derivar_a_asesor":
+            partes.append("derivó a un asesor")
+        elif ll["herramienta"] == "reportar_dano_electrico":
+            partes.append("reportó un daño eléctrico")
         elif ll["herramienta"] == "consultar_sedes":
             partes.append("consultó las sedes")
         elif ll["herramienta"] == "consultar_contactos":

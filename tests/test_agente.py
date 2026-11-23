@@ -107,6 +107,8 @@ def test_el_agente_tiene_las_herramientas():
         "consultar_mis_reclamos",
         "consultar_estado_reclamo",
         "cancelar_reclamo",
+        "derivar_a_asesor",
+        "reportar_dano_electrico",
     ]
 
 
@@ -549,6 +551,41 @@ def test_cancelar_esta_en_la_aprobacion_humana():
 
     assert "cancelar_reclamo" in APROBACION_HUMANA
     assert "approve" in APROBACION_HUMANA["cancelar_reclamo"]["allowed_decisions"]
+    assert "reportar_dano_electrico" in APROBACION_HUMANA
+
+
+def test_derivar_a_un_asesor_registra_el_pedido_y_da_canales_oficiales():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import Contexto, derivar_a_asesor
+
+    almacen = InMemoryStore()
+
+    class Corrida:
+        store, context = almacen, Contexto(usuario="ana")
+
+    salida = derivar_a_asesor.func("Quiere hablar con una persona por un cobro", Corrida, True)
+    assert "01 8000" in salida and "123" in salida
+    assert len(almacen.search(("derivaciones", "ana"))) == 1
+    assert "no significa que alguien vaya a llamarlo" in salida  # no promete una llamada
+
+
+def test_reportar_un_dano_guarda_el_reporte_sin_la_referencia():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import Contexto, consultar_mis_reclamos, reportar_dano_electrico
+
+    almacen = InMemoryStore()
+
+    class Corrida:
+        store, context = almacen, Contexto(usuario="ana")
+
+    salida = reportar_dano_electrico.func("Ibagué", "Cable caído en la cuadra", Corrida, "Calle 10 # 4-20")
+    numero = salida.split()[-1].rstrip(".")
+    assert numero.startswith("DAN-")
+    guardado = {i.key: i.value for i in almacen.search(("reclamos", "ana"))}
+    assert guardado[numero]["estado"] == "reportado" and "referencia" not in guardado[numero]
+    assert numero in consultar_mis_reclamos.func(Corrida)
 
 
 def test_el_borrado_del_cliente_tambien_elimina_sus_reclamos_guardados():
