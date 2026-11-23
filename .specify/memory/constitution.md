@@ -90,7 +90,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
 | **Base vectorial** | Qdrant en modo local (persistente, sin servidor), similitud del coseno |
 | **Interfaz** | API FastAPI + frontend React (`api/`, `frontend/`, Módulo 2); Streamlit solo para el Taller 1 (`app/`) |
-| **Testing** | `pytest` (368 pruebas, sin modelos ni red) |
+| **Testing** | `pytest` (409 pruebas, sin modelos ni red) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
 | **CI/CD** | GitHub Actions (`.github/workflows/ci.yml`) |
 
