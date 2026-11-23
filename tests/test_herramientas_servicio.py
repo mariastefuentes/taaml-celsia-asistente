@@ -221,3 +221,33 @@ def test_la_herramienta_calcula_y_rechaza_argumentos_invalidos():
     assert set(calcular_factura_estimada.tool_call_schema.model_json_schema()["properties"]) == {
         "consumo_kwh", "tarifa_cop_kwh", "cargo_fijo_cop", "ajuste_pct",
     }
+
+
+from taaml.herramientas_servicio import ConsumoDeAparato, consumo_aparato, consumo_de_un_aparato  # noqa: E402
+
+
+def test_consumo_de_un_aparato_sin_y_con_tarifa():
+    sin = consumo_aparato(150, 24)  # nevera: 150 W × 24 h × 30 d = 108 kWh
+    assert "= 108.00 kWh" in sin and "pídesela al cliente" in sin and "cuestan" not in sin
+    con = consumo_aparato(150, 24, tarifa_cop_kwh=900)
+    assert "= 108.00 kWh" in con and "cuestan $97.200" in con and "estimado" in con
+
+
+def test_consumo_con_otros_dias_y_horas_fraccionadas():
+    assert "= 2.50 kWh" in consumo_aparato(100, 2.5, dias=10)  # 100 × 2,5 × 10 ÷ 1000
+
+
+def test_esquema_del_aparato_rechaza_imposibles_y_extras():
+    for malo in ({"potencia_vatios": 0, "horas_por_dia": 2}, {"potencia_vatios": 100, "horas_por_dia": 25}, {"potencia_vatios": 100, "horas_por_dia": 0},
+                 {"potencia_vatios": 100, "horas_por_dia": 2, "dias": 0}, {"potencia_vatios": 100, "horas_por_dia": 2, "dias": 400},
+                 {"potencia_vatios": 100, "horas_por_dia": 2, "tarifa_cop_kwh": -1}, {"potencia_vatios": 100, "horas_por_dia": 2, "marca": "x"}):
+        with pytest.raises(ValidationError):
+            ConsumoDeAparato(**malo)
+    assert ConsumoDeAparato(potencia_vatios=60, horas_por_dia=5).dias == 30
+
+
+def test_la_herramienta_del_aparato():
+    assert "= 3.00 kWh" in consumo_de_un_aparato.invoke({"potencia_vatios": 100, "horas_por_dia": 1})
+    with pytest.raises(ValidationError):
+        consumo_de_un_aparato.invoke({"potencia_vatios": "mucha", "horas_por_dia": 1})
+    assert set(consumo_de_un_aparato.tool_call_schema.model_json_schema()["properties"]) == {"potencia_vatios", "horas_por_dia", "dias", "tarifa_cop_kwh"}

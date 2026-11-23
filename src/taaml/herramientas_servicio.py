@@ -275,3 +275,31 @@ def calcular_factura_estimada(
     contribución si el cliente los da). Úsala cuando el cliente dé o pregunte su consumo y quiera saber cuánto pagaría. Si falta la
     tarifa, búscala con `buscar_en_base` o pídesela al cliente (está en su factura); nunca la inventes. El resultado es un estimado."""
     return factura_estimada(consumo_kwh, tarifa_cop_kwh, cargo_fijo_cop, ajuste_pct)
+
+
+def consumo_aparato(potencia_vatios: float, horas_por_dia: float, dias: int = 30, tarifa_cop_kwh: float | None = None) -> str:
+    """kWh que gasta un aparato (vatios × horas × días ÷ 1.000) y, si hay tarifa, lo que cuesta."""
+    kwh = potencia_vatios * horas_por_dia * dias / 1000
+    texto = f"{potencia_vatios:g} W × {horas_por_dia:g} h al día × {dias} días ÷ 1.000 = {kwh:.2f} kWh"
+    if tarifa_cop_kwh is None:
+        return texto + ". Sin la tarifa por kWh no puedo calcular el costo: pídesela al cliente (está en su factura)."
+    return texto + f", que a {pesos(tarifa_cop_kwh)} por kWh cuestan {pesos(kwh * tarifa_cop_kwh)}. Es un estimado: el consumo real depende del uso."
+
+
+class ConsumoDeAparato(EsquemaEstricto):
+    """Esquema de entrada de `consumo_de_un_aparato`."""
+
+    potencia_vatios: float = Field(gt=0, le=100_000, description="Potencia del aparato en vatios (W), como dice su etiqueta o el cliente. Nunca inventada.")
+    horas_por_dia: float = Field(gt=0, le=24, description="Horas que lo usa cada día (hasta 24).")
+    dias: int = Field(30, ge=1, le=366, description="Días del período; 30 si el cliente habla de un mes.")
+    tarifa_cop_kwh: float | None = Field(None, gt=0, le=10_000, description="Precio del kWh en pesos, solo si el cliente lo dio; si no, déjalo vacío.")
+
+
+@tool(args_schema=ConsumoDeAparato)
+def consumo_de_un_aparato(
+    potencia_vatios: float, horas_por_dia: float, dias: int = 30, tarifa_cop_kwh: float | None = None
+) -> str:
+    """Calcula cuántos kWh gasta un aparato (nevera, bombillo, aire…) y, si hay tarifa, cuánto cuesta, a partir de su potencia en vatios
+    y las horas de uso al día. Úsala cuando el cliente pregunte cuánto gasta un aparato. La potencia la da el cliente (viene en la
+    etiqueta del aparato): si no la sabe, pídesela y no supongas una; la tarifa, si no la dio, no la inventes."""
+    return consumo_aparato(potencia_vatios, horas_por_dia, dias, tarifa_cop_kwh)

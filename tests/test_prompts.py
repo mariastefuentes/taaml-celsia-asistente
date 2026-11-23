@@ -180,3 +180,8 @@ def test_v13_manda_la_hora_a_fecha_y_hora_actual_junto_con_el_horario_de_la_sede
 def test_v13_calcula_la_factura_con_la_herramienta_y_no_inventa_la_tarifa():
     texto = leer_prompt("v13_agente.md")
     assert "`calcular_factura_estimada`" in texto and "Nunca inventes la tarifa ni hagas la cuenta tú" in texto
+
+
+def test_v13_calcula_el_consumo_de_un_aparato_sin_suponer_la_potencia():
+    texto = leer_prompt("v13_agente.md")
+    assert "`consumo_de_un_aparato`" in texto and "nunca supongas una potencia típica" in texto
