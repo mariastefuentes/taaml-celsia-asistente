@@ -304,3 +304,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Por qué.** El dato ya estaba en el repositorio (tablas, documento de canales y política). Ninguna herramienta calcula ni completa: filtran y devuelven el texto con su fuente. El CSV nuevo se escribió a mano desde `canales_atencion.md` y lleva la fuente en cada fila, como pide la constitución.
 - **Límites.** Los enlaces son los revisados el 17/10/2026; si celsia.com los cambia, hay que actualizarlos a mano. `consultar_cobertura` solo mira atención presencial: la cobertura eléctrica sigue dependiendo de `buscar_en_base`. La política es la del proyecto académico, no la de Celsia.
 - **Evidencia.** `src/taaml/agente.py`, `src/taaml/informacion_manual.py`, `data/0_manual/tramites_en_linea.csv`, `tests/test_agente.py`, `tests/test_informacion_manual.py`.
+
+## D43. El cliente puede listar y borrar un dato puntual desde la conversación
+- **Contexto.** La memoria de largo plazo tenía tres herramientas: guardar, recordar y olvidar todo (solo por `DELETE /api/usuarios/{usuario}/datos` y por el correo de la política). Si el cliente decía «olvida que vivo en Cali», el agente no tenía cómo hacerlo: podía guardar y leer, pero no borrar un dato concreto desde WhatsApp.
+- **Decisión.** `listar_datos_del_cliente` devuelve lo guardado, numerado; `olvidar_dato_del_cliente(dato)` borra todas las entradas cuyo texto contenga lo que el cliente nombra, sin tildes y sin mayúsculas, y confirma qué borró. Las dos respetan el anónimo (sin identificador no hay espacio que borrar) y nunca tocan el espacio de otro cliente.
+- **Por qué.** Es el derecho de supresión (Ley 1581) ejercido en el mismo canal donde se dieron los datos, y es demostrable en vivo sin llamar a la API.
+- **Límites.** Borra por coincidencia de texto, no por campo: si el cliente dice «mi ciudad» no coincide con «Vive en Cali»; el prompt le pide usar las palabras del dato. No borra la conversación (eso es `/nuevo`) ni los reclamos (el borrado total sigue en la API).
+- **Evidencia.** `src/taaml/agente.py` (`listar_datos_del_cliente`, `olvidar_dato_del_cliente`), `tests/test_agente.py`.
