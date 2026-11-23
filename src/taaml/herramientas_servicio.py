@@ -232,3 +232,46 @@ def fecha_y_hora_actual() -> str:
     """Devuelve el día de la semana, la fecha y la hora actuales en Colombia. Úsala cuando el cliente pregunte qué día u hora es,
     o si una sede está abierta ahora o abre hoy: compara esta hora con el horario que da `consultar_datos`."""
     return fecha_y_hora_texto()
+
+
+def pesos(valor: float) -> str:
+    """Pesos colombianos con punto de miles y sin decimales: 1234567 → «$1.234.567»."""
+    return f"${round(valor):,}".replace(",", ".")
+
+
+def factura_estimada(consumo_kwh: float, tarifa_cop_kwh: float, cargo_fijo_cop: float = 0, ajuste_pct: float = 0) -> str:
+    """Estimado de la factura: energía (kWh × tarifa) + cargo fijo + ajuste porcentual sobre la energía (positivo = contribución, negativo = subsidio)."""
+    energia = consumo_kwh * tarifa_cop_kwh
+    ajuste = energia * ajuste_pct / 100
+    total = energia + cargo_fijo_cop + ajuste
+    lineas = [f"- Energía: {consumo_kwh:g} kWh × {pesos(tarifa_cop_kwh)} por kWh = {pesos(energia)}"]
+    if cargo_fijo_cop:
+        lineas.append(f"- Cargo fijo: {pesos(cargo_fijo_cop)}")
+    if ajuste_pct:
+        nombre = "Contribución" if ajuste_pct > 0 else "Subsidio"
+        lineas.append(f"- {nombre} ({abs(ajuste_pct):g} % de la energía): {'+' if ajuste > 0 else '-'}{pesos(abs(ajuste))}")
+    lineas.append(f"Total estimado: {pesos(total)}")
+    lineas.append(
+        "Es un cálculo con los datos que dio el cliente: no incluye otros cobros de la factura (como alumbrado público o aseo) "
+        "y la factura oficial puede variar."
+    )
+    return "\n".join(lineas)
+
+
+class FacturaEstimada(EsquemaEstricto):
+    """Esquema de entrada de `calcular_factura_estimada`."""
+
+    consumo_kwh: float = Field(gt=0, le=100_000, description="Consumo de energía del mes en kWh, tal como lo dijo el cliente.")
+    tarifa_cop_kwh: float = Field(gt=0, le=10_000, description="Precio de cada kWh en pesos. Del cliente o de la base; nunca inventado.")
+    cargo_fijo_cop: float = Field(0, ge=0, le=1_000_000, description="Cargo fijo mensual en pesos, solo si el cliente lo dio.")
+    ajuste_pct: float = Field(0, ge=-100, le=100, description="Subsidio (negativo) o contribución (positivo) en %, solo si el cliente lo dio.")
+
+
+@tool(args_schema=FacturaEstimada)
+def calcular_factura_estimada(
+    consumo_kwh: float, tarifa_cop_kwh: float, cargo_fijo_cop: float = 0, ajuste_pct: float = 0
+) -> str:
+    """Calcula un estimado de la factura de energía a partir del consumo en kWh y la tarifa por kWh (más cargo fijo y subsidio o
+    contribución si el cliente los da). Úsala cuando el cliente dé o pregunte su consumo y quiera saber cuánto pagaría. Si falta la
+    tarifa, búscala con `buscar_en_base` o pídesela al cliente (está en su factura); nunca la inventes. El resultado es un estimado."""
+    return factura_estimada(consumo_kwh, tarifa_cop_kwh, cargo_fijo_cop, ajuste_pct)

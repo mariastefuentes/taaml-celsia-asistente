@@ -176,3 +176,48 @@ def test_domingo_y_enero():
 def test_la_herramienta_usa_el_reloj_real_y_no_pide_nada_al_modelo():
     assert fecha_y_hora_actual.invoke({}).startswith("Hoy es ")
     assert fecha_y_hora_actual.tool_call_schema.model_json_schema()["properties"] == {}
+
+
+from taaml.herramientas_servicio import FacturaEstimada, calcular_factura_estimada, factura_estimada, pesos  # noqa: E402
+
+
+def test_pesos_con_punto_de_miles():
+    assert pesos(1234567) == "$1.234.567" and pesos(999.6) == "$1.000" and pesos(0) == "$0"
+
+
+def test_factura_solo_energia():
+    r = factura_estimada(200, 900)
+    assert "200 kWh × $900 por kWh = $180.000" in r and "Total estimado: $180.000" in r and "estimado" not in r.split("Total")[0]
+    assert "Cargo fijo" not in r and "Subsidio" not in r and "Contribución" not in r
+
+
+def test_factura_con_cargo_fijo_y_contribucion():
+    r = factura_estimada(100, 1000, cargo_fijo_cop=5000, ajuste_pct=20)  # 100.000 + 5.000 + 20.000
+    assert "Cargo fijo: $5.000" in r and "Contribución (20 % de la energía): +$20.000" in r and "Total estimado: $125.000" in r
+
+
+def test_factura_con_subsidio_resta():
+    r = factura_estimada(130, 800, ajuste_pct=-50)  # 104.000 - 52.000
+    assert "Subsidio (50 % de la energía): -$52.000" in r and "Total estimado: $52.000" in r
+
+
+def test_siempre_advierte_que_es_un_estimado_y_que_la_factura_oficial_puede_variar():
+    assert "la factura oficial puede variar" in factura_estimada(50, 700)
+
+
+def test_esquema_rechaza_valores_imposibles_y_campos_extra():
+    for malo in ({"consumo_kwh": 0, "tarifa_cop_kwh": 900}, {"consumo_kwh": -5, "tarifa_cop_kwh": 900}, {"consumo_kwh": 100, "tarifa_cop_kwh": 0},
+                 {"consumo_kwh": 100, "tarifa_cop_kwh": 99_999}, {"consumo_kwh": 100, "tarifa_cop_kwh": 900, "ajuste_pct": 150},
+                 {"consumo_kwh": 100, "tarifa_cop_kwh": 900, "cargo_fijo_cop": -1}, {"consumo_kwh": 100, "tarifa_cop_kwh": 900, "iva": 19}):
+        with pytest.raises(ValidationError):
+            FacturaEstimada(**malo)
+    assert FacturaEstimada(consumo_kwh=100, tarifa_cop_kwh=900).ajuste_pct == 0
+
+
+def test_la_herramienta_calcula_y_rechaza_argumentos_invalidos():
+    assert "Total estimado: $90.000" in calcular_factura_estimada.invoke({"consumo_kwh": 100, "tarifa_cop_kwh": 900})
+    with pytest.raises(ValidationError):
+        calcular_factura_estimada.invoke({"consumo_kwh": "mucho", "tarifa_cop_kwh": 900})
+    assert set(calcular_factura_estimada.tool_call_schema.model_json_schema()["properties"]) == {
+        "consumo_kwh", "tarifa_cop_kwh", "cargo_fijo_cop", "ajuste_pct",
+    }

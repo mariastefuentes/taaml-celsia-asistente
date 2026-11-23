@@ -175,3 +175,8 @@ def test_v13_pide_repetir_la_seguridad_en_la_respuesta_final_porque_el_cliente_s
 def test_v13_manda_la_hora_a_fecha_y_hora_actual_junto_con_el_horario_de_la_sede():
     texto = leer_prompt("v13_agente.md")
     assert "`fecha_y_hora_actual`" in texto and "si una sede está abierta ahora" in texto
+
+
+def test_v13_calcula_la_factura_con_la_herramienta_y_no_inventa_la_tarifa():
+    texto = leer_prompt("v13_agente.md")
+    assert "`calcular_factura_estimada`" in texto and "Nunca inventes la tarifa ni hagas la cuenta tú" in texto

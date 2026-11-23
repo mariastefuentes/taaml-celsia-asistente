@@ -45,6 +45,7 @@ from langgraph.types import Command
 from taaml.base_herramientas import EsquemaEstricto
 from taaml.consulta_datos import consultar
 from taaml.herramientas_servicio import (
+    calcular_factura_estimada,
     canales_de_emergencia,
     ciudades_con_atencion,
     fecha_y_hora_actual,
@@ -378,6 +379,7 @@ HERRAMIENTAS = [
     verificar_canal_oficial,
     canales_de_emergencia,
     fecha_y_hora_actual,
+    calcular_factura_estimada,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
