@@ -67,11 +67,19 @@ def test_el_prompt_del_agente_prohibe_formatos_de_programacion():
     assert "solo puedes responder en texto plano" in texto
 
 
-def test_el_prompt_del_agente_nombra_herramientas_que_existen():
+def test_el_prompt_del_agente_documenta_las_herramientas_de_la_ruta():
+    """Las herramientas que el prompt enseña a elegir deben estar nombradas.
+
+    La lista completa se exige en `test_el_prompt_v13_documenta_las_veinte_herramientas` cuando entra el prompt v13; mientras
+    las herramientas nuevas llegan por tandas, aquí se vigilan las de la ruta del v12 para no publicar un prompt que hable de
+    herramientas que no existen.
+    """
     from taaml.agente import HERRAMIENTAS
 
+    nombres = {h.name for h in HERRAMIENTAS}
     texto = leer_prompt("v12_agente.md")
-    assert all(f"`{h.name}`" in texto for h in HERRAMIENTAS)
+    for nombre in ("buscar_en_base", "consultar_datos", "guardar_dato_del_cliente", "recordar_datos_del_cliente", "radicar_reclamo"):
+        assert nombre in nombres and f"`{nombre}`" in texto
 
 
 def test_el_agente_carga_el_prompt_vigente():
