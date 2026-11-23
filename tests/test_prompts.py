@@ -209,3 +209,8 @@ def test_v13_amplia_un_reclamo_radicado_sin_confundirlo_con_uno_nuevo():
 
 def test_v13_no_cuenta_el_detalle_como_agregado_hasta_que_una_persona_lo_apruebe():
     assert "una persona de Celsia la aprueba antes de agregarla" in leer_prompt("v13_agente.md")
+
+
+def test_v13_escala_a_un_asesor_sin_prometer_llamadas_ni_tiempos():
+    texto = leer_prompt("v13_agente.md")
+    assert "`escalar_a_asesor`" in texto and "nunca prometas que lo llamarán ni cuándo" in texto

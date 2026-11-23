@@ -7,6 +7,7 @@ import json
 import math
 import re
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 from langchain_core.tools import tool
 from langchain.tools import ToolRuntime
@@ -454,3 +455,44 @@ def agregar_detalle_a_reclamo(numero: str, detalle: str, runtime: ToolRuntime[Co
     cuando el cliente quiera ampliar su reclamo y dé el número de radicado (si no lo sabe, usa antes `listar_mis_reclamos`). No
     cambia lo radicado: queda como nota adicional. Para un reclamo nuevo usa `radicar_reclamo`. Nunca guardes cédulas, claves ni tarjetas."""
     return agregar_detalle(_almacen(runtime), runtime.context.usuario, numero, detalle)
+
+
+MAX_SOLICITUDES_ABIERTAS = 3
+LINEAS_PARA_HABLAR_CON_UNA_PERSONA = (
+    "Mientras tanto puedes hablar con una persona llamando a la línea 01 8000 112 115 o escribiendo al WhatsApp de energía +57 310 390 3468."
+)
+
+
+def solicitar_asesor(almacen, usuario: str, motivo: str) -> str:
+    """Deja anotado que el cliente pide hablar con una persona (no hay transferencia en vivo) y le da los canales que sí atienden."""
+    if usuario == ANONIMO:
+        return "No pude dejar la solicitud: no hay un cliente identificado. " + LINEAS_PARA_HABLAR_CON_UNA_PERSONA
+    motivo = quitar_invisibles(motivo).strip()[:300]
+    if not motivo:
+        return "No se registró: falta el motivo."
+    espacio = ("escalamientos", usuario)
+    existentes = almacen.search(espacio, limit=MAX_SOLICITUDES_ABIERTAS + 1)
+    if any(e.value["motivo"] == motivo for e in existentes):
+        return "Esa solicitud ya estaba registrada. " + LINEAS_PARA_HABLAR_CON_UNA_PERSONA
+    if len(existentes) >= MAX_SOLICITUDES_ABIERTAS:
+        return f"Ya hay {MAX_SOLICITUDES_ABIERTAS} solicitudes registradas de este cliente. " + LINEAS_PARA_HABLAR_CON_UNA_PERSONA
+    numero = f"ESC-{uuid4().hex[:8].upper()}"
+    almacen.put(espacio, numero, {"motivo": motivo})
+    return (
+        f"Dejé anotada tu solicitud {numero} para que una persona de Celsia la vea. En esta demostración no hay una transferencia en vivo "
+        f"ni un tiempo de respuesta confirmado. {LINEAS_PARA_HABLAR_CON_UNA_PERSONA}"
+    )
+
+
+class SolicitudDeAsesor(EsquemaConRuntime):
+    """Esquema de entrada de `escalar_a_asesor`."""
+
+    motivo: str = Field(min_length=1, max_length=300, description="Por qué quiere hablar con una persona, con las palabras del cliente (sin cédulas, claves ni tarjetas).")
+
+
+@tool(args_schema=SolicitudDeAsesor)
+def escalar_a_asesor(motivo: str, runtime: ToolRuntime[Contexto]) -> str:
+    """Deja anotada la solicitud del cliente de hablar con una persona (un asesor humano) y le da los canales para hacerlo ya.
+    Úsala cuando el cliente pida hablar con una persona o un asesor, o cuando no puedas resolver su caso. No hay transferencia en vivo
+    ni tiempo de respuesta: nunca prometas que lo llamarán o que lo atenderán pronto. Para un reclamo usa `radicar_reclamo`."""
+    return solicitar_asesor(_almacen(runtime), runtime.context.usuario, motivo)

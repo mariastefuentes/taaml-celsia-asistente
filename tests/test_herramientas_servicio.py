@@ -388,3 +388,48 @@ def test_esquema_del_detalle_valida_el_radicado_y_el_largo():
     assert DetalleDeReclamo._formato("rec-abcd1234") == "REC-ABCD1234"
     campo = DetalleDeReclamo.model_fields["detalle"]
     assert {type(m).__name__ for m in campo.metadata} >= {"MinLen", "MaxLen"}
+
+
+from taaml.herramientas_servicio import SolicitudDeAsesor, escalar_a_asesor, solicitar_asesor  # noqa: E402
+
+
+def test_la_solicitud_de_asesor_se_guarda_con_numero_y_da_los_canales_sin_prometer_tiempos():
+    almacen = InMemoryStore()
+    r = solicitar_asesor(almacen, "ana", "Quiero hablar con alguien sobre mi factura")
+    guardadas = almacen.search(("escalamientos", "ana"))
+    assert len(guardadas) == 1 and guardadas[0].key.startswith("ESC-") and guardadas[0].value["motivo"] == "Quiero hablar con alguien sobre mi factura"
+    assert guardadas[0].key in r and "01 8000 112 115" in r and "+57 310 390 3468" in r
+    assert "no hay una transferencia en vivo" in r and "tiempo de respuesta" in r
+
+
+def test_la_solicitud_no_se_repite_tiene_tope_y_no_mezcla_clientes():
+    almacen = InMemoryStore()
+    solicitar_asesor(almacen, "ana", "uno")
+    assert "ya estaba registrada" in solicitar_asesor(almacen, "ana", "uno")
+    solicitar_asesor(almacen, "ana", "dos")
+    solicitar_asesor(almacen, "ana", "tres")
+    assert "Ya hay 3 solicitudes" in solicitar_asesor(almacen, "ana", "cuatro")
+    assert len(almacen.search(("escalamientos", "ana"))) == 3 and almacen.search(("escalamientos", "luis")) == []
+
+
+def test_un_anonimo_no_registra_pero_recibe_los_canales_y_el_motivo_vacio_se_rechaza():
+    almacen = InMemoryStore()
+    r = solicitar_asesor(almacen, "anonimo", "quiero un asesor")
+    assert "No pude dejar la solicitud" in r and "01 8000 112 115" in r and almacen.search(("escalamientos", "anonimo")) == []
+    assert "falta el motivo" in solicitar_asesor(almacen, "ana", "   ")
+
+
+def test_el_borrado_del_cliente_tambien_elimina_sus_solicitudes_de_asesor():
+    from taaml.agente import olvidar_cliente
+
+    almacen = InMemoryStore()
+    solicitar_asesor(almacen, "ana", "quiero un asesor")
+    solicitar_asesor(almacen, "luis", "otro")
+    assert olvidar_cliente("ana", almacen) == 1
+    assert almacen.search(("escalamientos", "ana")) == [] and len(almacen.search(("escalamientos", "luis"))) == 1
+
+
+def test_esquema_de_la_solicitud():
+    assert set(escalar_a_asesor.tool_call_schema.model_json_schema()["properties"]) == {"motivo"}
+    campo = SolicitudDeAsesor.model_fields["motivo"]
+    assert {type(m).__name__ for m in campo.metadata} >= {"MinLen", "MaxLen"}
