@@ -279,3 +279,40 @@ def test_la_herramienta_solar():
     with pytest.raises(ValidationError):
         estimar_ahorro_solar.invoke({"consumo_kwh_mes": 300, "tarifa_cop_kwh": 900})
     assert set(estimar_ahorro_solar.tool_call_schema.model_json_schema()["properties"]) == {"consumo_kwh_mes", "tarifa_cop_kwh", "porcentaje_cubierto"}
+
+
+from langgraph.store.memory import InMemoryStore  # noqa: E402
+
+from taaml.herramientas_servicio import EstadoDeReclamo, consultar_estado_reclamo, estado_de_reclamo  # noqa: E402
+
+
+def _almacen_con_reclamos():
+    almacen = InMemoryStore()
+    almacen.put(("reclamos", "ana"), "REC-ABCD1234", {"tipo": "falla_de_servicio", "ciudad": "Ibagué", "descripcion": "Sin luz desde las 8"})
+    almacen.put(("reclamos", "luis"), "REC-99999999", {"tipo": "otro", "ciudad": "Cali", "descripcion": "reclamo de Luis"})
+    return almacen
+
+
+def test_el_cliente_ve_su_reclamo_con_fecha_tipo_y_ciudad_y_sin_inventar_el_estado():
+    r = estado_de_reclamo(_almacen_con_reclamos(), "ana", "REC-ABCD1234")
+    assert "figura radicado el" in r and "falla del servicio" in r and "Ibagué" in r and "Sin luz desde las 8" in r
+    assert "no veo si ya lo están gestionando" in r and "01 8000 112 115" in r
+
+
+def test_un_cliente_no_ve_el_reclamo_de_otro_y_un_anonimo_no_ve_nada():
+    almacen = _almacen_con_reclamos()
+    assert "No encontré el radicado REC-99999999" in estado_de_reclamo(almacen, "ana", "REC-99999999")
+    assert "reclamo de Luis" not in estado_de_reclamo(almacen, "ana", "REC-99999999")
+    assert "no hay un cliente identificado" in estado_de_reclamo(almacen, "anonimo", "REC-ABCD1234")
+
+
+def test_el_radicado_se_normaliza_y_se_rechaza_lo_que_no_tiene_su_forma():
+    normalizar = EstadoDeReclamo._formato  # el validador del campo, sin necesidad de un runtime
+    assert normalizar(" rec-abcd1234 ") == "REC-ABCD1234"
+    for malo in ("12345", "REC-XYZ", "REC-ABCD12345", "'; DROP TABLE", ""):
+        with pytest.raises(ValueError):
+            normalizar(malo)
+
+
+def test_el_modelo_no_ve_el_runtime_ni_puede_pasar_el_usuario():
+    assert set(consultar_estado_reclamo.tool_call_schema.model_json_schema()["properties"]) == {"numero"}

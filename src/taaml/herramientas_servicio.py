@@ -9,9 +9,10 @@ import re
 from datetime import datetime, timedelta, timezone
 
 from langchain_core.tools import tool
-from pydantic import Field, model_validator
+from langchain.tools import ToolRuntime
+from pydantic import Field, field_validator, model_validator
 
-from taaml.base_herramientas import EsquemaEstricto
+from taaml.base_herramientas import ANONIMO, Contexto, EsquemaConRuntime, EsquemaEstricto, _almacen
 from taaml.consulta_datos import SEDES, SIN_RESULTADOS, _contiene_alguno, _norm, contactos
 from taaml.sanitizar import quitar_invisibles
 
@@ -334,3 +335,45 @@ def estimar_ahorro_solar(consumo_kwh_mes: float, tarifa_cop_kwh: float, porcenta
     busca la tarifa con `buscar_en_base`; nunca los inventes). El porcentaje que cubriría lo dice el cliente; si no lo sabe, usa un
     escenario (por ejemplo 50 %) y di claramente que es hipotético. No incluye el costo de instalación ni promete resultados."""
     return ahorro_solar(consumo_kwh_mes, tarifa_cop_kwh, porcentaje_cubierto)
+
+
+NUMERO_RECLAMO = re.compile(r"^REC-[0-9A-F]{8}$")
+TIPOS_DE_RECLAMO = {"falla_de_servicio": "falla del servicio", "facturacion": "facturación", "otro": "otro"}
+
+
+def estado_de_reclamo(almacen, usuario: str, numero: str) -> str:
+    """Busca un radicado entre los reclamos de ESTE cliente (el espacio del Store es suyo) y dice qué figura, sin inventar un estado de gestión."""
+    if usuario == ANONIMO:
+        return "No puedo consultarlo: no hay un cliente identificado, y los reclamos se ven solo desde la cuenta de quien los radicó."
+    item = almacen.get(("reclamos", usuario), numero)
+    if item is None:
+        return f"No encontré el radicado {numero} entre los reclamos de este cliente. Revisa que el número esté bien escrito o llama a la línea 01 8000 112 115."
+    r = item.value
+    fecha = item.created_at.astimezone(HUSO_COLOMBIA)
+    return (
+        f"El radicado {numero} figura radicado el {fecha.day} de {MESES[fecha.month - 1]} de {fecha.year}. "
+        f"Tipo: {TIPOS_DE_RECLAMO.get(r.get('tipo'), 'otro')}. Ciudad: {r.get('ciudad', 'sin dato')}. Lo que se reportó: {r.get('descripcion', 'sin dato')}. "
+        "Desde aquí no veo si ya lo están gestionando ni en qué estado va: para eso llama a la línea 01 8000 112 115 con el número de radicado."
+    )
+
+
+class EstadoDeReclamo(EsquemaConRuntime):
+    """Esquema de entrada de `consultar_estado_reclamo`."""
+
+    numero: str = Field(description="Número de radicado del reclamo, con la forma REC-XXXXXXXX (letras A-F y números).")
+
+    @field_validator("numero", mode="before")
+    @classmethod
+    def _formato(cls, v: object) -> object:
+        v = str(v).strip().upper()
+        if not NUMERO_RECLAMO.match(v):
+            raise ValueError("el radicado tiene la forma REC- y 8 caracteres (números o letras A-F)")
+        return v
+
+
+@tool(args_schema=EstadoDeReclamo)
+def consultar_estado_reclamo(numero: str, runtime: ToolRuntime[Contexto]) -> str:
+    """Consulta un reclamo que este cliente radicó antes, por su número de radicado (REC-…). Úsala cuando el cliente pregunte por
+    su reclamo o por un radicado. Solo ve los reclamos del propio cliente. Dice qué se radicó y cuándo, no el estado de gestión de
+    Celsia (no lo tiene): para eso remite a la línea 01 8000 112 115. Si no tiene el número, usa `listar_mis_reclamos`."""
+    return estado_de_reclamo(_almacen(runtime), runtime.context.usuario, numero)

@@ -101,6 +101,7 @@ def test_el_agente_tiene_las_herramientas():
         "calcular_factura_estimada",
         "consumo_de_un_aparato",
         "estimar_ahorro_solar",
+        "consultar_estado_reclamo",
     ]
 
 
@@ -1001,7 +1002,7 @@ def test_el_modelo_recibe_las_herramientas_con_su_esquema_json():
     from taaml.agente import HERRAMIENTAS
 
     esquemas = {f["function"]["name"]: f["function"] for f in map(convert_to_openai_tool, HERRAMIENTAS)}
-    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == len(HERRAMIENTAS) == 13
+    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == len(HERRAMIENTAS) == 14
     for e in esquemas.values():
         assert e["description"] and e["parameters"]["type"] == "object"
     assert esquemas["consultar_datos"]["parameters"]["properties"]["tabla"]["enum"] == ["sedes", "contactos", "catalogo"]
@@ -1219,3 +1220,20 @@ def test_el_costo_del_turno_suma_el_ultimo_turno_y_no_rompe_si_falla():
     assert costo_del_turno("h", modelo="ollama:local", agente=_estado_falso(hecho)) == 0.0  # un modelo local no cuesta
     roto = SimpleNamespace(get_state=lambda config: (_ for _ in ()).throw(RuntimeError("base caída")))
     assert costo_del_turno("h", agente=roto) is None
+
+
+def test_el_agente_consulta_el_reclamo_del_cliente_actual_por_su_numero():
+    from langgraph.store.memory import InMemoryStore
+
+    almacen = InMemoryStore()
+    almacen.put(("reclamos", "c1"), "REC-ABCD1234", {"tipo": "otro", "ciudad": "Cali", "descripcion": "Cobro repetido"})
+    llamada = AIMessage(content="", tool_calls=[{"name": "consultar_estado_reclamo", "args": {"numero": "rec-abcd1234"}, "id": "e1"}])
+    modelo = ModeloEspia(messages=iter([llamada, AIMessage(content="Figura radicado.")]), vistos=[])
+    agente = crear_agente(llm=modelo, store=almacen)
+    respuesta, usadas = conversar("¿Cómo va mi reclamo REC-ABCD1234?", "h-est", agente=agente, usuario="c1")
+    assert respuesta == "Figura radicado." and [u["herramienta"] for u in usadas] == ["consultar_estado_reclamo"]
+    assert "Cobro repetido" in _resultado_de_herramienta(agente, "h-est")
+    llamada2 = AIMessage(content="", tool_calls=[{"name": "consultar_estado_reclamo", "args": {"numero": "REC-ABCD1234"}, "id": "e2"}])
+    otro = crear_agente(llm=ModeloEspia(messages=iter([llamada2, AIMessage(content="No lo encontré.")]), vistos=[]), store=almacen)
+    conversar("¿Cómo va mi reclamo?", "h-est2", agente=otro, usuario="c2")  # otro cliente: no ve el de c1
+    assert "No encontré el radicado" in _resultado_de_herramienta(otro, "h-est2")

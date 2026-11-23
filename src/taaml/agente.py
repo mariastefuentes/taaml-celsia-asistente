@@ -42,12 +42,13 @@ from langgraph.store.memory import InMemoryStore
 from langgraph.store.sqlite import SqliteStore
 from langgraph.types import Command
 
-from taaml.base_herramientas import EsquemaEstricto
+from taaml.base_herramientas import ANONIMO, Contexto, EsquemaConRuntime, EsquemaEstricto, _almacen
 from taaml.consulta_datos import consultar
 from taaml.herramientas_servicio import (
     calcular_factura_estimada,
     canales_de_emergencia,
     ciudades_con_atencion,
+    consultar_estado_reclamo,
     consumo_de_un_aparato,
     estimar_ahorro_solar,
     fecha_y_hora_actual,
@@ -263,35 +264,8 @@ def consultar_datos(
     return delimitar_como_datos(consultar(tabla, filtros))
 
 
-ANONIMO = "anonimo"  # sin identificador de cliente no hay memoria de largo plazo: si no, todos los anónimos compartirían lo guardado
-
-
-@dataclass
-class Contexto:
-    """Quién conversa: el Store separa lo guardado de cada cliente con este identificador (no lo ve el modelo)."""
-
-    usuario: str = ANONIMO
-
-
 def _espacio(runtime: ToolRuntime[Contexto]) -> tuple[str, str]:
     return ("perfil", runtime.context.usuario)  # namespace: un cliente nunca lee los datos de otro
-
-
-def _almacen(runtime: ToolRuntime[Contexto]) -> BaseStore:
-    if runtime.store is None:
-        raise RuntimeError("El agente se creó sin Store: no hay memoria de largo plazo")
-    return runtime.store
-
-
-class EsquemaConRuntime(EsquemaEstricto):
-    """Base de los esquemas de las herramientas que usan la memoria: lleva `runtime`, que inyecta el sistema.
-
-    Hay que declararlo en el esquema: sin él, LangChain no lo inyecta y la llamada falla. Aun así el modelo no lo ve: el JSON Schema
-    que se le envía (`tool_call_schema`) solo trae los campos de cada herramienta (lo comprueba una prueba).
-    """
-
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True, arbitrary_types_allowed=True)
-    runtime: ToolRuntime = Field(exclude=True)  # exclude: que Pydantic no intente serializar el contexto
 
 
 class DatoDelCliente(EsquemaConRuntime):
@@ -384,6 +358,7 @@ HERRAMIENTAS = [
     calcular_factura_estimada,
     consumo_de_un_aparato,
     estimar_ahorro_solar,
+    consultar_estado_reclamo,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
