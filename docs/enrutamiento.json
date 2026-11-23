@@ -4,7 +4,7 @@
   "meta": { "title": "Enrutamiento: cómo elige el agente la herramienta", "output": "enrutamiento.html", "locale": "es", "quality_profile": "showcase" },
   "components": [
     { "id": "pregunta", "type": "external", "label": "Pregunta", "sublabel": "texto + historial recortado", "pos": [40, 300], "size": [140, 60] },
-    { "id": "modelo", "type": "cloud", "label": "Modelo + prompt v11", "sublabel": "function calling", "pos": [260, 300], "size": [150, 60], "tag": "elige por esquema" },
+    { "id": "modelo", "type": "cloud", "label": "Modelo + prompt v12", "sublabel": "function calling", "pos": [260, 300], "size": [150, 60], "tag": "elige por esquema" },
     { "id": "buscar", "type": "database", "label": "buscar_en_base", "sublabel": "trámites, tarifas, noticias", "pos": [520, 120], "size": [170, 60], "tag": "significado + palabras" },
     { "id": "consultar", "type": "database", "label": "consultar_datos", "sublabel": "sedes, contactos, catálogo", "pos": [520, 230], "size": [170, 60] },
     { "id": "guardar", "type": "backend", "label": "guardar_dato_del_cliente", "sublabel": "el cliente cuenta algo", "pos": [520, 340], "size": [170, 60] },

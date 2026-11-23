@@ -431,6 +431,20 @@ def test_el_cliente_puede_ver_y_borrar_lo_guardado():
     ]  # solo borra el suyo
 
 
+def test_el_borrado_del_cliente_tambien_elimina_sus_reclamos_guardados():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import olvidar_cliente
+
+    almacen = InMemoryStore()
+    almacen.put(("perfil", "ana"), "1", {"dato": "Vive en Cali"})
+    almacen.put(("reclamos", "ana"), "REC-1", {"tipo": "otro", "ciudad": "Cali", "descripcion": "x"})
+    almacen.put(("reclamos", "luis"), "REC-2", {"tipo": "otro", "ciudad": "Ibagué", "descripcion": "y"})
+    assert olvidar_cliente("ana", almacen) == 2
+    assert almacen.search(("perfil", "ana")) == [] and almacen.search(("reclamos", "ana")) == []
+    assert len(almacen.search(("reclamos", "luis"))) == 1  # no toca los de otro cliente
+
+
 def test_el_store_en_sqlite_conserva_los_datos_al_reabrir(tmp_path):
     from taaml.agente import almacen_de_largo_plazo
 
@@ -594,7 +608,7 @@ def test_el_prompt_de_sistema_se_arma_en_cada_turno_con_la_fecha_de_hoy():
     modelo = ModeloQueLeeElPrompt(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[], sistemas=[])
     conversar("hola", "hilo-fecha", agente=crear_agente(llm=modelo))
     assert f"Fecha de hoy: {date.today().isoformat()}" in modelo.sistemas[0]
-    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v11_agente.md
+    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v12_agente.md
 
 
 def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
@@ -781,7 +795,7 @@ def test_calentar_no_falla_si_ollama_esta_apagado(monkeypatch):
 
 
 # --- aprobación humana (HumanInTheLoopMiddleware): radicar un reclamo espera a una persona ---
-def _agente_con_reclamo(respuesta_final="Listo.", clase=ModeloEspia):
+def _agente_con_reclamo(respuesta_final="Listo.", clase=ModeloEspia, extra=None):
     from langgraph.store.memory import InMemoryStore
 
     llamada = AIMessage(
@@ -789,7 +803,7 @@ def _agente_con_reclamo(respuesta_final="Listo.", clase=ModeloEspia):
         tool_calls=[
             {
                 "name": "radicar_reclamo",
-                "args": {"tipo": "falla_de_servicio", "ciudad": "Ibagué", "descripcion": "Sin luz desde las 8"},
+                "args": {"tipo": "falla_de_servicio", "ciudad": "Ibagué", "descripcion": "Sin luz desde las 8", **(extra or {})},
                 "id": "r1",
             }
         ],
@@ -807,6 +821,22 @@ def test_radicar_un_reclamo_pausa_al_agente_hasta_que_una_persona_decide():
     assert respuesta == MENSAJE_EN_REVISION and [u["herramienta"] for u in usadas] == ["radicar_reclamo"]
     assert pendiente_de_aprobacion("h1", agente=agente)["args"]["ciudad"] == "Ibagué"
     assert almacen.search(("reclamos", "c1")) == []  # nada se radicó todavía
+
+
+def test_la_referencia_dir_o_niu_viaja_a_la_aprobacion_pero_no_se_guarda_en_el_reclamo():
+    from taaml.agente import pendiente_de_aprobacion, resolver_aprobacion
+
+    agente, _, almacen = _agente_con_reclamo("Radicado.", extra={"referencia": "  Calle 10 # 4-20, NIU 123456  "})
+    conversar("Radica mi reclamo", "h2r", agente=agente, usuario="c2r")
+    assert pendiente_de_aprobacion("h2r", agente=agente)["args"]["referencia"].strip() == "Calle 10 # 4-20, NIU 123456"
+    resolver_aprobacion("h2r", "aprobar", usuario="c2r", agente=agente)
+    guardado = almacen.search(("reclamos", "c2r"))[0].value
+    assert "referencia" not in guardado  # dato personal: solo va a la aprobación y al radicado
+    assert guardado["ciudad"] == "Ibagué"  # el resto del reclamo sí queda
+    sin, _, almacen2 = _agente_con_reclamo("Radicado.")  # sin referencia: se radica igual
+    conversar("Radica mi reclamo", "h2s", agente=sin, usuario="c2s")
+    resolver_aprobacion("h2s", "aprobar", usuario="c2s", agente=sin)
+    assert "referencia" not in almacen2.search(("reclamos", "c2s"))[0].value
 
 
 def test_al_aprobar_se_radica_y_al_rechazar_no():
@@ -1092,7 +1122,7 @@ def test_el_json_schema_que_ve_el_modelo_trae_solo_los_argumentos_de_cada_herram
 
     vistos = {t.name: convert_to_openai_tool(t)["function"]["parameters"] for t in HERRAMIENTAS}
     assert set(vistos["guardar_dato_del_cliente"]["properties"]) == {"dato"}
-    assert set(vistos["radicar_reclamo"]["properties"]) == {"tipo", "ciudad", "descripcion"}
+    assert set(vistos["radicar_reclamo"]["properties"]) == {"tipo", "ciudad", "descripcion", "referencia"}  # referencia: dirección o NIU, opcional
     assert vistos["recordar_datos_del_cliente"]["properties"] == {}  # no pide nada al modelo
     assert set(vistos["buscar_en_base"]["properties"]) == {"pregunta", "categoria", "region"}
     assert vistos["radicar_reclamo"]["required"] == ["tipo", "ciudad", "descripcion"]

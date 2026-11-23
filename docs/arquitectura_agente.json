@@ -83,7 +83,7 @@
       "id": "agente",
       "type": "backend",
       "label": "Agente",
-      "sublabel": "create_agent · prompt v11",
+      "sublabel": "create_agent · prompt v12",
       "pos": [
         680,
         300
