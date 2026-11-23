@@ -1,0 +1,114 @@
+"""Configuración de OpenClaw versionada y saneada, e instalación en la carpeta del usuario.
+
+La plantilla `openclaw/openclaw.example.json` se resolvió desde la configuración endurecida de la decisión D35. Este módulo no
+ejecuta OpenClaw: sustituye las variables de entorno, valida el endurecimiento y, si se le pide, escribe la configuración y el
+workspace en `~/.openclaw`. La validación de esquema la hace `openclaw config validate` en el equipo donde esté instalado.
+"""
+
+import json
+import os
+import re
+from pathlib import Path
+
+RAIZ = Path(__file__).resolve().parents[2]
+PLANTILLA = RAIZ / "openclaw" / "openclaw.example.json"
+WORKSPACE = RAIZ / "openclaw" / "workspace"
+
+E164 = re.compile(r"^\+[1-9]\d{7,14}$")
+VARIABLES = ("OPENCLAW_GATEWAY_TOKEN", "WHATSAPP_ALLOWLIST", "REPO_CELSIA")
+
+
+class ConfiguracionInvalida(ValueError):
+    """La plantilla no cumple el endurecimiento que exige la rúbrica o le falta una variable."""
+
+
+def _resolver(texto: str, entorno: dict[str, str] | None = None) -> str:
+    """Sustituye `${VARIABLE}` por su valor. Falla si falta: una configuración a medias es peor que ninguna."""
+    entorno = {**os.environ, **(entorno or {})}
+    faltan = [v for v in VARIABLES if f"${{{v}}}" in texto and not entorno.get(v)]
+
+    def reemplazo(match: re.Match) -> str:
+        nombre = match.group(1)
+        return entorno.get(nombre, match.group(0))
+
+    resuelto = re.sub(r"\$\{([A-Z0-9_]+)\}", reemplazo, texto)
+    if faltan:
+        raise ConfiguracionInvalida(f"Faltan variables de entorno: {', '.join(faltan)}")
+    return resuelto
+
+
+def configuracion(entorno: dict[str, str] | None = None, plantilla: Path | None = None) -> dict:
+    """Devuelve la configuración como diccionario, con las variables ya sustituidas."""
+    texto = _resolver((plantilla or PLANTILLA).read_text(encoding="utf-8"), entorno)
+    return json.loads(texto)
+
+
+def problemas(config: dict) -> list[str]:
+    """Lista lo que falta para el endurecimiento de la rúbrica: sandbox, deny, workspaceOnly, loopback, allowlist E.164.
+
+    No es un validador del esquema de OpenClaw (eso lo hace la herramienta): comprueba las decisiones que el equipo tomó y que
+    la auditoría debe poder mostrar.
+    """
+    fallos: list[str] = []
+    gateway = config.get("gateway", {})
+    if gateway.get("bind") != "loopback":
+        fallos.append("gateway.bind debe ser «loopback»")
+    token = gateway.get("auth", {}).get("token", "")
+    if not token or token.startswith("${"):
+        fallos.append("gateway.auth.token sin resolver")
+    herramientas = config.get("tools", {})
+    for grupo in ("group:automation", "group:runtime", "group:fs", "sessions_spawn"):
+        if grupo not in herramientas.get("deny", []):
+            fallos.append(f"tools.deny debe incluir «{grupo}»")
+    if herramientas.get("fs", {}).get("workspaceOnly") is not True:
+        fallos.append("tools.fs.workspaceOnly debe ser true")
+    if herramientas.get("exec", {}).get("mode") != "deny":
+        fallos.append("tools.exec.mode debe ser «deny»")
+    if herramientas.get("elevated", {}).get("enabled") is not False:
+        fallos.append("tools.elevated.enabled debe ser false")
+    if herramientas.get("browser", {}).get("enabled") is not False:
+        fallos.append("tools.browser.enabled debe ser false")
+    sandbox = config.get("agents", {}).get("defaults", {}).get("sandbox", {})
+    if sandbox.get("scope") != "all" or sandbox.get("workspaceAccess") != "none":
+        fallos.append("el sandbox debe ser scope «all» con workspaceAccess «none»")
+    if "celsia__*" not in herramientas.get("sandbox", {}).get("tools", {}).get("alsoAllow", []):
+        fallos.append("el sandbox debe permitir el servidor MCP «celsia__*»")
+    allowlist = config.get("channels", {}).get("whatsapp", {}).get("allowlist", [])
+    if not allowlist:
+        fallos.append("channels.whatsapp.allowlist está vacía")
+    for numero in allowlist:
+        for uno in str(numero).replace(";", ",").split(","):
+            if uno.strip() and not E164.match(uno.strip()):
+                fallos.append(f"«{uno.strip()}» no está en formato E.164 (+57…)")
+    if not config.get("mcp", {}).get("servers", {}).get("celsia"):
+        fallos.append("falta el servidor MCP propio «celsia»")
+    return fallos
+
+
+def instalar(destino: Path, entorno: dict[str, str] | None = None, forzar: bool = False) -> list[Path]:
+    """Escribe la configuración y el workspace en `destino` (~/.openclaw) y devuelve los archivos escritos.
+
+    No sobrescribe una configuración existente salvo con `forzar`; en ese caso deja un respaldo `.bak` al lado.
+    """
+    config = configuracion(entorno)
+    fallos = problemas(config)
+    if fallos:
+        raise ConfiguracionInvalida("; ".join(fallos))
+    destino.mkdir(parents=True, exist_ok=True)
+    archivo = destino / "openclaw.json"
+    escritos: list[Path] = []
+    if archivo.exists() and not forzar:
+        raise ConfiguracionInvalida(f"Ya existe {archivo}; usa --forzar para reemplazarla (se guarda un respaldo)")
+    if archivo.exists():
+        respaldo = archivo.with_suffix(".json.bak")
+        respaldo.write_text(archivo.read_text(encoding="utf-8"), encoding="utf-8")
+        escritos.append(respaldo)
+    archivo.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    escritos.append(archivo)
+    carpeta = destino / "workspace"
+    carpeta.mkdir(parents=True, exist_ok=True)
+    for origen in sorted(WORKSPACE.glob("*.md")):
+        copia = carpeta / origen.name
+        copia.write_text(origen.read_text(encoding="utf-8"), encoding="utf-8")
+        escritos.append(copia)
+    return escritos

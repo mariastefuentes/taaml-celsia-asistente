@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida test lint tipos skills-check check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend chat-web qr-chat-web demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida banco-verificable verificar-clon test lint tipos skills-check check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp openclaw-check openclaw-instalar
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -160,6 +160,13 @@ tipos:
 # Servidor MCP propio (solo lectura, por stdio): lo lanza el cliente MCP; a mano sirve para ver que arranca.
 mcp:
 	uv run python -m taaml.servidor_mcp
+
+# Configuracion versionada de OpenClaw: --simular solo valida; sin argumentos valida y escribe ~/.openclaw.
+openclaw-check:
+	uv run python scripts/47_openclaw_instalar.py --simular
+
+openclaw-instalar:
+	uv run python scripts/47_openclaw_instalar.py $(ARGS)
 
 check: lint test skills-check
 
