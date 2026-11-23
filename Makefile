@@ -143,7 +143,7 @@ demo-inyeccion:
 	uv run python scripts/23_demo_corpus_envenenado.py --servir
 
 test:
-	uv run python -m pytest
+	uv run --group analisis python -m pytest
 
 lint:
 	uvx ruff@0.17.3 check --select F,E9 src tests scripts app
