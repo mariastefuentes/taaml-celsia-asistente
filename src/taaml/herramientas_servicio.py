@@ -350,9 +350,11 @@ def estado_de_reclamo(almacen, usuario: str, numero: str) -> str:
         return f"No encontré el radicado {numero} entre los reclamos de este cliente. Revisa que el número esté bien escrito o llama a la línea 01 8000 112 115."
     r = item.value
     fecha = item.created_at.astimezone(HUSO_COLOMBIA)
+    adicionales = r.get("detalles", [])
+    extra = (" Información agregada después: " + " | ".join(adicionales) + ".") if adicionales else ""
     return (
         f"El radicado {numero} figura radicado el {fecha.day} de {MESES[fecha.month - 1]} de {fecha.year}. "
-        f"Tipo: {TIPOS_DE_RECLAMO.get(r.get('tipo'), 'otro')}. Ciudad: {r.get('ciudad', 'sin dato')}. Lo que se reportó: {r.get('descripcion', 'sin dato')}. "
+        f"Tipo: {TIPOS_DE_RECLAMO.get(r.get('tipo'), 'otro')}. Ciudad: {r.get('ciudad', 'sin dato')}. Lo que se reportó: {r.get('descripcion', 'sin dato')}.{extra} "
         "Desde aquí no veo si ya lo están gestionando ni en qué estado va: para eso llama a la línea 01 8000 112 115 con el número de radicado."
     )
 
@@ -411,3 +413,44 @@ def listar_mis_reclamos(runtime: ToolRuntime[Contexto]) -> str:
     total ya contado. Úsala cuando el cliente pregunte qué reclamos tiene, cuántos ha puesto o no recuerde el número de su radicado.
     Solo ve los del propio cliente. No dice el estado de gestión de Celsia (no lo tiene)."""
     return reclamos_del_cliente(_almacen(runtime), runtime.context.usuario)
+
+
+MAX_DETALLES_POR_RECLAMO = 5
+
+
+def agregar_detalle(almacen, usuario: str, numero: str, detalle: str) -> str:
+    """Añade una nota a un reclamo ya radicado de ESTE cliente (no cambia lo radicado: queda como información adicional)."""
+    if usuario == ANONIMO:
+        return "No se agregó: no hay un cliente identificado, y solo se puede ampliar un reclamo desde la cuenta de quien lo radicó."
+    detalle = quitar_invisibles(detalle).strip()[:300]
+    if not detalle:
+        return "No se agregó: el detalle está vacío."
+    espacio = ("reclamos", usuario)
+    item = almacen.get(espacio, numero)
+    if item is None:
+        return f"No se agregó: no encontré el radicado {numero} entre los reclamos de este cliente."
+    valor = dict(item.value)
+    detalles = list(valor.get("detalles", []))
+    if detalle in detalles:
+        return "Ese detalle ya estaba agregado al reclamo."
+    if len(detalles) >= MAX_DETALLES_POR_RECLAMO:
+        return f"No se agregó: el reclamo ya tiene {MAX_DETALLES_POR_RECLAMO} detalles adicionales. Para más, llama a la línea 01 8000 112 115."
+    valor["detalles"] = detalles + [detalle]
+    almacen.put(espacio, numero, valor)
+    return (
+        f"Agregado al reclamo {numero}. Queda como información adicional; lo ya radicado no cambia y la gestión de Celsia sigue siendo la misma."
+    )
+
+
+class DetalleDeReclamo(EstadoDeReclamo):
+    """Esquema de entrada de `agregar_detalle_a_reclamo`: el radicado (con su misma validación) y lo que se agrega."""
+
+    detalle: str = Field(min_length=1, max_length=300, description="Lo que el cliente quiere añadir, en sus palabras (sin cédulas, claves ni tarjetas).")
+
+
+@tool(args_schema=DetalleDeReclamo)
+def agregar_detalle_a_reclamo(numero: str, detalle: str, runtime: ToolRuntime[Contexto]) -> str:
+    """Agrega información nueva a un reclamo que este cliente ya radicó (por ejemplo, un dato que faltaba o algo que cambió). Úsala
+    cuando el cliente quiera ampliar su reclamo y dé el número de radicado (si no lo sabe, usa antes `listar_mis_reclamos`). No
+    cambia lo radicado: queda como nota adicional. Para un reclamo nuevo usa `radicar_reclamo`. Nunca guardes cédulas, claves ni tarjetas."""
+    return agregar_detalle(_almacen(runtime), runtime.context.usuario, numero, detalle)

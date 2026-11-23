@@ -45,6 +45,7 @@ from langgraph.types import Command
 from taaml.base_herramientas import ANONIMO, Contexto, EsquemaConRuntime, EsquemaEstricto, _almacen
 from taaml.consulta_datos import consultar
 from taaml.herramientas_servicio import (
+    agregar_detalle_a_reclamo,
     calcular_factura_estimada,
     canales_de_emergencia,
     ciudades_con_atencion,
@@ -361,6 +362,7 @@ HERRAMIENTAS = [
     estimar_ahorro_solar,
     consultar_estado_reclamo,
     listar_mis_reclamos,
+    agregar_detalle_a_reclamo,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.

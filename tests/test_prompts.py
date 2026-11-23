@@ -200,3 +200,8 @@ def test_v13_consulta_el_estado_del_reclamo_sin_inventar_la_gestion():
 def test_v13_lista_los_reclamos_del_cliente_con_su_herramienta():
     texto = leer_prompt("v13_agente.md")
     assert "`listar_mis_reclamos`" in texto and "no recuerda su número de radicado" in texto
+
+
+def test_v13_amplia_un_reclamo_radicado_sin_confundirlo_con_uno_nuevo():
+    texto = leer_prompt("v13_agente.md")
+    assert "`agregar_detalle_a_reclamo`" in texto and "Un reclamo nuevo es `radicar_reclamo`" in texto

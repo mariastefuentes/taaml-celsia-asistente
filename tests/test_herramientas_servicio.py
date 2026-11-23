@@ -350,3 +350,41 @@ def test_la_herramienta_de_listar_no_pide_nada_al_modelo():
     with pytest.raises(ValidationError):
         SoloElCliente.model_validate({"runtime": None})
     assert listar_mis_reclamos.tool_call_schema.model_json_schema()["properties"] == {}
+
+
+from taaml.herramientas_servicio import DetalleDeReclamo, agregar_detalle, agregar_detalle_a_reclamo  # noqa: E402
+
+
+def test_agrega_un_detalle_y_aparece_al_consultar_el_reclamo_sin_cambiar_lo_radicado():
+    almacen = _almacen_con_reclamos()
+    antes = almacen.get(("reclamos", "ana"), "REC-ABCD1234").created_at
+    assert agregar_detalle(almacen, "ana", "REC-ABCD1234", "El medidor es el de la esquina") .startswith("Agregado al reclamo REC-ABCD1234")
+    item = almacen.get(("reclamos", "ana"), "REC-ABCD1234")
+    assert item.value["descripcion"] == "Sin luz desde las 8" and item.value["detalles"] == ["El medidor es el de la esquina"]
+    assert item.created_at == antes  # la fecha de radicación no se mueve
+    assert "Información agregada después: El medidor es el de la esquina" in estado_de_reclamo(almacen, "ana", "REC-ABCD1234")
+
+
+def test_no_agrega_a_reclamos_ajenos_ni_a_anonimos_ni_vacios_ni_repetidos():
+    almacen = _almacen_con_reclamos()
+    assert "no encontré el radicado" in agregar_detalle(almacen, "ana", "REC-99999999", "algo")
+    assert "reclamo de Luis" in almacen.get(("reclamos", "luis"), "REC-99999999").value["descripcion"]
+    assert "detalles" not in almacen.get(("reclamos", "luis"), "REC-99999999").value  # el de Luis quedó intacto
+    assert "no hay un cliente identificado" in agregar_detalle(almacen, "anonimo", "REC-ABCD1234", "algo")
+    assert "vacío" in agregar_detalle(almacen, "ana", "REC-ABCD1234", "   ")
+    agregar_detalle(almacen, "ana", "REC-ABCD1234", "uno")
+    assert "ya estaba agregado" in agregar_detalle(almacen, "ana", "REC-ABCD1234", "uno")
+
+
+def test_tope_de_detalles_por_reclamo():
+    almacen = _almacen_con_reclamos()
+    for n in range(5):
+        assert agregar_detalle(almacen, "ana", "REC-ABCD1234", f"dato {n}").startswith("Agregado")
+    assert "ya tiene 5 detalles" in agregar_detalle(almacen, "ana", "REC-ABCD1234", "dato 6")
+
+
+def test_esquema_del_detalle_valida_el_radicado_y_el_largo():
+    assert set(agregar_detalle_a_reclamo.tool_call_schema.model_json_schema()["properties"]) == {"numero", "detalle"}
+    assert DetalleDeReclamo._formato("rec-abcd1234") == "REC-ABCD1234"
+    campo = DetalleDeReclamo.model_fields["detalle"]
+    assert {type(m).__name__ for m in campo.metadata} >= {"MinLen", "MaxLen"}
