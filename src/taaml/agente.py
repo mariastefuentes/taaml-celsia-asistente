@@ -48,6 +48,7 @@ from taaml.herramientas_servicio import (
     DetalleDeReclamo,
     agregar_detalle_a_reclamo,
     calcular_factura_estimada,
+    calificar_atencion,
     canales_de_emergencia,
     ciudades_con_atencion,
     consultar_estado_reclamo,
@@ -366,6 +367,7 @@ HERRAMIENTAS = [
     listar_mis_reclamos,
     agregar_detalle_a_reclamo,
     escalar_a_asesor,
+    calificar_atencion,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
@@ -629,11 +631,11 @@ def datos_del_cliente(usuario: str, almacen: Any = None) -> list[str]:
 def olvidar_cliente(usuario: str, almacen: Any = None) -> int:
     """Borra todo lo guardado de un cliente (su derecho a la supresión de datos) y devuelve cuántos datos eran.
 
-    Incluye lo que el cliente contó de sí mismo (`perfil`) los reclamos simulados (`reclamos`) y las solicitudes de asesor (`escalamientos`).
+    Incluye lo que el cliente contó de sí mismo (`perfil`) los reclamos simulados (`reclamos`), las solicitudes de asesor (`escalamientos`) y sus calificaciones (`calificaciones`).
     """
     almacen = almacen or almacen_compartido()
     borrados = 0
-    for espacio, limite in ((("perfil", usuario), MAX_DATOS_CLIENTE), (("reclamos", usuario), 1000), (("escalamientos", usuario), 100)):
+    for espacio, limite in ((("perfil", usuario), MAX_DATOS_CLIENTE), (("reclamos", usuario), 1000), (("escalamientos", usuario), 100), (("calificaciones", usuario), 100)):
         for i in almacen.search(espacio, limit=limite):
             almacen.delete(espacio, i.key)
             borrados += 1

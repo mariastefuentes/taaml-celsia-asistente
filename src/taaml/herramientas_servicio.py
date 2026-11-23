@@ -496,3 +496,36 @@ def escalar_a_asesor(motivo: str, runtime: ToolRuntime[Contexto]) -> str:
     Úsala cuando el cliente pida hablar con una persona o un asesor, o cuando no puedas resolver su caso. No hay transferencia en vivo
     ni tiempo de respuesta: nunca prometas que lo llamarán o que lo atenderán pronto. Para un reclamo usa `radicar_reclamo`."""
     return solicitar_asesor(_almacen(runtime), runtime.context.usuario, motivo)
+
+
+MAX_CALIFICACIONES = 10
+
+
+def registrar_calificacion(almacen, usuario: str, puntaje: int, comentario: str = "") -> str:
+    """Guarda la calificación (1 a 5) que el cliente da a la atención recibida, con un comentario opcional."""
+    if usuario == ANONIMO:
+        return "No pude guardar la calificación: no hay un cliente identificado. Gracias por tomarte el tiempo de opinar."
+    if not isinstance(puntaje, int) or isinstance(puntaje, bool) or not 1 <= puntaje <= 5:
+        return "No se registró: la calificación debe ser un número entero de 1 a 5."
+    comentario = quitar_invisibles(comentario or "").strip()[:300]
+    espacio = ("calificaciones", usuario)
+    if len(almacen.search(espacio, limit=MAX_CALIFICACIONES + 1)) >= MAX_CALIFICACIONES:
+        return f"Ya hay {MAX_CALIFICACIONES} calificaciones registradas de este cliente; no se guardan más."
+    numero = f"CAL-{uuid4().hex[:8].upper()}"
+    almacen.put(espacio, numero, {"puntaje": puntaje, "comentario": comentario})
+    return f"Gracias, quedó registrada tu calificación {numero}: {puntaje} de 5." + (" También guardé tu comentario." if comentario else "")
+
+
+class CalificacionDeAtencion(EsquemaConRuntime):
+    """Esquema de entrada de `calificar_atencion`."""
+
+    puntaje: int = Field(ge=1, le=5, description="Calificación de la atención, un número entero de 1 (muy mala) a 5 (excelente).")
+    comentario: str = Field(default="", max_length=300, description="Comentario opcional del cliente, con sus palabras (sin cédulas, claves ni tarjetas).")
+
+
+@tool(args_schema=CalificacionDeAtencion)
+def calificar_atencion(puntaje: int, runtime: ToolRuntime[Contexto], comentario: str = "") -> str:
+    """Registra la calificación (de 1 a 5) que el cliente da a la atención recibida, con un comentario opcional. Úsala solo cuando
+    el cliente diga o dé una calificación; nunca inventes el puntaje ni lo pidas con insistencia. No es un reclamo: para quejas
+    formales usa `radicar_reclamo`."""
+    return registrar_calificacion(_almacen(runtime), runtime.context.usuario, puntaje, comentario)

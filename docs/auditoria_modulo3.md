@@ -10,7 +10,7 @@ Hay dos bloqueos: solo hay 5 herramientas (se exigen 20) y OpenClaw no está con
 
 | # | Criterio (peso) | Estado | Evidencia revisada | Brecha para 5.0 |
 |---|---|---|---|---|
-| 1.1 | Herramientas, catálogo de 20 (10 %) | **NO CUMPLE** (17 de 20 el 23/11: se añade una por vez, en la rama `herramientas-20`) | `HERRAMIENTAS` en `src/taaml/agente.py:368` tiene 5, con esquema Pydantic (`@tool(args_schema=…)`); `servidor_mcp.py` expone 2 más, que son envoltorios de las mismas búsquedas | Faltan 15 herramientas reales, cada una con esquema, prueba y uso demostrable |
+| 1.1 | Herramientas, catálogo de 20 (10 %) | **NO CUMPLE** (18 de 20 el 23/11: se añade una por vez, en la rama `herramientas-20`) | `HERRAMIENTAS` en `src/taaml/agente.py:368` tiene 5, con esquema Pydantic (`@tool(args_schema=…)`); `servidor_mcp.py` expone 2 más, que son envoltorios de las mismas búsquedas | Faltan 15 herramientas reales, cada una con esquema, prueba y uso demostrable |
 | 1.2 | Router y razonamiento (8 %) | CUMPLE PARCIAL | Matriz de enrutamiento 42/43, banco 49/49 (medido hoy), `errores_amables` | Con 20 herramientas hay que ampliar la matriz; R31 sigue marcada |
 | 1.3 | Memoria por capas (7 %) | CUMPLE PARCIAL | PostgresSaver + Store, `thread_id`, aislamiento por usuario en pruebas | Falta demostrar persistencia tras reiniciar en vivo y edición/auditoría de memoria por el usuario |
 | 2.1 | Pipeline de datos M1 (5 %) | CUMPLE PARCIAL | `data/1_bronze → 2_silver → 3_gold`, scripts numerados | No se volvió a ejecutar de cero en esta auditoría |

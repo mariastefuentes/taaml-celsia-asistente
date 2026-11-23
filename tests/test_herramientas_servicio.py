@@ -433,3 +433,51 @@ def test_esquema_de_la_solicitud():
     assert set(escalar_a_asesor.tool_call_schema.model_json_schema()["properties"]) == {"motivo"}
     campo = SolicitudDeAsesor.model_fields["motivo"]
     assert {type(m).__name__ for m in campo.metadata} >= {"MinLen", "MaxLen"}
+
+
+from taaml.herramientas_servicio import CalificacionDeAtencion, calificar_atencion, registrar_calificacion  # noqa: E402
+
+
+def test_la_calificacion_se_guarda_con_numero_puntaje_y_comentario():
+    almacen = InMemoryStore()
+    r = registrar_calificacion(almacen, "ana", 4, "Me ayudaron rápido")
+    guardadas = almacen.search(("calificaciones", "ana"))
+    assert len(guardadas) == 1 and guardadas[0].key.startswith("CAL-")
+    assert guardadas[0].value == {"puntaje": 4, "comentario": "Me ayudaron rápido"}
+    assert guardadas[0].key in r and "4 de 5" in r and "comentario" in r
+
+
+def test_la_calificacion_sin_comentario_no_dice_que_lo_guardo():
+    almacen = InMemoryStore()
+    assert "comentario" not in registrar_calificacion(almacen, "ana", 5)
+
+
+def test_puntajes_fuera_de_rango_o_no_enteros_se_rechazan_y_no_se_guardan():
+    almacen = InMemoryStore()
+    for malo in (0, 6, -1, True, 3.5):
+        assert "de 1 a 5" in registrar_calificacion(almacen, "ana", malo)
+    assert almacen.search(("calificaciones", "ana")) == []
+
+
+def test_la_calificacion_tiene_tope_no_mezcla_clientes_y_el_anonimo_no_guarda():
+    almacen = InMemoryStore()
+    for _ in range(10):
+        registrar_calificacion(almacen, "ana", 3)
+    assert "no se guardan más" in registrar_calificacion(almacen, "ana", 3)
+    assert len(almacen.search(("calificaciones", "ana"), limit=50)) == 10 and almacen.search(("calificaciones", "luis")) == []
+    assert "No pude guardar" in registrar_calificacion(almacen, "anonimo", 5) and almacen.search(("calificaciones", "anonimo")) == []
+
+
+def test_el_borrado_del_cliente_tambien_elimina_sus_calificaciones():
+    from taaml.agente import olvidar_cliente
+
+    almacen = InMemoryStore()
+    registrar_calificacion(almacen, "ana", 5)
+    registrar_calificacion(almacen, "luis", 2)
+    assert olvidar_cliente("ana", almacen) == 1
+    assert almacen.search(("calificaciones", "ana")) == [] and len(almacen.search(("calificaciones", "luis"))) == 1
+
+
+def test_esquema_de_la_calificacion():
+    assert set(calificar_atencion.tool_call_schema.model_json_schema()["properties"]) == {"puntaje", "comentario"}
+    assert {type(m).__name__ for m in CalificacionDeAtencion.model_fields["puntaje"].metadata} >= {"Ge", "Le"}

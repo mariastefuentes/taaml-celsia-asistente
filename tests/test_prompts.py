@@ -214,3 +214,8 @@ def test_v13_no_cuenta_el_detalle_como_agregado_hasta_que_una_persona_lo_apruebe
 def test_v13_escala_a_un_asesor_sin_prometer_llamadas_ni_tiempos():
     texto = leer_prompt("v13_agente.md")
     assert "`escalar_a_asesor`" in texto and "nunca prometas que lo llamarán ni cuándo" in texto
+
+
+def test_v13_registra_la_calificacion_sin_inventar_el_puntaje():
+    texto = leer_prompt("v13_agente.md")
+    assert "`calificar_atencion`" in texto and "nunca inventes el puntaje" in texto
