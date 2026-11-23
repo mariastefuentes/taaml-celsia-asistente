@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from taaml.herramientas_servicio import SedesCercanas, distancia_km, sedes_cercanas, sedes_cercanas_a
+from taaml.herramientas_servicio import CiudadesConAtencion, SedesCercanas, ciudades_con_atencion, ciudades_con_atencion_en, distancia_km, sedes_cercanas, sedes_cercanas_a
 
 
 def test_distancia_conocida_y_cero_consigo_misma():
@@ -46,3 +46,30 @@ def test_la_herramienta_se_invoca_con_los_argumentos_del_modelo():
     salida = sedes_cercanas.invoke({"ciudad": "Palmira"})
     assert "Palmira" in salida
     assert {"latitud", "longitud", "ciudad"} == set(sedes_cercanas.tool_call_schema.model_json_schema()["properties"])
+
+
+def test_ciudades_por_departamento_con_total_contado_por_el_codigo():
+    texto = ciudades_con_atencion_en("Tolima")
+    assert "Tolima:" in texto and "Ibagué" in texto and "Valle del Cauca" not in texto
+    ciudades = texto.splitlines()[0].split(": ", 1)[1].split(", ")
+    assert texto.splitlines()[-1] == f"Total: {len(ciudades)} ciudades."
+
+
+def test_ciudades_varios_departamentos_y_sin_filtro_excluye_otros_paises():
+    dos = ciudades_con_atencion_en("Tolima, Valle del Cauca")
+    todo = ciudades_con_atencion_en()
+    assert "Tolima:" in dos and "Valle del Cauca:" in dos and "Antioquia:" not in dos
+    assert "Antioquia:" in todo and "Panam" not in todo and "Costa Rica" not in todo and "Honduras" not in todo
+    assert int(todo.rsplit("Total: ", 1)[1].split()[0]) > int(dos.rsplit("Total: ", 1)[1].split()[0])
+
+
+def test_ciudades_departamento_inexistente_dice_sin_resultados():
+    assert ciudades_con_atencion_en("Atlántida") == "Sin resultados en los datos estructurados."
+
+
+def test_ciudades_esquema_y_herramienta():
+    with pytest.raises(ValidationError):
+        CiudadesConAtencion(departamento="Tolima", otro="x")
+    assert CiudadesConAtencion().departamento == ""
+    assert "Ibagué" in ciudades_con_atencion.invoke({"departamento": "tolima"})  # sin tildes ni mayúsculas
+    assert set(ciudades_con_atencion.tool_call_schema.model_json_schema()["properties"]) == {"departamento"}

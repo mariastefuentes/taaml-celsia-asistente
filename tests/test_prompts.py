@@ -149,3 +149,8 @@ def test_v13_manda_la_sede_mas_cercana_a_sedes_cercanas_y_estado_vigente():
     texto = leer_prompt("v13_agente.md")
     assert "`sedes_cercanas`" in texto and "pídesela" in texto
     assert "estado: vigente" in (Path(__file__).parents[1] / "prompts" / "v13_agente.md").read_text(encoding="utf-8")
+
+
+def test_v13_manda_las_ciudades_con_atencion_a_su_herramienta():
+    texto = leer_prompt("v13_agente.md")
+    assert "`ciudades_con_atencion`" in texto and "cita su Total" in texto

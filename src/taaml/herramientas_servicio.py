@@ -10,7 +10,7 @@ from langchain_core.tools import tool
 from pydantic import Field, model_validator
 
 from taaml.base_herramientas import EsquemaEstricto
-from taaml.consulta_datos import SEDES, _norm
+from taaml.consulta_datos import SEDES, SIN_RESULTADOS, _contiene_alguno, _norm
 from taaml.sanitizar import quitar_invisibles
 
 MAX_SEDES_CERCANAS = 3
@@ -52,6 +52,19 @@ def sedes_cercanas_a(latitud: float | None = None, longitud: float | None = None
     return "\n".join(lineas) + "\nLas distancias son en línea recta, no por carretera."
 
 
+def ciudades_con_atencion_en(departamento: str = "") -> str:
+    """Ciudades de Colombia con sede o punto de atención, agrupadas por departamento; el total lo cuenta el código."""
+    por_departamento: dict[str, set[str]] = {}
+    for s in _sedes_de_colombia():
+        if _contiene_alguno(s["DEPARTMENT"], departamento):
+            por_departamento.setdefault(s["DEPARTMENT"], set()).add(s["CITY"])
+    if not por_departamento:
+        return SIN_RESULTADOS
+    lineas = [f"- {dep}: {', '.join(sorted(ciudades))}" for dep, ciudades in sorted(por_departamento.items())]
+    total = sum(len(c) for c in por_departamento.values())
+    return "\n".join(lineas) + f"\nTotal: {total} {'ciudad' if total == 1 else 'ciudades'}."
+
+
 class SedesCercanas(EsquemaEstricto):
     """Esquema de entrada de `sedes_cercanas`: o las coordenadas completas o una ciudad."""
 
@@ -74,3 +87,21 @@ def sedes_cercanas(latitud: float | None = None, longitud: float | None = None, 
     Úsala cuando el cliente pregunte cuál es la sede más cercana o comparta su ubicación (latitud y longitud) o diga su ciudad.
     Para listar las sedes de una ciudad concreta usa `consultar_datos`."""
     return sedes_cercanas_a(latitud, longitud, quitar_invisibles(ciudad))
+
+
+class CiudadesConAtencion(EsquemaEstricto):
+    """Esquema de entrada de `ciudades_con_atencion`."""
+
+    departamento: str = Field(
+        "",
+        max_length=80,
+        description="Departamento por el que filtrar («Tolima», «Valle del Cauca»; varios separados por comas). Vacío: todos los de Colombia.",
+    )
+
+
+@tool(args_schema=CiudadesConAtencion)
+def ciudades_con_atencion(departamento: str = "") -> str:
+    """Lista las ciudades de Colombia donde Celsia tiene sede o punto de atención, agrupadas por departamento, con el total ya contado.
+    Úsala para «¿en qué ciudades del Tolima hay oficinas?» o «¿en cuántas ciudades tienen atención?». Para ver las direcciones y los
+    horarios de las sedes de una ciudad usa `consultar_datos`."""
+    return ciudades_con_atencion_en(quitar_invisibles(departamento))
