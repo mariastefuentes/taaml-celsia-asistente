@@ -358,8 +358,10 @@ def radicar_reclamo(
     reclamo = {"tipo": tipo, "ciudad": quitar_invisibles(ciudad).strip()[:80], "descripcion": quitar_invisibles(descripcion).strip()[:500]}
     if referencia.strip():
         reclamo["referencia"] = quitar_invisibles(referencia).strip()[:120]
-    numero = radicar_simulado(reclamo)  # registro de mentira: un sistema real llamaría al de Celsia
-    _almacen(runtime).put(("reclamos", runtime.context.usuario), numero, reclamo)
+    numero = radicar_simulado(reclamo)  # registro de mentira: un sistema real llamaría al de Celsia con la referencia
+    # La referencia es un dato personal: se usa para radicar y para la aprobación, pero no se guarda en el Store.
+    guardado = {clave: valor for clave, valor in reclamo.items() if clave != "referencia"}
+    _almacen(runtime).put(("reclamos", runtime.context.usuario), numero, guardado)
     return f"Reclamo radicado con el número {numero}."
 
 
@@ -589,12 +591,17 @@ def datos_del_cliente(usuario: str, almacen: Any = None) -> list[str]:
 
 
 def olvidar_cliente(usuario: str, almacen: Any = None) -> int:
-    """Borra todo lo guardado de un cliente (su derecho a la supresión de datos) y devuelve cuántos datos eran."""
+    """Borra todo lo guardado de un cliente (su derecho a la supresión de datos) y devuelve cuántos datos eran.
+
+    Incluye lo que el cliente contó de sí mismo (`perfil`) y los reclamos simulados (`reclamos`).
+    """
     almacen = almacen or almacen_compartido()
-    items = almacen.search(("perfil", usuario), limit=MAX_DATOS_CLIENTE)
-    for i in items:
-        almacen.delete(("perfil", usuario), i.key)
-    return len(items)
+    borrados = 0
+    for espacio, limite in ((("perfil", usuario), MAX_DATOS_CLIENTE), (("reclamos", usuario), 1000)):
+        for i in almacen.search(espacio, limit=limite):
+            almacen.delete(espacio, i.key)
+            borrados += 1
+    return borrados
 
 
 _AGENTES: dict = {}  # un agente (con su memoria) por modelo: el cuaderno vive dentro del agente, así que hay que reutilizarlo

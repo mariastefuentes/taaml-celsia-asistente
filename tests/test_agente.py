@@ -431,6 +431,20 @@ def test_el_cliente_puede_ver_y_borrar_lo_guardado():
     ]  # solo borra el suyo
 
 
+def test_el_borrado_del_cliente_tambien_elimina_sus_reclamos_guardados():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import olvidar_cliente
+
+    almacen = InMemoryStore()
+    almacen.put(("perfil", "ana"), "1", {"dato": "Vive en Cali"})
+    almacen.put(("reclamos", "ana"), "REC-1", {"tipo": "otro", "ciudad": "Cali", "descripcion": "x"})
+    almacen.put(("reclamos", "luis"), "REC-2", {"tipo": "otro", "ciudad": "Ibagué", "descripcion": "y"})
+    assert olvidar_cliente("ana", almacen) == 2
+    assert almacen.search(("perfil", "ana")) == [] and almacen.search(("reclamos", "ana")) == []
+    assert len(almacen.search(("reclamos", "luis"))) == 1  # no toca los de otro cliente
+
+
 def test_el_store_en_sqlite_conserva_los_datos_al_reabrir(tmp_path):
     from taaml.agente import almacen_de_largo_plazo
 
@@ -809,15 +823,17 @@ def test_radicar_un_reclamo_pausa_al_agente_hasta_que_una_persona_decide():
     assert almacen.search(("reclamos", "c1")) == []  # nada se radicó todavía
 
 
-def test_la_referencia_dir_o_niu_viaja_al_reclamo_guardado_y_es_opcional():
+def test_la_referencia_dir_o_niu_viaja_a_la_aprobacion_pero_no_se_guarda_en_el_reclamo():
     from taaml.agente import pendiente_de_aprobacion, resolver_aprobacion
 
     agente, _, almacen = _agente_con_reclamo("Radicado.", extra={"referencia": "  Calle 10 # 4-20, NIU 123456  "})
     conversar("Radica mi reclamo", "h2r", agente=agente, usuario="c2r")
     assert pendiente_de_aprobacion("h2r", agente=agente)["args"]["referencia"].strip() == "Calle 10 # 4-20, NIU 123456"
     resolver_aprobacion("h2r", "aprobar", usuario="c2r", agente=agente)
-    assert almacen.search(("reclamos", "c2r"))[0].value["referencia"] == "Calle 10 # 4-20, NIU 123456"
-    sin, _, almacen2 = _agente_con_reclamo("Radicado.")  # sin referencia: se radica igual y el campo no aparece
+    guardado = almacen.search(("reclamos", "c2r"))[0].value
+    assert "referencia" not in guardado  # dato personal: solo va a la aprobación y al radicado
+    assert guardado["ciudad"] == "Ibagué"  # el resto del reclamo sí queda
+    sin, _, almacen2 = _agente_con_reclamo("Radicado.")  # sin referencia: se radica igual
     conversar("Radica mi reclamo", "h2s", agente=sin, usuario="c2s")
     resolver_aprobacion("h2s", "aprobar", usuario="c2s", agente=sin)
     assert "referencia" not in almacen2.search(("reclamos", "c2s"))[0].value
