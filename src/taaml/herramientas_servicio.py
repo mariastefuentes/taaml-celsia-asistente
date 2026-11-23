@@ -6,6 +6,7 @@ La lógica vive en funciones simples que se prueban sin modelo; la herramienta d
 import json
 import math
 import re
+from datetime import datetime, timedelta, timezone
 
 from langchain_core.tools import tool
 from pydantic import Field, model_validator
@@ -210,3 +211,24 @@ def canales_de_emergencia() -> str:
     un daño y la línea de servicio. Úsala cuando el cliente describa un peligro eléctrico (cable caído, chispas, humo, descarga) o
     pida cómo reportar una falla o un corte; antes dile qué hacer para estar seguro. No radica nada: para radicar usa `radicar_reclamo`."""
     return canales_de_emergencia_texto()
+
+
+HUSO_COLOMBIA = timezone(timedelta(hours=-5))  # Colombia no cambia la hora en el año: siempre UTC-5
+DIAS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+MESES = (
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+)  # fmt: skip
+
+
+def fecha_y_hora_texto(ahora: datetime | None = None) -> str:
+    """Día de la semana, fecha y hora de Colombia en una frase (nombres en español sin depender del idioma del equipo)."""
+    t = (ahora or datetime.now(timezone.utc)).astimezone(HUSO_COLOMBIA)
+    return f"Hoy es {DIAS[t.weekday()]} {t.day} de {MESES[t.month - 1]} de {t.year}, {t:%H:%M} (hora de Colombia, UTC-5)."
+
+
+@tool(args_schema=SinParametros)
+def fecha_y_hora_actual() -> str:
+    """Devuelve el día de la semana, la fecha y la hora actuales en Colombia. Úsala cuando el cliente pregunte qué día u hora es,
+    o si una sede está abierta ahora o abre hoy: compara esta hora con el horario que da `consultar_datos`."""
+    return fecha_y_hora_texto()

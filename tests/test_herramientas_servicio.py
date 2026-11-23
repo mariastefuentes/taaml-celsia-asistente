@@ -152,3 +152,27 @@ def test_la_herramienta_no_pide_nada_al_modelo():
         SinParametros(algo="x")
     assert canales_de_emergencia.invoke({}) == canales_de_emergencia_texto()
     assert canales_de_emergencia.tool_call_schema.model_json_schema()["properties"] == {}
+
+
+from datetime import datetime, timezone  # noqa: E402
+
+from taaml.herramientas_servicio import fecha_y_hora_actual, fecha_y_hora_texto  # noqa: E402
+
+
+def test_la_hora_se_convierte_a_colombia_con_dia_y_mes_en_espanol():
+    utc = datetime(2026, 11, 23, 19, 35, tzinfo=timezone.utc)  # lunes 23/11/2026, 14:35 en Colombia
+    assert fecha_y_hora_texto(utc) == "Hoy es lunes 23 de noviembre de 2026, 14:35 (hora de Colombia, UTC-5)."
+
+
+def test_pasada_la_medianoche_utc_en_colombia_sigue_siendo_el_dia_anterior():
+    utc = datetime(2026, 11, 28, 3, 5, tzinfo=timezone.utc)  # 22:05 del viernes 27 en Colombia
+    assert "viernes 27 de noviembre" in fecha_y_hora_texto(utc) and "22:05" in fecha_y_hora_texto(utc)
+
+
+def test_domingo_y_enero():
+    assert fecha_y_hora_texto(datetime(2027, 1, 3, 17, 0, tzinfo=timezone.utc)).startswith("Hoy es domingo 3 de enero de 2027, 12:00")
+
+
+def test_la_herramienta_usa_el_reloj_real_y_no_pide_nada_al_modelo():
+    assert fecha_y_hora_actual.invoke({}).startswith("Hoy es ")
+    assert fecha_y_hora_actual.tool_call_schema.model_json_schema()["properties"] == {}

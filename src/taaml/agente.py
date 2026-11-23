@@ -47,6 +47,7 @@ from taaml.consulta_datos import consultar
 from taaml.herramientas_servicio import (
     canales_de_emergencia,
     ciudades_con_atencion,
+    fecha_y_hora_actual,
     sedes_cercanas,
     verificar_canal_oficial,
 )
@@ -376,6 +377,7 @@ HERRAMIENTAS = [
     ciudades_con_atencion,
     verificar_canal_oficial,
     canales_de_emergencia,
+    fecha_y_hora_actual,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
