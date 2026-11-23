@@ -200,3 +200,25 @@ def test_el_webhook_registra_el_id_corto_y_si_el_mensaje_es_repetido(caplog):
     assert len(lineas) == 2 and "repetido: no" in lineas[0] and "repetido: sí" in lineas[1]
     assert all("NTczMDAxMjM0NTY3"[-8:] in l for l in lineas)
     assert not any("573001234567" in l or "hola" in l for l in lineas)  # ni el teléfono ni el texto van al registro
+
+
+# --- allowlist E.164 ---
+
+
+def test_sin_lista_el_canal_queda_abierto(monkeypatch):
+    from taaml.whatsapp import autorizado, numeros_autorizados
+
+    monkeypatch.delenv("WHATSAPP_ALLOWLIST", raising=False)
+    assert numeros_autorizados() == set() and autorizado("573001112233")
+
+
+def test_con_lista_solo_pasan_los_autorizados(monkeypatch):
+    from taaml.whatsapp import autorizado, numeros_autorizados
+
+    monkeypatch.setenv("WHATSAPP_ALLOWLIST", "+57 300 111 2233, +573104445566;573007778899")
+    esperados = {"573001112233", "573104445566", "573007778899"}
+    assert numeros_autorizados() == esperados
+    assert autorizado("573001112233")  # Meta manda el número sin «+»
+    assert autorizado("+57 300 111 2233")
+    assert not autorizado("573009999999")
+    assert not autorizado("")
