@@ -757,7 +757,6 @@ def reportar_dano_electrico(
 
 HERRAMIENTAS = [
     buscar_en_base,
-    consultar_datos,
     consultar_sedes,
     consultar_contactos,
     consultar_catalogo,
@@ -1052,7 +1051,7 @@ def crear_agente(
     return create_agent(
         model=llm,
         tools=[t for t in HERRAMIENTAS if not (en_cadena and t is buscar_en_base)],
-        system_prompt=leer_prompt("v12_agente.md"),
+        system_prompt=leer_prompt("v13_agente.md"),
         checkpointer=checkpointer,
         store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
         context_schema=Contexto,

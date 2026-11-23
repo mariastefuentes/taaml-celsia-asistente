@@ -89,7 +89,6 @@ def test_el_agente_tiene_las_herramientas():
 
     assert [h.name for h in HERRAMIENTAS] == [
         "buscar_en_base",
-        "consultar_datos",
         "consultar_sedes",
         "consultar_contactos",
         "consultar_catalogo",
@@ -741,7 +740,7 @@ def test_el_tope_de_herramientas_por_turno_corta_a_un_modelo_que_insiste(monkeyp
         lambda tabla, filtros: ejecutadas.append(tabla) or "Sin resultados en los datos estructurados.",
     )
     insiste = [
-        _llamada("consultar_datos", {"tabla": "sedes", "ciudad": f"Ciudad{n}"}, f"t{n}")
+        _llamada("consultar_sedes", {"ciudad": f"Ciudad{n}"}, f"t{n}")
         for n in range(MAX_LLAMADAS_POR_TURNO + 3)
     ]
     agente = crear_agente(
@@ -1186,7 +1185,7 @@ def test_el_modelo_recibe_las_herramientas_con_su_esquema_json():
     assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == len(HERRAMIENTAS)
     for e in esquemas.values():
         assert e["description"] and e["parameters"]["type"] == "object"
-    assert esquemas["consultar_datos"]["parameters"]["properties"]["tabla"]["enum"] == ["sedes", "contactos", "catalogo"]
+    assert set(esquemas["consultar_sedes"]["parameters"]["properties"]) == {"ciudad", "departamento", "tipo"}
     assert esquemas["radicar_reclamo"]["parameters"]["properties"]["tipo"]["enum"] == [
         "falla_de_servicio",
         "facturacion",
@@ -1253,7 +1252,7 @@ def test_el_modo_de_rag_se_elige_con_una_variable_y_por_defecto_es_agentico(monk
 def test_en_modo_cadena_el_agente_no_tiene_buscar_en_base_y_en_el_agentico_si():
     cadena = crear_agente(llm=ModeloSinTrozos(messages=iter([AIMessage(content="ok")])), rag="cadena")
     agentico = crear_agente(llm=ModeloSinTrozos(messages=iter([AIMessage(content="ok")])), rag="agente")
-    assert "buscar_en_base" not in _nombres_de_herramientas(cadena) and "consultar_datos" in _nombres_de_herramientas(cadena)
+    assert "buscar_en_base" not in _nombres_de_herramientas(cadena) and "consultar_sedes" in _nombres_de_herramientas(cadena)
     assert "buscar_en_base" in _nombres_de_herramientas(agentico)
 
 
