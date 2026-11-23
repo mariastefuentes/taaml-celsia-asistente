@@ -93,6 +93,7 @@ def test_el_agente_tiene_las_herramientas():
         "guardar_dato_del_cliente",
         "recordar_datos_del_cliente",
         "radicar_reclamo",
+        "sedes_cercanas",
     ]
 
 
@@ -608,7 +609,7 @@ def test_el_prompt_de_sistema_se_arma_en_cada_turno_con_la_fecha_de_hoy():
     modelo = ModeloQueLeeElPrompt(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[], sistemas=[])
     conversar("hola", "hilo-fecha", agente=crear_agente(llm=modelo))
     assert f"Fecha de hoy: {date.today().isoformat()}" in modelo.sistemas[0]
-    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v12_agente.md
+    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v13_agente.md
 
 
 def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
@@ -993,7 +994,7 @@ def test_el_modelo_recibe_las_herramientas_con_su_esquema_json():
     from taaml.agente import HERRAMIENTAS
 
     esquemas = {f["function"]["name"]: f["function"] for f in map(convert_to_openai_tool, HERRAMIENTAS)}
-    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == 5
+    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == len(HERRAMIENTAS) == 6
     for e in esquemas.values():
         assert e["description"] and e["parameters"]["type"] == "object"
     assert esquemas["consultar_datos"]["parameters"]["properties"]["tabla"]["enum"] == ["sedes", "contactos", "catalogo"]

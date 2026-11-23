@@ -34,7 +34,7 @@ from langchain_core.messages.utils import count_tokens_approximately, trim_messa
 from langchain_core.tools import tool
 from langgraph.errors import GraphBubbleUp
 from langgraph.prebuilt.tool_node import ToolInvocationError
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import ConfigDict, Field, ValidationError
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.store.base import BaseStore
@@ -42,7 +42,9 @@ from langgraph.store.memory import InMemoryStore
 from langgraph.store.sqlite import SqliteStore
 from langgraph.types import Command
 
+from taaml.base_herramientas import EsquemaEstricto
 from taaml.consulta_datos import consultar
+from taaml.herramientas_servicio import sedes_cercanas
 from taaml.flujo_reclamo import radicar_simulado
 from taaml.prompts import leer_prompt
 from taaml.recuperacion import buscar, formatear_contexto
@@ -175,12 +177,6 @@ Categoria = Literal[
     "otros",
 ]
 Region = Literal["General", "Valle y Tolima", "Valle del Cauca", "Tolima", "Internacional"]
-
-
-class EsquemaEstricto(BaseModel):
-    """Base de los esquemas de entrada de las herramientas: rechaza argumentos que no existen y recorta espacios sobrantes."""
-
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
 class BusquedaEnBase(EsquemaEstricto):
@@ -365,7 +361,14 @@ def radicar_reclamo(
     return f"Reclamo radicado con el número {numero}."
 
 
-HERRAMIENTAS = [buscar_en_base, consultar_datos, guardar_dato_del_cliente, recordar_datos_del_cliente, radicar_reclamo]
+HERRAMIENTAS = [
+    buscar_en_base,
+    consultar_datos,
+    guardar_dato_del_cliente,
+    recordar_datos_del_cliente,
+    radicar_reclamo,
+    sedes_cercanas,
+]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
 APROBACION_HUMANA = {
@@ -479,7 +482,7 @@ def limitar_historial(request: Any, handler: Any) -> Any:
 
 @dynamic_prompt
 def con_fecha_de_hoy(request: Any) -> str:
-    """El prompt de sistema se arma en cada turno: al texto fijo de `v12_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
+    """El prompt de sistema se arma en cada turno: al texto fijo de `v13_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
     base = request.system_message.text if request.system_message else ""
     return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
 
@@ -632,7 +635,7 @@ def crear_agente(
     return create_agent(
         model=llm,
         tools=[t for t in HERRAMIENTAS if not (en_cadena and t is buscar_en_base)],
-        system_prompt=leer_prompt("v12_agente.md"),
+        system_prompt=leer_prompt("v13_agente.md"),
         checkpointer=checkpointer,
         store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
         context_schema=Contexto,
