@@ -42,8 +42,9 @@ from langgraph.store.memory import InMemoryStore
 from langgraph.store.sqlite import SqliteStore
 from langgraph.types import Command
 
-from taaml.consulta_datos import consultar
+from taaml.consulta_datos import consultar, sedes
 from taaml.flujo_reclamo import radicar_simulado
+from taaml.informacion_manual import politica_de_datos, tramites_en_linea
 from taaml.prompts import leer_prompt
 from taaml.recuperacion import buscar, formatear_contexto
 from taaml.sanitizar import quitar_invisibles
@@ -329,6 +330,124 @@ def consultar_catalogo(texto: str = "", seccion: str = "", categoria: str = "") 
     return delimitar_como_datos(consultar("catalogo", filtros))
 
 
+# Consultas de dominio sobre las mismas tablas: esquemas de un solo campo, para que el modelo no tenga que elegir la tabla.
+
+
+class ConsultaPuntosDePago(EsquemaEstricto):
+    """Esquema de entrada de `consultar_puntos_de_pago`."""
+
+    ciudad: str = Field(
+        default="",
+        max_length=80,
+        description="Ciudad del punto de pago. Para varias, sepáralas con comas («Cali, Palmira»).",
+    )
+
+
+@tool(args_schema=ConsultaPuntosDePago)
+def consultar_puntos_de_pago(ciudad: str = "") -> str:
+    """Consulta los puntos de recaudo y pago de Celsia (dirección, teléfono y horario) donde el cliente puede pagar la factura.
+    Úsala para «dónde puedo pagar» o «puntos de pago en…». Termina con «Total: N»: cita ese total."""
+    return delimitar_como_datos(consultar("sedes", {"ciudad": ciudad, "tipo": "Punto de Recaudo y Pago"}))
+
+
+class ConsultaTiendas(EsquemaEstricto):
+    """Esquema de entrada de `consultar_tiendas`."""
+
+    ciudad: str = Field(default="", max_length=80, description="Ciudad de la tienda. Admite varias separadas por comas.")
+
+
+@tool(args_schema=ConsultaTiendas)
+def consultar_tiendas(ciudad: str = "") -> str:
+    """Consulta las tiendas Celsia (dirección, teléfono y horario) para atención presencial de servicios y productos.
+    Úsala para «qué tiendas hay en…» o «cuántas tiendas hay». Termina con «Total: N»: cita ese total."""
+    return delimitar_como_datos(consultar("sedes", {"ciudad": ciudad, "tipo": "Tiendas Celsia"}))
+
+
+class ConsultaCanales(EsquemaEstricto):
+    """Esquema de entrada de `consultar_canales_de_atencion`."""
+
+    necesidad: str = Field(
+        default="",
+        max_length=120,
+        description="Para qué necesita el canal, con una palabra del tema: «pagos», «facturación», «emergencia», «transparencia», «internet».",
+    )
+    tipo: str = Field(default="", max_length=80, description="Clase de contacto: telefono, whatsapp, correo o enlace.")
+
+
+@tool(args_schema=ConsultaCanales)
+def consultar_canales_de_atencion(necesidad: str = "", tipo: str = "") -> str:
+    """Consulta el canal oficial (teléfono, WhatsApp, correo o enlace) que sirve para una necesidad concreta del cliente.
+    Úsala para «¿a dónde llamo para…?» o «¿cuál es el correo de…?». Nunca inventes un canal que no devuelva esta herramienta."""
+    return delimitar_como_datos(consultar("contactos", {"tema": necesidad, "tipo": tipo}))
+
+
+class ConsultaCobertura(EsquemaEstricto):
+    """Esquema de entrada de `consultar_cobertura`."""
+
+    ciudad: str = Field(min_length=1, max_length=80, description="Ciudad que el cliente pregunta, por ejemplo «Pasto».")
+
+
+@tool(args_schema=ConsultaCobertura)
+def consultar_cobertura(ciudad: str) -> str:
+    """Dice si Celsia tiene atención presencial en una ciudad (sedes, tiendas o puntos de pago) y cuántos de cada tipo.
+    Úsala para «¿atienden en…?» o «¿hay alguna oficina en…?». No responde por la cobertura del servicio de energía: para eso, busca en el texto oficial."""
+    filas = sedes(ciudad=ciudad)
+    if not filas:
+        return f"No hay puntos de atención presencial registrados en {quitar_invisibles(ciudad).strip()}. No respondas por la cobertura del servicio: búscala en el texto oficial o remite a la línea 01 8000 112 115."
+    por_tipo: dict[str, int] = {}
+    for fila in filas:
+        por_tipo[fila["HQ_TYPE"]] = por_tipo.get(fila["HQ_TYPE"], 0) + 1
+    detalle = ", ".join(f"{cantidad} de {tipo.lower()}" for tipo, cantidad in sorted(por_tipo.items()))
+    return f"Sí hay atención presencial en {quitar_invisibles(ciudad).strip()}: {detalle} (Total: {len(filas)} puntos)."
+
+
+class ConsultaTramiteEnLinea(EsquemaEstricto):
+    """Esquema de entrada de `consultar_tramite_en_linea`."""
+
+    tramite: str = Field(
+        default="",
+        max_length=120,
+        description="Qué quiere hacer el cliente: «pagar la factura», «reportar un daño», «factura digital», «PQR»…",
+    )
+    tipo: str = Field(
+        default="",
+        max_length=40,
+        description="Clase de trámite: pago, reporte, facturacion, reclamo, autogestion o sedes. Vacío para todos.",
+    )
+
+
+@tool(args_schema=ConsultaTramiteEnLinea)
+def consultar_tramite_en_linea(tramite: str = "", tipo: str = "") -> str:
+    """Devuelve el enlace oficial de celsia.com para hacer un trámite o pago en línea (pagar la factura, reportar un daño,
+    registrar la factura digital, presentar una PQR, entrar a la Zona Clientes o ver las sedes).
+    Úsala cuando el cliente pida «el enlace», «la página» o «dónde hago» ese trámite. El enlace se da tal cual, sin inventarlo."""
+    filas = tramites_en_linea(tramite, tipo)
+    if not filas:
+        return "No tengo esa información: no hay un enlace oficial registrado para ese trámite. Remite a la línea 01 8000 112 115."
+    lineas = [f"- {f['tramite']}: {f['enlace']}. {f['que_resuelve']}." for f in filas]
+    return delimitar_como_datos("\n".join(lineas))
+
+
+class ConsultaPoliticaDeDatos(EsquemaEstricto):
+    """Esquema de entrada de `consultar_politica_de_datos`."""
+
+    tema: str = Field(
+        default="",
+        max_length=120,
+        description="Tema de la política: «datos», «derechos», «borrar», «comparten», «tiempo»… Vacío para la política completa.",
+    )
+
+
+@tool(args_schema=ConsultaPoliticaDeDatos)
+def consultar_politica_de_datos(tema: str = "") -> str:
+    """Devuelve lo que dice la política de privacidad del asistente sobre cómo se tratan los datos del cliente y cómo pedir
+    que se corrijan o se borren. Úsala cuando pregunte «¿qué hacen con mis datos?», «¿quién los ve?» o «¿cómo los borro?»."""
+    parrafos = politica_de_datos(tema)
+    if not parrafos:
+        return "No tengo ese tema en la política de datos. Devuelve la política completa y deja que el cliente elija."
+    return delimitar_como_datos("\n\n".join(parrafos))
+
+
 ANONIMO = "anonimo"  # sin identificador de cliente no hay memoria de largo plazo: si no, todos los anónimos compartirían lo guardado
 
 
@@ -442,6 +561,12 @@ HERRAMIENTAS = [
     consultar_sedes,
     consultar_contactos,
     consultar_catalogo,
+    consultar_puntos_de_pago,
+    consultar_tiendas,
+    consultar_canales_de_atencion,
+    consultar_cobertura,
+    consultar_tramite_en_linea,
+    consultar_politica_de_datos,
     guardar_dato_del_cliente,
     recordar_datos_del_cliente,
     radicar_reclamo,
@@ -1005,6 +1130,18 @@ def etiqueta_herramientas(llamadas: list[dict]) -> str:
             partes.append("consultó los canales de atención")
         elif ll["herramienta"] == "consultar_catalogo":
             partes.append("buscó la página del sitio")
+        elif ll["herramienta"] == "consultar_puntos_de_pago":
+            partes.append("consultó los puntos de pago")
+        elif ll["herramienta"] == "consultar_tiendas":
+            partes.append("consultó las tiendas")
+        elif ll["herramienta"] == "consultar_canales_de_atencion":
+            partes.append("buscó el canal de atención")
+        elif ll["herramienta"] == "consultar_cobertura":
+            partes.append("verificó la atención en la ciudad")
+        elif ll["herramienta"] == "consultar_tramite_en_linea":
+            partes.append("buscó el trámite en línea")
+        elif ll["herramienta"] == "consultar_politica_de_datos":
+            partes.append("consultó la política de datos")
         else:
             filtros = ", ".join(f"{k}: {v}" for k, v in ll["args"].items() if k != "tabla" and v)
             partes.append(f"consultó la tabla {ll['args'].get('tabla', '?')}" + (f" ({filtros})" if filtros else ""))

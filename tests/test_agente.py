@@ -93,6 +93,12 @@ def test_el_agente_tiene_las_herramientas():
         "consultar_sedes",
         "consultar_contactos",
         "consultar_catalogo",
+        "consultar_puntos_de_pago",
+        "consultar_tiendas",
+        "consultar_canales_de_atencion",
+        "consultar_cobertura",
+        "consultar_tramite_en_linea",
+        "consultar_politica_de_datos",
         "guardar_dato_del_cliente",
         "recordar_datos_del_cliente",
         "radicar_reclamo",
@@ -125,6 +131,49 @@ def test_las_herramientas_por_tabla_solo_piden_lo_suyo():
     assert set(ConsultaSedes.model_fields) == {"ciudad", "departamento", "tipo"}
     assert set(ConsultaContactos.model_fields) == {"tipo", "tema"}
     assert set(ConsultaCatalogo.model_fields) == {"texto", "seccion", "categoria"}
+
+
+def test_los_puntos_de_pago_salen_de_la_tabla_de_sedes():
+    from taaml.agente import consultar_puntos_de_pago
+
+    salida = consultar_puntos_de_pago.invoke({})
+    assert "Punto de Recaudo y Pago" in salida and "Total:" in salida
+
+
+def test_las_tiendas_salen_de_la_tabla_de_sedes():
+    from taaml.agente import consultar_tiendas
+
+    salida = consultar_tiendas.invoke({"ciudad": "Ibagué"})
+    assert "Tiendas Celsia" in salida and "Total:" in salida
+
+
+def test_los_canales_devuelven_contactos_con_su_para_que():
+    from taaml.agente import consultar_canales_de_atencion
+
+    salida = consultar_canales_de_atencion.invoke({"tipo": "whatsapp"})
+    assert "whatsapp" in salida.lower() and "Total:" in salida
+
+
+def test_la_cobertura_cuenta_por_tipo_y_no_inventa_ciudades():
+    from taaml.agente import consultar_cobertura
+
+    salida = consultar_cobertura.invoke({"ciudad": "Ibagué"})
+    assert "Sí hay atención presencial" in salida and "Total:" in salida
+    assert "No hay puntos de atención" in consultar_cobertura.invoke({"ciudad": "Ciudad inexistente"})
+
+
+def test_el_tramite_en_linea_da_el_enlace_oficial():
+    from taaml.agente import consultar_tramite_en_linea
+
+    salida = consultar_tramite_en_linea.invoke({"tramite": "pagar la factura"})
+    assert "https://clientes.celsia.com" in salida
+
+
+def test_la_politica_de_datos_responde_por_tema():
+    from taaml.agente import consultar_politica_de_datos
+
+    salida = consultar_politica_de_datos.invoke({"tema": "derechos"})
+    assert "borrar" in salida.lower() or "corregir" in salida.lower()
 
 
 # --- memoria conversacional (modelo simulado: no llama a Gemini ni a Ollama) ---
