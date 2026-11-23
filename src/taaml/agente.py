@@ -49,6 +49,7 @@ from taaml.herramientas_servicio import (
     canales_de_emergencia,
     ciudades_con_atencion,
     consumo_de_un_aparato,
+    estimar_ahorro_solar,
     fecha_y_hora_actual,
     sedes_cercanas,
     verificar_canal_oficial,
@@ -382,6 +383,7 @@ HERRAMIENTAS = [
     fecha_y_hora_actual,
     calcular_factura_estimada,
     consumo_de_un_aparato,
+    estimar_ahorro_solar,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.

@@ -303,3 +303,34 @@ def consumo_de_un_aparato(
     y las horas de uso al día. Úsala cuando el cliente pregunte cuánto gasta un aparato. La potencia la da el cliente (viene en la
     etiqueta del aparato): si no la sabe, pídesela y no supongas una; la tarifa, si no la dio, no la inventes."""
     return consumo_aparato(potencia_vatios, horas_por_dia, dias, tarifa_cop_kwh)
+
+
+def ahorro_solar(consumo_kwh_mes: float, tarifa_cop_kwh: float, porcentaje_cubierto: float) -> str:
+    """Ahorro de energía solar bajo un supuesto: qué parte del consumo mensual (en %) cubriría el sistema, al precio actual del kWh."""
+    kwh_solar = consumo_kwh_mes * porcentaje_cubierto / 100
+    mensual = kwh_solar * tarifa_cop_kwh
+    return (
+        f"Si la energía solar cubriera el {porcentaje_cubierto:g} % de {consumo_kwh_mes:g} kWh al mes, serían {kwh_solar:.1f} kWh menos "
+        f"comprados a {pesos(tarifa_cop_kwh)} por kWh: ahorro de {pesos(mensual)} al mes, {pesos(mensual * 12)} al año. "
+        "Es un escenario con el porcentaje indicado, no una promesa: no incluye el costo de instalación ni el mantenimiento, "
+        "y la cobertura real depende del sistema y del lugar. Para una cotización real, un asesor de Celsia debe visitar el sitio."
+    )
+
+
+class AhorroSolar(EsquemaEstricto):
+    """Esquema de entrada de `estimar_ahorro_solar`."""
+
+    consumo_kwh_mes: float = Field(gt=0, le=1_000_000, description="Consumo mensual de energía en kWh, según el cliente.")
+    tarifa_cop_kwh: float = Field(gt=0, le=10_000, description="Precio del kWh en pesos. Del cliente o de la base; nunca inventado.")
+    porcentaje_cubierto: float = Field(
+        gt=0, le=100, description="Qué parte del consumo (en %) cubriría la energía solar. La dice el cliente; si no, un escenario que se presenta como hipotético."
+    )
+
+
+@tool(args_schema=AhorroSolar)
+def estimar_ahorro_solar(consumo_kwh_mes: float, tarifa_cop_kwh: float, porcentaje_cubierto: float) -> str:
+    """Estima cuánto ahorraría un cliente al mes y al año si la energía solar cubriera una parte de su consumo. Úsala cuando el
+    cliente pregunte cuánto ahorraría con paneles solares. Necesita el consumo mensual y la tarifa por kWh (si faltan, pídelos o
+    busca la tarifa con `buscar_en_base`; nunca los inventes). El porcentaje que cubriría lo dice el cliente; si no lo sabe, usa un
+    escenario (por ejemplo 50 %) y di claramente que es hipotético. No incluye el costo de instalación ni promete resultados."""
+    return ahorro_solar(consumo_kwh_mes, tarifa_cop_kwh, porcentaje_cubierto)

@@ -100,6 +100,7 @@ def test_el_agente_tiene_las_herramientas():
         "fecha_y_hora_actual",
         "calcular_factura_estimada",
         "consumo_de_un_aparato",
+        "estimar_ahorro_solar",
     ]
 
 
@@ -1000,7 +1001,7 @@ def test_el_modelo_recibe_las_herramientas_con_su_esquema_json():
     from taaml.agente import HERRAMIENTAS
 
     esquemas = {f["function"]["name"]: f["function"] for f in map(convert_to_openai_tool, HERRAMIENTAS)}
-    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == len(HERRAMIENTAS) == 12
+    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == len(HERRAMIENTAS) == 13
     for e in esquemas.values():
         assert e["description"] and e["parameters"]["type"] == "object"
     assert esquemas["consultar_datos"]["parameters"]["properties"]["tabla"]["enum"] == ["sedes", "contactos", "catalogo"]

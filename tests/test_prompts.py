@@ -185,3 +185,8 @@ def test_v13_calcula_la_factura_con_la_herramienta_y_no_inventa_la_tarifa():
 def test_v13_calcula_el_consumo_de_un_aparato_sin_suponer_la_potencia():
     texto = leer_prompt("v13_agente.md")
     assert "`consumo_de_un_aparato`" in texto and "nunca supongas una potencia típica" in texto
+
+
+def test_v13_estima_el_ahorro_solar_con_escenario_hipotetico_y_deja_la_oferta_a_la_busqueda():
+    texto = leer_prompt("v13_agente.md")
+    assert "`estimar_ahorro_solar`" in texto and "di que es hipotético" in texto and "precios de instalación usa `buscar_en_base`" in texto

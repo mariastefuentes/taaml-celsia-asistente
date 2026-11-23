@@ -251,3 +251,31 @@ def test_la_herramienta_del_aparato():
     with pytest.raises(ValidationError):
         consumo_de_un_aparato.invoke({"potencia_vatios": "mucha", "horas_por_dia": 1})
     assert set(consumo_de_un_aparato.tool_call_schema.model_json_schema()["properties"]) == {"potencia_vatios", "horas_por_dia", "dias", "tarifa_cop_kwh"}
+
+
+from taaml.herramientas_servicio import AhorroSolar, ahorro_solar, estimar_ahorro_solar  # noqa: E402
+
+
+def test_ahorro_solar_mensual_y_anual():
+    r = ahorro_solar(300, 900, 50)  # 150 kWh × 900 = 135.000 al mes, 1.620.000 al año
+    assert "150.0 kWh" in r and "$135.000 al mes" in r and "$1.620.000 al año" in r
+
+
+def test_ahorro_solar_aclara_que_es_un_escenario_sin_costo_de_instalacion():
+    r = ahorro_solar(200, 800, 100)
+    assert "no una promesa" in r and "costo de instalación" in r and "asesor de Celsia" in r
+
+
+def test_esquema_solar_rechaza_porcentajes_imposibles_y_extras():
+    for malo in ({"consumo_kwh_mes": 300, "tarifa_cop_kwh": 900, "porcentaje_cubierto": 0}, {"consumo_kwh_mes": 300, "tarifa_cop_kwh": 900, "porcentaje_cubierto": 101},
+                 {"consumo_kwh_mes": 0, "tarifa_cop_kwh": 900, "porcentaje_cubierto": 50}, {"consumo_kwh_mes": 300, "tarifa_cop_kwh": -1, "porcentaje_cubierto": 50},
+                 {"consumo_kwh_mes": 300, "tarifa_cop_kwh": 900, "porcentaje_cubierto": 50, "paneles": 4}, {"consumo_kwh_mes": 300, "tarifa_cop_kwh": 900}):
+        with pytest.raises(ValidationError):
+            AhorroSolar(**malo)
+
+
+def test_la_herramienta_solar():
+    assert "$135.000 al mes" in estimar_ahorro_solar.invoke({"consumo_kwh_mes": 300, "tarifa_cop_kwh": 900, "porcentaje_cubierto": 50})
+    with pytest.raises(ValidationError):
+        estimar_ahorro_solar.invoke({"consumo_kwh_mes": 300, "tarifa_cop_kwh": 900})
+    assert set(estimar_ahorro_solar.tool_call_schema.model_json_schema()["properties"]) == {"consumo_kwh_mes", "tarifa_cop_kwh", "porcentaje_cubierto"}
