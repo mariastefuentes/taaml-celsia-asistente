@@ -90,10 +90,41 @@ def test_el_agente_tiene_las_herramientas():
     assert [h.name for h in HERRAMIENTAS] == [
         "buscar_en_base",
         "consultar_datos",
+        "consultar_sedes",
+        "consultar_contactos",
+        "consultar_catalogo",
         "guardar_dato_del_cliente",
         "recordar_datos_del_cliente",
         "radicar_reclamo",
     ]
+
+
+def test_consultar_contactos_devuelve_canales_reales():
+    from taaml.agente import consultar_contactos
+
+    salida = consultar_contactos.invoke({"tipo": "whatsapp"})
+    assert "310" in salida and "Total:" in salida
+
+
+def test_consultar_sedes_sin_coincidencias_lo_dice():
+    from taaml.agente import consultar_sedes
+
+    assert "Sin resultados" in consultar_sedes.invoke({"ciudad": "Ciudad inexistente"})
+
+
+def test_consultar_catalogo_encuentra_paginas_por_titulo():
+    from taaml.agente import consultar_catalogo
+
+    salida = consultar_catalogo.invoke({"texto": "Celsia"})
+    assert "https://www.celsia.com" in salida
+
+
+def test_las_herramientas_por_tabla_solo_piden_lo_suyo():
+    from taaml.agente import ConsultaCatalogo, ConsultaContactos, ConsultaSedes
+
+    assert set(ConsultaSedes.model_fields) == {"ciudad", "departamento", "tipo"}
+    assert set(ConsultaContactos.model_fields) == {"tipo", "tema"}
+    assert set(ConsultaCatalogo.model_fields) == {"texto", "seccion", "categoria"}
 
 
 # --- memoria conversacional (modelo simulado: no llama a Gemini ni a Ollama) ---
@@ -993,7 +1024,7 @@ def test_el_modelo_recibe_las_herramientas_con_su_esquema_json():
     from taaml.agente import HERRAMIENTAS
 
     esquemas = {f["function"]["name"]: f["function"] for f in map(convert_to_openai_tool, HERRAMIENTAS)}
-    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == 5
+    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == len(HERRAMIENTAS)
     for e in esquemas.values():
         assert e["description"] and e["parameters"]["type"] == "object"
     assert esquemas["consultar_datos"]["parameters"]["properties"]["tabla"]["enum"] == ["sedes", "contactos", "catalogo"]

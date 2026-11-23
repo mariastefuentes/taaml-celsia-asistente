@@ -258,6 +258,77 @@ def consultar_datos(
     return delimitar_como_datos(consultar(tabla, filtros))
 
 
+# Herramientas por tabla: cada una tiene un esquema más corto que `consultar_datos`, así el modelo ve solo los campos que le sirven
+# y elige con menos ruido. Devuelven el mismo texto y el mismo «Total: N» que la consulta general.
+
+
+class ConsultaSedes(EsquemaEstricto):
+    """Esquema de entrada de `consultar_sedes`."""
+
+    ciudad: str = Field(
+        default="",
+        max_length=80,
+        description="Ciudad de la sede, por ejemplo «Cali». Para varias, sepáralas con comas («Ibagué, Cali»): el total las cuenta juntas.",
+    )
+    departamento: str = Field(
+        default="",
+        max_length=80,
+        description="Departamento (Tolima, Valle del Cauca…). Admite varios separados por comas.",
+    )
+    tipo: str = Field(
+        default="",
+        max_length=80,
+        description="Tipo de sede: tienda, punto de pago, oficina… Vacío para todos los tipos.",
+    )
+
+
+@tool(args_schema=ConsultaSedes)
+def consultar_sedes(ciudad: str = "", departamento: str = "", tipo: str = "") -> str:
+    """Consulta sedes, tiendas y puntos de atención de Celsia con su dirección, teléfono y horario. Úsala para «dónde queda»,
+    «cuál es el horario de» o «cuántas sedes hay». La última línea trae «Total: N», que calcula el sistema: cita ese total y no cuentes filas."""
+    filtros = {"ciudad": ciudad, "departamento": departamento, "tipo": tipo}
+    return delimitar_como_datos(consultar("sedes", filtros))
+
+
+class ConsultaContactos(EsquemaEstricto):
+    """Esquema de entrada de `consultar_contactos`."""
+
+    tipo: str = Field(
+        default="",
+        max_length=80,
+        description="Clase de contacto: telefono, whatsapp, correo o enlace. Vacío para todos.",
+    )
+    tema: str = Field(
+        default="",
+        max_length=120,
+        description="Para qué sirve el contacto, por ejemplo «pagos», «emergencias» o «facturación».",
+    )
+
+
+@tool(args_schema=ConsultaContactos)
+def consultar_contactos(tipo: str = "", tema: str = "") -> str:
+    """Consulta los teléfonos, WhatsApp, correos y enlaces oficiales de atención de Celsia, con la descripción de para qué sirve cada uno.
+    Úsala para «cuál es el teléfono/WhatsApp/correo de…» o para dar un canal cuando no puedes resolver algo. Nunca inventes un número."""
+    filtros = {"tipo": tipo, "tema": tema}
+    return delimitar_como_datos(consultar("contactos", filtros))
+
+
+class ConsultaCatalogo(EsquemaEstricto):
+    """Esquema de entrada de `consultar_catalogo`."""
+
+    texto: str = Field(default="", max_length=120, description="Palabras del título de la página del sitio.")
+    seccion: str = Field(default="", max_length=80, description="Sección del sitio (por ejemplo, «inversionistas»).")
+    categoria: str = Field(default="", max_length=80, description="Categoría del documento dentro del corpus.")
+
+
+@tool(args_schema=ConsultaCatalogo)
+def consultar_catalogo(texto: str = "", seccion: str = "", categoria: str = "") -> str:
+    """Ubica páginas del sitio de Celsia por el título, la sección o la categoría, y devuelve su enlace oficial.
+    Úsala cuando el cliente pida «el enlace de», «la página de» o quiera saber si existe un documento sobre un tema."""
+    filtros = {"texto": texto, "seccion": seccion, "categoria": categoria}
+    return delimitar_como_datos(consultar("catalogo", filtros))
+
+
 ANONIMO = "anonimo"  # sin identificador de cliente no hay memoria de largo plazo: si no, todos los anónimos compartirían lo guardado
 
 
@@ -365,7 +436,16 @@ def radicar_reclamo(
     return f"Reclamo radicado con el número {numero}."
 
 
-HERRAMIENTAS = [buscar_en_base, consultar_datos, guardar_dato_del_cliente, recordar_datos_del_cliente, radicar_reclamo]
+HERRAMIENTAS = [
+    buscar_en_base,
+    consultar_datos,
+    consultar_sedes,
+    consultar_contactos,
+    consultar_catalogo,
+    guardar_dato_del_cliente,
+    recordar_datos_del_cliente,
+    radicar_reclamo,
+]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
 APROBACION_HUMANA = {
@@ -919,6 +999,12 @@ def etiqueta_herramientas(llamadas: list[dict]) -> str:
             partes.append("recordó lo que sabe del cliente")
         elif ll["herramienta"] == "radicar_reclamo":
             partes.append("preparó un reclamo para aprobación")
+        elif ll["herramienta"] == "consultar_sedes":
+            partes.append("consultó las sedes")
+        elif ll["herramienta"] == "consultar_contactos":
+            partes.append("consultó los canales de atención")
+        elif ll["herramienta"] == "consultar_catalogo":
+            partes.append("buscó la página del sitio")
         else:
             filtros = ", ".join(f"{k}: {v}" for k, v in ll["args"].items() if k != "tabla" and v)
             partes.append(f"consultó la tabla {ll['args'].get('tabla', '?')}" + (f" ({filtros})" if filtros else ""))
