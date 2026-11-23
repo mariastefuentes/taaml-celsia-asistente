@@ -203,6 +203,8 @@ Los datos que el sitio muestra solo como enlaces (WhatsApp, PQR, pagos) están e
 
 </details>
 
+El guion de la sustentaci?n final del 28 de noviembre (7 minutos de pitch, 8 de discusi?n t?cnica y la versi?n en ingl?s) est? en [`docs/guion_sustentacion_final.md`](docs/guion_sustentacion_final.md).
+
 ## OpenClaw
 
 El gateway de OpenClaw, su workspace (`SOUL.md`, `AGENTS.md`, `USER.md`, `MEMORY.md` y bit?cora) y su configuraci?n endurecida est?n versionados en [`openclaw/`](openclaw/README.md), y la puesta en marcha completa, con la allowlist E.164 y la auditor?a de seguridad, est? en la [gu?a de despliegue](docs/guia_despliegue_openclaw.md). Se instala con `make openclaw-check` y `make openclaw-instalar`.
