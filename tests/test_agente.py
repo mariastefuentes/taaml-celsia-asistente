@@ -594,7 +594,7 @@ def test_el_prompt_de_sistema_se_arma_en_cada_turno_con_la_fecha_de_hoy():
     modelo = ModeloQueLeeElPrompt(messages=iter(AIMessage(content="ok") for _ in range(5)), vistos=[], sistemas=[])
     conversar("hola", "hilo-fecha", agente=crear_agente(llm=modelo))
     assert f"Fecha de hoy: {date.today().isoformat()}" in modelo.sistemas[0]
-    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v11_agente.md
+    assert "Celsia" in modelo.sistemas[0]  # y conserva el texto fijo de v12_agente.md
 
 
 def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
@@ -781,7 +781,7 @@ def test_calentar_no_falla_si_ollama_esta_apagado(monkeypatch):
 
 
 # --- aprobación humana (HumanInTheLoopMiddleware): radicar un reclamo espera a una persona ---
-def _agente_con_reclamo(respuesta_final="Listo.", clase=ModeloEspia):
+def _agente_con_reclamo(respuesta_final="Listo.", clase=ModeloEspia, extra=None):
     from langgraph.store.memory import InMemoryStore
 
     llamada = AIMessage(
@@ -789,7 +789,7 @@ def _agente_con_reclamo(respuesta_final="Listo.", clase=ModeloEspia):
         tool_calls=[
             {
                 "name": "radicar_reclamo",
-                "args": {"tipo": "falla_de_servicio", "ciudad": "Ibagué", "descripcion": "Sin luz desde las 8"},
+                "args": {"tipo": "falla_de_servicio", "ciudad": "Ibagué", "descripcion": "Sin luz desde las 8", **(extra or {})},
                 "id": "r1",
             }
         ],
@@ -807,6 +807,20 @@ def test_radicar_un_reclamo_pausa_al_agente_hasta_que_una_persona_decide():
     assert respuesta == MENSAJE_EN_REVISION and [u["herramienta"] for u in usadas] == ["radicar_reclamo"]
     assert pendiente_de_aprobacion("h1", agente=agente)["args"]["ciudad"] == "Ibagué"
     assert almacen.search(("reclamos", "c1")) == []  # nada se radicó todavía
+
+
+def test_la_referencia_dir_o_niu_viaja_al_reclamo_guardado_y_es_opcional():
+    from taaml.agente import pendiente_de_aprobacion, resolver_aprobacion
+
+    agente, _, almacen = _agente_con_reclamo("Radicado.", extra={"referencia": "  Calle 10 # 4-20, NIU 123456  "})
+    conversar("Radica mi reclamo", "h2r", agente=agente, usuario="c2r")
+    assert pendiente_de_aprobacion("h2r", agente=agente)["args"]["referencia"].strip() == "Calle 10 # 4-20, NIU 123456"
+    resolver_aprobacion("h2r", "aprobar", usuario="c2r", agente=agente)
+    assert almacen.search(("reclamos", "c2r"))[0].value["referencia"] == "Calle 10 # 4-20, NIU 123456"
+    sin, _, almacen2 = _agente_con_reclamo("Radicado.")  # sin referencia: se radica igual y el campo no aparece
+    conversar("Radica mi reclamo", "h2s", agente=sin, usuario="c2s")
+    resolver_aprobacion("h2s", "aprobar", usuario="c2s", agente=sin)
+    assert "referencia" not in almacen2.search(("reclamos", "c2s"))[0].value
 
 
 def test_al_aprobar_se_radica_y_al_rechazar_no():
@@ -1092,7 +1106,7 @@ def test_el_json_schema_que_ve_el_modelo_trae_solo_los_argumentos_de_cada_herram
 
     vistos = {t.name: convert_to_openai_tool(t)["function"]["parameters"] for t in HERRAMIENTAS}
     assert set(vistos["guardar_dato_del_cliente"]["properties"]) == {"dato"}
-    assert set(vistos["radicar_reclamo"]["properties"]) == {"tipo", "ciudad", "descripcion"}
+    assert set(vistos["radicar_reclamo"]["properties"]) == {"tipo", "ciudad", "descripcion", "referencia"}  # referencia: dirección o NIU, opcional
     assert vistos["recordar_datos_del_cliente"]["properties"] == {}  # no pide nada al modelo
     assert set(vistos["buscar_en_base"]["properties"]) == {"pregunta", "categoria", "region"}
     assert vistos["radicar_reclamo"]["required"] == ["tipo", "ciudad", "descripcion"]

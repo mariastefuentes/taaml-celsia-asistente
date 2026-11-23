@@ -305,6 +305,11 @@ class Reclamo(EsquemaConRuntime):
     tipo: Literal["falla_de_servicio", "facturacion", "otro"] = Field(description="Clase de reclamo.")
     ciudad: str = Field(min_length=1, max_length=80, description="Ciudad donde ocurre el problema.")
     descripcion: str = Field(min_length=1, max_length=500, description="Qué pasó, con las palabras del cliente.")
+    referencia: str = Field(
+        default="",
+        max_length=120,
+        description="Dirección del servicio o NIU del cliente, para que la persona de Celsia ubique su cuenta; vacío si no lo tiene a mano.",
+    )
 
 
 @tool(args_schema=DatoDelCliente)
@@ -335,17 +340,24 @@ def recordar_datos_del_cliente(runtime: ToolRuntime[Contexto]) -> str:
 
 @tool(args_schema=Reclamo)
 def radicar_reclamo(
-    tipo: Literal["falla_de_servicio", "facturacion", "otro"], ciudad: str, descripcion: str, runtime: ToolRuntime[Contexto]
+    tipo: Literal["falla_de_servicio", "facturacion", "otro"],
+    ciudad: str,
+    descripcion: str,
+    runtime: ToolRuntime[Contexto],
+    referencia: str = "",
 ) -> str:
     """Radica un reclamo del cliente: una falla del servicio (por ejemplo, sin luz), un problema de facturación u otro.
     Úsala solo cuando el cliente pida radicar o poner un reclamo, y después de tener la ciudad y qué pasó (si falta la ciudad,
-    pídesela antes). Una persona de Celsia debe aprobarlo antes de que se radique: el sistema pausa esta herramienta hasta
+    pídesela antes). Pide también la dirección del servicio o el NIU y pásalo en `referencia`; si el cliente no lo tiene a mano,
+    déjalo vacío. Una persona de Celsia debe aprobarlo antes de que se radique: el sistema pausa esta herramienta hasta
     que decida."""
     if runtime.context.usuario == ANONIMO:
         return "No se radicó: no hay un cliente identificado para asociar el reclamo."
     if not ciudad.strip():
         return "No se radicó: falta la ciudad; pídesela al cliente."
     reclamo = {"tipo": tipo, "ciudad": quitar_invisibles(ciudad).strip()[:80], "descripcion": quitar_invisibles(descripcion).strip()[:500]}
+    if referencia.strip():
+        reclamo["referencia"] = quitar_invisibles(referencia).strip()[:120]
     numero = radicar_simulado(reclamo)  # registro de mentira: un sistema real llamaría al de Celsia
     _almacen(runtime).put(("reclamos", runtime.context.usuario), numero, reclamo)
     return f"Reclamo radicado con el número {numero}."
@@ -465,7 +477,7 @@ def limitar_historial(request: Any, handler: Any) -> Any:
 
 @dynamic_prompt
 def con_fecha_de_hoy(request: Any) -> str:
-    """El prompt de sistema se arma en cada turno: al texto fijo de `v11_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
+    """El prompt de sistema se arma en cada turno: al texto fijo de `v12_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
     base = request.system_message.text if request.system_message else ""
     return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
 
@@ -613,7 +625,7 @@ def crear_agente(
     return create_agent(
         model=llm,
         tools=[t for t in HERRAMIENTAS if not (en_cadena and t is buscar_en_base)],
-        system_prompt=leer_prompt("v11_agente.md"),
+        system_prompt=leer_prompt("v12_agente.md"),
         checkpointer=checkpointer,
         store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
         context_schema=Contexto,
