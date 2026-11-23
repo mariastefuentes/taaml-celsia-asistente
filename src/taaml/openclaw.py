@@ -29,7 +29,8 @@ def _resolver(texto: str, entorno: dict[str, str] | None = None) -> str:
 
     def reemplazo(match: re.Match) -> str:
         nombre = match.group(1)
-        return entorno.get(nombre, match.group(0))
+        # el valor va dentro de una cadena JSON: hay que escapar las barras de las rutas de Windows y las comillas
+        return json.dumps(entorno[nombre])[1:-1] if nombre in entorno else match.group(0)
 
     resuelto = re.sub(r"\$\{([A-Z0-9_]+)\}", reemplazo, texto)
     if faltan:
@@ -107,8 +108,9 @@ def instalar(destino: Path, entorno: dict[str, str] | None = None, forzar: bool 
     escritos.append(archivo)
     carpeta = destino / "workspace"
     carpeta.mkdir(parents=True, exist_ok=True)
-    for origen in sorted(WORKSPACE.glob("*.md")):
-        copia = carpeta / origen.name
+    for origen in sorted(WORKSPACE.rglob("*.md")):
+        copia = carpeta / origen.relative_to(WORKSPACE)
+        copia.parent.mkdir(parents=True, exist_ok=True)
         copia.write_text(origen.read_text(encoding="utf-8"), encoding="utf-8")
         escritos.append(copia)
     return escritos
