@@ -101,6 +101,8 @@ def test_el_agente_tiene_las_herramientas():
         "consultar_politica_de_datos",
         "guardar_dato_del_cliente",
         "recordar_datos_del_cliente",
+        "listar_datos_del_cliente",
+        "olvidar_dato_del_cliente",
         "radicar_reclamo",
     ]
 
@@ -549,6 +551,39 @@ def test_un_cliente_anonimo_no_tiene_memoria_de_largo_plazo():
 
 
 from taaml.agente import etiqueta_herramientas  # noqa: E402
+
+
+def test_el_cliente_lista_y_olvida_un_dato_puntual():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import Contexto, listar_datos_del_cliente, olvidar_dato_del_cliente
+
+    almacen = InMemoryStore()
+    almacen.put(("perfil", "ana"), "1", {"dato": "Se llama Ana"})
+    almacen.put(("perfil", "ana"), "2", {"dato": "Vive en Ibagué"})
+    almacen.put(("perfil", "luis"), "3", {"dato": "Vive en Cali"})
+
+    class Corrida:
+        store, context = almacen, Contexto(usuario="ana")
+
+    listado = listar_datos_del_cliente.func(Corrida)
+    assert "Ana" in listado and "Ibagué" in listado and "Cali" not in listado
+    assert "Borrado" in olvidar_dato_del_cliente.func("ibague", Corrida)
+    assert "Ibagué" not in listar_datos_del_cliente.func(Corrida)
+    assert "No encontré" in olvidar_dato_del_cliente.func("no existe", Corrida)
+    assert almacen.search(("perfil", "luis"))  # el dato de otro cliente no se toca
+
+
+def test_las_herramientas_de_privacidad_no_tocan_al_anonimo():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import Contexto, listar_datos_del_cliente, olvidar_dato_del_cliente
+
+    class Corrida:
+        store, context = InMemoryStore(), Contexto()  # anónimo
+
+    assert "anónimo" in listar_datos_del_cliente.func(Corrida)
+    assert "anónimo" in olvidar_dato_del_cliente.func("mi nombre", Corrida)
 
 
 def test_etiqueta_sin_herramientas():

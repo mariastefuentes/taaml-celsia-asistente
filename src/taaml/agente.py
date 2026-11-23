@@ -528,6 +528,55 @@ def recordar_datos_del_cliente(runtime: ToolRuntime[Contexto]) -> str:
     )
 
 
+class DatoAOlvidar(EsquemaConRuntime):
+    """Esquema de entrada de `olvidar_dato_del_cliente`."""
+
+    dato: str = Field(
+        min_length=1,
+        max_length=200,
+        description="Palabras del dato que el cliente quiere borrar, por ejemplo «mi nombre» o «Cali».",
+    )
+
+
+def _sin_tildes(texto: str) -> str:
+    """Minúsculas y sin tildes, para que «Ibagué» y «ibague» coincidan al borrar."""
+    import unicodedata
+
+    sin_tildes = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode()
+    return sin_tildes.lower().strip()
+
+
+@tool(args_schema=SinArgumentos)
+def listar_datos_del_cliente(runtime: ToolRuntime[Contexto]) -> str:
+    """Lista, uno por línea, los datos que el asistente guardó de este cliente para recordarlos en otras conversaciones.
+    Úsala cuando pregunte «¿qué sabes de mí?» o quiera revisar qué datos hay antes de pedir que se borren."""
+    if runtime.context.usuario == ANONIMO:
+        return "No hay datos guardados: este cliente es anónimo y no tiene memoria de largo plazo."
+    items = _almacen(runtime).search(_espacio(runtime), limit=MAX_DATOS_CLIENTE)
+    if not items:
+        return "No hay datos guardados de este cliente."
+    return "\n".join(f"{n}. {quitar_invisibles(i.value['dato'])}" for n, i in enumerate(items, start=1))
+
+
+@tool(args_schema=DatoAOlvidar)
+def olvidar_dato_del_cliente(dato: str, runtime: ToolRuntime[Contexto]) -> str:
+    """Borra de la memoria de largo plazo lo que el cliente pida olvidar (su derecho a la supresión). Úsala solo cuando el
+    cliente lo pida o se arrepienta de haber contado algo; borra el dato que coincida con lo que escriba y confírmalo.
+    No borra la conversación: para eso está /nuevo."""
+    if runtime.context.usuario == ANONIMO:
+        return "No se borró nada: este cliente es anónimo y no tiene memoria de largo plazo."
+    almacen = _almacen(runtime)
+    buscado = _sin_tildes(quitar_invisibles(dato))
+    items = almacen.search(_espacio(runtime), limit=MAX_DATOS_CLIENTE)
+    coinciden = [i for i in items if buscado in _sin_tildes(i.value["dato"])]
+    if not coinciden:
+        return "No encontré ese dato guardado. Revisa con la herramienta de listar lo que hay antes de borrar."
+    for item in coinciden:
+        almacen.delete(_espacio(runtime), item.key)
+    borrados = "; ".join(quitar_invisibles(i.value["dato"]) for i in coinciden)
+    return f"Borrado de lo que recuerdo de ti: {borrados}."
+
+
 @tool(args_schema=Reclamo)
 def radicar_reclamo(
     tipo: Literal["falla_de_servicio", "facturacion", "otro"],
@@ -569,6 +618,8 @@ HERRAMIENTAS = [
     consultar_politica_de_datos,
     guardar_dato_del_cliente,
     recordar_datos_del_cliente,
+    listar_datos_del_cliente,
+    olvidar_dato_del_cliente,
     radicar_reclamo,
 ]
 
@@ -1122,6 +1173,10 @@ def etiqueta_herramientas(llamadas: list[dict]) -> str:
             partes.append("guardó un dato del cliente")
         elif ll["herramienta"] == "recordar_datos_del_cliente":
             partes.append("recordó lo que sabe del cliente")
+        elif ll["herramienta"] == "listar_datos_del_cliente":
+            partes.append("revisó lo que sabe del cliente")
+        elif ll["herramienta"] == "olvidar_dato_del_cliente":
+            partes.append("borró un dato del cliente")
         elif ll["herramienta"] == "radicar_reclamo":
             partes.append("preparó un reclamo para aprobación")
         elif ll["herramienta"] == "consultar_sedes":
