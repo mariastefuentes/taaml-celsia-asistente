@@ -1,0 +1,77 @@
+# Guion de la sustentación final (28 de noviembre de 2026)
+
+Grupo 4 — Celsia. Último bloque del día: **10:45 a 11:00**. Quince minutos sin diapositivas, sin video y sin leer: **7 minutos de pitch**, **8 minutos de discusión técnica** con el público experto. Los invitados escriben desde su teléfono.
+
+> Este guion reemplaza al del 21/11 (`docs/guion_demo_whatsapp.md`). Lo nuevo: **20 herramientas**, **OpenClaw versionado** y una demo que puede ir por dos canales. Lo medido antes del 23/11 se cita con su fecha y su prompt; lo que no se volvió a medir, no se afirma.
+
+## Reparto (provisional, confirmar el miércoles)
+
+| Quién | Qué defiende |
+|---|---|
+| Juan José Mosquera | Apertura y cierre del pitch; arquitectura de punta a punta; demo desde el teléfono |
+| María Stella Fuentes | Datos, RAG y evaluación (pipeline, Qdrant, métricas, t-SNE) |
+| Nicolás Bolaños | Seguridad e inyección; pruebas; panel y métricas en vivo |
+| Jensen Fabián Tamayo | OpenClaw (gateway, workspace, sandbox, allowlist, auditoría) y herramientas |
+
+Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra persona del equipo, desde un teléfono que ya escribió al bot.
+
+## Antes de entrar (10:30)
+
+- Terminal 1: `make api` y comprobar `http://127.0.0.1:8000/api/salud` (`almacen: qdrant`, `memoria: postgresql`, `allowlist_whatsapp` con el número de invitados).
+- Terminal 2: el túnel https registrado en el panel de Meta.
+- Terminal 3 (si se muestra OpenClaw): `openclaw gateway` y `openclaw channels status --probe`.
+- Dos preguntas de calentamiento, de las que no se van a mostrar.
+- Los invitados ya registrados en la allowlist y con la app de WhatsApp abierta.
+
+## Minuto a minuto
+
+### 0:00 – 7:00 · Elevator pitch
+
+| Minuto | Qué se dice | Qué se ve |
+|---|---|---|
+| 0:00 – 0:40 | **Problema.** La información de Celsia está en más de mil páginas; quien necesita una sede, un requisito o un reclamo termina llamando o buscando a ciegas. | Nada más que la voz; el teléfono en la mano |
+| 0:40 – 1:20 | **Propuesta.** Un asistente que responde por WhatsApp con información oficial, cita la fuente, recuerda lo que el cliente contó y no inventa: si no está en la base, lo dice. | Diagrama de arquitectura abierto en segundo plano (no se lee) |
+| 1:20 – 2:00 | **Qué es distinto.** 20 herramientas tipadas que el modelo elige solo, memoria que sobrevive al reinicio y una persona que aprueba los reclamos. | El diagrama de enrutamiento (los caminos de una pregunta) |
+| 2:00 – 4:30 | **Demo real.** «Escriba al bot, por favor»: el invitado pregunta una sede, algo de tarifas y qué sabe de él. | El teléfono del invitado y la terminal con la traza |
+| 4:30 – 5:30 | **Un reclamo con aprobación humana.** El invitado pide un reclamo, alguien del equipo lo aprueba desde otro teléfono y llega el radicado. | Los dos teléfonos y la pausa en la terminal |
+| 5:30 – 6:20 | **Lo que se midió.** Banco verificable 49 de 49 y ataques 11 de 11 con el prompt v12 (D40); matriz de enrutamiento 42 de 43 con el prompt v9. Si una cifra no se volvió a medir, se dice. | El panel en vivo, no una lámina |
+| 6:20 – 7:00 | **Cierre.** Lo que falta (medir la matriz con las 20 herramientas, más tráfico real) y por qué el municipio del Valle y el Tolima puede usarlo mañana. | — |
+
+**Reglas del pitch:** no decir «nuestro chatbot»; decir qué problema resuelve. No prometer integración con sistemas de Celsia. No citar una cifra que no esté en el repositorio.
+
+### 7:00 – 12:00 · Discusión técnica
+
+| Minuto | Tema | Quién |
+|---|---|---|
+| 7:00 – 7:40 | **Recorrido de un mensaje**: WhatsApp → Meta → nuestro webhook (firma, deduplicación, allowlist) → agente → herramienta → PostgreSQL → respuesta | Juan José |
+| 7:40 – 8:30 | **20 herramientas**: por qué 20 y no 5; esquemas Pydantic, `APROBACION_HUMANA`, qué se retiró (`consultar_datos`) y por qué; el MCP de solo lectura | Jensen |
+| 8:30 – 9:15 | **Datos y RAG**: Bronze → Silver → Gold → curaduría → fragmentos; Qdrant con payload; mezcla significado + palabras; 89 % de recuperación del Q&A (medido con 12 fragmentos) | María Stella |
+| 9:15 – 10:00 | **Memoria y evaluación**: `PostgresSaver` frente a `Store`; el hilo sobrevive al reinicio; t-SNE/UMAP de 114 conversaciones simuladas y sus límites | María Stella |
+| 10:00 – 10:45 | **OpenClaw**: `openclaw.json` versionado, `bind: loopback`, `tools.deny`, `fs.workspaceOnly`, sandbox Docker, allowlist E.164 y `security audit`; workspace con identidad y límites separados | Jensen |
+| 10:45 – 11:30 | **Seguridad**: inyección directa e indirecta (11/11 y 8/8 leídos a mano), límite por teléfono, clave en `/chat`, HITL, sin `.env` en el repo | Nicolás |
+| 11:30 – 12:00 | **Calidad**: `uv sync`, 409 pruebas (2 omitidas), ruff, pre-commit, CI y `make verificar-clon`; lo que no está probado (Meta real, OpenClaw en este equipo) | Nicolás |
+
+Cada quien responde lo suyo. Si una pregunta cae en terreno ajeno, se contesta con lo que se sabe y se pasa la palabra; no se improvisa una cifra.
+
+### 12:00 – 15:00 · Preguntas del público
+
+Tres respuestas preparadas, por si aparecen:
+
+- **«¿Y si el modelo alucina?»** Tres capas: solo fragmentos recuperados, nota «dato sin respaldo» cuando una cifra no está en la fuente y banco verificable de 49 casos. En la última medición con prompt v12: 49/49.
+- **«¿Por qué no un modelo local?»** El agente en producción corre contra una API en la nube: un modelo en un portátil no resiste a los invitados. Ollama queda solo para los embeddings y como último respaldo.
+- **«¿Qué pasa si se cae el túnel?»** El plan B: chat web con QR y la conversación grabada (`make demo-plan-b`), mostrando la misma API.
+
+## Versión en inglés (décimas de 5.1 y 5.2)
+
+Si se sustenta en inglés, el pitch y la discusión se hacen en inglés; las preguntas pueden ser en los dos idiomas. Guion corto:
+
+1. **Problem** — Celsia's public information is spread over a thousand pages; customers call or search blindly for a branch, a requirement or a complaint.
+2. **What we built** — a WhatsApp assistant grounded on official content: it cites its source, remembers what the customer told it, refuses to invent, and routes each question to one of 20 typed tools.
+3. **Demo** — a guest types: a branch in Ibagué, a billing question, "what do you know about me?", then a complaint that a human approves from another phone.
+4. **Technical highlights** — FastAPI webhook with signature checks and an E.164 allowlist; PostgreSQL checkpointer and Store; Qdrant with hybrid retrieval; LangGraph middleware for summarization, tool limits and human-in-the-loop; OpenClaw gateway with a versioned hardened config, Docker sandbox and a read-only MCP server.
+5. **Evidence** — verified bank 49/49 and prompt-injection 11/11 under prompt v12; routing matrix 42/43 under prompt v9. We say which numbers were not re-measured after adding the 20 tools.
+6. **Limits and next steps** — real Celsia systems are out of scope; next is re-running the routing matrix with the full tool set and measuring real traffic.
+
+## Si algo falla
+
+Se dice en voz alta y se muestra el repositorio: qué falló, qué se intentó y qué se aprendió. El plan B es el chat web con QR. Lo que no se hace es cambiar de computador a último minuto ni mostrar una captura como si fuera una respuesta en vivo.
