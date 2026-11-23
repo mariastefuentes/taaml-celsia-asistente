@@ -154,3 +154,8 @@ def test_v13_manda_la_sede_mas_cercana_a_sedes_cercanas_y_estado_vigente():
 def test_v13_manda_las_ciudades_con_atencion_a_su_herramienta():
     texto = leer_prompt("v13_agente.md")
     assert "`ciudades_con_atencion`" in texto and "cita su Total" in texto
+
+
+def test_v13_manda_verificar_canales_sin_decir_que_algo_es_falso():
+    texto = leer_prompt("v13_agente.md")
+    assert "`verificar_canal_oficial`" in texto and "nunca «es falso»" in texto

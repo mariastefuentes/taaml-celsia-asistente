@@ -5,12 +5,13 @@ La lógica vive en funciones simples que se prueban sin modelo; la herramienta d
 
 import json
 import math
+import re
 
 from langchain_core.tools import tool
 from pydantic import Field, model_validator
 
 from taaml.base_herramientas import EsquemaEstricto
-from taaml.consulta_datos import SEDES, SIN_RESULTADOS, _contiene_alguno, _norm
+from taaml.consulta_datos import SEDES, SIN_RESULTADOS, _contiene_alguno, _norm, contactos
 from taaml.sanitizar import quitar_invisibles
 
 MAX_SEDES_CERCANAS = 3
@@ -105,3 +106,80 @@ def ciudades_con_atencion(departamento: str = "") -> str:
     Úsala para «¿en qué ciudades del Tolima hay oficinas?» o «¿en cuántas ciudades tienen atención?». Para ver las direcciones y los
     horarios de las sedes de una ciudad usa `consultar_datos`."""
     return ciudades_con_atencion_en(quitar_invisibles(departamento))
+
+
+AVISO_NO_FIGURA = (
+    "No figura entre los canales oficiales que tengo. Eso no prueba que sea falso, pero no lo uses para dar datos ni pagos: "
+    "confírmalo llamando a la línea 01 8000 112 115."
+)
+DOMINIOS_DE_CELSIA = ("celsia.com", "celsiainternet.com")
+
+
+def _digitos(valor: str) -> str:
+    """Solo los dígitos de un teléfono, sin el indicativo +57 / 57 de Colombia (los canales oficiales se guardan sin él)."""
+    d = re.sub(r"\D", "", valor)
+    return d[2:] if d.startswith("57") and len(d) in (11, 12) else d
+
+
+def _anfitrion(enlace: str) -> str:
+    """Solo el dominio de un enlace, sin esquema, «www.», ruta ni puerto, en minúsculas."""
+    sin_esquema = re.sub(r"^[a-z][a-z0-9+.-]*://", "", enlace.strip().lower())
+    return re.sub(r"^www\.", "", re.split(r"[/?#:]", sin_esquema, maxsplit=1)[0])
+
+
+def _ruta(enlace: str) -> str:
+    sin_esquema = re.sub(r"^[a-z][a-z0-9+.-]*://", "", enlace.strip().lower())
+    return sin_esquema.split("/", 1)[1].strip("/") if "/" in sin_esquema else ""
+
+
+def verificar_canal(valor: str) -> str:
+    """Dice si un teléfono, correo o enlace figura entre los canales oficiales de Celsia (tablas de contactos y sedes)."""
+    valor = valor.strip()
+    oficiales = contactos()
+    if "@" in valor:
+        for c in oficiales:
+            if c["tipo"] == "correo" and c["valor"].strip().lower() == valor.lower():
+                return f"Sí figura como canal oficial: correo {c['valor']}. {c['para_que_sirve']}."
+        if any(valor.lower().endswith("@" + d) for d in DOMINIOS_DE_CELSIA):
+            return (
+                f"El dominio del correo es de Celsia, pero ese correo no figura entre los canales oficiales que tengo. "
+                "Confírmalo llamando a la línea 01 8000 112 115."
+            )
+        return AVISO_NO_FIGURA
+    if re.search(r"[A-Za-z]{2,}\.[A-Za-z]{2,}", valor) or "://" in valor:
+        host, ruta = _anfitrion(valor), _ruta(valor)
+        mismos = [c for c in oficiales if c["tipo"] == "enlace" and _anfitrion(c["valor"]) == host]
+        for c in mismos:
+            if _ruta(c["valor"]) == ruta:
+                return f"Sí figura como canal oficial: enlace {c['valor']}. {c['para_que_sirve']}."
+        if mismos:
+            return (
+                f"El sitio {host} figura como canal oficial ({mismos[0]['para_que_sirve']}), pero esa dirección exacta no está "
+                "en mi lista. Entra mejor por el enlace oficial que te dé el agente o por celsia.com."
+            )
+        return AVISO_NO_FIGURA
+    digitos = _digitos(valor)
+    if len(digitos) >= 7:
+        for c in oficiales:
+            if c["tipo"] in ("telefono", "whatsapp") and _digitos(c["valor"]) == digitos:
+                clase = "WhatsApp" if c["tipo"] == "whatsapp" else "teléfono"
+                return f"Sí figura como canal oficial: {clase} {c['valor']}. {c['para_que_sirve']}."
+        for s in _sedes_de_colombia():
+            if s["PHONE"] and _digitos(s["PHONE"]) == digitos:
+                return f"Sí figura como teléfono oficial de {s['NAME']} ({s['CITY']}): {s['PHONE']}."
+        return AVISO_NO_FIGURA
+    return "No entendí qué canal verificar: dame el teléfono, el correo o el enlace completo."
+
+
+class CanalAVerificar(EsquemaEstricto):
+    """Esquema de entrada de `verificar_canal_oficial`."""
+
+    canal: str = Field(min_length=3, max_length=200, description="El teléfono, WhatsApp, correo o enlace que el cliente quiere comprobar, tal como lo escribió.")
+
+
+@tool(args_schema=CanalAVerificar)
+def verificar_canal_oficial(canal: str) -> str:
+    """Comprueba si un teléfono, WhatsApp, correo o enlace figura entre los canales oficiales de Celsia. Úsala cuando el cliente
+    pregunte si un número, correo o página es de Celsia, o cuando desconfíe de un mensaje o una llamada (posible fraude).
+    Responde solo «sí figura» o «no figura»: no digas que algo es falso ni verdadero; si no figura, recomienda llamar a la línea oficial."""
+    return verificar_canal(quitar_invisibles(canal))

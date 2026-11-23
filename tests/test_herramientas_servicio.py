@@ -73,3 +73,55 @@ def test_ciudades_esquema_y_herramienta():
     assert CiudadesConAtencion().departamento == ""
     assert "Ibagué" in ciudades_con_atencion.invoke({"departamento": "tolima"})  # sin tildes ni mayúsculas
     assert set(ciudades_con_atencion.tool_call_schema.model_json_schema()["properties"]) == {"departamento"}
+
+
+from taaml.herramientas_servicio import CanalAVerificar, verificar_canal, verificar_canal_oficial  # noqa: E402
+
+
+@pytest.mark.parametrize(
+    "valor",
+    ["01 8000 112 115", "018000112115", "+57 310 390 3468", "3103903468", "311 321 0000", "servicioalcliente@celsia.com", "SERVICIOALCLIENTE@celsia.com"],
+)
+def test_canales_oficiales_se_reconocen_aunque_cambie_el_formato(valor):
+    assert verificar_canal(valor).startswith("Sí figura")
+
+
+def test_el_whatsapp_y_el_telefono_se_nombran_bien_y_el_de_una_sede_tambien():
+    assert "WhatsApp" in verificar_canal("3103903468")
+    assert "teléfono" in verificar_canal("01 8000 112 115")
+    assert "Sede" in verificar_canal("604 326 66 00")
+
+
+def test_numero_ajeno_o_parecido_no_figura_y_no_se_dice_que_sea_falso():
+    for ajeno in ("310 390 3469", "300 123 4567", "326 66 00"):  # el último es un pedazo de un número oficial: no cuenta
+        r = verificar_canal(ajeno)
+        assert r.startswith("No figura") and "01 8000 112 115" in r and "falso" in r.lower() and "no prueba" in r
+
+
+def test_correo_del_dominio_de_celsia_que_no_esta_en_la_lista_lo_avisa_distinto():
+    assert "dominio del correo es de Celsia" in verificar_canal("pagos@celsia.com")
+    assert verificar_canal("servicioalcliente@celsia.co.ru").startswith("No figura")  # dominio parecido
+    assert verificar_canal("atencion@celsia-energia.com").startswith("No figura")
+
+
+def test_enlaces_exactos_del_sitio_o_con_otra_ruta_y_dominios_parecidos():
+    assert verificar_canal("https://clientes.celsia.com/clientes/paga-tus-facturas").startswith("Sí figura")
+    assert verificar_canal("clientes.celsia.com/clientes/paga-tus-facturas/").startswith("Sí figura")  # sin esquema y con «/» final
+    assert "esa dirección exacta no está" in verificar_canal("https://clientes.celsia.com/promo-gana-ya")
+    assert verificar_canal("https://clientes-celsia.com/paga-tus-facturas").startswith("No figura")
+    assert verificar_canal("https://celsia.com.pagos-seguros.co/").startswith("No figura")
+
+
+def test_entrada_que_no_es_un_canal_pide_el_dato_completo():
+    assert "No entendí" in verificar_canal("hola")
+
+
+def test_esquema_y_herramienta_de_verificar_canal():
+    with pytest.raises(ValidationError):
+        CanalAVerificar()
+    with pytest.raises(ValidationError):
+        CanalAVerificar(canal="ab")
+    with pytest.raises(ValidationError):
+        CanalAVerificar(canal="3103903468", otro="x")
+    assert verificar_canal_oficial.invoke({"canal": "01 8000 112 115"}).startswith("Sí figura")
+    assert set(verificar_canal_oficial.tool_call_schema.model_json_schema()["properties"]) == {"canal"}

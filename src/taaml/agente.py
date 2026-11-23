@@ -44,7 +44,7 @@ from langgraph.types import Command
 
 from taaml.base_herramientas import EsquemaEstricto
 from taaml.consulta_datos import consultar
-from taaml.herramientas_servicio import ciudades_con_atencion, sedes_cercanas
+from taaml.herramientas_servicio import ciudades_con_atencion, sedes_cercanas, verificar_canal_oficial
 from taaml.flujo_reclamo import radicar_simulado
 from taaml.prompts import leer_prompt
 from taaml.recuperacion import buscar, formatear_contexto
@@ -369,6 +369,7 @@ HERRAMIENTAS = [
     radicar_reclamo,
     sedes_cercanas,
     ciudades_con_atencion,
+    verificar_canal_oficial,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
