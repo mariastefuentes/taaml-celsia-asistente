@@ -208,3 +208,13 @@ def test_la_actividad_guarda_si_hubo_nota_de_dato_sin_respaldo_y_el_costo():
     assert sin["nota"] is False and sin["costo"] is None  # sin datos, el panel no muestra nada
     con = actividad.registrar("whatsapp", CLIENTE, "dame un dato", "respondido", ["buscar_en_base"], 2.0, nota=True, costo=0.0012345678)
     assert con["nota"] is True and con["costo"] == 0.00123
+
+
+def test_a_quien_aprueba_se_le_dice_si_es_un_reclamo_nuevo_o_un_detalle_de_uno_radicado(monkeypatch):
+    monkeypatch.setenv("APROBADOR_WHATSAPP", APROBADOR)
+    enviados = []
+    monkeypatch.setattr(api_main, "enviar_botones", lambda tel, texto, botones: enviados.append(texto) or True)
+    api_main._pedir_aprobacion(CLIENTE, {"herramienta": "radicar_reclamo", "args": {"ciudad": "Ibagué"}})
+    api_main._pedir_aprobacion(CLIENTE, {"herramienta": "agregar_detalle_a_reclamo", "args": {"numero": "REC-ABCD1234", "detalle": "x"}})
+    assert enviados[0].startswith("Reclamo pendiente de aprobación") and enviados[1].startswith("Detalle para un reclamo ya radicado pendiente de aprobación")
+    assert "REC-ABCD1234" in enviados[1]

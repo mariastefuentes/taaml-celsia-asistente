@@ -353,7 +353,8 @@ def _pedir_aprobacion(telefono_cliente: str, pendiente: dict) -> None:
         return
     detalle = "\n".join(f"{k}: {v}" for k, v in (pendiente.get("args") or {}).items())[:700]
     digitos = _digitos(telefono_cliente)
-    texto = f"Reclamo pendiente de aprobación (cliente {actividad.quien(telefono_cliente)}):\n{detalle}"
+    que = "Detalle para un reclamo ya radicado" if pendiente.get("herramienta") == "agregar_detalle_a_reclamo" else "Reclamo"
+    texto = f"{que} pendiente de aprobación (cliente {actividad.quien(telefono_cliente)}):\n{detalle}"
     if not enviar_botones(aprobador, texto, [(f"aprobar:{digitos}", "Aprobar"), (f"rechazar:{digitos}", "Rechazar")]):
         log.warning("no se pudo enviar los botones al aprobador: queda POST /aprobar")
 

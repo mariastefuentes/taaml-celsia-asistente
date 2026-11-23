@@ -1253,3 +1253,68 @@ def test_el_agente_lista_los_reclamos_solo_del_cliente_actual():
     assert respuesta == "Tienes uno." and [u["herramienta"] for u in usadas] == ["listar_mis_reclamos"]
     resultado = _resultado_de_herramienta(agente, "h-lis")
     assert "REC-ABCD1234" in resultado and "REC-99999999" not in resultado and "De otro cliente" not in resultado
+
+
+# --- agregar_detalle_a_reclamo también pasa por la aprobación de una persona de Celsia ---
+def _agente_con_detalle(numero="REC-ABCD1234", detalle="El medidor está en la esquina", respuesta_final="Listo.", clase=ModeloEspia):
+    from langgraph.store.memory import InMemoryStore
+
+    almacen = InMemoryStore()
+    almacen.put(("reclamos", "c1"), "REC-ABCD1234", {"tipo": "otro", "ciudad": "Cali", "descripcion": "Cobro repetido"})
+    llamada = AIMessage(content="", tool_calls=[{"name": "agregar_detalle_a_reclamo", "args": {"numero": numero, "detalle": detalle}, "id": "d1"}])
+    modelo = clase(messages=iter([llamada, AIMessage(content=respuesta_final)]), vistos=[])
+    return crear_agente(llm=modelo, store=almacen), modelo, almacen
+
+
+def test_agregar_un_detalle_pausa_con_su_propio_aviso_y_no_guarda_nada_antes_de_aprobar():
+    from taaml.agente import MENSAJE_DETALLE_EN_REVISION, MENSAJE_EN_REVISION, pendiente_de_aprobacion
+
+    agente, _, almacen = _agente_con_detalle()
+    respuesta, usadas = conversar("Agrega al reclamo REC-ABCD1234 que el medidor está en la esquina", "hd1", agente=agente, usuario="c1")
+    assert respuesta == MENSAJE_DETALLE_EN_REVISION and respuesta != MENSAJE_EN_REVISION  # no promete un «número de radicado»
+    assert [u["herramienta"] for u in usadas] == ["agregar_detalle_a_reclamo"]
+    assert pendiente_de_aprobacion("hd1", agente=agente)["herramienta"] == "agregar_detalle_a_reclamo"
+    assert "detalles" not in almacen.get(("reclamos", "c1"), "REC-ABCD1234").value
+    assert conversar("¿ya?", "hd1", agente=agente, usuario="c1") == (MENSAJE_DETALLE_EN_REVISION, [])  # mientras espera, sigue el mismo aviso
+
+
+def test_al_aprobar_el_detalle_se_agrega_y_al_rechazar_no_con_su_propio_mensaje():
+    from taaml.agente import MENSAJE_DETALLE_RECHAZADO, MENSAJE_RECHAZADO, resolver_aprobacion
+
+    agente, _, almacen = _agente_con_detalle(respuesta_final="Quedó agregado.")
+    conversar("Agrega un detalle", "hd2", agente=agente, usuario="c1")
+    texto, _ = resolver_aprobacion("hd2", "aprobar", usuario="c1", agente=agente)
+    assert texto == "Quedó agregado." and almacen.get(("reclamos", "c1"), "REC-ABCD1234").value["detalles"] == ["El medidor está en la esquina"]
+
+    agente, _, almacen = _agente_con_detalle(respuesta_final="No se agregó.")
+    conversar("Agrega un detalle", "hd3", agente=agente, usuario="c1")
+    resolver_aprobacion("hd3", "rechazar", usuario="c1", agente=agente)
+    assert "detalles" not in almacen.get(("reclamos", "c1"), "REC-ABCD1234").value
+    rechazo = [m for m in agente.get_state({"configurable": {"thread_id": "hd3"}}).values["messages"] if m.type == "tool"][-1]
+    assert MENSAJE_DETALLE_RECHAZADO in rechazo.content and "radicado" not in MENSAJE_DETALLE_RECHAZADO and MENSAJE_RECHAZADO != MENSAJE_DETALLE_RECHAZADO
+
+
+def test_un_radicado_mal_escrito_se_corrige_antes_de_molestar_a_la_persona():
+    from taaml.agente import pendiente_de_aprobacion
+
+    guion = [
+        AIMessage(content="", tool_calls=[{"name": "agregar_detalle_a_reclamo", "args": {"numero": "123", "detalle": "algo"}, "id": "m1"}]),
+        AIMessage(content="¿Me repites el número de radicado?"),
+    ]
+    from langgraph.store.memory import InMemoryStore
+
+    agente = crear_agente(llm=ModeloEspia(messages=iter(guion), vistos=[]), store=InMemoryStore())
+    respuesta, _ = conversar("Agrega algo al reclamo 123", "hd4", agente=agente, usuario="c1")
+    assert respuesta == "¿Me repites el número de radicado?" and pendiente_de_aprobacion("hd4", agente=agente) is None
+    error = [m for m in agente.get_state({"configurable": {"thread_id": "hd4"}}).values["messages"] if m.type == "tool"][-1]
+    assert error.status == "error" and "agregar_detalle_a_reclamo" in error.content and "numero" in error.content
+
+
+def test_el_flujo_en_vivo_avisa_distinto_si_lo_pendiente_es_un_detalle():
+    from taaml.agente import MENSAJE_DETALLE_EN_REVISION, conversar_en_vivo
+
+    agente, _, _ = _agente_con_detalle(clase=ModeloSinTrozos)
+    eventos = list(conversar_en_vivo("Agrega un detalle", "hd5", agente=agente, usuario="c1"))
+    assert "".join(e["texto"] for e in eventos if e["tipo"] == "texto") == MENSAJE_DETALLE_EN_REVISION
+    nuevo = list(conversar_en_vivo("¿ya?", "hd5", agente=agente, usuario="c1"))
+    assert [e["tipo"] for e in nuevo][:2] == ["pendiente", "texto"] and nuevo[1]["texto"] == MENSAJE_DETALLE_EN_REVISION

@@ -205,3 +205,7 @@ def test_v13_lista_los_reclamos_del_cliente_con_su_herramienta():
 def test_v13_amplia_un_reclamo_radicado_sin_confundirlo_con_uno_nuevo():
     texto = leer_prompt("v13_agente.md")
     assert "`agregar_detalle_a_reclamo`" in texto and "Un reclamo nuevo es `radicar_reclamo`" in texto
+
+
+def test_v13_no_cuenta_el_detalle_como_agregado_hasta_que_una_persona_lo_apruebe():
+    assert "una persona de Celsia la aprueba antes de agregarla" in leer_prompt("v13_agente.md")

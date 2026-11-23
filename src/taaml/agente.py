@@ -45,6 +45,7 @@ from langgraph.types import Command
 from taaml.base_herramientas import ANONIMO, Contexto, EsquemaConRuntime, EsquemaEstricto, _almacen
 from taaml.consulta_datos import consultar
 from taaml.herramientas_servicio import (
+    DetalleDeReclamo,
     agregar_detalle_a_reclamo,
     calcular_factura_estimada,
     canales_de_emergencia,
@@ -367,6 +368,10 @@ HERRAMIENTAS = [
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
 APROBACION_HUMANA = {
+    "agregar_detalle_a_reclamo": {
+        "allowed_decisions": ["approve", "reject", "respond"],
+        "description": "Un cliente quiere agregar información a un reclamo ya radicado: apruébalo, recházalo o responde por la herramienta (por ejemplo, para pedir otro dato).",
+    },
     "radicar_reclamo": {
         "allowed_decisions": ["approve", "edit", "reject", "respond"],
         "description": "Un cliente pidió radicar este reclamo: apruébalo, edítalo, recházalo o responde por la herramienta (por ejemplo, para pedir más datos).",
@@ -376,6 +381,34 @@ MENSAJE_EN_REVISION = (
     "Recibí tu reclamo y una persona de Celsia lo está revisando antes de radicarlo. "
     "Apenas lo apruebe, te escribo aquí con el número de radicado. Si es urgente, puedes llamar a la línea 01 8000 112 115."
 )
+MENSAJE_DETALLE_EN_REVISION = (
+    "Recibí lo que quieres agregar a tu reclamo y una persona de Celsia lo está revisando. "
+    "Apenas lo apruebe, te escribo aquí para confirmártelo. Si es urgente, puedes llamar a la línea 01 8000 112 115."
+)
+MENSAJE_DETALLE_RECHAZADO = (
+    "Una persona de Celsia revisó lo que querías agregar a tu reclamo y por ahora no lo aprobó, así que no se añadió. "
+    "Puedes escribirme de nuevo con más detalles, o llamar a la línea 01 8000 112 115."
+)
+MENSAJES_EN_REVISION = (MENSAJE_EN_REVISION, MENSAJE_DETALLE_EN_REVISION)
+
+
+def mensaje_en_revision(herramienta: str | None) -> str:
+    """El aviso que recibe el cliente mientras una persona revisa: el de agregar un detalle es distinto al de radicar un reclamo."""
+    return MENSAJE_DETALLE_EN_REVISION if herramienta == "agregar_detalle_a_reclamo" else MENSAJE_EN_REVISION
+
+
+def _herramienta_pausada(interrupciones: Any) -> str | None:
+    """Qué herramienta pidió aprobación, leído de la propia pausa (en el flujo en vivo el estado aún no está guardado)."""
+    for pausa in interrupciones or ():
+        for pedido in getattr(pausa, "value", {}).get("action_requests", []):
+            return pedido["name"]
+    return None
+
+
+def mensaje_rechazado(herramienta: str | None) -> str:
+    return MENSAJE_DETALLE_RECHAZADO if herramienta == "agregar_detalle_a_reclamo" else MENSAJE_RECHAZADO
+
+
 MENSAJE_RECHAZADO = "Una persona de Celsia revisó tu reclamo y por ahora no lo aprobó, así que todavía no está radicado. Puedes escribirme de nuevo con más detalles (ciudad, qué pasó y desde cuándo) para intentarlo otra vez, o llamar a la línea 01 8000 112 115."
 
 
@@ -416,10 +449,13 @@ MENSAJE_RECLAMO_INCOMPLETO = (
 )
 
 
-def _errores_del_reclamo(args: dict) -> list[str]:
-    """Campos mal enviados por el modelo en `radicar_reclamo` (el `runtime` lo inyecta el sistema, no se revisa)."""
+ESQUEMAS_CON_APROBACION = {"radicar_reclamo": Reclamo, "agregar_detalle_a_reclamo": DetalleDeReclamo}
+
+
+def _errores_del_reclamo(args: dict, herramienta: str = "radicar_reclamo") -> list[str]:
+    """Campos mal enviados por el modelo en una herramienta con aprobación (el `runtime` lo inyecta el sistema, no se revisa)."""
     try:
-        Reclamo.model_validate(args)
+        ESQUEMAS_CON_APROBACION[herramienta].model_validate(args)
     except ValidationError as e:
         return [".".join(map(str, d["loc"])) for d in e.errors() if d["loc"] != ("runtime",)]
     return []
@@ -437,7 +473,7 @@ def validar_reclamo_antes_de_pausar(state: Any, runtime: Any) -> dict | None:
     mensajes = state["messages"]
     ultimo = mensajes[-1]
     llamadas = getattr(ultimo, "tool_calls", None) or []
-    malas = {ll["id"]: _errores_del_reclamo(ll["args"]) for ll in llamadas if ll["name"] == "radicar_reclamo"}
+    malas = {ll["id"]: _errores_del_reclamo(ll["args"], ll["name"]) for ll in llamadas if ll["name"] in ESQUEMAS_CON_APROBACION}
     malas = {i: campos for i, campos in malas.items() if campos}
     if not malas:
         return None
@@ -445,14 +481,14 @@ def validar_reclamo_antes_de_pausar(state: Any, runtime: Any) -> dict | None:
     for m in reversed(mensajes[:-1]):
         if m.type == "human":
             break
-        if m.type == "tool" and m.name == "radicar_reclamo" and m.status == "error":
+        if m.type == "tool" and m.name in ESQUEMAS_CON_APROBACION and m.status == "error":
             reintentos += 1
     if reintentos >= MAX_REINTENTOS_RECLAMO:
         return {"messages": [AIMessage(content=MENSAJE_RECLAMO_INCOMPLETO, id=ultimo.id)], "jump_to": "end"}
     respuestas = []
     for ll in llamadas:
         if ll["id"] in malas:
-            texto = f"Argumentos inválidos para «radicar_reclamo» ({', '.join(malas[ll['id']])}). Corrígelos y vuelve a intentarlo."
+            texto = f"Argumentos inválidos para «{ll['name']}» ({', '.join(malas[ll['id']])}). Corrígelos y vuelve a intentarlo."
             respuestas.append(ToolMessage(content=texto, tool_call_id=ll["id"], name=ll["name"], status="error"))
         else:
             respuestas.append(ToolMessage(content="No se ejecutó en este paso; vuelve a pedirla si hace falta.", tool_call_id=ll["id"], name=ll["name"]))
@@ -676,8 +712,8 @@ def conversar(
     Mismo `thread_id` = misma conversación (el agente ve los turnos anteriores); otro `thread_id` empieza en blanco.
     """
     agente = agente or _agente(modelo)
-    if pendiente_de_aprobacion(thread_id, agente=agente):  # esta conversación espera a una persona: no se sigue hasta que decida
-        return MENSAJE_EN_REVISION, []
+    if pendiente := pendiente_de_aprobacion(thread_id, agente=agente):  # esta conversación espera a una persona: no se sigue hasta que decida
+        return mensaje_en_revision(pendiente["herramienta"]), []
     resultado = agente.invoke(
         {"messages": [{"role": "user", "content": quitar_invisibles(pregunta)}]},
         config={"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente"]},
@@ -693,7 +729,7 @@ def conversar(
         for ll in getattr(m, "tool_calls", [])
     ]
     if resultado.get("__interrupt__"):  # el agente se pausó pidiendo aprobación: el cliente recibe el aviso, no un texto vacío
-        return MENSAJE_EN_REVISION, llamadas
+        return mensaje_en_revision((pendiente_de_aprobacion(thread_id, agente=agente) or {}).get("herramienta")), llamadas
     return mensajes[-1].text.strip(), llamadas
 
 
@@ -732,6 +768,7 @@ def resolver_aprobacion(
     (por ejemplo, «falta la dirección del predio»). Es la decisión `respond` de `HumanInTheLoopMiddleware`.
     """
     agente = agente or _agente(modelo)
+    herramienta = (pendiente_de_aprobacion(thread_id, agente=agente) or {}).get("herramienta")
     if decision == "responder":
         if not (mensaje or "").strip():
             raise ValueError("responder necesita un mensaje")
@@ -739,7 +776,7 @@ def resolver_aprobacion(
     elif decision == "aprobar":
         respuesta = {"type": "approve"}
     else:
-        respuesta = {"type": "reject", "message": MENSAJE_RECHAZADO}
+        respuesta = {"type": "reject", "message": mensaje_rechazado(herramienta)}
     resultado = agente.invoke(
         Command(resume={"decisions": [respuesta]}),
         config={"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente", "aprobacion"]},
@@ -769,7 +806,7 @@ def aviso_de_datos_dudosos(thread_id: str, respuesta: str, modelo: str = MODELO_
     La web ya muestra este aviso aparte; por WhatsApp y `POST /chat` no hay dónde, así que va como texto. Si algo falla al revisar, no se añade nada:
     es una ayuda, no debe tumbar la respuesta.
     """
-    if respuesta == MENSAJE_EN_REVISION:
+    if respuesta in MENSAJES_EN_REVISION:
         return ""
     try:
         agente = agente or _agente(modelo)
@@ -807,7 +844,7 @@ def conversar_en_vivo(
     agente = agente or _agente(modelo)
     if pendiente := pendiente_de_aprobacion(thread_id, agente=agente):  # espera a una persona: no se sigue hasta que decida
         yield {"tipo": "pendiente", **pendiente}
-        yield {"tipo": "texto", "texto": MENSAJE_EN_REVISION}
+        yield {"tipo": "texto", "texto": mensaje_en_revision(pendiente["herramienta"])}
         yield {"tipo": "fin", "usadas": "Reclamo en revisión", "tokens_entrada": 0, "tokens_salida": 0, "costo_usd": 0.0}
         return
     entrada = {"messages": [{"role": "user", "content": quitar_invisibles(pregunta)}]}
@@ -825,7 +862,7 @@ def conversar_en_vivo(
         else:
             if "__interrupt__" in datos:  # el agente se pausó pidiendo aprobación humana
                 hubo_texto = True
-                yield {"tipo": "texto", "texto": MENSAJE_EN_REVISION}
+                yield {"tipo": "texto", "texto": mensaje_en_revision(_herramienta_pausada(datos["__interrupt__"]))}
                 continue
             for actualizacion in datos.values():
                 for m in (actualizacion or {}).get("messages", []):
@@ -917,6 +954,8 @@ def etiqueta_herramientas(llamadas: list[dict]) -> str:
             partes.append("recordó lo que sabe del cliente")
         elif ll["herramienta"] == "radicar_reclamo":
             partes.append("preparó un reclamo para aprobación")
+        elif ll["herramienta"] == "agregar_detalle_a_reclamo":
+            partes.append("preparó un detalle de reclamo para aprobación")
         else:
             filtros = ", ".join(f"{k}: {v}" for k, v in ll["args"].items() if k != "tabla" and v)
             partes.append(f"consultó la tabla {ll['args'].get('tabla', '?')}" + (f" ({filtros})" if filtros else ""))

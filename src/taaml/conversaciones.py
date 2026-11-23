@@ -7,7 +7,7 @@ visibles (cliente y asistente), las herramientas usadas y si terminó mal. No ll
 
 from typing import Any
 
-from taaml.agente import MENSAJE_EN_REVISION
+from taaml.agente import MENSAJES_EN_REVISION
 
 MARCAS_DE_FALLO = ("no tengo esa información", "no pude", "no está disponible", "no puedo escribirte código")
 MAX_CARACTERES = 2000  # el modelo de embeddings tiene contexto limitado; una conversación típica mide unos cientos de caracteres
@@ -44,7 +44,7 @@ def conversacion_de(hilo: str, mensajes: list) -> dict:
         "turnos": turnos,
         "herramientas": herramientas,
         "fallida": es_fallida(turnos, errores),
-        "en_revision": any(t["texto"] == MENSAJE_EN_REVISION for t in turnos),
+        "en_revision": any(t["texto"] in MENSAJES_EN_REVISION for t in turnos),
         "texto": texto[:MAX_CARACTERES],
     }
 
