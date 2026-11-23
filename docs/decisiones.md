@@ -311,3 +311,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Por qué.** Es el derecho de supresión (Ley 1581) ejercido en el mismo canal donde se dieron los datos, y es demostrable en vivo sin llamar a la API.
 - **Límites.** Borra por coincidencia de texto, no por campo: si el cliente dice «mi ciudad» no coincide con «Vive en Cali»; el prompt le pide usar las palabras del dato. No borra la conversación (eso es `/nuevo`) ni los reclamos (el borrado total sigue en la API).
 - **Evidencia.** `src/taaml/agente.py` (`listar_datos_del_cliente`, `olvidar_dato_del_cliente`), `tests/test_agente.py`.
+
+## D44. Reclamos consultables: listar, estado por radicado y cancelar con aprobación
+- **Contexto.** El agente radicaba reclamos (con aprobación humana) y los guardaba en `("reclamos", usuario)`, pero no podía decir en qué iban ni cancelarlos: el cliente quedaba con un número que el asistente no volvía a usar.
+- **Decisión.** Tres herramientas sobre el mismo registro: `consultar_mis_reclamos()` lista los del cliente con su estado; `consultar_estado_reclamo(radicado)` busca por número (sin distinguir mayúsculas); `cancelar_reclamo(radicado, motivo)` marca el reclamo como `cancelado` y guarda el motivo. Cancelar entra en `APROBACION_HUMANA` (aprobar, rechazar o responder), igual que radicar. Los reclamos nuevos se guardan con `estado: "radicado"`.
+- **Por qué.** Es la pregunta que sigue a cualquier radicado («¿en qué quedó?») y no exige ningún sistema externo: el estado vive en el mismo Store. Marcar en vez de borrar deja el rastro para la persona de Celsia.
+- **Límites.** El estado lo cambia solo el asistente (radicado/cancelado): no refleja la gestión real de Celsia, que no tenemos. Cualquiera que escriba desde el mismo teléfono ve esos reclamos; el aislamiento es por usuario, no por radicado. La búsqueda del número es literal, no admite búsquedas parciales.
+- **Evidencia.** `src/taaml/agente.py` (`consultar_mis_reclamos`, `consultar_estado_reclamo`, `cancelar_reclamo`, `APROBACION_HUMANA`), `tests/test_agente.py`.

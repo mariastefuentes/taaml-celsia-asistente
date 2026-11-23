@@ -64,6 +64,7 @@ RUTA_MEMORIA_LARGA = RUTA_MEMORIA.with_name(
     "largo_plazo.sqlite"
 )  # lo que el cliente cuenta de sí mismo, para otras conversaciones
 MAX_DATOS_CLIENTE = 20  # tope de datos guardados por cliente
+MAX_RECLAMOS_POR_CLIENTE = 50  # tope de reclamos que se leen para listar, buscar un radicado o cancelar
 MAX_TOKENS_HISTORIAL = 3000  # lo que el modelo ve de la conversación; el historial completo sigue guardado
 UMBRAL_RESUMEN_TOKENS = 8000  # por encima de esto la conversación guardada se resume (con el recorte de arriba, el modelo ve 3.000 como máximo)
 MENSAJES_TRAS_RESUMEN = 6  # los últimos mensajes se conservan tal cual; lo anterior queda en un resumen
@@ -600,8 +601,90 @@ def radicar_reclamo(
     numero = radicar_simulado(reclamo)  # registro de mentira: un sistema real llamaría al de Celsia con la referencia
     # La referencia es un dato personal: se usa para radicar y para la aprobación, pero no se guarda en el Store.
     guardado = {clave: valor for clave, valor in reclamo.items() if clave != "referencia"}
+    guardado["estado"] = "radicado"
     _almacen(runtime).put(("reclamos", runtime.context.usuario), numero, guardado)
     return f"Reclamo radicado con el número {numero}."
+
+
+def _reclamos(runtime: ToolRuntime[Contexto]) -> list[Any]:
+    """Los reclamos guardados del cliente, el más reciente primero (el Store no promete orden: se ordena por el número)."""
+    return sorted(
+        _almacen(runtime).search(("reclamos", runtime.context.usuario), limit=MAX_RECLAMOS_POR_CLIENTE),
+        key=lambda i: i.key,
+        reverse=True,
+    )
+
+
+class ConsultaEstadoReclamo(EsquemaConRuntime):
+    """Esquema de entrada de `consultar_estado_reclamo`."""
+
+    radicado: str = Field(
+        min_length=3,
+        max_length=40,
+        description="Número de radicado que el asistente entregó, por ejemplo «REC-1A2B3C4D».",
+    )
+
+
+@tool(args_schema=SinArgumentos)
+def consultar_mis_reclamos(runtime: ToolRuntime[Contexto]) -> str:
+    """Lista los reclamos que este cliente tiene guardados, con su número, tipo, ciudad y estado.
+    Úsala cuando pregunte «¿en qué quedó mi reclamo?», «¿qué reclamos tengo?» o pida el número de radicado."""
+    if runtime.context.usuario == ANONIMO:
+        return "No hay reclamos asociados: este cliente es anónimo."
+    items = _reclamos(runtime)
+    if not items:
+        return "Este cliente no tiene reclamos guardados."
+    return "\n".join(
+        f"- {i.key}: {i.value.get('tipo', 'otro')} en {i.value.get('ciudad', 'sin ciudad')} "
+        f"({i.value.get('estado', 'radicado')}). {quitar_invisibles(i.value.get('descripcion', ''))[:160]}"
+        for i in items
+    )
+
+
+@tool(args_schema=ConsultaEstadoReclamo)
+def consultar_estado_reclamo(radicado: str, runtime: ToolRuntime[Contexto]) -> str:
+    """Devuelve el estado de un reclamo del cliente por su número de radicado (por ejemplo «REC-1A2B3C4D»).
+    Úsala cuando el cliente dé un número y pregunte cómo va; si no coincide con ninguno de sus reclamos, dilo y ofrécele listarlos."""
+    if runtime.context.usuario == ANONIMO:
+        return "No hay reclamos asociados: este cliente es anónimo."
+    buscado = quitar_invisibles(radicado).strip().upper()
+    for item in _reclamos(runtime):
+        if item.key.upper() == buscado:
+            datos = item.value
+            return (
+                f"El reclamo {item.key} está {datos.get('estado', 'radicado')}. Tipo: {datos.get('tipo', 'otro')}. "
+                f"Ciudad: {datos.get('ciudad', 'sin ciudad')}. Descripción: {quitar_invisibles(datos.get('descripcion', ''))[:300]}"
+            )
+    return "No encontré un reclamo con ese número entre los de este cliente. Ofrécele listar sus reclamos con la herramienta de lista."
+
+
+class CancelarReclamo(EsquemaConRuntime):
+    """Esquema de entrada de `cancelar_reclamo`."""
+
+    radicado: str = Field(min_length=3, max_length=40, description="Número de radicado que el cliente quiere cancelar.")
+    motivo: str = Field(
+        default="",
+        max_length=300,
+        description="Por qué lo cancela, con las palabras del cliente; vacío si no lo dijo.",
+    )
+
+
+@tool(args_schema=CancelarReclamo)
+def cancelar_reclamo(radicado: str, runtime: ToolRuntime[Contexto], motivo: str = "") -> str:
+    """Pide cancelar un reclamo del cliente. Úsala solo si el cliente lo pide de forma explícita y ya le confirmaste el número.
+    Una persona de Celsia debe aprobar la cancelación: el sistema pausa esta herramienta hasta que decida, así que no la des por hecha."""
+    if runtime.context.usuario == ANONIMO:
+        return "No se canceló: no hay un cliente identificado para asociar el reclamo."
+    buscado = quitar_invisibles(radicado).strip().upper()
+    for item in _reclamos(runtime):
+        if item.key.upper() == buscado:
+            datos = dict(item.value)
+            datos["estado"] = "cancelado"
+            if motivo.strip():
+                datos["motivo_cancelacion"] = quitar_invisibles(motivo).strip()[:300]
+            _almacen(runtime).put(("reclamos", runtime.context.usuario), item.key, datos)
+            return f"Reclamo {item.key} cancelado."
+    return "No encontré un reclamo con ese número entre los de este cliente. Ofrécele listar sus reclamos antes de cancelar."
 
 
 HERRAMIENTAS = [
@@ -621,6 +704,9 @@ HERRAMIENTAS = [
     listar_datos_del_cliente,
     olvidar_dato_del_cliente,
     radicar_reclamo,
+    consultar_mis_reclamos,
+    consultar_estado_reclamo,
+    cancelar_reclamo,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.
@@ -628,7 +714,11 @@ APROBACION_HUMANA = {
     "radicar_reclamo": {
         "allowed_decisions": ["approve", "edit", "reject", "respond"],
         "description": "Un cliente pidió radicar este reclamo: apruébalo, edítalo, recházalo o responde por la herramienta (por ejemplo, para pedir más datos).",
-    }
+    },
+    "cancelar_reclamo": {
+        "allowed_decisions": ["approve", "reject", "respond"],
+        "description": "Un cliente pidió cancelar un reclamo radicado: apruébalo, recházalo o responde por la herramienta.",
+    },
 }
 MENSAJE_EN_REVISION = (
     "Recibí tu reclamo y una persona de Celsia lo está revisando antes de radicarlo. "
@@ -1179,6 +1269,12 @@ def etiqueta_herramientas(llamadas: list[dict]) -> str:
             partes.append("borró un dato del cliente")
         elif ll["herramienta"] == "radicar_reclamo":
             partes.append("preparó un reclamo para aprobación")
+        elif ll["herramienta"] == "consultar_mis_reclamos":
+            partes.append("revisó los reclamos del cliente")
+        elif ll["herramienta"] == "consultar_estado_reclamo":
+            partes.append("consultó el estado de un reclamo")
+        elif ll["herramienta"] == "cancelar_reclamo":
+            partes.append("pidió cancelar un reclamo")
         elif ll["herramienta"] == "consultar_sedes":
             partes.append("consultó las sedes")
         elif ll["herramienta"] == "consultar_contactos":
