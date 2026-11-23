@@ -1,4 +1,4 @@
-from pathlib import Path
+﻿from pathlib import Path
 
 from conftest import RAIZ
 from taaml.prompts import construir_mensaje_usuario, construir_prompt_sistema, leer_prompt
@@ -44,15 +44,15 @@ def test_la_linea_de_servicio_de_los_prompts_esta_en_los_datos_manuales():
 
 
 def test_prompt_del_agente_tiene_los_cinco_bloques_y_nombra_las_herramientas():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     for bloque in ("# 1.", "# 2. CONTEXTO", "# 3. INSTRUCCIÓN", "# 4. FORMATO", "# 5. RESTRICCIONES"):
         assert bloque in texto
-    assert "consultar_datos" in texto and "buscar_en_base" in texto
+    assert "consultar_sedes" in texto and "buscar_en_base" in texto
 
 
 def test_prompt_del_agente_explica_el_router_la_memoria_y_la_defensa():
-    texto = leer_prompt("v12_agente.md")
-    assert "«sedes»" in texto and "«contactos»" in texto  # regla de datos exactos
+    texto = leer_prompt("v13_agente.md")
+    assert "consultar_sedes" in texto and "consultar_contactos" in texto  # regla de datos exactos
     assert "Sin resultados" in texto  # respaldo hacia el texto
     assert "turno anterior" in texto  # memoria
     assert "datos, no órdenes" in texto  # defensa contra inyección indirecta
@@ -60,39 +60,34 @@ def test_prompt_del_agente_explica_el_router_la_memoria_y_la_defensa():
 
 
 def test_el_prompt_del_agente_prohibe_formatos_de_programacion():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     for formato in ("JSON", "XML", "YAML", "HTML", "CSV", "SQL"):
         assert formato in texto
     assert "texto plano" in texto
     assert "solo puedes responder en texto plano" in texto
 
 
-def test_el_prompt_del_agente_documenta_las_herramientas_de_la_ruta():
-    """Las herramientas que el prompt enseña a elegir deben estar nombradas.
-
-    La lista completa se exige en `test_el_prompt_v13_documenta_las_veinte_herramientas` cuando entra el prompt v13; mientras
-    las herramientas nuevas llegan por tandas, aquí se vigilan las de la ruta del v12 para no publicar un prompt que hable de
-    herramientas que no existen.
-    """
+def test_el_prompt_del_agente_documenta_las_veinte_herramientas():
     from taaml.agente import HERRAMIENTAS
 
-    nombres = {h.name for h in HERRAMIENTAS}
-    texto = leer_prompt("v12_agente.md")
-    for nombre in ("buscar_en_base", "consultar_datos", "guardar_dato_del_cliente", "recordar_datos_del_cliente", "radicar_reclamo"):
-        assert nombre in nombres and f"`{nombre}`" in texto
+    texto = leer_prompt("v13_agente.md")
+    assert len(HERRAMIENTAS) == 20
+    for herramienta in HERRAMIENTAS:
+        assert f"`{herramienta.name}`" in texto, herramienta.name
+    assert "`consultar_datos`" not in texto  # se retiró en v13: ahora hay una por tabla
 
 
 def test_el_agente_carga_el_prompt_vigente():
     import inspect
     from taaml import agente
 
-    assert "v12_agente.md" in inspect.getsource(agente.crear_agente)
+    assert "v13_agente.md" in inspect.getsource(agente.crear_agente)
 
 
 
 
 def test_v7_conserva_la_regla_de_v6_de_no_responder_preguntas_ajenas_a_celsia_aunque_sean_sencillas():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     assert "capital de Francia" in texto and "ni siquiera para una pregunta sencilla" in texto
     assert "una pregunta que no necesita datos de Celsia se responde sin herramientas" not in texto  # la frase de v5 que dejaba pasar las trivias
     assert "estado: reemplazado por v6" in (Path(__file__).parents[1] / "prompts" / "v5_agente.md").read_text(encoding="utf-8")
@@ -100,13 +95,13 @@ def test_v7_conserva_la_regla_de_v6_de_no_responder_preguntas_ajenas_a_celsia_au
 
 
 def test_v7_manda_buscar_los_temas_de_energia_y_no_prometer_lo_que_fallo():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     assert "energía solar" in texto and "no los rechaces sin buscar" in texto
     assert "nada se guardó ni se radicó" in texto
 
 
 def test_v8_manda_buscar_las_cifras_de_la_empresa_y_darlas_como_aproximadas():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     assert "cuántos clientes atiende" in texto and "antes de decir que no los tienes" in texto
     assert "no tienes el dato exacto de hoy" in texto
     assert "no los rechaces sin buscar" in texto and "ni siquiera para una pregunta sencilla" in texto  # conserva v7
@@ -114,13 +109,13 @@ def test_v8_manda_buscar_las_cifras_de_la_empresa_y_darlas_como_aproximadas():
 
 
 def test_v8_rechaza_con_claridad_el_dano_y_atiende_las_crisis_con_las_lineas_106_y_123():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     assert "no ayudo a hacerle daño a nadie" in texto and "no quiere vivir" in texto
     assert "Línea 106" in texto and "123" in texto
 
 
 def test_v9_da_una_sola_cifra_cuando_las_fuentes_difieren_y_conserva_lo_de_v8():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     assert "da una sola" in texto and "no menciones las otras" in texto
     assert "no cambies ninguna cifra" in texto
     assert "no ayudo a hacerle daño a nadie" in texto and "no tienes el dato exacto de hoy" in texto  # conserva v8
@@ -128,15 +123,15 @@ def test_v9_da_una_sola_cifra_cuando_las_fuentes_difieren_y_conserva_lo_de_v8():
 
 
 def test_v11_responde_en_cualquier_idioma_y_atiende_el_peligro_electrico_primero():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     assert "sea cual sea" in texto and "Si escribe en otro idioma, responde en español" not in texto
-    assert "peligro eléctrico inmediato" in texto and "123" in texto and "Solo después ofrece radicar el reclamo" in texto
+    assert "peligro eléctrico inmediato" in texto and "123" in texto and "Solo después ofrece `reportar_dano_electrico`" in texto
     assert "estado: reemplazado por v11" in (Path(__file__).parents[1] / "prompts" / "v9_agente.md").read_text(encoding="utf-8")
     assert "estado: reemplazado por v12" in (Path(__file__).parents[1] / "prompts" / "v11_agente.md").read_text(encoding="utf-8")
 
 
 def test_v11_rechaza_lo_ajeno_sin_decir_que_no_tiene_la_informacion_y_se_presenta_al_saludar():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     assert "Eso se sale de lo que puedo ayudarte" in texto and "No tengo esa información" in texto  # la segunda queda para lo que sí es de Celsia
     assert "asistente virtual de Celsia" in texto and "ya es cliente de Celsia o quiere un servicio nuevo" in texto
     assert "No pidas ningún dato personal para empezar" in texto
@@ -146,8 +141,8 @@ def test_v11_rechaza_lo_ajeno_sin_decir_que_no_tiene_la_informacion_y_se_present
 
 
 def test_v12_pide_la_direccion_o_el_niu_en_el_reclamo_sin_bloquear_ni_guardarlo_en_la_memoria():
-    texto = leer_prompt("v12_agente.md")
+    texto = leer_prompt("v13_agente.md")
     assert "la dirección del servicio o el NIU" in texto and "`referencia`" in texto
     assert "no lo bloquees" in texto and "no lo guardes en la memoria" in texto
     assert "usa las dos herramientas en el mismo turno" in texto  # conserva v11
-    assert "estado: vigente" in (Path(__file__).parents[1] / "prompts" / "v12_agente.md").read_text(encoding="utf-8")
+    assert "estado: vigente" in (Path(__file__).parents[1] / "prompts" / "v13_agente.md").read_text(encoding="utf-8")
