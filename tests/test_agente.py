@@ -104,6 +104,9 @@ def test_el_agente_tiene_las_herramientas():
         "listar_datos_del_cliente",
         "olvidar_dato_del_cliente",
         "radicar_reclamo",
+        "consultar_mis_reclamos",
+        "consultar_estado_reclamo",
+        "cancelar_reclamo",
     ]
 
 
@@ -511,6 +514,41 @@ def test_el_cliente_puede_ver_y_borrar_lo_guardado():
     assert datos_del_cliente("ana", almacen) == [] and datos_del_cliente("luis", almacen) == [
         "Vive en Ibagué"
     ]  # solo borra el suyo
+
+
+def test_los_reclamos_se_listan_se_consultan_por_radicado_y_se_cancelan():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import (
+        Contexto,
+        cancelar_reclamo,
+        consultar_estado_reclamo,
+        consultar_mis_reclamos,
+    )
+
+    almacen = InMemoryStore()
+    almacen.put(("reclamos", "ana"), "REC-AAA1", {"tipo": "falla_de_servicio", "ciudad": "Ibagué", "descripcion": "Sin luz", "estado": "radicado"})
+    almacen.put(("reclamos", "ana"), "REC-BBB2", {"tipo": "facturacion", "ciudad": "Cali", "descripcion": "Cobro doble", "estado": "radicado"})
+    almacen.put(("reclamos", "luis"), "REC-CCC3", {"tipo": "otro", "ciudad": "Palmira", "descripcion": "x"})
+
+    class Corrida:
+        store, context = almacen, Contexto(usuario="ana")
+
+    listado = consultar_mis_reclamos.func(Corrida)
+    assert "REC-AAA1" in listado and "REC-BBB2" in listado and "REC-CCC3" not in listado
+    assert "Ibagué" in consultar_estado_reclamo.func("rec-aaa1", Corrida)
+    assert "No encontré" in consultar_estado_reclamo.func("REC-ZZZZ", Corrida)
+    assert "cancelado" in cancelar_reclamo.func("REC-BBB2", Corrida, "ya se resolvió")
+    guardado = {i.key: i.value for i in almacen.search(("reclamos", "ana"))}
+    assert guardado["REC-BBB2"]["estado"] == "cancelado"
+    assert guardado["REC-AAA1"]["estado"] == "radicado"
+
+
+def test_cancelar_esta_en_la_aprobacion_humana():
+    from taaml.agente import APROBACION_HUMANA
+
+    assert "cancelar_reclamo" in APROBACION_HUMANA
+    assert "approve" in APROBACION_HUMANA["cancelar_reclamo"]["allowed_decisions"]
 
 
 def test_el_borrado_del_cliente_tambien_elimina_sus_reclamos_guardados():
