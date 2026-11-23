@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from pydantic import ValidationError
 
@@ -316,3 +318,35 @@ def test_el_radicado_se_normaliza_y_se_rechaza_lo_que_no_tiene_su_forma():
 
 def test_el_modelo_no_ve_el_runtime_ni_puede_pasar_el_usuario():
     assert set(consultar_estado_reclamo.tool_call_schema.model_json_schema()["properties"]) == {"numero"}
+
+
+from taaml.herramientas_servicio import SoloElCliente, listar_mis_reclamos, reclamos_del_cliente  # noqa: E402
+
+
+def test_lista_los_reclamos_del_cliente_con_el_total_y_sin_mezclar_clientes():
+    almacen = _almacen_con_reclamos()
+    r = reclamos_del_cliente(almacen, "ana")
+    assert "REC-ABCD1234" in r and "falla del servicio" in r and "Ibagué" in r and r.endswith("Total: 1 reclamo.")
+    assert "REC-99999999" not in r and "Cobro" not in r
+
+
+def test_lista_vacia_y_anonimo():
+    assert "no tiene reclamos radicados" in reclamos_del_cliente(InMemoryStore(), "ana")
+    assert "no hay un cliente identificado" in reclamos_del_cliente(_almacen_con_reclamos(), "anonimo")
+
+
+def test_lista_ordena_del_mas_reciente_y_topa_en_diez():
+    almacen = InMemoryStore()
+    for n in range(12):
+        time.sleep(0.01)  # que cada uno tenga su propia hora de creación
+        almacen.put(("reclamos", "ana"), f"REC-0000000{n:X}", {"tipo": "otro", "ciudad": "Cali", "descripcion": f"caso {n}"})
+    r = reclamos_del_cliente(almacen, "ana")
+    lineas = [x for x in r.splitlines() if x.startswith("- ")]
+    assert len(lineas) == 10 and "Total: 12 reclamos (se muestran los 10 más recientes)." in r
+    assert "caso 11" in lineas[0]  # el último que se guardó sale primero
+
+
+def test_la_herramienta_de_listar_no_pide_nada_al_modelo():
+    with pytest.raises(ValidationError):
+        SoloElCliente.model_validate({"runtime": None})
+    assert listar_mis_reclamos.tool_call_schema.model_json_schema()["properties"] == {}

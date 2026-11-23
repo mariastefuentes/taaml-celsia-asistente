@@ -102,6 +102,7 @@ def test_el_agente_tiene_las_herramientas():
         "consumo_de_un_aparato",
         "estimar_ahorro_solar",
         "consultar_estado_reclamo",
+        "listar_mis_reclamos",
     ]
 
 
@@ -1002,7 +1003,7 @@ def test_el_modelo_recibe_las_herramientas_con_su_esquema_json():
     from taaml.agente import HERRAMIENTAS
 
     esquemas = {f["function"]["name"]: f["function"] for f in map(convert_to_openai_tool, HERRAMIENTAS)}
-    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == len(HERRAMIENTAS) == 14
+    assert set(esquemas) == {t.name for t in HERRAMIENTAS} and len(esquemas) == len(HERRAMIENTAS) == 15
     for e in esquemas.values():
         assert e["description"] and e["parameters"]["type"] == "object"
     assert esquemas["consultar_datos"]["parameters"]["properties"]["tabla"]["enum"] == ["sedes", "contactos", "catalogo"]
@@ -1237,3 +1238,17 @@ def test_el_agente_consulta_el_reclamo_del_cliente_actual_por_su_numero():
     otro = crear_agente(llm=ModeloEspia(messages=iter([llamada2, AIMessage(content="No lo encontré.")]), vistos=[]), store=almacen)
     conversar("¿Cómo va mi reclamo?", "h-est2", agente=otro, usuario="c2")  # otro cliente: no ve el de c1
     assert "No encontré el radicado" in _resultado_de_herramienta(otro, "h-est2")
+
+
+def test_el_agente_lista_los_reclamos_solo_del_cliente_actual():
+    from langgraph.store.memory import InMemoryStore
+
+    almacen = InMemoryStore()
+    almacen.put(("reclamos", "c1"), "REC-ABCD1234", {"tipo": "otro", "ciudad": "Cali", "descripcion": "Cobro repetido"})
+    almacen.put(("reclamos", "c2"), "REC-99999999", {"tipo": "otro", "ciudad": "Ibagué", "descripcion": "De otro cliente"})
+    llamada = AIMessage(content="", tool_calls=[{"name": "listar_mis_reclamos", "args": {}, "id": "l1"}])
+    agente = crear_agente(llm=ModeloEspia(messages=iter([llamada, AIMessage(content="Tienes uno.")]), vistos=[]), store=almacen)
+    respuesta, usadas = conversar("¿Qué reclamos tengo?", "h-lis", agente=agente, usuario="c1")
+    assert respuesta == "Tienes uno." and [u["herramienta"] for u in usadas] == ["listar_mis_reclamos"]
+    resultado = _resultado_de_herramienta(agente, "h-lis")
+    assert "REC-ABCD1234" in resultado and "REC-99999999" not in resultado and "De otro cliente" not in resultado

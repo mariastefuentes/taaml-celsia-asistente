@@ -195,3 +195,8 @@ def test_v13_estima_el_ahorro_solar_con_escenario_hipotetico_y_deja_la_oferta_a_
 def test_v13_consulta_el_estado_del_reclamo_sin_inventar_la_gestion():
     texto = leer_prompt("v13_agente.md")
     assert "`consultar_estado_reclamo`" in texto and "nunca inventes si ya lo atendieron" in texto
+
+
+def test_v13_lista_los_reclamos_del_cliente_con_su_herramienta():
+    texto = leer_prompt("v13_agente.md")
+    assert "`listar_mis_reclamos`" in texto and "no recuerda su número de radicado" in texto

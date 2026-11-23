@@ -377,3 +377,37 @@ def consultar_estado_reclamo(numero: str, runtime: ToolRuntime[Contexto]) -> str
     su reclamo o por un radicado. Solo ve los reclamos del propio cliente. Dice qué se radicó y cuándo, no el estado de gestión de
     Celsia (no lo tiene): para eso remite a la línea 01 8000 112 115. Si no tiene el número, usa `listar_mis_reclamos`."""
     return estado_de_reclamo(_almacen(runtime), runtime.context.usuario, numero)
+
+
+MAX_RECLAMOS_LISTADOS = 10
+
+
+def reclamos_del_cliente(almacen, usuario: str) -> str:
+    """Los reclamos que ESTE cliente radicó, del más reciente al más antiguo; el total lo cuenta el código."""
+    if usuario == ANONIMO:
+        return "No puedo listarlos: no hay un cliente identificado, y los reclamos se ven solo desde la cuenta de quien los radicó."
+    items = sorted(almacen.search(("reclamos", usuario), limit=100), key=lambda i: i.created_at, reverse=True)
+    if not items:
+        return "Este cliente no tiene reclamos radicados desde este servicio."
+    lineas = []
+    for i in items[:MAX_RECLAMOS_LISTADOS]:
+        f = i.created_at.astimezone(HUSO_COLOMBIA)
+        lineas.append(
+            f"- {i.key}: {f.day} de {MESES[f.month - 1]} de {f.year}, {TIPOS_DE_RECLAMO.get(i.value.get('tipo'), 'otro')}, "
+            f"{i.value.get('ciudad', 'sin dato')}: {str(i.value.get('descripcion', ''))[:100]}"
+        )
+    total = f"Total: {len(items)} {'reclamo' if len(items) == 1 else 'reclamos'}"
+    lineas.append(f"{total} (se muestran los {MAX_RECLAMOS_LISTADOS} más recientes)." if len(items) > MAX_RECLAMOS_LISTADOS else f"{total}.")
+    return "\n".join(lineas)
+
+
+class SoloElCliente(EsquemaConRuntime):
+    """Esquema de las herramientas que no piden nada al modelo y solo miran lo del cliente actual."""
+
+
+@tool(args_schema=SoloElCliente)
+def listar_mis_reclamos(runtime: ToolRuntime[Contexto]) -> str:
+    """Lista los reclamos que este cliente radicó (número, fecha, tipo, ciudad y qué reportó), del más reciente al más antiguo, con el
+    total ya contado. Úsala cuando el cliente pregunte qué reclamos tiene, cuántos ha puesto o no recuerde el número de su radicado.
+    Solo ve los del propio cliente. No dice el estado de gestión de Celsia (no lo tiene)."""
+    return reclamos_del_cliente(_almacen(runtime), runtime.context.usuario)
