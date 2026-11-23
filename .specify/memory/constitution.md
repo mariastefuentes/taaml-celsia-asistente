@@ -249,6 +249,11 @@ git push -u origin feat/mi-cambio
 | 2026-11-21 | El agente busca con mezcla de significado y palabras; ranking k=10 medido | Rescata el dato que el significado deja lejos; nDCG@10 empata con embeddings (D31) |
 | 2026-11-21 | Servidor MCP propio (solo lectura, stdio) con las dos herramientas de consulta | Reutilizar el agente en clientes MCP sin abrir puertos (D32) |
 | 2026-11-21 | pre-commit (ruff, lock, `.env`) y `make tipos` con ty informativo | Detectar en local lo que el CI ve tarde; ty aún no bloquea (D33) |
+| 2026-11-22 | Métricas de la Parte 1 (D34): hit, MRR y nDCG@4 con Wilson y McNemar; la mezcla no se distingue de embeddings en 35 preguntas | Medir con rigor, no por impresión: 25/35 vs 26/35, p = 1,0 |
+| 2026-11-22 | OpenClaw como segundo cliente del MCP, con identidad, permisos endurecidos y sandbox Docker (D35) | El Taller 3 pide un cliente propio del MCP; la configuración vive fuera del repositorio |
+| 2026-11-22 | Matriz de enrutamiento ampliada de 33 a 43 preguntas; 42/43 (D36) | Cubre trámites, inglés, datos mezclados, fuga del prompt y fuera de dominio; R31 sigue como límite |
+| 2026-11-22 | Asesor humano: sin herramienta nueva; el agente deriva a los canales oficiales (D37) | Una sexta herramienta obligaría a cambiar el prompt v9 y el camino de WhatsApp por poca ganancia |
+| 2026-11-22 | Diagrama de arquitectura regenerado con Archify: prompt v9, mezcla, MCP y OpenClaw (D38) | El diagrama de punta a punta estaba desactualizado; se validó y se revisó a ojo |
 
 ## 10. Notas y tareas pendientes
 
