@@ -8,12 +8,49 @@ El puerto lo elige pgserver y puede cambiar en cada arranque, por eso `make api-
 """
 
 import argparse
+import subprocess
 import sys
+import time
 from pathlib import Path
 
+import psycopg
 import pgserver
+from pgserver.utils import PostmasterInfo
 
 RUTA = Path(__file__).resolve().parents[1] / "data" / "memoria" / "postgres"
+
+
+def _arrancar():
+    """Obtiene el servidor a `pgserver`; si el `pg_ctl -w` que usa pgserver expira (su timeout es 10 s y en
+    Windows el arranque se demora por la recuperaci├│n de la base y conflictos con el archivo de log), reintenta:
+    al segunda llamada devuelve la instancia ya registrada mientras el servidor sigue subiendo."""
+    deadline = time.monotonic() + 120
+    while True:
+        try:
+            # None: sigue encendido cuando este script termina
+            return pgserver.get_server(RUTA, cleanup_mode=None)
+        except subprocess.TimeoutExpired:
+            if time.monotonic() > deadline:
+                raise
+            time.sleep(2)
+
+
+def _esperar_listo() -> PostmasterInfo:
+    """Espera a que el servidor acepte una consulta de verdad: el archivo `postmaster.pid` dice 'ready'
+    antes de que el puerto sirva, y en Windows el arranque se demora m├ís all├í de lo que aguanta el timeout
+    de `pg_ctl`, as├¡ que lo comprueba conect├índose."""
+    deadline = time.monotonic() + 120
+    while time.monotonic() < deadline:
+        try:
+            info = PostmasterInfo.read_from_pgdata(RUTA)
+            if info is not None and info.is_running():
+                with psycopg.connect(info.get_uri(), autocommit=True) as conn:
+                    conn.execute("select 1")
+                return info
+        except Exception:
+            pass  # a├║n no sirve: en Windows la recuperaci├│n del arranque lleva su tiempo
+        time.sleep(1)
+    raise RuntimeError("el servidor PostgreSQL no qued├│ disponible; revisa el log en data/memoria/postgres/log")
 
 
 def main() -> None:
@@ -25,8 +62,8 @@ def main() -> None:
         pgserver.get_server(RUTA).cleanup()
         print("PostgreSQL local detenido", file=sys.stderr)
         return
-    servidor = pgserver.get_server(RUTA, cleanup_mode=None)  # None: sigue encendido cuando este script termina
-    print(servidor.get_uri())
+    _arrancar()
+    print(_esperar_listo().get_uri())
 
 
 if __name__ == "__main__":
