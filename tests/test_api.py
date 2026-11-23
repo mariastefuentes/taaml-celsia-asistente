@@ -239,3 +239,9 @@ def test_el_chat_web_no_se_monta_si_falta_el_frontend_compilado(tmp_path):
 
     assert montar_frontend(FastAPI(), tmp_path) is False
 
+
+def test_salud_dice_cuantos_numeros_estan_autorizados(monkeypatch):
+    monkeypatch.setenv("WHATSAPP_ALLOWLIST", "+573001112233,+573104445566")
+    assert cliente.get("/api/salud").json()["allowlist_whatsapp"] == 2
+    monkeypatch.delenv("WHATSAPP_ALLOWLIST", raising=False)
+    assert cliente.get("/api/salud").json()["allowlist_whatsapp"] == "abierta"

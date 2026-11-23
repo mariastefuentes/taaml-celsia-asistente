@@ -14,6 +14,7 @@ import hashlib
 import hmac
 import logging
 import os
+import re
 from typing import Any
 
 import requests
@@ -68,6 +69,25 @@ def estados_fallidos(carga: dict[str, Any]) -> list[str]:
 def configurado() -> bool:
     """¿Hay con qué enviar mensajes? Sin token y sin número, el servidor responde por la API pero no por WhatsApp."""
     return bool(os.environ.get("WHATSAPP_TOKEN") and os.environ.get("WHATSAPP_PHONE_NUMBER_ID"))
+
+
+def numeros_autorizados() -> set[str]:
+    """Los teléfonos de `WHATSAPP_ALLOWLIST`, en dígitos (Meta manda `573001112233` sin «+»).
+
+    Se acepta la lista separada por comas, punto y coma o espacios; los «+» y los espacios de cada número se ignoran.
+    """
+    crudo = os.environ.get("WHATSAPP_ALLOWLIST", "")
+    numeros = (re.sub(r"\D", "", n) for n in re.split(r"[,;]+", crudo))
+    return {n for n in numeros if n}
+
+
+def autorizado(telefono: str) -> bool:
+    """¿Este teléfono puede usar el bot? Sin lista configurada queda abierto (para los ensayos); con lista, solo los suyos.
+
+    La lista es la allowlist E.164 de la rúbrica: si está definida, cualquier otro número se ignora sin llamar al modelo.
+    """
+    permitidos = numeros_autorizados()
+    return not permitidos or re.sub(r"\D", "", telefono) in permitidos
 
 
 def enviar_texto(telefono: str, texto: str) -> bool:

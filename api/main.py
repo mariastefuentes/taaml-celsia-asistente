@@ -57,6 +57,7 @@ from taaml.limite import TEXTO_LIMITE, limite_desde_entorno
 from taaml.recuperacion import almacen_vectorial
 from taaml.whatsapp import (
     TEXTO_NO_SOPORTADO,
+    autorizado,
     descargar_audio,
     enviar_botones,
     enviar_texto,
@@ -64,6 +65,7 @@ from taaml.whatsapp import (
     firma_valida,
     marcar_leido,
     mensajes_entrantes,
+    numeros_autorizados,
 )
 
 log = logging.getLogger("taaml.api")
@@ -125,6 +127,7 @@ def salud() -> dict:
         "modelo": MODELO_AGENTE,
         "almacen": almacen_vectorial(),
         "memoria": "postgresql" if os.environ.get("DATABASE_URL") else "sqlite",
+        "allowlist_whatsapp": len(numeros_autorizados()) or "abierta",
     }
 
 
@@ -486,6 +489,10 @@ async def recibir_de_whatsapp(peticion: Request, segundo_plano: BackgroundTasks)
         # Solo el final del identificador (no el teléfono ni el texto): sirve para distinguir un reintento de Meta de un mensaje nuevo
         log.info("mensaje de WhatsApp ...%s (tipo %s), repetido: %s", m["id"][-8:], m["tipo"] or "?", "sí" if repetido else "no")
         if repetido:
+            continue
+        # Allowlist E.164: si está definida, un número ajeno no llega ni al agente ni al modelo (el aprobador es la excepción)
+        if not autorizado(m["telefono"]) and not _es_el_aprobador(m["telefono"]):
+            log.warning("mensaje de WhatsApp de un número fuera de la lista de autorizados: se ignora")
             continue
         nuevos += 1
         segundo_plano.add_task(atender_mensaje_de_whatsapp, m["telefono"], m["tipo"], m["texto"], m.get("audio", ""), m["id"])
