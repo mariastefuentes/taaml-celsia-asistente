@@ -45,6 +45,7 @@
     }
   },
   "tools": {
+    "toolSearch": false,
     "profile": "messaging",
     "deny": ["group:automation", "group:runtime", "group:fs", "sessions_spawn"],
     "fs": {
@@ -58,7 +59,7 @@
     },
     "sandbox": {
       "tools": {
-        "alsoAllow": ["celsia__*"]
+        "alsoAllow": ["celsia__*", "puente__*"]
       }
     }
   },
@@ -90,12 +91,32 @@
             "calcular_factura_estimada_celsia"
           ]
         }
+      },
+      "puente": {
+        "transport": "stdio",
+        "command": "uv",
+        "args": ["run", "python", "-m", "taaml.puente_mcp"],
+        "cwd": "${REPO_CELSIA}",
+        "env": {
+          "CELSIA_API_URL": "http://127.0.0.1:8000",
+          "CHAT_TOKEN": "${CHAT_TOKEN}",
+          "WHATSAPP_ALLOWLIST": "${WHATSAPP_ALLOWLIST}"
+        },
+        "toolFilter": {
+          "include": ["atender_cliente_celsia"]
+        }
       }
     }
   },
   "plugins": {
+    "load": {
+      "paths": ["${REPO_CELSIA}/openclaw/plugins/puente-celsia.js"]
+    },
     "entries": {
       "whatsapp": {
+        "enabled": true
+      },
+      "puente-celsia": {
         "enabled": true
       }
     }

@@ -98,6 +98,19 @@ WHATSAPP_ALLOWLIST=+57...,+57...
 
 5. Probar desde un teléfono autorizado: una pregunta de sedes (tool de tabla) y un «¿qué sabes de mí?» (memoria). La traza debe mostrar la herramienta elegida.
 
+### El puente: las 20 herramientas por el canal de OpenClaw (D52)
+
+El agente de OpenClaw solo ve las diez herramientas de solo lectura del MCP `celsia`. Para que **lo que se escribe por el WhatsApp de OpenClaw lo atienda el agente completo** (20 herramientas, memoria por cliente, reclamos con aprobación humana), la plantilla conecta un segundo MCP, `puente`, con **una sola herramienta**: `atender_cliente_celsia(mensaje, telefono)`, que llama a `POST /chat` de la API.
+
+```
+cliente → WhatsApp (QR) → OpenClaw → atender_cliente_celsia → POST /chat → agente de Celsia (20 herramientas) → respuesta
+```
+
+- **Quién escribe lo fija OpenClaw, no el modelo.** OpenClaw no manda el remitente a los MCP por stdio (se comprobó con un servidor espejo), así que el plugin `openclaw/plugins/puente-celsia.js` usa el gancho `before_tool_call` y reemplaza `telefono` con `ctx.requester.senderId`, el remitente verificado del canal. Sin remitente, bloquea la llamada. El puente además exige que el número esté en `WHATSAPP_ALLOWLIST`.
+- **Requisitos:** la API encendida (`make api`), `CHAT_TOKEN` igual en `.env` y en el entorno de OpenClaw, y el plugin del canal instalado (`openclaw plugins install npm:@openclaw/whatsapp`).
+- **Instrucciones al modelo:** `workspace/AGENTS.md` (sección «Canal de WhatsApp») manda llamar la herramienta en cada mensaje y devolver su texto sin cambios; `tools.toolSearch: false` deja el esquema a la vista.
+- **Si falla el puente**, responde la frase de contingencia con la línea 01 8000 112 115 y la demo sigue por el webhook propio de Meta.
+
 **Si el canal de OpenClaw no queda listo**, la demo no se cae: el bot sigue respondiendo por el webhook propio de Meta (apartado 8).
 
 ## 7. Evidencia para el repositorio
@@ -151,5 +164,6 @@ Y desde el teléfono de un invitado real: pedir una sede, pedir «¿qué sabes d
 
 - La plantilla se validó contra OpenClaw 2026.11.7 (esquema del ejecutable instalado localmente). Verificar en el equipo de la demo con `openclaw config validate`: si una clave cambió, se corrige la plantilla y sus pruebas en el mismo PR.
 - La allowlist autentica el número, no a la persona.
-- El servidor MCP es de solo lectura: los reclamos y la memoria solo existen en el agente del webhook propio, no en OpenClaw.
+- El servidor MCP `celsia` es de solo lectura; los reclamos y la memoria del cliente los atiende el agente de Celsia, al que OpenClaw llega por el puente `puente` (más una llamada al modelo: la respuesta tarda más que por el webhook).
+- El puente se probó de punta a punta con la CLI de OpenClaw y un remitente de prueba (memoria por cliente incluida); falta el ensayo con el chip real (el plugin lee `ctx.requester.senderId`, que solo existe en mensajes que llegan por un canal).
 - `openclaw security audit` no se automatiza; su salida se pega a mano con fecha.

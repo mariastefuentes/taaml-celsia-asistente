@@ -121,6 +121,14 @@ def problemas(config: dict) -> list[str]:
             fallos.append(f"«{numero}» no está en formato E.164 (+57…)")
     if not config.get("mcp", {}).get("servers", {}).get("celsia"):
         fallos.append("falta el servidor MCP propio «celsia»")
+    if not config.get("mcp", {}).get("servers", {}).get("puente"):
+        fallos.append("falta el servidor MCP «puente» (lleva los mensajes al agente de Celsia con sus 20 herramientas)")
+    if "puente__*" not in herramientas.get("sandbox", {}).get("tools", {}).get("alsoAllow", []):
+        fallos.append("el sandbox debe permitir el servidor MCP «puente__*»")
+    if config.get("plugins", {}).get("entries", {}).get("puente-celsia", {}).get("enabled") is not True:
+        fallos.append("falta el plugin «puente-celsia» (fija el teléfono del cliente con el remitente verificado)")
+    if herramientas.get("toolSearch") is not False:
+        fallos.append("tools.toolSearch debe ser false: el modelo tiene que ver la herramienta del puente sin buscarla")
     return fallos
 
 
