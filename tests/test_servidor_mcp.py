@@ -53,8 +53,8 @@ def test_consultar_sedes_devuelve_direcciones():
 
 def test_la_lista_permitida_de_openclaw_coincide_con_las_herramientas_del_servidor():
     """Si el servidor cambia una herramienta y la configuración de OpenClaw no, el gateway la bloquea (o apunta a una que ya no existe)."""
-    import json
-    from pathlib import Path
+    from taaml.openclaw import configuracion
 
-    ejemplo = json.loads((Path(__file__).parents[1] / "openclaw" / "openclaw.example.json").read_text(encoding="utf-8"))
-    assert set(ejemplo["mcp"]["servers"]["celsia"]["tools"]["allow"]) == ESPERADAS
+    entorno = {"OPENCLAW_GATEWAY_TOKEN": "t", "WHATSAPP_ALLOWLIST": "+573001112233", "REPO_CELSIA": "C:/ruta/al/repo"}
+    config = configuracion(entorno)
+    assert set(config["mcp"]["servers"]["celsia"]["toolFilter"]["include"]) == ESPERADAS
