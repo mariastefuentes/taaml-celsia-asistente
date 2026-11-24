@@ -1,49 +1,10 @@
-import json
 
 import pytest
 from langchain_openai import ChatOpenAI
 
 from taaml import tareas
 from taaml.reordenar import MODELO_REORDENADOR, modelo_reordenador
-from taaml.tareas import _tag_instalado, obtener_modelo
-
-
-class _RespuestaTags:
-    def __init__(self, nombres):
-        self._cuerpo = json.dumps({"models": [{"name": n} for n in nombres]}).encode("utf-8")
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_):
-        return False
-
-    def read(self):
-        return self._cuerpo
-
-
-def test_un_modelo_local_sin_tag_usa_el_tag_que_ollama_tiene_instalado(monkeypatch):
-    from taaml import tareas
-
-    monkeypatch.setattr(
-        tareas.urllib.request,
-        "urlopen",
-        lambda *a, **k: _RespuestaTags(["llama3.2:3b", "nomic-embed-text-v2-moe:latest"]),
-    )
-    assert _tag_instalado("llama3.2") == "llama3.2:3b"
-    assert _tag_instalado("llama3.2:3b") == "llama3.2:3b"
-    assert _tag_instalado("nomic-embed-text-v2-moe") == "nomic-embed-text-v2-moe:latest"
-    assert _tag_instalado("modelo-inexistente") == "modelo-inexistente"
-
-
-def test_si_ollama_no_responde_se_deja_el_nombre_tal_cual(monkeypatch):
-    from taaml import tareas
-
-    def sin_ollama(*_a, **_k):
-        raise ConnectionError("Ollama apagado")
-
-    monkeypatch.setattr(tareas.urllib.request, "urlopen", sin_ollama)
-    assert _tag_instalado("llama3.2") == "llama3.2"
+from taaml.tareas import obtener_modelo
 
 
 def test_un_nombre_deepseek_usa_deepseek_con_razonamiento_apagado(monkeypatch):
@@ -91,9 +52,8 @@ def test_los_tres_modelos_se_crean_con_init_chat_model(monkeypatch):
         return real(modelo, **kwargs)
 
     monkeypatch.setattr(tareas, "init_chat_model", espia)
-    monkeypatch.setattr(tareas, "_tag_instalado", lambda nombre: nombre)
     tareas.obtener_modelo.cache_clear()
-    modelos = [tareas.obtener_modelo(n) for n in ("deepseek-flash", "gemini-3.5-flash", "ollama:llama3.2")]
+    modelos = [tareas.obtener_modelo(n) for n in ("deepseek-flash", "gemini-3.5-flash")]
     tareas.obtener_modelo.cache_clear()
-    assert pedidos == [("deepseek-flash", "openai"), ("gemini-3.5-flash", "google_genai"), ("llama3.2", "ollama")]
-    assert [type(m).__name__ for m in modelos] == ["ChatOpenAI", "ChatGoogleGenerativeAI", "ChatOllama"]
+    assert pedidos == [("deepseek-flash", "openai"), ("gemini-3.5-flash", "google_genai")]
+    assert [type(m).__name__ for m in modelos] == ["ChatOpenAI", "ChatGoogleGenerativeAI"]

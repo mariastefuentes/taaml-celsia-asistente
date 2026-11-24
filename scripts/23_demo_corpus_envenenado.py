@@ -4,7 +4,7 @@ Crea data/_demo_inyeccion/ con una copia de chunks.jsonl a la que se le agrega u
 (el texto parece normal, pero trae una orden escondida). No toca el corpus real (data/4_curaduria). Con `--servir` además enciende la API
 apuntando a esa copia (variable TAAML_CURADURIA), para probarlo desde el frontend.
 
-El vector del fragmento nuevo se calcula con Ollama (debe estar encendido) y se suma a los del corpus real.
+El vector del fragmento nuevo se calcula con Gemini y se suma a los del corpus real.
 
 Uso:  uv run python scripts/23_demo_corpus_envenenado.py            (solo crea la copia)
       uv run python scripts/23_demo_corpus_envenenado.py --servir   (crea la copia y enciende la API en el puerto 8000)
@@ -54,7 +54,7 @@ def crear_copia() -> Path:
     with (DEMO / "chunks.jsonl").open("w", encoding="utf-8", newline="\n") as f:
         for fr in fragmentos:
             f.write(json.dumps(fr, ensure_ascii=False) + "\n")
-    # el vector del fragmento nuevo se calcula con Ollama (local, gratis) y se suma a los del corpus real: se recupera por significado, como un documento cualquiera
+    # el vector del fragmento nuevo se calcula con Gemini y se suma a los del corpus real: se recupera por significado, como un documento cualquiera
     sys.path.insert(0, str(ROOT / "src"))
     import numpy as np
 

@@ -19,11 +19,11 @@ def test_la_cuota_y_la_conexion_son_fallas_del_proveedor_y_un_error_de_codigo_no
 
 def test_la_cadena_agrega_deepseek_solo_con_clave_y_siempre_el_local(monkeypatch):
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
-    assert cadena_de_modelos("gemini-3.5-flash") == ["gemini-3.5-flash", "ollama:llama3.2"]
+    assert cadena_de_modelos("gemini-3.5-flash") == ["gemini-3.5-flash", "deepseek-v4-pro"]
     monkeypatch.setenv("DEEPSEEK_API_KEY", "x")
-    assert cadena_de_modelos("gemini-3.5-flash") == ["gemini-3.5-flash", "deepseek-flash", "ollama:llama3.2"]
-    assert cadena_de_modelos("deepseek-flash") == ["deepseek-flash", "ollama:llama3.2"]
-    assert cadena_de_modelos("ollama:llama3.2") == ["ollama:llama3.2"]
+    assert cadena_de_modelos("gemini-3.5-flash") == ["gemini-3.5-flash", "deepseek-flash", "deepseek-v4-pro"]
+    assert cadena_de_modelos("deepseek-flash") == ["deepseek-flash", "deepseek-v4-pro"]
+    assert cadena_de_modelos("deepseek-v4-pro") == ["deepseek-v4-pro"]
 
 
 def test_pasa_al_siguiente_modelo_y_avisa(monkeypatch):
@@ -37,8 +37,8 @@ def test_pasa_al_siguiente_modelo_y_avisa(monkeypatch):
         return "ok"
 
     resultado, usado, avisos = con_respaldo(tarea, "gemini-3.5-flash")
-    assert (resultado, usado) == ("ok", "ollama:llama3.2") and llamados == ["gemini-3.5-flash", "ollama:llama3.2"]
-    assert "gemini-3.5-flash no respondió" in avisos[0] and "más lento" in avisos[-1]
+    assert (resultado, usado) == ("ok", "deepseek-v4-pro") and llamados == ["gemini-3.5-flash", "deepseek-v4-pro"]
+    assert "gemini-3.5-flash no respondió" in avisos[0] and "último recurso" in avisos[-1]
 
 
 def test_si_responde_el_primero_no_hay_avisos_ni_se_llama_a_los_demas():
@@ -58,7 +58,7 @@ def test_si_fallan_todos_se_propaga_el_ultimo_error(monkeypatch):
     def tarea(modelo):
         raise RuntimeError(f"503 UNAVAILABLE {modelo}")
 
-    with pytest.raises(RuntimeError, match="ollama:llama3.2"):
+    with pytest.raises(RuntimeError, match="deepseek-v4-pro"):
         con_respaldo(tarea, "gemini-3.5-flash")
 
 
@@ -105,7 +105,7 @@ def test_con_una_clave_invalida_pasa_al_modelo_local(monkeypatch):
         return "respuesta local"
 
     resultado, usado, avisos = con_respaldo(tarea, "gemini-3.5-flash")
-    assert (resultado, usado) == ("respuesta local", "ollama:llama3.2")
+    assert (resultado, usado) == ("respuesta local", "deepseek-v4-pro")
     assert "no respondió" in avisos[0]
     assert es_falla_del_proveedor(TimeoutError("timed out"))
 

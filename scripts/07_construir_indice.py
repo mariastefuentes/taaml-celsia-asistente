@@ -1,11 +1,11 @@
-"""INDICE: calcula el embedding de cada fragmento de data/4_curaduria/chunks.jsonl con Ollama.
+"""INDICE: calcula el embedding de cada fragmento de data/4_curaduria/chunks.jsonl con Gemini.
 
 Escribe data/4_curaduria/indice_embeddings.npz (vectores e identificadores de los fragmentos, que sirven de caché) y los carga
 en la base vectorial Qdrant (data/4_curaduria/qdrant, modo local), que es donde busca el asistente. Apaga la API antes de correrlo: el modo local bloquea la carpeta. Es reanudable: guarda
 cada tanda en un archivo temporal, así que si se interrumpe retoma donde quedó. Los fragmentos que no cambiaron
 (mismo texto) reutilizan su vector, por lo que reindexar tras un cambio pequeño es rápido.
 
-Requisitos: Ollama encendido y el modelo descargado (`ollama pull nomic-embed-text-v2-moe`).
+Requisitos: GOOGLE_API_KEY en .env.
 
 Uso:  uv run python scripts/07_construir_indice.py
 """
@@ -22,7 +22,7 @@ from taaml.recuperacion import CURADURIA, INDICE, MODELO_EMBEDDINGS, cargar_frag
 from taaml.sinonimos import etiquetas_fragmento  # noqa: E402
 
 PARCIAL = CURADURIA / "indice_parcial.npz"
-TANDA = 8
+TANDA = 50
 
 
 def huella(texto: str) -> str:

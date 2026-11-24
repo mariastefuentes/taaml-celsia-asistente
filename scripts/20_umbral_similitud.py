@@ -1,4 +1,4 @@
-"""UMBRAL DE SIMILITUD (clase 5): ¿conviene dejar pasar al modelo solo los fragmentos con coseno >= τ? No usa la API del modelo; necesita Ollama (embeddings).
+"""UMBRAL DE SIMILITUD (clase 5): ¿conviene dejar pasar al modelo solo los fragmentos con coseno >= τ? No usa la API del modelo; necesita GOOGLE_API_KEY (embeddings).
 
 Para cada τ mide dos cosas con el conjunto de prueba:
   - preguntas con respuesta (35): en cuántas la respuesta sigue entre los fragmentos que pasan el umbral (lo que se pierde si el umbral es alto);
@@ -31,7 +31,7 @@ def main() -> None:
     for p in preguntas:
         recuperados = buscar(p["pregunta"], K, "embeddings")
         if recuperados[0]["metodo"] != "embeddings":
-            sys.exit("Ollama no respondió: sin embeddings no hay coseno que medir.")
+            sys.exit("La API de embeddings no respondió: sin embeddings no hay coseno que medir.")
         if p["tipo_prueba"] == "respuesta":
             patron = re.compile(inventario[p["intencion_id"]]["regex_cobertura"], re.I)
             puntaje = next(

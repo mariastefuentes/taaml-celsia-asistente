@@ -12,7 +12,7 @@ A diferencia del banco de hostiles (script 40), aquí cada caso tiene un valor e
   - «trámite» y «tarifa»: preguntas de texto largo cuya respuesta correcta debe traer unos datos clave (un plazo, un documento, un porcentaje). Cada dato esperado
     se comprueba contra el texto oficial al arrancar (`hechos_sin_respaldo`): si no aparece ahí, el caso no se corre.
   - «conversación»: una charla larga de 10 turnos con cambios de tema y una corrección; se revisa cada turno.
-Necesita DEEPSEEK_API_KEY y Ollama encendido. Usa memoria SQLite temporal: no toca la base de la demostración.
+Necesita DEEPSEEK_API_KEY y GOOGLE_API_KEY en .env. Usa memoria SQLite temporal: no toca la base de la demostración.
 """
 
 import os

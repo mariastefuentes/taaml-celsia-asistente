@@ -1,4 +1,4 @@
-"""BÚSQUEDA EXACTA FRENTE A ANN Y ESTRATEGIAS DE FILTRADO (clase de bases vectoriales). No gasta cuota de modelos de pago; las preguntas se vectorizan con Ollama.
+"""BÚSQUEDA EXACTA FRENTE A ANN Y ESTRATEGIAS DE FILTRADO (clase de bases vectoriales). No gasta cuota de modelos de pago; las preguntas se vectorizan con Gemini.
 
 Qdrant en modo local (el que usa el proyecto) hace búsqueda exacta: compara la pregunta con los 1.690 vectores. Un índice aproximado (ANN) como HNSW solo existe en un servidor Qdrant;
 aquí se mide, sobre los mismos vectores, qué pierden y qué ahorran dos familias de ANN escritas con NumPy, y cómo se comportan las estrategias de filtrado.

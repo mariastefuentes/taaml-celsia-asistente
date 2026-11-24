@@ -6,7 +6,7 @@
 A diferencia de los ataques (script 19), aquí no hay trampas técnicas: son preguntas legítimas pero incómodas (ambiguas, sin dato en la base,
 de la competencia, con un reclamo a medias, con un insulto). Cada caso tiene una regla automática de falla y, además, se imprime la respuesta
 para leerla a mano: la regla es una ayuda, no un veredicto. Casos sin regla (`None`) se juzgan solo leyéndolos.
-Necesita DEEPSEEK_API_KEY y Ollama encendido. Usa memoria SQLite temporal: no toca la base de la demostración.
+Necesita DEEPSEEK_API_KEY y GOOGLE_API_KEY en .env. Usa memoria SQLite temporal: no toca la base de la demostración.
 """
 
 import os

@@ -29,7 +29,7 @@ ayuda:
 	$(info   DATOS Y SCRAPING)
 	$(info     make scraping-demo   borra la carpeta de demo y descarga 5 paginas del blog (no toca data/1_bronze ni gasta cuota))
 	$(info     make datos           reconstruye silver, gold, curaduria y fragmentos (necesita el HTML de Bronze))
-	$(info     make indice          construye el indice de vectores con Ollama (sube la busqueda del 54 % al 89 %))
+	$(info     make indice          construye el indice de vectores con embeddings de Gemini (en la nube; sube la busqueda del 51 % al 83 %))
 	$(info )
 	$(info   VERIFICAR ANTES DE LA DEMO)
 	$(info     make demo-limpiar    borra la memoria de largo plazo de los ensayos (antes de la demo))
@@ -41,11 +41,11 @@ ayuda:
 	$(info     make herramienta-caida   rompe herramientas a proposito con el modelo real y mira que el agente avise sin inventar (GASTA CUOTA: unas 4 a 8 llamadas))
 	$(info     make informe-borrador    genera docs/3 - Informe/borrador_informe_final.md con los datos del repo (gratis))
 	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas al modelo))
-	$(info     make test            pruebas automaticas (gratis, sin Gemini ni Ollama))
+	$(info     make test            pruebas automaticas (gratis, sin Gemini))
 	$(info     make lint            errores de codigo con ruff y lock vigente)
 	$(info     make skills-check    valida las skills de .opencode/skills (gratis))
 	$(info     make check           lint + pruebas + skills: lo que corre el CI; correrlo antes de subir)
-	$(info     make recuperacion    mide la recuperacion de fragmentos (gratis; necesita Ollama))
+	$(info     make recuperacion    mide la recuperacion de fragmentos (necesita GOOGLE_API_KEY para los embeddings))
 	$(info )
 	$(info   OTROS)
 	$(info     make evaluar         corre las 59 preguntas con Gemini (GASTA CUOTA: confirmar antes))
@@ -58,13 +58,9 @@ ayuda:
 setup:
 	uv sync --all-groups
 	uv run python -c "import pathlib, shutil; p = pathlib.Path('.env'); p.exists() or shutil.copy('.env.example', p); print('Listo: .env disponible (completa GOOGLE_API_KEY si esta vacio)')"
-	$(info Descargando los modelos de Ollama (si ya estan, no hace nada):)
-	-ollama --version
-	-ollama pull nomic-embed-text-v2-moe
-	-ollama pull llama3.2:3b
 	$(info )
 	$(info Siguiente paso: edita .env, pon tu GOOGLE_API_KEY y ejecuta 'make modulo1'.)
-	$(info Sin GOOGLE_API_KEY la app usa Ollama local (llama3.2:3b) y, si tampoco responde, las respuestas guardadas.)
+	$(info Sin GOOGLE_API_KEY ni DEEPSEEK_API_KEY la app muestra las respuestas guardadas. No se usan modelos locales.)
 
 modulo1:
 	uv run streamlit run app/modulo1.py
