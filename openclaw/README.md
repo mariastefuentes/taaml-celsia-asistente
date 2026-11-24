@@ -6,7 +6,7 @@ Configuración **versionada y saneada** del gateway de OpenClaw que pide la rúb
 
 | Archivo | Para qué |
 |---|---|
-| `openclaw.example.json` | Plantilla de la configuración endurecida (decisión D35): `bind: loopback`, token de gateway, modelo primario y respaldo, `tools.deny`, `fs.workspaceOnly`, sandbox Docker, allowlist E.164 del canal de WhatsApp y el servidor MCP `celsia` con sus diez herramientas |
+| `openclaw.example.json` | Plantilla de la configuración endurecida, validada contra OpenClaw 2026.11.7 (decisión D35): `bind: loopback`, token de gateway, modelo primario y respaldo, `tools.deny`, `fs.workspaceOnly`, sandbox (`mode: all`, `backend: docker`, `scope: agent`, `docker.image`), `dmPolicy`/`allowFrom` de WhatsApp en E.164 (derivado de `WHATSAPP_ALLOWLIST`), `session.dmScope: per-channel-peer` y el servidor MCP `celsia` con sus diez herramientas (`toolFilter`) |
 | `workspace/` | Identidad y memoria legibles y editables: `SOUL.md`, `AGENTS.md`, `USER.md`, `MEMORY.md` y la bitácora diaria |
 
 ## Instalación
@@ -35,13 +35,14 @@ openclaw security audit
 - `gateway.bind` en `loopback` y token resuelto desde el entorno.
 - `tools.deny` con los grupos de automatización, ejecución y sistema de archivos, y `sessions_spawn`.
 - `tools.fs.workspaceOnly` en `true` y `tools.exec.mode` en `deny`.
-- Permisos elevados y navegador apagados.
-- Sandbox en modo `all` con `workspaceAccess: none` y el MCP `celsia__*` permitido dentro.
-- Allowlist de WhatsApp con números en E.164.
+- Sandbox en modo `all` con backend `docker`, scope `agent`, `workspaceAccess: none` y el MCP `celsia__*` permitido dentro.
+- `channels.whatsapp` con `dmPolicy: allowlist` y `allowFrom` en E.164 (derivado de `WHATSAPP_ALLOWLIST`).
+- `session.dmScope: per-channel-peer`.
+- El servidor MCP `celsia` con sus diez herramientas.
 - Ningún secreto en la plantilla.
 
 ## Límites
 
-- La plantilla salió de la configuración que funcionó en D35, pero **cada versión de OpenClaw puede cambiar nombres de claves**: después de instalar, correr `openclaw config validate` y `openclaw security audit` en el equipo de la demo. Si una clave cambió, se actualiza la plantilla en el mismo PR.
+- La plantilla se validó contra el esquema de OpenClaw 2026.11.7 (el ejecutable instalado localmente). Verificar en el equipo de la demo con `openclaw config validate`: si una clave cambió, se corrige la plantilla y sus pruebas en el mismo PR.
 - El modelo primario es `deepseek-flash` con `gemini-3.8-flash` de respaldo, como el agente. La clave del proveedor vive en el entorno, nunca aquí.
 - La bitácora diaria del workspace se escribe a mano; no se versiona lo que diga de clientes reales.
