@@ -23,14 +23,20 @@ class ConfiguracionInvalida(ValueError):
 
 
 def _resolver(texto: str, entorno: dict[str, str] | None = None) -> str:
-    """Sustituye `${VARIABLE}` por su valor. Falla si falta: una configuración a medias es peor que ninguna."""
+    """Sustituye `${VARIABLE}` por su valor. Falla si falta: una configuración a medias es peor que ninguna.
+
+    Los valores que empiezan por `[` van sin comillas (arrays JSON, por ejemplo `allowFrom`); el resto va dentro de
+    la comilla que el template puso alrededor del `${...}`.
+    """
     entorno = {**os.environ, **(entorno or {})}
     faltan = [v for v in VARIABLES if f"${{{v}}}" in texto and not entorno.get(v)]
 
     def reemplazo(match: re.Match) -> str:
         nombre = match.group(1)
-        # el valor va dentro de una cadena JSON: hay que escapar las barras de las rutas de Windows y las comillas
-        return json.dumps(entorno[nombre])[1:-1] if nombre in entorno else match.group(0)
+        if nombre not in entorno:
+            return match.group(0)
+        valor = entorno[nombre]
+        return valor if valor.lstrip().startswith("[") else json.dumps(valor)[1:-1]
 
     resuelto = re.sub(r"\$\{([A-Z0-9_]+)\}", reemplazo, texto)
     if faltan:
@@ -38,20 +44,38 @@ def _resolver(texto: str, entorno: dict[str, str] | None = None) -> str:
     return resuelto
 
 
+def _allowlist_json(crudo: str) -> str:
+    """Convierte WHATSAPP_ALLOWLIST (separado por comas, punto y comas o espacios) en un array JSON de E.164."""
+    numeros = []
+    for parte in re.split(r"[,;]", crudo):
+        digitos = re.sub(r"\D", "", parte)
+        if digitos:
+            numeros.append("+" + digitos)
+    return json.dumps(numeros)
+
+
 def configuracion(entorno: dict[str, str] | None = None, plantilla: Path | None = None) -> dict:
-    """Devuelve la configuración como diccionario, con las variables ya sustituidas."""
-    texto = _resolver((plantilla or PLANTILLA).read_text(encoding="utf-8"), entorno)
+    """Devuelve la configuración como diccionario, con las variables ya sustituidas.
+
+    El `allowFrom` del canal de WhatsApp sale de `WHATSAPP_ALLOWLIST` (derivado aquí); una lista vacía queda
+    marcada en `problemas()` con el nombre de la variable que hay que definir.
+    """
+    ent = {**os.environ, **(entorno or {})}
+    ent["WHATSAPP_ALLOWLIST_ARRAY"] = _allowlist_json(ent.get("WHATSAPP_ALLOWLIST", ""))
+    texto = _resolver((plantilla or PLANTILLA).read_text(encoding="utf-8"), ent)
     return json.loads(texto)
 
 
 def problemas(config: dict) -> list[str]:
-    """Lista lo que falta para el endurecimiento de la rúbrica: sandbox, deny, workspaceOnly, loopback, allowlist E.164.
+    """Lista lo que falta para el endurecimiento de la rúbrica en OpenClaw 2026.11.7: sandbox, deny, workspaceOnly, allowlist E.164.
 
     No es un validador del esquema de OpenClaw (eso lo hace la herramienta): comprueba las decisiones que el equipo tomó y que
     la auditoría debe poder mostrar.
     """
     fallos: list[str] = []
     gateway = config.get("gateway", {})
+    if gateway.get("mode") != "local":
+        fallos.append("gateway.mode debe ser «local»")
     if gateway.get("bind") != "loopback":
         fallos.append("gateway.bind debe ser «loopback»")
     token = gateway.get("auth", {}).get("token", "")
@@ -67,20 +91,34 @@ def problemas(config: dict) -> list[str]:
         fallos.append("tools.exec.mode debe ser «deny»")
     if herramientas.get("elevated", {}).get("enabled") is not False:
         fallos.append("tools.elevated.enabled debe ser false")
-    if herramientas.get("browser", {}).get("enabled") is not False:
-        fallos.append("tools.browser.enabled debe ser false")
+    if not config.get("agents", {}).get("entries", {}):
+        fallos.append("agents.entries debe contener al menos un agente configurado (por ejemplo «main»)")
+    if not config.get("plugins", {}).get("entries", {}).get("whatsapp", {}).get("enabled"):
+        fallos.append("plugins.entries.whatsapp.enabled debe ser true")
+    if config.get("env", {}).get("shellEnv", {}).get("enabled") is not True:
+        fallos.append("env.shellEnv.enabled debe ser true")
     sandbox = config.get("agents", {}).get("defaults", {}).get("sandbox", {})
-    if sandbox.get("scope") != "all" or sandbox.get("workspaceAccess") != "none":
-        fallos.append("el sandbox debe ser scope «all» con workspaceAccess «none»")
+    if sandbox.get("mode") != "all":
+        fallos.append("el sandbox debe ser mode «all»")
+    if sandbox.get("backend") != "docker":
+        fallos.append("el sandbox debe ser backend «docker»")
+    if sandbox.get("scope") not in ("session", "agent", "shared"):
+        fallos.append("el sandbox scope debe ser session, agent o shared")
+    if sandbox.get("workspaceAccess") != "none":
+        fallos.append("el sandbox debe ser workspaceAccess «none»")
+    if not sandbox.get("docker", {}).get("image"):
+        fallos.append("el sandbox debe tener una imagen en docker.image")
     if "celsia__*" not in herramientas.get("sandbox", {}).get("tools", {}).get("alsoAllow", []):
         fallos.append("el sandbox debe permitir el servidor MCP «celsia__*»")
-    allowlist = config.get("channels", {}).get("whatsapp", {}).get("allowlist", [])
+    whatsapp = config.get("channels", {}).get("whatsapp", {})
+    if whatsapp.get("dmPolicy") != "allowlist":
+        fallos.append("channels.whatsapp.dmPolicy debe ser «allowlist»")
+    allowlist = whatsapp.get("allowFrom", [])
     if not allowlist:
-        fallos.append("channels.whatsapp.allowlist está vacía")
+        fallos.append("channels.whatsapp.allowFrom está vacía (defina WHATSAPP_ALLOWLIST)")
     for numero in allowlist:
-        for uno in str(numero).replace(";", ",").split(","):
-            if uno.strip() and not E164.match(uno.strip()):
-                fallos.append(f"«{uno.strip()}» no está en formato E.164 (+57…)")
+        if not E164.match(str(numero).strip()):
+            fallos.append(f"«{numero}» no está en formato E.164 (+57…)")
     if not config.get("mcp", {}).get("servers", {}).get("celsia"):
         fallos.append("falta el servidor MCP propio «celsia»")
     return fallos
