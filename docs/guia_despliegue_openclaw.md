@@ -75,11 +75,19 @@ Debe listar `celsia` con diez herramientas (`buscar_informacion_celsia`, `consul
 ## 6. Canal de WhatsApp
 
 1. Arrancar el gateway (`openclaw gateway`, o como servicio del sistema).
-2. Vincular el canal de WhatsApp y escanear el código cuando lo pida.
-3. Comprobar el estado y la sesión:
+2. Vincular el canal de WhatsApp con el procedimiento nativo de OpenClaw (imprime un QR; escanéalo desde la app WhatsApp → Mis dispositivos vinculados):
+
+```bash
+openclaw channels login --channel whatsapp --verbose
+openclaw channels logs
+```
+
+3. Comprobar el estado, la sesión y los servidores MCP (verificado el 2026-11-24):
 
 ```bash
 openclaw channels status --probe
+openclaw mcp doctor celsia --probe   # «celsia: ok»
+openclaw mcp list                    # lista el servidor «celsia»
 ```
 
 4. Definir la allowlist solo con los teléfonos de los invitados y del equipo:
@@ -141,7 +149,7 @@ Y desde el teléfono de un invitado real: pedir una sede, pedir «¿qué sabes d
 
 ## Límites conocidos
 
-- La plantilla no se probó contra la versión de OpenClaw del equipo de la demo; hay que validarla allí.
+- La plantilla se validó contra OpenClaw 2026.11.7 (esquema del ejecutable instalado localmente). Verificar en el equipo de la demo con `openclaw config validate`: si una clave cambió, se corrige la plantilla y sus pruebas en el mismo PR.
 - La allowlist autentica el número, no a la persona.
 - El servidor MCP es de solo lectura: los reclamos y la memoria solo existen en el agente del webhook propio, no en OpenClaw.
 - `openclaw security audit` no se automatiza; su salida se pega a mano con fecha.
