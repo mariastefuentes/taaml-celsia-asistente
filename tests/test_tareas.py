@@ -44,10 +44,10 @@ def test_la_cadena_del_qa_coloca_el_prompt_de_sistema_y_la_pregunta_delimitada(m
 
 def test_si_la_recuperacion_falla_se_propaga_el_error_para_el_respaldo(monkeypatch):
     def _recuperar(pregunta, k=12, metodo="auto"):
-        return [], {"encontrados": 0, "metodo": "error", "tiempo_ms": 1.0, "error": "ConnectionError ollama apagado"}
+        return [], {"encontrados": 0, "metodo": "error", "tiempo_ms": 1.0, "error": "ConnectionError embeddings caidos"}
 
     monkeypatch.setattr(tareas, "recuperar", _recuperar)
-    with pytest.raises(RuntimeError, match="ollama apagado"):
+    with pytest.raises(RuntimeError, match="embeddings caidos"):
         tareas.responder_con_fuentes("pregunta", "rag", "gemini-3.5-flash")
 
 

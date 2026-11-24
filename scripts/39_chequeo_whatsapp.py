@@ -3,7 +3,7 @@
   make ensayo-whatsapp                                                       # revisa todo lo local y, si hay claves, el token de Meta
   uv run python scripts/39_chequeo_whatsapp.py --tunel https://algo.trycloudflare.com   # además prueba el camino túnel -> API
 
-Revisa: las claves (solo si existen; nunca se imprimen), Ollama y el índice, la API local (`make api` encendida, memoria, panel),
+Revisa: las claves (solo si existen; nunca se imprimen), los embeddings y el índice, la API local (`make api` encendida, memoria, panel),
 que el token de Meta siga vivo (el de prueba vence a las 24 horas y es la falla más común) y, con `--tunel`, que la dirección pública
 llegue al webhook (se hace la verificación GET de Meta, que no usa el modelo). Termina con código 1 si falta algo imprescindible.
 """
@@ -61,11 +61,8 @@ def revisar_variables() -> None:
         resultados[-1] = ("OK   ", "APROBADOR_WHATSAPP definida (aprobar con botones)", "")
 
 
-def revisar_ollama_e_indice() -> None:
-    codigo, cuerpo = pedir("http://localhost:11434/api/tags", tiempo=3)
-    modelos = [m["name"] for m in json.loads(cuerpo).get("models", [])] if codigo == 200 else []
-    anotar(codigo == 200, "Ollama encendido", "abre Ollama (los embeddings de las preguntas lo necesitan)")
-    anotar(any("nomic-embed-text-v2-moe" in m for m in modelos), "modelo nomic-embed-text-v2-moe instalado", "ollama pull nomic-embed-text-v2-moe")
+def revisar_embeddings_e_indice() -> None:
+    anotar(bool(os.environ.get("GOOGLE_API_KEY")), "GOOGLE_API_KEY definida (embeddings de las preguntas)", "agrégala al .env (ver .env.example)")
     try:
         from taaml.recuperacion import INDICE
 
@@ -123,7 +120,7 @@ def main() -> int:
     if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
         sys.stdout.reconfigure(encoding="utf-8")
     revisar_variables()
-    revisar_ollama_e_indice()
+    revisar_embeddings_e_indice()
     revisar_api()
     revisar_token_de_meta()
     if args.tunel:

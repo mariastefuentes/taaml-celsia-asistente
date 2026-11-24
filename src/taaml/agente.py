@@ -2,7 +2,7 @@
 
 Es el patrón «modelo + herramientas + prompt», con memoria por conversación (`thread_id`) y dos herramientas: `buscar_en_base`
 (texto, reutiliza `recuperacion.buscar`) y `consultar_datos` (datos exactos). Usa DeepSeek de pago y, si
-falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1; DeepSeek respeta temperature con el razonamiento apagado, pero deja top_p fijo en 1,0.
+falla, cae a otros modelos en la nube (Gemini y DeepSeek v4 pro). Se envían temperature 0.0 y top_p 0.1; DeepSeek respeta temperature con el razonamiento apagado, pero deja top_p fijo en 1,0.
 """
 
 import logging
@@ -55,8 +55,8 @@ log = logging.getLogger("taaml.agente")
 
 MODELO_AGENTE_POR_DEFECTO = "deepseek-flash"  # DeepSeek-V4.1-Flash-1017 con API de pago
 MODELO_AGENTE = os.environ.get("TAAML_MODELO_AGENTE") or MODELO_AGENTE_POR_DEFECTO  # TAAML_MODELO_AGENTE permite cambiarlo sin tocar código
-MODELO_RESPALDO_GEMINI = "gemini-3.8-flash"  # si DeepSeek falla (cuota, red), se intenta este antes del local; requiere GOOGLE_API_KEY
-MODELO_RESPALDO = "ollama:llama3.2"  # 3B local y gratis: solo entra si los de pago fallan
+MODELO_RESPALDO_GEMINI = "gemini-3.8-flash"  # si DeepSeek falla (cuota, red), se intenta este antes del último recurso; requiere GOOGLE_API_KEY
+MODELO_RESPALDO = "deepseek-v4-pro"  # último recurso, también en la nube (el anuncio no admite modelos locales): solo entra si los anteriores fallan
 RUTA_MEMORIA = (
     Path(__file__).resolve().parents[2] / "data" / "memoria" / "conversaciones.sqlite"
 )  # las conversaciones sobreviven a reiniciar la app
@@ -812,7 +812,7 @@ MENSAJE_HERRAMIENTA_CAIDA = (
 def errores_amables(request: Any, handler: Any) -> Any:
     """Si una herramienta falla, el modelo recibe el aviso en lugar de que se caiga el turno entero.
 
-    Argumentos inválidos: se le dice qué corregir para que reintente. Cualquier otro fallo (base caída, Ollama apagado…): se
+    Argumentos inválidos: se le dice qué corregir para que reintente. Cualquier otro fallo (base caída, API de embeddings caída…): se
     registra completo y el modelo recibe un mensaje sin detalles internos para que le explique al cliente con cortesía.
     Las pausas de aprobación humana (`GraphBubbleUp`) no son errores y pasan intactas.
     """
@@ -1078,9 +1078,9 @@ def _agente(modelo: str) -> Any:
 
 
 def calentar(modelo: str = MODELO_AGENTE) -> None:
-    """Prepara lo lento de la primera pregunta: arma el agente (~3 s), abre la base vectorial y carga el modelo de embeddings en Ollama (~7 s en frío).
+    """Prepara lo lento de la primera pregunta: arma el agente (~3 s), abre la base vectorial y comprueba el servicio de embeddings.
 
-    No llama al modelo de pago. Si algo falta (Ollama apagado, por ejemplo) no falla: la primera pregunta real lo resolverá o mostrará el error.
+    No llama al modelo de pago. Si algo falta (sin red o sin clave, por ejemplo) no falla: la primera pregunta real lo resolverá o mostrará el error.
     """
     try:
         _agente(modelo)
@@ -1314,9 +1314,7 @@ def uso_del_turno(agente: Any, thread_id: str) -> tuple[int, int]:
 
 
 def costo_usd(entrada: int, salida: int, modelo: str = MODELO_AGENTE, hoy: date | None = None) -> float | None:
-    """Costo en dólares de una cantidad de tokens; 0.0 para un modelo local y None si no hay precio conocido."""
-    if modelo.startswith("ollama:"):
-        return 0.0
+    """Costo en dólares de una cantidad de tokens; None si no hay precio conocido."""
     precios = PRECIOS_USD_2027 if (hoy or date.today()) >= INICIO_2027 else PRECIOS_USD
     if modelo not in precios:
         return None

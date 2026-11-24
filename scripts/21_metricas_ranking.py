@@ -1,4 +1,4 @@
-"""RANKING (clase 7): precision@10, recall@10 y nDCG@10 por método de recuperación. No usa la API del modelo; los embeddings necesitan Ollama.
+"""RANKING (clase 7): precision@10, recall@10 y nDCG@10 por método de recuperación. No usa la API del modelo; los embeddings usan Gemini (GOOGLE_API_KEY).
 
 Un fragmento es relevante si cumple el `regex_cobertura` de la intención a la que apunta la pregunta (el mismo criterio de 10_evaluar_recuperacion.py).
   - precision@10: de los 10 recuperados, qué fracción es relevante.
@@ -54,7 +54,7 @@ def main() -> None:
             recuperados = buscar(p["pregunta"], K, metodo)
             if recuperados[0]["metodo"] != ("embeddings" if metodo == "mezcla" else metodo):  # la mezcla etiqueta los primeros como embeddings
                 sys.exit(
-                    f"El método «{metodo}» no se pudo usar (¿Ollama apagado?): se usó «{recuperados[0]['metodo']}»."
+                    f"El método «{metodo}» no se pudo usar (¿sin GOOGLE_API_KEY?): se usó «{recuperados[0]['metodo']}»."
                 )
             rel = [int(bool(patron.search(r["texto"]))) for r in recuperados]
             p_.append(sum(rel) / K)

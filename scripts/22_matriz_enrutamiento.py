@@ -1,7 +1,7 @@
 """MATRIZ DE ENRUTAMIENTO (Taller 2): ¿el agente elige la herramienta correcta? GASTA CUOTA del modelo de pago (una llamada de agente por pregunta, más 2 de preparación).
 
 Lee docs/2 - Conjunto de prueba/matriz_enrutamiento.csv, hace cada pregunta en una conversación nueva (las de memoria llevan antes un turno de preparación)
-y compara las herramientas usadas con las esperadas. Mide además tokens, costo y segundos por turno. Necesita GOOGLE_API_KEY con facturación y Ollama encendido.
+y compara las herramientas usadas con las esperadas. Mide además tokens, costo y segundos por turno. Necesita GOOGLE_API_KEY con facturación y GOOGLE_API_KEY en .env.
 Uso:  uv run python scripts/22_matriz_enrutamiento.py          (corre todo)
       uv run python scripts/22_matriz_enrutamiento.py --seco   (solo muestra el plan, no llama al modelo)
       uv run python scripts/22_matriz_enrutamiento.py R01 R15  (solo esas)

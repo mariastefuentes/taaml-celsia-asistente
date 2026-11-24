@@ -5,7 +5,7 @@ Para cada pregunta de respuesta del conjunto de prueba, toma la intención del i
 los k fragmentos recuperados cumple el patrón. Se reporta el porcentaje de aciertos (hit@k) por método y también hit@1 y hit@3
 (¿la respuesta ya viene en el primer fragmento, o entre los tres primeros?), que dicen si el ranking pone arriba lo que sirve.
 
-Uso:  uv run python scripts/10_evaluar_recuperacion.py             (usa embeddings si hay índice y Ollama responde)
+Uso:  uv run python scripts/10_evaluar_recuperacion.py             (usa embeddings si hay índice y la API responde)
       uv run python scripts/10_evaluar_recuperacion.py --k 5 --detalle
 Resultado: docs/2 - Conjunto de prueba/resultados/recuperacion_k<k>.csv (una fila por método y pregunta; las cifras del informe salen de ahí)
           y recuperacion_por_pregunta.md (la misma información en tabla; `--solo-tabla --k 12` la regenera del CSV sin buscar nada)

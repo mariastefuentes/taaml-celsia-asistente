@@ -17,10 +17,10 @@ from taaml.recuperacion import cargar_fragmentos
 ROOT = Path(__file__).resolve().parents[2]
 RESULTADOS = ROOT / "docs" / "2 - Conjunto de prueba" / "resultados" / "resultados_gemini-gemini-3.5-flash_rag_v3.csv"
 MODELO_DEEPSEEK = "deepseek-flash"
-MODELO_LOCAL = "ollama:llama3.2"  # gratis y sin red, pero 3.000 millones de parámetros en CPU: lento y menos preciso
+MODELO_LOCAL = "deepseek-v4-pro"  # último recurso, en la nube (sin modelos locales); se conserva el nombre de la constante
 # patrones precisos: un «429» o «falta» suelto dentro de otro mensaje no debe esconder un error de código.
 # 401/403 entran porque una clave inválida o sin permisos es una falla del proveedor, no del código:
-# sin ellos, la app mostraba el 401 y no probaba DeepSeek ni el modelo local.
+# sin ellos, la app mostraba el 401 y no probaba otro modelo.
 MARCAS_DE_FALLA = re.compile(
     r"resource_exhausted|\b(401|403|429|503)\b|unauthenticated|unauthorized|permission[_ ]denied|"
     r"api[_ ]?key[_ ]?(not valid|invalid)|invalid api key|quota|cuota|falta \w+_api_key|"
@@ -35,8 +35,8 @@ def es_falla_del_proveedor(error: Exception) -> bool:
 
 
 def cadena_de_modelos(elegido: str) -> list[str]:
-    """El modelo elegido, luego DeepSeek (solo si hay clave) y por último el local."""
-    if elegido == MODELO_LOCAL:  # el local es el último recurso: no hay nada después
+    """El modelo elegido, luego DeepSeek (solo si hay clave) y por último el modelo de último recurso."""
+    if elegido == MODELO_LOCAL:  # el de último recurso va al final: no hay nada después
         return [elegido]
     cadena = [elegido]
     if os.environ.get("DEEPSEEK_API_KEY") and not elegido.startswith("deepseek"):
@@ -61,7 +61,7 @@ def con_respaldo(funcion: Callable, elegido: str) -> Any:
             continue
         if avisos:
             avisos.append(
-                f"se usó {modelo}" + (" (modelo local: más lento y menos preciso)" if modelo == MODELO_LOCAL else "")
+                f"se usó {modelo}" + (" (modelo de último recurso)" if modelo == MODELO_LOCAL else "")
             )
         return resultado, modelo, avisos
     raise ultimo or RuntimeError("la cadena de modelos está vacía")

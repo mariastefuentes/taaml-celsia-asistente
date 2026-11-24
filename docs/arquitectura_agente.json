@@ -98,7 +98,7 @@
       "id": "modelo",
       "type": "cloud",
       "label": "Modelo de lenguaje",
-      "sublabel": "DeepSeek, Gemini, Ollama",
+      "sublabel": "DeepSeek, Gemini",
       "pos": [
         680,
         140
@@ -139,7 +139,7 @@
     {
       "id": "qdrant",
       "type": "database",
-      "label": "Qdrant + Ollama",
+      "label": "Qdrant + embeddings Gemini",
       "sublabel": "1.690 fragmentos",
       "pos": [
         940,
