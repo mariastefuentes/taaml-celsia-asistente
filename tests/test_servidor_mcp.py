@@ -11,12 +11,12 @@ ESPERADAS = {
     "consultar_sedes_celsia",
     "consultar_contactos_celsia",
     "consultar_catalogo_celsia",
-    "consultar_puntos_de_pago_celsia",
-    "consultar_tiendas_celsia",
     "consultar_canales_de_atencion_celsia",
     "consultar_cobertura_celsia",
     "consultar_tramite_en_linea_celsia",
     "consultar_politica_de_datos_celsia",
+    "verificar_canal_oficial_celsia",
+    "calcular_factura_estimada_celsia",
 }
 
 
@@ -49,3 +49,12 @@ def test_consultar_sedes_devuelve_direcciones():
 
     texto = asyncio.run(_sesion(accion)).content[0].text
     assert "Dirección" in texto and "Total:" in texto
+
+
+def test_la_lista_permitida_de_openclaw_coincide_con_las_herramientas_del_servidor():
+    """Si el servidor cambia una herramienta y la configuración de OpenClaw no, el gateway la bloquea (o apunta a una que ya no existe)."""
+    from taaml.openclaw import configuracion
+
+    entorno = {"OPENCLAW_GATEWAY_TOKEN": "t", "WHATSAPP_ALLOWLIST": "+573001112233", "REPO_CELSIA": "C:/ruta/al/repo"}
+    config = configuracion(entorno)
+    assert set(config["mcp"]["servers"]["celsia"]["toolFilter"]["include"]) == ESPERADAS

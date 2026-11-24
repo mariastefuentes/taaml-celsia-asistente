@@ -83,9 +83,9 @@ Un reclamo no se radica solo: `radicar_reclamo` pausa el flujo con `HumanInTheLo
 | Cadena del Q&A (Taller 1) | `cadena_qa` en `src/taaml/tareas.py`: `RunnablePassthrough.assign` → `ChatPromptTemplate` → modelo → `StrOutputParser` |
 | Datos estructurados | `consultar_datos`, con esquema Pydantic (`ConsultaDatos`) sobre sedes, contactos y catálogo |
 | RAG agéntico o en cadena | Por defecto el agente decide cuándo llamar a `buscar_en_base` (RAG agéntico). Con `RAG_MODO=cadena` funciona como RAG en cadena: un `dynamic_prompt` (`con_contexto_recuperado`) recupera los fragmentos de la última pregunta y los inserta en el prompt de sistema antes de cada respuesta, y el agente deja de tener `buscar_en_base` (conserva las consultas de tablas, la memoria y el reclamo). Misma búsqueda, mismos delimitadores contra inyección y mismo aviso de baja confianza. En la comparación con 6 preguntas ambos respondieron bien; el modo en cadena recupera también para los saludos y, sin llamada a la herramienta, la pantalla no muestra tarjetas de fuentes |
-| Herramientas estrictas y errores corteses | Las 20 herramientas tienen un esquema Pydantic (`args_schema`) que rechaza campos inventados y valida largos y valores permitidos; de él sale el JSON Schema que ve el modelo. Las que usan la memoria llevan `runtime` en el esquema, marcado `exclude`, porque LangChain lo necesita para inyectarlo; el modelo no lo ve. Si una herramienta falla (base o Ollama caídos), el middleware `errores_amables` le pasa al modelo un aviso sin detalles internos (que no pudo verificarlo ahora, que reintente o llame a la línea y que puede ayudarle con otra cosa) y el turno sigue; si la herramienta responde pero sin datos, el prompt manda decir «No tengo esa información» y remitir a la línea; las pausas de aprobación humana no se confunden con errores |
-| RAG | `buscar_en_base`: 4 fragmentos del texto oficial (Qdrant + embeddings de Ollama) |
-| Vectorstore y embeddings nativos de LangChain | `src/taaml/vectorstore.py`: `EmbeddingsCelsia` (subclase de `OllamaEmbeddings` con el prefijo de tarea y vectores normalizados) y `QdrantVectorStore` sobre la colección; la búsqueda por significado pasa por `similarity_search_with_score_by_vector`. Con los mismos 10 casos de prueba devolvió los mismos 12 fragmentos que la versión anterior. Si tu índice local es del formato anterior (sin texto en Qdrant), la búsqueda cae sola a la matriz `.npz`: corre `make indice` para reconstruirlo (usa los vectores en caché, sin recalcular) |
+| Herramientas estrictas y errores corteses | Las 20 herramientas tienen un esquema Pydantic (`args_schema`) que rechaza campos inventados y valida largos y valores permitidos; de él sale el JSON Schema que ve el modelo. Las que usan la memoria llevan `runtime` en el esquema, marcado `exclude`, porque LangChain lo necesita para inyectarlo; el modelo no lo ve. Si una herramienta falla (base o API de embeddings caídas), el middleware `errores_amables` le pasa al modelo un aviso sin detalles internos (que no pudo verificarlo ahora, que reintente o llame a la línea y que puede ayudarle con otra cosa) y el turno sigue; si la herramienta responde pero sin datos, el prompt manda decir «No tengo esa información» y remitir a la línea; las pausas de aprobación humana no se confunden con errores |
+| RAG | `buscar_en_base`: 4 fragmentos del texto oficial (Qdrant + embeddings de Gemini) |
+| Vectorstore y embeddings nativos de LangChain | `src/taaml/vectorstore.py`: `EmbeddingsCelsia` (subclase de `GoogleGenerativeAIEmbeddings` con `gemini-embedding-001`, 768 dimensiones, tarea de documento o consulta y vectores normalizados) y `QdrantVectorStore` sobre la colección; la búsqueda por significado pasa por `similarity_search_with_score_by_vector`. Con los mismos 10 casos de prueba devolvió los mismos 12 fragmentos que la versión anterior. Si tu índice local es del formato anterior (sin texto en Qdrant), la búsqueda cae sola a la matriz `.npz`: corre `make indice` para reconstruirlo (usa los vectores en caché, sin recalcular) |
 | Base vectorial | Qdrant local con alias `celsia` sobre colecciones versionadas (migración blue/green y `revertir_qdrant`), payload filtrable por `categoria` y `region`; `scripts/26_explorar_ann_y_filtros.py` mide IVF, PQ y pre/post-filtrado frente a la búsqueda exacta; `scripts/29_medir_hnsw_en_servidor.py` mide HNSW (`m`, `ef_construct`, `ef`) contra un servidor Qdrant en Docker |
 | Exploración de embeddings | `scripts/25_explorar_embeddings.py`: coseno, producto punto y L2 (mismo orden con vectores de norma 1), recorte Matryoshka (512 dimensiones casi no pierde calidad) y mapa t-SNE en `docs/3 - Informe/tsne_corpus.svg` |
 | Validación de la respuesta | `datos_dudosos` revisa que cada cifra, correo o enlace de la respuesta aparezca en lo que devolvieron las herramientas, lo que dijo el cliente o la fecha de hoy; si no, el frontend avisa «Verifica antes de usar» |
@@ -96,7 +96,7 @@ Un reclamo no se radica solo: `radicar_reclamo` pausa el flujo con `HumanInTheLo
 | Aprobar con botones | Con `APROBADOR_WHATSAPP`, el reclamo pendiente le llega a esa persona con «Aprobar» y «Rechazar»; solo decide el botón que toca ese número. `POST /aprobar` sigue igual. **No probado con Meta real** (Meta solo entrega el mensaje si la persona escribió en las últimas 24 h) |
 | Notas de voz (tentativo) | Apagado por defecto (`VOZ_ACTIVA=1`); transcribe en el mismo equipo con `faster-whisper`, que se instala a mano (`src/taaml/voz.py`). No probado con audios reales de Meta |
 | Menú, `/nuevo` y «escribiendo…» | «Hola», «menú» o «ayuda» responden con 3 botones sin llamar al modelo (o como texto si Meta no los entrega); `/nuevo` reinicia la conversación (conserva la memoria de largo plazo; no con un reclamo pendiente); cada mensaje se marca leído con indicador de escribiendo. **No probado con Meta real** |
-| Chequeo y preguntas de la demo | `make ensayo-whatsapp` (claves, Ollama, API, token de Meta vivo, túnel; gratis), `make preguntas-hostiles` (12 preguntas incómodas al agente real; gasta cuota) `make herramienta-caida` (rompe herramientas a propósito con DeepSeek real y comprueba que el agente avisa con cortesía, no inventa y no filtra detalles internos; gasta cuota) y `make informe-borrador` (esqueleto del informe final desde el repo) |
+| Chequeo y preguntas de la demo | `make ensayo-whatsapp` (claves, API de embeddings, API, token de Meta vivo, túnel; gratis), `make preguntas-hostiles` (12 preguntas incómodas al agente real; gasta cuota) `make herramienta-caida` (rompe herramientas a propósito con DeepSeek real y comprueba que el agente avisa con cortesía, no inventa y no filtra detalles internos; gasta cuota) y `make informe-borrador` (esqueleto del informe final desde el repo) |
 | Plan B de la demostración | `make demo-plan-b` (`scripts/37_demo_plan_b.py`): repite en pantalla una conversación real grabada en `docs/demo_grabada.json`, avisando que es una repetición |
 | Análisis de conversaciones | `src/taaml/conversaciones.py` y `notebooks/analisis_conversaciones.ipynb`: t-SNE sobre conversaciones simuladas (ver la sección siguiente) |
 
@@ -110,18 +110,16 @@ La app de Streamlit del Taller 1 tiene cuatro pestañas: **Preguntas y respuesta
 
 ## Instalación
 
-Requisitos: [uv](https://docs.astral.sh/uv/) (regla del curso: solo `uv`, sin `pip` ni `requirements.txt`), Python 3.12 y [Ollama](https://ollama.com/) con el modelo `nomic-embed-text-v2-moe` para los embeddings de las preguntas. Opcional: `llama3.2:3b`, el respaldo local que responde cuando no hay `DEEPSEEK_API_KEY` ni `GOOGLE_API_KEY` o se agota la cuota.
+Requisitos: [uv](https://docs.astral.sh/uv/) (regla del curso: solo `uv`, sin `pip` ni `requirements.txt`), Python 3.12 y las claves de API en `.env` (`DEEPSEEK_API_KEY` para el agente y `GOOGLE_API_KEY` para los embeddings y el respaldo). No se usan modelos locales.
 
 ```bash
 git clone https://github.com/mariastefuentes/taaml-celsia-asistente.git
 cd taaml-celsia-asistente
-make setup               # uv sync + .env + modelos de Ollama (nomic y llama3.2:3b)
+make setup               # uv sync + .env
 # o paso a paso:
 # uv sync
 # cp .env.example .env   # completa DEEPSEEK_API_KEY (agente y tareas); GOOGLE_API_KEY es opcional (respaldo Gemini); sin ellas responde el modelo local
-# ollama pull nomic-embed-text-v2-moe
-# ollama pull llama3.2:3b
-make indice              # construye el índice de vectores con Ollama (el repositorio no versiona el .npz ni Qdrant)
+make indice              # construye el índice de vectores con Gemini, unos 2 minutos y centavos de dólar (el repositorio no versiona el .npz ni Qdrant)
 ```
 
 **En Windows:** clona en una ruta corta y fuera de OneDrive (por ejemplo `C:\taaml`) y activa las rutas largas con `git config --global core.longpaths true`; si `uv sync` falla por enlaces duros, ejecuta antes `$env:UV_LINK_MODE="copy"`. Sin esto, Windows corta las rutas de más de 260 caracteres y el clon queda incompleto.
@@ -139,7 +137,7 @@ Para reconstruir la base **desde cero** (descargar todo el sitio): `scripts/01_s
 **Agente conversacional (Módulos 2 y 3): API y frontend separados.** El frontend (React con Vite, carpeta `frontend/`) no llama al modelo: habla por HTTP con una API FastAPI (`api/`) que ejecuta el agente y le responde por streaming (Server-Sent Events). Se corren en dos terminales:
 
 ```bash
-make api        # API del agente con memoria en PostgreSQL (levanta uno local si no defines DATABASE_URL; necesita la clave del modelo en .env y Ollama encendido)
+make api        # API del agente con memoria en PostgreSQL (levanta uno local si no defines DATABASE_URL; necesita la clave del modelo en .env y las claves en `.env`)
 make api-sqlite # la misma API con la memoria en archivos SQLite
 ```
 
@@ -155,7 +153,7 @@ La API expone `GET /api/salud` (estado, modelo y la base donde busca: `"almacen"
 make setup                                # uv sync + .env + modelo de embeddings (una sola vez por equipo)
 make modulo1                              # la app del Módulo 1: solo el corpus y las etapas del scraping
 make app-taller1                          # la app del Taller 1 (Streamlit); el agente va por API + frontend
-make test                                 # pruebas de componentes, sin Gemini ni Ollama (el CI las corre en cada PR)
+make test                                 # pruebas de componentes, sin Gemini (el CI las corre en cada PR)
 make lint                                 # ruff y lock vigente
 make ensayo                               # revisa que la demo esté lista, sin gastar cuota
 make ensayo-agente                        # conversación real con el agente (GASTA CUOTA: 8 a 12 llamadas)
@@ -178,24 +176,24 @@ Los datos pasan por tres capas (patrón Medallion): cada script hace una sola et
 | 3. Enriquecer (Gold) | `uv run python scripts/04_construir_gold.py` | texto con metadatos en `data/3_gold/` |
 | 4. Curar | `uv run python scripts/05_curar_base.py` | `data/4_curaduria/base_conocimiento.txt` y el registro de decisiones |
 | 4b. Fragmentar (chunking) | `uv run python scripts/06_construir_chunks.py` | `data/4_curaduria/chunks.jsonl`: 1.690 fragmentos con sus metadatos |
-| 4c. Indexar (embeddings) | `uv run python scripts/07_construir_indice.py` (necesita Ollama y `nomic-embed-text-v2-moe`) | `data/4_curaduria/indice_embeddings.npz` (un vector por fragmento, caché) y la base vectorial Qdrant `data/4_curaduria/qdrant` (no se sube a Git; sin ella la app usa el `.npz`) |
+| 4c. Indexar (embeddings) | `uv run python scripts/07_construir_indice.py` (necesita `GOOGLE_API_KEY`) | `data/4_curaduria/indice_embeddings.npz` (un vector por fragmento, caché) y la base vectorial Qdrant `data/4_curaduria/qdrant` (no se sube a Git; sin ella la app usa el `.npz`) |
 | 5. Verificar alcance | `uv run python scripts/08_inventario_intenciones.py` | cobertura de las intenciones del cliente |
 | 6. Validar la prueba | `uv run python scripts/09_conjunto_de_prueba.py` | comprueba los criterios del conjunto de prueba (59 preguntas) |
 | 7. Evaluar un modelo | `uv run python scripts/11_evaluar_modelo.py --modelo deepseek:deepseek-flash --juez deepseek:deepseek-v4-pro` | respuestas y calificaciones en `docs/2 - Conjunto de prueba/resultados/` |
 
-Archivos binarios: el repositorio no versiona PDF ni la matriz de vectores (`indice_embeddings.npz`). Los PDF se generan con `make pdf` y el índice con `make indice` (necesita Ollama con `nomic-embed-text-v2-moe`); sin índice la búsqueda cae a palabras.
+Archivos binarios: el repositorio no versiona PDF ni la matriz de vectores (`indice_embeddings.npz`). Los PDF se generan con `make pdf` y el índice con `make indice` (necesita `GOOGLE_API_KEY`); sin índice la búsqueda cae a palabras.
 
 Reglas del scraper: respeta `robots.txt` (los PDF de celsia.com están bloqueados), espera 1 segundo entre peticiones y es reanudable.
 **`data/1_bronze/` (HTML crudo, ~250 MB) no se sube a GitHub** (está en `.gitignore`): se regenera con el comando del paso 1. Lo que se entrega como base de conocimiento es Silver, Gold y `data/4_curaduria/`.
 Los datos que el sitio muestra solo como enlaces (WhatsApp, PQR, pagos) están escritos a mano, con su fuente, en `data/0_manual/`.
 
 ### Pruebas y atajos
-`make test` corre las pruebas automáticas de componentes (sin Gemini ni Ollama) y `make` muestra los demás atajos (`datos`, `app`, `evaluar`, `pdf`). `uv run python scripts/12_probar_inyeccion_indirecta.py` prueba órdenes escondidas en los documentos (una llamada al modelo por caso: 7 indirectos y 3 directos; con `--agente`, contra el agente).
+`make test` corre las pruebas automáticas de componentes (sin Gemini) y `make` muestra los demás atajos (`datos`, `app`, `evaluar`, `pdf`). `uv run python scripts/12_probar_inyeccion_indirecta.py` prueba órdenes escondidas en los documentos (una llamada al modelo por caso: 7 indirectos y 3 directos; con `--agente`, contra el agente).
 
 ### Opciones que se activan a propósito
 - **Post-validación.** La app avisa si una cifra, un correo o un enlace de la respuesta no aparece en las fuentes consultadas (`src/taaml/validacion.py`); `scripts/14_validar_respuestas.py` lo mide sobre las respuestas guardadas, sin modelo.
-- **Continuidad de la demo.** Si el modelo elegido falla por cuota o conexión, la app prueba `deepseek-flash` (si hay clave) y luego `ollama:llama3.2` (local), y si ninguno responde muestra la respuesta ya evaluada (v3) de esa pregunta, marcada como guardada (`src/taaml/respaldo.py`). `uv run python scripts/16_ensayo_demo.py` revisa que todo esté listo sin gastar; con `--llamar` hace una llamada corta por proveedor.
-- **Agente con memoria y router (specs 011 y 013).** `src/taaml/agente.py` arma un agente `create_agent` con `deepseek-flash` (DeepSeek-V4.1-Flash-1017, respaldo `gemini-3.8-flash` y `ollama:llama3.2`), memoria por conversación (`thread_id`) en PostgreSQL (o SQLite en `data/memoria/`, que no se versiona; el hilo viaja en la dirección `/c/<hilo>` y la conversación vuelve al recargar), un recorte del historial que ve el modelo (3.000 tokens aproximados; lo guardado y lo que se ve en pantalla siguen completos) y cinco herramientas: `buscar_en_base`, `consultar_datos`, `guardar_dato_del_cliente`, `recordar_datos_del_cliente` y `radicar_reclamo` (con aprobación humana). El prompt vigente es `prompts/v7_agente.md`. Se usa por la API y el frontend (no por Streamlit); `uv run python scripts/18_ensayo_agente.py` hace una conversación de cuatro preguntas (gasta unas 8 a 12 llamadas al modelo de pago) y `scripts/15_probar_agente.py` hace preguntas sueltas.
+- **Continuidad de la demo.** Si el modelo elegido falla por cuota o conexión, la app prueba `deepseek-flash` (si hay clave) y luego `deepseek-v4-pro`, y si ninguno responde muestra la respuesta ya evaluada (v3) de esa pregunta, marcada como guardada (`src/taaml/respaldo.py`). `uv run python scripts/16_ensayo_demo.py` revisa que todo esté listo sin gastar; con `--llamar` hace una llamada corta por proveedor.
+- **Agente con memoria y router (specs 011 y 013).** `src/taaml/agente.py` arma un agente `create_agent` con `deepseek-flash` (DeepSeek-V4.1-Flash-1017, respaldo `gemini-3.8-flash` y `deepseek-v4-pro`), memoria por conversación (`thread_id`) en PostgreSQL (o SQLite en `data/memoria/`, que no se versiona; el hilo viaja en la dirección `/c/<hilo>` y la conversación vuelve al recargar), un recorte del historial que ve el modelo (3.000 tokens aproximados; lo guardado y lo que se ve en pantalla siguen completos) y cinco herramientas: `buscar_en_base`, `consultar_datos`, `guardar_dato_del_cliente`, `recordar_datos_del_cliente` y `radicar_reclamo` (con aprobación humana). El prompt vigente es `prompts/v7_agente.md`. Se usa por la API y el frontend (no por Streamlit); `uv run python scripts/18_ensayo_agente.py` hace una conversación de cuatro preguntas (gasta unas 8 a 12 llamadas al modelo de pago) y `scripts/15_probar_agente.py` hace preguntas sueltas.
 - **Extracción a JSONL.** `uv run python scripts/13_extraer_contactos.py` (3 llamadas al modelo por defecto, DeepSeek) escribe `data/5_extraccion/contactos.jsonl`.
 - **Trazabilidad (LangSmith).** Si el `.env` tiene `LANGSMITH_API_KEY`, la app y las tareas registran cada ejecución (pregunta, fragmentos, prompt, respuesta, tokens y tiempo) en el proyecto `taaml-celsia` de smith.langchain.com. Sin la clave no se envía nada. La evaluación (`11_evaluar_modelo.py`) llama a la API directamente y no se traza. En el agente, cada paso (modelo y herramientas) es un nodo de la traza con su latencia, y un error en los argumentos de una herramienta aparece como error de ese nodo. `scripts/24_evaluar_en_langsmith.py` sube la matriz de enrutamiento como dataset (`celsia-matriz-enrutamiento`) y la evalúa con `evaluate`, con dos configuraciones del agente (con y sin tope de herramientas) que se comparan en LangSmith. LangSmith observa; no orquesta.
 - **Reordenamiento de fragmentos.** `responder_con_fuentes(..., reordenar=True)` o `--reordenar` en los scripts 10 y 11: recupera 30 candidatos y un modelo barato elige los 12 mejores (`deepseek-flash`; `gemini-3.5-flash-lite` si el que responde es de Gemini). Cuesta una llamada más por pregunta y está apagado por defecto.
@@ -222,7 +220,7 @@ La API ya guarda cada conversación completa en PostgreSQL (el checkpointer, baj
 ```
 uv sync --group analisis
 uv run python scripts/35_simular_conversaciones.py   # simula con el agente real (gasta cuota) y exporta a data/analisis/
-uv run python scripts/36_construir_notebook_tsne.py  # construye y ejecuta el cuaderno (necesita Ollama la primera vez)
+uv run python scripts/36_construir_notebook_tsne.py  # construye y ejecuta el cuaderno (necesita `GOOGLE_API_KEY` la primera vez)
 
 # Con conversaciones reales (30 o más de los ensayos por WhatsApp; las pruebas técnicas se dejan fuera):
 make exportar-chats ARGS="--excluir-telefonos 573009990001,573009990002"
@@ -276,4 +274,4 @@ Licencia MIT ([LICENSE](LICENSE)), © 2026 María Stella Fuentes, Juan José Mos
 
 Para contribuir, lee la [guía de contribución](CONTRIBUTING.md), el [código de conducta](CODE_OF_CONDUCT.md) y la [constitución](CONSTITUTION.md) del proyecto.
 
-Herramientas: LangChain, Streamlit, FastAPI, React, Qdrant, PostgreSQL, Ollama, Gemini, DeepSeek, LangSmith y la API Cloud de WhatsApp. El código se escribió con ayuda de Claude Code; la declaración de uso de IA del Módulo 3 está en [docs/3 - Informe/declaracion_uso_ia_modulo3.md](<docs/3 - Informe/declaracion_uso_ia_modulo3.md>) y la de los talleres anteriores, en sus informes.
+Herramientas: LangChain, Streamlit, FastAPI, React, Qdrant, PostgreSQL, Gemini, DeepSeek, LangSmith y la API Cloud de WhatsApp. El código se escribió con ayuda de Claude Code; la declaración de uso de IA del Módulo 3 está en [docs/3 - Informe/declaracion_uso_ia_modulo3.md](<docs/3 - Informe/declaracion_uso_ia_modulo3.md>) y la de los talleres anteriores, en sus informes.

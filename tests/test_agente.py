@@ -92,12 +92,12 @@ def test_el_agente_tiene_las_herramientas():
         "consultar_sedes",
         "consultar_contactos",
         "consultar_catalogo",
-        "consultar_puntos_de_pago",
-        "consultar_tiendas",
         "consultar_canales_de_atencion",
         "consultar_cobertura",
         "consultar_tramite_en_linea",
         "consultar_politica_de_datos",
+        "verificar_canal_oficial",
+        "calcular_factura_estimada",
         "guardar_dato_del_cliente",
         "recordar_datos_del_cliente",
         "listar_datos_del_cliente",
@@ -139,18 +139,24 @@ def test_las_herramientas_por_tabla_solo_piden_lo_suyo():
     assert set(ConsultaCatalogo.model_fields) == {"texto", "seccion", "categoria"}
 
 
-def test_los_puntos_de_pago_salen_de_la_tabla_de_sedes():
-    from taaml.agente import consultar_puntos_de_pago
+def test_los_puntos_de_pago_salen_de_la_tabla_de_sedes_con_su_tipo():
+    from taaml.agente import consultar_sedes
 
-    salida = consultar_puntos_de_pago.invoke({})
-    assert "Punto de Recaudo y Pago" in salida and "Total:" in salida
+    salida = consultar_sedes.invoke({"tipo": "Punto de Recaudo y Pago"})
+    assert "Punto de Recaudo y Pago" in salida and "Total:" in salida and "Tiendas Celsia" not in salida
 
 
-def test_las_tiendas_salen_de_la_tabla_de_sedes():
-    from taaml.agente import consultar_tiendas
+def test_las_tiendas_salen_de_la_tabla_de_sedes_con_su_tipo():
+    from taaml.agente import consultar_sedes
 
-    salida = consultar_tiendas.invoke({"ciudad": "Ibagué"})
+    salida = consultar_sedes.invoke({"ciudad": "Ibagué", "tipo": "Tiendas Celsia"})
     assert "Tiendas Celsia" in salida and "Total:" in salida
+
+
+def test_las_herramientas_redundantes_ya_no_existen():
+    import taaml.agente as agente
+
+    assert not hasattr(agente, "consultar_tiendas") and not hasattr(agente, "consultar_puntos_de_pago")
 
 
 def test_los_canales_devuelven_contactos_con_su_para_que():
@@ -252,10 +258,10 @@ def test_conversar_informa_la_herramienta_usada_solo_en_este_turno():
 
 
 # --- modelo del agente ---
-def test_el_agente_usa_deepseek_de_pago_y_ollama_de_respaldo():
+def test_el_agente_usa_deepseek_de_pago_y_un_modelo_en_la_nube_de_respaldo():
     from taaml.agente import MODELO_AGENTE_POR_DEFECTO, MODELO_RESPALDO, MODELO_RESPALDO_GEMINI
 
-    assert MODELO_AGENTE_POR_DEFECTO == "deepseek-flash" and MODELO_RESPALDO.startswith("ollama:")
+    assert MODELO_AGENTE_POR_DEFECTO == "deepseek-flash" and MODELO_RESPALDO == "deepseek-v4-pro"
     assert MODELO_RESPALDO_GEMINI == "gemini-3.8-flash"  # respaldo intermedio si DeepSeek falla
 
 
@@ -333,7 +339,7 @@ def test_el_costo_usa_la_tarifa_vigente_y_cambia_en_2027():
 def test_el_costo_de_un_modelo_local_es_cero_y_sin_precio_es_desconocido():
     from taaml.agente import costo_usd
 
-    assert costo_usd(5000, 500, "ollama:llama3.2") == 0.0 and costo_usd(5000, 500, "modelo-raro") is None
+    assert costo_usd(5000, 500, "modelo-raro") is None
 
 
 # --- memoria en disco (SQLite) y recorte del historial ---
@@ -972,12 +978,12 @@ def test_calentar_arma_el_agente_y_hace_una_busqueda(monkeypatch):
     assert llamadas == [("agente", "modelo-x"), ("buscar", 1)]
 
 
-def test_calentar_no_falla_si_ollama_esta_apagado(monkeypatch):
-    def sin_ollama(pregunta, k):
-        raise OSError("Ollama no responde")
+def test_calentar_no_falla_si_la_api_de_embeddings_no_responde(monkeypatch):
+    def sin_embeddings(pregunta, k):
+        raise OSError("API de embeddings no responde")
 
     monkeypatch.setattr("taaml.agente._agente", lambda modelo: None)
-    monkeypatch.setattr("taaml.agente.buscar", sin_ollama)
+    monkeypatch.setattr("taaml.agente.buscar", sin_embeddings)
     from taaml.agente import calentar
 
     calentar()  # no debe lanzar: la primera pregunta real mostrará el problema
@@ -1126,7 +1132,7 @@ def _mensajes_de_herramienta(agente, hilo):
 
 def test_si_una_herramienta_falla_el_turno_sigue_con_un_aviso_cortes(monkeypatch):
     def caida(*a, **k):
-        raise ConnectionError("Ollama apagado en 127.0.0.1:11434")
+        raise ConnectionError("API de embeddings caída en 127.0.0.1:11434")
 
     monkeypatch.setattr("taaml.agente.buscar", caida)
     guiones = iter([_llamada("buscar_en_base", {"pregunta": "¿Qué es Celsia?"}), AIMessage(content="No pude consultarlo ahora.")])
@@ -1134,7 +1140,7 @@ def test_si_una_herramienta_falla_el_turno_sigue_con_un_aviso_cortes(monkeypatch
     respuesta, _ = conversar("¿Qué es Celsia?", "h-caida", agente=agente)
     (aviso,) = _mensajes_de_herramienta(agente, "h-caida")
     assert respuesta == "No pude consultarlo ahora." and aviso.status == "error"
-    assert "01 8000 112 115" in aviso.content and "Ollama" not in aviso.content and "11434" not in aviso.content
+    assert "01 8000 112 115" in aviso.content and "embeddings" not in aviso.content and "11434" not in aviso.content
     assert "ayuda con otra cosa" in aviso.content and "no pudiste verificarlo" in aviso.content  # la alternativa que se le ofrece al cliente
 
 
@@ -1397,6 +1403,6 @@ def test_el_costo_del_turno_suma_el_ultimo_turno_y_no_rompe_si_falla():
     from taaml.agente import costo_del_turno
 
     hecho = [_mensaje("human", "hola"), SimpleNamespace(type="ai", usage_metadata={"input_tokens": 1000, "total_tokens": 1500})]
-    assert costo_del_turno("h", modelo="ollama:local", agente=_estado_falso(hecho)) == 0.0  # un modelo local no cuesta
+    assert costo_del_turno("h", modelo="modelo-raro", agente=_estado_falso(hecho)) is None  # sin precio conocido no se inventa un costo
     roto = SimpleNamespace(get_state=lambda config: (_ for _ in ()).throw(RuntimeError("base caída")))
     assert costo_del_turno("h", agente=roto) is None

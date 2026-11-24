@@ -2,7 +2,7 @@
 
 El modo local de Qdrant (el que usa la aplicación) hace búsqueda exacta; el índice aproximado HNSW solo existe en un servidor.
 Este script carga los mismos 1.690 vectores en un servidor (por ejemplo `docker run -p 6333:6333 qdrant/qdrant`), construye el grafo con distintos parámetros
-y compara cada búsqueda con la exacta del propio servidor (`exact=True`) sobre las preguntas del conjunto de prueba (se vectorizan con Ollama).
+y compara cada búsqueda con la exacta del propio servidor (`exact=True`) sobre las preguntas del conjunto de prueba (se vectorizan con Gemini).
   - `m`: vecinos por nodo del grafo.  - `ef_construct`: candidatos al construir.  - `hnsw_ef`: candidatos al consultar (más alto: más recall y más tiempo).
 Además mide una búsqueda con filtro por `categoria` (el filtro se aplica durante el recorrido del grafo), frente a la exacta con el mismo filtro.
 Uso:  uv run python scripts/29_medir_hnsw_en_servidor.py [url]      (por defecto http://localhost:6333)

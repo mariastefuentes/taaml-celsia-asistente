@@ -1,5 +1,5 @@
 """EXPLORAR LOS EMBEDDINGS (clase de embeddings): medidas de similitud, recorte Matryoshka y mapa t-SNE. No gasta cuota de ningún modelo de pago; las preguntas
-se convierten en vectores con Ollama (local) y los fragmentos salen de data/4_curaduria/indice_embeddings.npz.
+se convierten en vectores con Gemini y los fragmentos salen de data/4_curaduria/indice_embeddings.npz.
 
 1. Similitud: ordena el corpus para cada pregunta con coseno, producto punto y distancia L2 y compara los tres (con vectores de norma 1 dan el mismo orden: ver el informe).
 2. Matryoshka: recorta los vectores a las primeras N dimensiones, los vuelve a normalizar y mide precision@10, recall@10 y nDCG@10 con el mismo criterio de relevancia de

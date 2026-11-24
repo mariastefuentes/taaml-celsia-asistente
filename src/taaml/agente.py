@@ -2,7 +2,7 @@
 
 Es el patrón «modelo + herramientas + prompt», con memoria por conversación (`thread_id`) y dos herramientas: `buscar_en_base`
 (texto, reutiliza `recuperacion.buscar`) y `consultar_datos` (datos exactos). Usa DeepSeek de pago y, si
-falla, cae a un modelo local de Ollama. Se envían temperature 0.0 y top_p 0.1; DeepSeek respeta temperature con el razonamiento apagado, pero deja top_p fijo en 1,0.
+falla, cae a otros modelos en la nube (Gemini y DeepSeek v4 pro). Se envían temperature 0.0 y top_p 0.1; DeepSeek respeta temperature con el razonamiento apagado, pero deja top_p fijo en 1,0.
 """
 
 import logging
@@ -48,6 +48,7 @@ from taaml.informacion_manual import politica_de_datos, tramites_en_linea
 from taaml.prompts import leer_prompt
 from taaml.recuperacion import buscar, formatear_contexto
 from taaml.sanitizar import quitar_invisibles
+from taaml.servicios_celsia import factura_estimada, verificar_canal
 from taaml.validacion import datos_sin_respaldo
 from taaml.tareas import obtener_modelo
 
@@ -55,8 +56,8 @@ log = logging.getLogger("taaml.agente")
 
 MODELO_AGENTE_POR_DEFECTO = "deepseek-flash"  # DeepSeek-V4.1-Flash-1017 con API de pago
 MODELO_AGENTE = os.environ.get("TAAML_MODELO_AGENTE") or MODELO_AGENTE_POR_DEFECTO  # TAAML_MODELO_AGENTE permite cambiarlo sin tocar código
-MODELO_RESPALDO_GEMINI = "gemini-3.8-flash"  # si DeepSeek falla (cuota, red), se intenta este antes del local; requiere GOOGLE_API_KEY
-MODELO_RESPALDO = "ollama:llama3.2"  # 3B local y gratis: solo entra si los de pago fallan
+MODELO_RESPALDO_GEMINI = "gemini-3.8-flash"  # si DeepSeek falla (cuota, red), se intenta este antes del último recurso; requiere GOOGLE_API_KEY
+MODELO_RESPALDO = "deepseek-v4-pro"  # último recurso, también en la nube (el anuncio no admite modelos locales): solo entra si los anteriores fallan
 RUTA_MEMORIA = (
     Path(__file__).resolve().parents[2] / "data" / "memoria" / "conversaciones.sqlite"
 )  # las conversaciones sobreviven a reiniciar la app
@@ -280,14 +281,14 @@ class ConsultaSedes(EsquemaEstricto):
     tipo: str = Field(
         default="",
         max_length=80,
-        description="Tipo de sede: tienda, punto de pago, oficina… Vacío para todos los tipos.",
+        description="Tipo exacto: «Tiendas Celsia», «Punto de Recaudo y Pago» (donde se paga la factura), «Internet Celsia» o «Sedes Administrativas». Vacío para todos los tipos.",
     )
 
 
 @tool(args_schema=ConsultaSedes)
 def consultar_sedes(ciudad: str = "", departamento: str = "", tipo: str = "") -> str:
     """Consulta sedes, tiendas y puntos de atención de Celsia con su dirección, teléfono y horario. Úsala para «dónde queda»,
-    «cuál es el horario de» o «cuántas sedes hay». La última línea trae «Total: N», que calcula el sistema: cita ese total y no cuentes filas."""
+    «cuál es el horario de», «dónde puedo pagar», «qué tiendas hay» o «cuántas sedes hay». La última línea trae «Total: N», que calcula el sistema: cita ese total y no cuentes filas. Para tiendas pasa tipo «Tiendas Celsia»; para puntos de pago, «Punto de Recaudo y Pago». Si la pregunta es por los puntos de atención en general, no pongas tipo."""
     filtros = {"ciudad": ciudad, "departamento": departamento, "tipo": tipo}
     return delimitar_como_datos(consultar("sedes", filtros))
 
@@ -329,39 +330,6 @@ def consultar_catalogo(texto: str = "", seccion: str = "", categoria: str = "") 
     Úsala cuando el cliente pida «el enlace de», «la página de» o quiera saber si existe un documento sobre un tema."""
     filtros = {"texto": texto, "seccion": seccion, "categoria": categoria}
     return delimitar_como_datos(consultar("catalogo", filtros))
-
-
-# Consultas de dominio sobre las mismas tablas: esquemas de un solo campo, para que el modelo no tenga que elegir la tabla.
-
-
-class ConsultaPuntosDePago(EsquemaEstricto):
-    """Esquema de entrada de `consultar_puntos_de_pago`."""
-
-    ciudad: str = Field(
-        default="",
-        max_length=80,
-        description="Ciudad del punto de pago. Para varias, sepáralas con comas («Cali, Palmira»).",
-    )
-
-
-@tool(args_schema=ConsultaPuntosDePago)
-def consultar_puntos_de_pago(ciudad: str = "") -> str:
-    """Consulta los puntos de recaudo y pago de Celsia (dirección, teléfono y horario) donde el cliente puede pagar la factura.
-    Úsala para «dónde puedo pagar» o «puntos de pago en…». Termina con «Total: N»: cita ese total."""
-    return delimitar_como_datos(consultar("sedes", {"ciudad": ciudad, "tipo": "Punto de Recaudo y Pago"}))
-
-
-class ConsultaTiendas(EsquemaEstricto):
-    """Esquema de entrada de `consultar_tiendas`."""
-
-    ciudad: str = Field(default="", max_length=80, description="Ciudad de la tienda. Admite varias separadas por comas.")
-
-
-@tool(args_schema=ConsultaTiendas)
-def consultar_tiendas(ciudad: str = "") -> str:
-    """Consulta las tiendas Celsia (dirección, teléfono y horario) para atención presencial de servicios y productos.
-    Úsala para «qué tiendas hay en…» o «cuántas tiendas hay». Termina con «Total: N»: cita ese total."""
-    return delimitar_como_datos(consultar("sedes", {"ciudad": ciudad, "tipo": "Tiendas Celsia"}))
 
 
 class ConsultaCanales(EsquemaEstricto):
@@ -447,6 +415,40 @@ def consultar_politica_de_datos(tema: str = "") -> str:
     if not parrafos:
         return "No tengo ese tema en la política de datos. Devuelve la política completa y deja que el cliente elija."
     return delimitar_como_datos("\n\n".join(parrafos))
+
+
+class CanalAVerificar(EsquemaEstricto):
+    """Esquema de entrada de `verificar_canal_oficial`."""
+
+    canal: str = Field(min_length=3, max_length=200, description="El teléfono, WhatsApp, correo o enlace que el cliente quiere comprobar, tal como lo escribió.")
+
+
+@tool(args_schema=CanalAVerificar)
+def verificar_canal_oficial(canal: str) -> str:
+    """Comprueba si un teléfono, WhatsApp, correo o enlace figura entre los canales oficiales de Celsia. Úsala cuando el cliente
+    pregunte si un número, correo o página es de Celsia, o cuando desconfíe de un mensaje o una llamada (posible fraude).
+    Responde solo «sí figura» o «no figura»: no digas que algo es falso ni verdadero. Si no figura y el cliente dijo de qué sede o canal
+    es, consulta también el dato oficial con `consultar_sedes` o `consultar_contactos` y dáselo."""
+    return verificar_canal(quitar_invisibles(canal))
+
+
+class FacturaEstimada(EsquemaEstricto):
+    """Esquema de entrada de `calcular_factura_estimada`."""
+
+    consumo_kwh: float = Field(gt=0, le=100_000, description="Consumo de energía del mes en kWh, tal como lo dijo el cliente.")
+    tarifa_cop_kwh: float = Field(gt=0, le=10_000, description="Precio de cada kWh en pesos. Del cliente o de la base; nunca inventado.")
+    cargo_fijo_cop: float = Field(0, ge=0, le=1_000_000, description="Cargo fijo mensual en pesos, solo si el cliente lo dio.")
+    ajuste_pct: float = Field(0, ge=-100, le=100, description="Subsidio (negativo) o contribución (positivo) en %, solo si el cliente lo dio.")
+
+
+@tool(args_schema=FacturaEstimada)
+def calcular_factura_estimada(
+    consumo_kwh: float, tarifa_cop_kwh: float, cargo_fijo_cop: float = 0, ajuste_pct: float = 0
+) -> str:
+    """Calcula un estimado de la factura de energía a partir del consumo en kWh y la tarifa por kWh (más cargo fijo y subsidio o
+    contribución si el cliente los da). Úsala cuando el cliente dé o pregunte su consumo y quiera saber cuánto pagaría. Si falta la
+    tarifa, búscala con `buscar_en_base` o pídesela al cliente (está en su factura); nunca la inventes. El resultado es un estimado."""
+    return factura_estimada(consumo_kwh, tarifa_cop_kwh, cargo_fijo_cop, ajuste_pct)
 
 
 ANONIMO = "anonimo"  # sin identificador de cliente no hay memoria de largo plazo: si no, todos los anónimos compartirían lo guardado
@@ -760,12 +762,12 @@ HERRAMIENTAS = [
     consultar_sedes,
     consultar_contactos,
     consultar_catalogo,
-    consultar_puntos_de_pago,
-    consultar_tiendas,
     consultar_canales_de_atencion,
     consultar_cobertura,
     consultar_tramite_en_linea,
     consultar_politica_de_datos,
+    verificar_canal_oficial,
+    calcular_factura_estimada,
     guardar_dato_del_cliente,
     recordar_datos_del_cliente,
     listar_datos_del_cliente,
@@ -812,7 +814,7 @@ MENSAJE_HERRAMIENTA_CAIDA = (
 def errores_amables(request: Any, handler: Any) -> Any:
     """Si una herramienta falla, el modelo recibe el aviso en lugar de que se caiga el turno entero.
 
-    Argumentos inválidos: se le dice qué corregir para que reintente. Cualquier otro fallo (base caída, Ollama apagado…): se
+    Argumentos inválidos: se le dice qué corregir para que reintente. Cualquier otro fallo (base caída, API de embeddings caída…): se
     registra completo y el modelo recibe un mensaje sin detalles internos para que le explique al cliente con cortesía.
     Las pausas de aprobación humana (`GraphBubbleUp`) no son errores y pasan intactas.
     """
@@ -1078,9 +1080,9 @@ def _agente(modelo: str) -> Any:
 
 
 def calentar(modelo: str = MODELO_AGENTE) -> None:
-    """Prepara lo lento de la primera pregunta: arma el agente (~3 s), abre la base vectorial y carga el modelo de embeddings en Ollama (~7 s en frío).
+    """Prepara lo lento de la primera pregunta: arma el agente (~3 s), abre la base vectorial y comprueba el servicio de embeddings.
 
-    No llama al modelo de pago. Si algo falta (Ollama apagado, por ejemplo) no falla: la primera pregunta real lo resolverá o mostrará el error.
+    No llama al modelo de pago. Si algo falta (sin red o sin clave, por ejemplo) no falla: la primera pregunta real lo resolverá o mostrará el error.
     """
     try:
         _agente(modelo)
@@ -1314,9 +1316,7 @@ def uso_del_turno(agente: Any, thread_id: str) -> tuple[int, int]:
 
 
 def costo_usd(entrada: int, salida: int, modelo: str = MODELO_AGENTE, hoy: date | None = None) -> float | None:
-    """Costo en dólares de una cantidad de tokens; 0.0 para un modelo local y None si no hay precio conocido."""
-    if modelo.startswith("ollama:"):
-        return 0.0
+    """Costo en dólares de una cantidad de tokens; None si no hay precio conocido."""
     precios = PRECIOS_USD_2027 if (hoy or date.today()) >= INICIO_2027 else PRECIOS_USD
     if modelo not in precios:
         return None
@@ -1358,10 +1358,10 @@ def etiqueta_herramientas(llamadas: list[dict]) -> str:
             partes.append("consultó los canales de atención")
         elif ll["herramienta"] == "consultar_catalogo":
             partes.append("buscó la página del sitio")
-        elif ll["herramienta"] == "consultar_puntos_de_pago":
-            partes.append("consultó los puntos de pago")
-        elif ll["herramienta"] == "consultar_tiendas":
-            partes.append("consultó las tiendas")
+        elif ll["herramienta"] == "verificar_canal_oficial":
+            partes.append("verificó un canal")
+        elif ll["herramienta"] == "calcular_factura_estimada":
+            partes.append("estimó una factura")
         elif ll["herramienta"] == "consultar_canales_de_atencion":
             partes.append("buscó el canal de atención")
         elif ll["herramienta"] == "consultar_cobertura":

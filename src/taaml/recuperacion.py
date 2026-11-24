@@ -1,12 +1,12 @@
 """Recuperación de fragmentos: de toda la base de conocimiento, solo lo relevante para cada pregunta.
 
 La base completa tiene unos 316.800 tokens: cabe en el contexto de Gemini, pero cuesta unas 80 veces más por pregunta que 12 fragmentos. Cada fragmento (data/4_curaduria/chunks.jsonl) tiene
-un embedding (un vector que representa su significado) calculado con nomic-embed-text-v2-moe en Ollama. Para una
+un embedding (un vector que representa su significado) calculado con gemini-embedding-001 (API de Google, en la nube). Para una
 pregunta se calcula su embedding y se buscan los fragmentos más parecidos (similitud del coseno) en una base vectorial (Qdrant). Esos van al prompt.
-Embeddings y vectorstore son las clases nativas de LangChain (`OllamaEmbeddings` y `QdrantVectorStore`, ver vectorstore.py).
+Embeddings y vectorstore son las clases nativas de LangChain (`GoogleGenerativeAIEmbeddings` y `QdrantVectorStore`, ver vectorstore.py).
 
 Si la carpeta de Qdrant no existe, está abierta por otro proceso o no corresponde a los fragmentos actuales, se busca en la matriz de vectores del .npz (mismo resultado).
-Si Ollama no responde, se usa una búsqueda por palabras (menos precisa, pero el asistente sigue funcionando).
+Si la API de embeddings no responde, se usa una búsqueda por palabras (menos precisa, pero el asistente sigue funcionando).
 """
 
 import atexit
@@ -35,14 +35,14 @@ QDRANT = (
     CURADURIA / "qdrant"
 )  # base vectorial Qdrant (modo local, archivos en disco, sin servidor); se regenera con scripts/07_construir_indice.py
 COLECCION = "celsia"
-MODELO_EMBEDDINGS = "nomic-embed-text-v2-moe"
+MODELO_EMBEDDINGS = "models/gemini-embedding-001"
 FRAGMENTOS_POR_DEFECTO = (
     12  # con 5, 8, 12 y 16 se midió 71, 74, 81 y 81 % de aciertos (scripts/10_evaluar_recuperacion.py)
 )
 
 
 def embeddings(textos: list[str], tipo: str, timeout: int = 300) -> np.ndarray:
-    """Embeddings normalizados, calculados con los embeddings nativos de LangChain (`EmbeddingsCelsia`). `tipo` es «document» o «query»: el modelo espera ese prefijo."""
+    """Embeddings normalizados, calculados con los embeddings nativos de LangChain (`EmbeddingsCelsia`). `tipo` es «document» o «query»: el modelo ajusta el vector a esa tarea."""
     return np.array(embeddings_celsia(MODELO_EMBEDDINGS, timeout).incrustar(textos, tipo), dtype=np.float32)
 
 
@@ -261,7 +261,7 @@ def _buscar(pregunta: str, k: int, metodo: str, filtro: dict | None = None) -> t
 
     metodo: «embeddings» (significado), «palabras» (coincidencia de palabras), «hibrido» (las dos combinadas por posición) o «mezcla» (k-1 por significado más la mejor por palabras).
     filtro: opcional, por campos del payload (`categoria`, `region`); solo se devuelven fragmentos que lo cumplen (pueden ser menos de k).
-    «auto» usa embeddings (en la medición superó al híbrido); si no hay índice vigente o Ollama no responde, cae a palabras.
+    «auto» usa embeddings (en la medición superó al híbrido); si no hay índice vigente o la API de embeddings no responde, cae a palabras.
     """
     fragmentos, matriz = cargar_fragmentos(), _matriz()
     mezcla = metodo == "mezcla"  # significado + la mejor por palabras (ver más abajo); se comporta como «embeddings» en el resto
@@ -283,7 +283,7 @@ def _buscar(pregunta: str, k: int, metodo: str, filtro: dict | None = None) -> t
                 "hibrido",
             )
             puntajes = puntajes if mascara is None else np.where(mascara, puntajes, -np.inf)
-    except Exception:  # noqa: BLE001  Ollama apagado, índice desactualizado o método forzado
+    except Exception:  # noqa: BLE001  API de embeddings caída, índice desactualizado o método forzado
         if por_palabras is None:
             por_palabras = _puntajes_por_palabras(pregunta)
         puntajes, metodo = (por_palabras if mascara is None else np.where(mascara, por_palabras, -np.inf)), "palabras"

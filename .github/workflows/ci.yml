@@ -17,5 +17,5 @@ jobs:
         run: make lint
       - name: Validar skills (frontmatter, tamano y seguridad)
         run: make skills-check
-      - name: Pruebas de componentes (sin Gemini ni Ollama)
+      - name: Pruebas de componentes (sin Gemini)
         run: make test

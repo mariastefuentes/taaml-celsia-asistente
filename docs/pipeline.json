@@ -22,7 +22,7 @@
     { "id": "gold", "type": "database", "label": "Gold", "sublabel": "metadatos + tokens · 1.101 docs", "stage": 2, "row": 1 },
     { "id": "curaduria", "type": "backend", "label": "Curaduría", "sublabel": "393 documentos", "stage": 3, "row": 0 },
     { "id": "fragmentos", "type": "backend", "label": "Fragmentos", "sublabel": "1.000 caracteres · 150 de solape", "stage": 3, "row": 1 },
-    { "id": "embeddings", "type": "cloud", "label": "Embeddings", "sublabel": "Ollama · nomic-embed-text-v2-moe", "stage": 4, "row": 0 },
+    { "id": "embeddings", "type": "cloud", "label": "Embeddings", "sublabel": "Gemini · gemini-embedding-001", "stage": 4, "row": 0 },
     { "id": "chroma", "type": "database", "label": "Qdrant", "sublabel": "1.690 vectores", "stage": 4, "row": 1 }
   ],
   "flows": [

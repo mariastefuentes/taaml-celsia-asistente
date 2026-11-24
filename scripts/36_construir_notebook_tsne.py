@@ -4,7 +4,7 @@
   uv run python scripts/36_construir_notebook_tsne.py            # notebook con las 114 conversaciones simuladas
   uv run python scripts/36_construir_notebook_tsne.py --reales   # notebook con las conversaciones reales (antes: make exportar-chats)
 
-Necesita Ollama encendido (embeddings) la primera vez; después usa `data/analisis/embeddings.npy`. El texto del análisis vive en
+Necesita GOOGLE_API_KEY en .env (embeddings) la primera vez; después usa `data/analisis/embeddings.npy`. El texto del análisis vive en
 `notebooks/analisis_conversaciones.md` y se pega en la última celda: así se puede reescribir sin tocar el código del notebook.
 """
 

@@ -97,7 +97,7 @@ def test_buscar_sigue_devolviendo_la_lista_y_propagando_errores(monkeypatch):
         buscar("pregunta", k=3, metodo="auto")
 
 
-def test_si_ollama_no_responde_se_recupera_por_palabras_con_metricas(monkeypatch):
+def test_si_la_api_de_embeddings_no_responde_se_recupera_por_palabras_con_metricas(monkeypatch):
     monkeypatch.setattr(recuperacion, "_matriz", lambda: None)
     fragmentos, metricas = recuperar("teléfono de atención al cliente", k=3)
     assert metricas["metodo"] == "palabras" and metricas["encontrados"] == 3 and metricas.get("error") is None
@@ -112,7 +112,7 @@ def test_si_no_hay_indice_se_usa_la_busqueda_por_palabras(monkeypatch):
 
 
 def test_con_indice_vigente_la_recuperacion_automatica_usa_embeddings(monkeypatch):
-    """Regresión: `recuperar` con método «auto» no debe caer a palabras cuando hay índice y Ollama responde."""
+    """Regresión: `recuperar` con método «auto» no debe caer a palabras cuando hay índice y la API de embeddings responde."""
     n = len(cargar_fragmentos())
     monkeypatch.setattr(recuperacion, "_matriz", lambda: np.ones((n, 4), dtype=np.float32))
     monkeypatch.setattr(recuperacion, "embeddings", lambda textos, tipo: np.ones((1, 4), dtype=np.float32))
@@ -154,19 +154,23 @@ def test_el_contexto_no_lleva_ordenes_escondidas_con_caracteres_invisibles():
     assert not any(0xE0000 <= ord(c) <= 0xE007F or c == "​" for c in contexto) and "</contexto>" not in contexto
 
 
-def test_los_embeddings_piden_a_ollama_mantener_el_modelo_cargado(monkeypatch):
-    import ollama
+def test_los_embeddings_son_de_gemini_con_tarea_y_vector_normalizado(monkeypatch):
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+    from taaml.vectorstore import DIMENSIONES, EmbeddingsCelsia
 
     enviado = {}
 
-    def falso_embed(self, model, input, **kwargs):
-        enviado.update(model=model, input=input, **kwargs)
-        return {"embeddings": [[3.0, 4.0]]}
+    def falso_embed(self, texts, **kwargs):
+        enviado.update(texts=texts, **kwargs)
+        return [[3.0, 4.0] for _ in texts]
 
-    monkeypatch.setattr(ollama.Client, "embed", falso_embed)
+    monkeypatch.setenv("GOOGLE_API_KEY", "clave-de-prueba")
+    monkeypatch.setattr(GoogleGenerativeAIEmbeddings, "embed_documents", falso_embed)
     from taaml.recuperacion import MODELO_EMBEDDINGS, embeddings
 
     vector = embeddings(["hola"], "query")
-    assert enviado["keep_alive"] == 1800 and enviado["model"] == MODELO_EMBEDDINGS  # 30 minutos, en segundos and enviado["model"] == MODELO_EMBEDDINGS
-    assert enviado["input"] == ["search_query: hola"]  # el prefijo de tarea que pide el modelo
+    assert MODELO_EMBEDDINGS == "models/gemini-embedding-001" and issubclass(EmbeddingsCelsia, GoogleGenerativeAIEmbeddings)
+    assert enviado["task_type"] == "RETRIEVAL_QUERY" and enviado["output_dimensionality"] == DIMENSIONES
+    assert enviado["texts"] == ["hola"]
     assert [round(float(x), 2) for x in vector[0]] == [0.6, 0.8]  # normalizado
