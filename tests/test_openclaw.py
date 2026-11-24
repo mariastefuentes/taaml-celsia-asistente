@@ -18,12 +18,12 @@ NAMES_MCP = [
     "consultar_sedes_celsia",
     "consultar_contactos_celsia",
     "consultar_catalogo_celsia",
-    "consultar_puntos_de_pago_celsia",
-    "consultar_tiendas_celsia",
     "consultar_canales_de_atencion_celsia",
     "consultar_cobertura_celsia",
     "consultar_tramite_en_linea_celsia",
     "consultar_politica_de_datos_celsia",
+    "verificar_canal_oficial_celsia",
+    "calcular_factura_estimada_celsia",
 ]
 
 
@@ -33,8 +33,8 @@ def test_la_plantilla_cumple_el_endurecimiento_de_la_rubrica():
     assert config["gateway"]["mode"] == "local"
     assert config["gateway"]["bind"] == "loopback"
     assert config["tools"]["fs"]["workspaceOnly"] is True
-    assert config["channels"]["whatsapp"]["dmPolicy"] == "allowlist"
-    assert config["channels"]["whatsapp"]["allowFrom"] == ["+573001112233", "+573104445566"]
+    assert config["channels"]["whatsapp"]["dmPolicy"] == "open"
+    assert config["channels"]["whatsapp"]["allowFrom"] == ["*"]
     assert config["session"]["dmScope"] == "per-channel-peer"
     assert config["agents"]["defaults"]["sandbox"]["mode"] == "all"
     assert config["agents"]["defaults"]["sandbox"]["backend"] == "docker"
@@ -62,8 +62,22 @@ def test_falta_una_variable_y_lo_dice():
         configuracion({**ENTORMO, "OPENCLAW_GATEWAY_TOKEN": ""})
 
 
-def test_una_allowlist_que_no_es_e164_se_marca():
-    config = configuracion({**ENTORMO, "WHATSAPP_ALLOWLIST": "12"})
+def test_una_dm_policy_invalida_se_marca():
+    config = configuracion(ENTORMO)
+    config["channels"]["whatsapp"]["dmPolicy"] = "pairing"
+    assert any("dmPolicy" in fallo for fallo in problemas(config))
+
+
+def test_open_sin_asterisco_en_allowFrom_se_marca():
+    config = configuracion(ENTORMO)
+    config["channels"]["whatsapp"]["allowFrom"] = []
+    assert any("«*»" in fallo for fallo in problemas(config))
+
+
+def test_allowlist_que_no_es_e164_se_marca():
+    config = configuracion(ENTORMO)
+    config["channels"]["whatsapp"]["dmPolicy"] = "allowlist"
+    config["channels"]["whatsapp"]["allowFrom"] = ["3001112233"]
     assert any("E.164" in fallo for fallo in problemas(config))
 
 
