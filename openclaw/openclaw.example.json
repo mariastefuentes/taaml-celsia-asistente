@@ -22,7 +22,7 @@
       "workspace": "~/.openclaw/workspace",
       "model": {
         "primary": "deepseek/deepseek-flash",
-        "fallbacks": ["google/gemini-3.8-flash"]
+        "fallbacks": []
       },
       "sandbox": {
         "mode": "all",
@@ -39,7 +39,7 @@
         "workspace": "~/.openclaw/workspace",
         "model": {
           "primary": "deepseek/deepseek-flash",
-          "fallbacks": ["google/gemini-3.8-flash"]
+          "fallbacks": []
         }
       }
     }
@@ -65,9 +65,9 @@
   },
   "channels": {
     "whatsapp": {
-      "enabled": true,
-      "dmPolicy": "allowlist",
-      "allowFrom": ${WHATSAPP_ALLOWLIST_ARRAY}
+      "enabled": false,
+      "dmPolicy": "open",
+      "allowFrom": ["*"]
     }
   },
   "mcp": {

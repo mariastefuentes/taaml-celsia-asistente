@@ -12,7 +12,7 @@ Esta guía lleva el asistente de Celsia al gateway de OpenClaw que pide la rúbr
 | Docker | Imagen del sandbox (`openclaw-sandbox:trixie-slim`) |
 | `uv` y este repositorio | El servidor MCP `celsia` corre con `uv run` |
 | Cuenta de Meta con la app de WhatsApp | Canal de WhatsApp y número vinculado |
-| Clave del proveedor del modelo | `deepseek-flash` primario, `gemini-3.8-flash` de respaldo |
+| Clave del proveedor del modelo | `google/gemini-3.8-flash` primario (sin DeepSeek) |
 
 ## 1. Variables (en `.env`, nunca en el repositorio)
 
