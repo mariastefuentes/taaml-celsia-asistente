@@ -145,7 +145,7 @@ def verificar_canal(valor: str) -> str:
                 return f"Sí figura como canal oficial: correo {c['valor']}. {c['para_que_sirve']}."
         if any(valor.lower().endswith("@" + d) for d in DOMINIOS_DE_CELSIA):
             return (
-                f"El dominio del correo es de Celsia, pero ese correo no figura entre los canales oficiales que tengo. "
+                "El dominio del correo es de Celsia, pero ese correo no figura entre los canales oficiales que tengo. "
                 "Confírmalo llamando a la línea 01 8000 112 115."
             )
         return AVISO_NO_FIGURA

@@ -10,7 +10,6 @@ import os
 import re
 import sqlite3
 from collections.abc import Iterator
-from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
 from pathlib import Path
@@ -34,7 +33,7 @@ from langchain_core.messages.utils import count_tokens_approximately, trim_messa
 from langchain_core.tools import tool
 from langgraph.errors import GraphBubbleUp
 from langgraph.prebuilt.tool_node import ToolInvocationError
-from pydantic import ConfigDict, Field, ValidationError
+from pydantic import Field, ValidationError
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.store.base import BaseStore
