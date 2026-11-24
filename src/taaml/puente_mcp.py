@@ -32,8 +32,8 @@ servidor = MCPServer("puente")
 
 def atender(mensaje: str, telefono: str) -> str:
     """Un turno del agente de Celsia para ese teléfono; nunca lanza: un fallo vuelve como texto cortés."""
-    telefono = telefono.strip()
-    if not E164.match(telefono) or not autorizado(telefono):
+    telefono = (telefono or "").strip()
+    if not telefono or not E164.match(telefono) or not autorizado(telefono):
         return MENSAJE_NO_AUTORIZADO
     cabeceras = {"X-Api-Key": os.environ["CHAT_TOKEN"]} if os.environ.get("CHAT_TOKEN") else {}
     try:
