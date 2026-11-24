@@ -41,3 +41,12 @@ def test_numeros_de_una_cifra_y_enumeraciones_no_cuentan():
 
 def test_el_formato_del_numero_no_importa():
     assert datos_sin_respaldo("Son 1200 pesos y el teléfono 018000112115.", FRAGMENTOS) == []
+
+
+def test_numero_ajeno_duplicado_se_marca_una_sola_vez():
+    assert datos_sin_respaldo("El cargo es de 987 y luego 987 más.", FRAGMENTOS) == ["987"]
+
+
+def test_datos_de_varios_tipos_sin_respaldo_se_marcan_todos():
+    marcados = datos_sin_respaldo("Llame al 12345 y escriba a a@b.com con https://inventado.example.", FRAGMENTOS)
+    assert "12345" in marcados and "a@b.com" in marcados and "https://inventado.example" in marcados
