@@ -529,3 +529,34 @@ def calificar_atencion(puntaje: int, runtime: ToolRuntime[Contexto], comentario:
     el cliente diga o dé una calificación; nunca inventes el puntaje ni lo pidas con insistencia. No es un reclamo: para quejas
     formales usa `radicar_reclamo`."""
     return registrar_calificacion(_almacen(runtime), runtime.context.usuario, puntaje, comentario)
+
+
+def resumen_de_actividad(almacen, usuario: str) -> str:
+    """Cuenta lo que hay guardado del cliente (datos, reclamos, solicitudes de asesor y calificaciones), sin repetir su contenido."""
+    if usuario == ANONIMO:
+        return "No hay un cliente identificado: de un cliente anónimo no se guarda nada."
+    datos = almacen.search(("perfil", usuario), limit=100)
+    reclamos = sorted(almacen.search(("reclamos", usuario), limit=1000), key=lambda i: i.created_at, reverse=True)
+    solicitudes = almacen.search(("escalamientos", usuario), limit=100)
+    calificaciones = almacen.search(("calificaciones", usuario), limit=100)
+    if not (datos or reclamos or solicitudes or calificaciones):
+        return "No hay nada guardado de este cliente todavía."
+    lineas = [
+        f"- Datos que contó de sí mismo: {len(datos)}.",
+        f"- Reclamos radicados: {len(reclamos)}" + (f" (el más reciente: {reclamos[0].key})." if reclamos else "."),
+        f"- Solicitudes para hablar con una persona: {len(solicitudes)}.",
+    ]
+    if calificaciones:
+        promedio = sum(c.value["puntaje"] for c in calificaciones) / len(calificaciones)
+        lineas.append(f"- Calificaciones de la atención: {len(calificaciones)} (promedio {promedio:.1f} de 5).")
+    else:
+        lineas.append("- Calificaciones de la atención: 0.")
+    return "Esto es lo que hay guardado de este cliente:\n" + "\n".join(lineas)
+
+
+@tool(args_schema=SoloElCliente)
+def resumen_de_mi_actividad(runtime: ToolRuntime[Contexto]) -> str:
+    """Resume lo que hay guardado del cliente: cuántos datos suyos, reclamos, solicitudes de asesor y calificaciones, y su reclamo más
+    reciente. Úsala cuando el cliente pregunte qué hay guardado de él o cuál es su actividad con Celsia en general. Para el detalle de
+    un reclamo usa `consultar_estado_reclamo`; para lo que contó de sí mismo, `recordar_datos_del_cliente`."""
+    return resumen_de_actividad(_almacen(runtime), runtime.context.usuario)

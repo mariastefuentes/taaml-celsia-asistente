@@ -224,3 +224,8 @@ def test_v13_registra_la_calificacion_sin_inventar_el_puntaje():
 def test_v13_borra_los_datos_solo_con_la_confirmacion_del_cliente():
     texto = leer_prompt("v13_agente.md")
     assert "`olvidar_datos_del_cliente`" in texto and "Nunca borres sin esa confirmación" in texto
+
+
+def test_v13_resume_la_actividad_del_cliente_con_su_herramienta():
+    texto = leer_prompt("v13_agente.md")
+    assert "`resumen_de_mi_actividad`" in texto and "cita lo que devuelve" in texto

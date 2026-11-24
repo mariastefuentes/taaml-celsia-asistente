@@ -57,6 +57,7 @@ from taaml.herramientas_servicio import (
     estimar_ahorro_solar,
     fecha_y_hora_actual,
     listar_mis_reclamos,
+    resumen_de_mi_actividad,
     sedes_cercanas,
     verificar_canal_oficial,
 )
@@ -417,6 +418,7 @@ HERRAMIENTAS = [
     escalar_a_asesor,
     calificar_atencion,
     olvidar_datos_del_cliente,
+    resumen_de_mi_actividad,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.

@@ -529,3 +529,32 @@ def test_la_marca_de_un_cliente_no_autoriza_el_borrado_de_otro_y_el_anonimo_no_t
 def test_esquema_del_borrado():
     assert set(olvidar_datos_del_cliente.tool_call_schema.model_json_schema()["properties"]) == {"confirmo"}
     assert ConfirmacionDeBorrado.model_fields["confirmo"].default is False
+
+
+from taaml.herramientas_servicio import resumen_de_actividad, resumen_de_mi_actividad  # noqa: E402
+
+
+def test_el_resumen_cuenta_cada_cosa_y_da_el_promedio_sin_mezclar_clientes():
+    almacen = _almacen_con_datos()
+    registrar_calificacion(almacen, "ana", 3)
+    r = resumen_de_actividad(almacen, "ana")
+    assert "Datos que contó de sí mismo: 1" in r and "Reclamos radicados: 0." in r and "Solicitudes para hablar con una persona: 1" in r
+    assert "Calificaciones de la atención: 2 (promedio 4.0 de 5)" in r
+
+
+def test_el_resumen_muestra_el_reclamo_mas_reciente_y_no_repite_el_contenido():
+    almacen = _almacen_con_reclamos()
+    r = resumen_de_actividad(almacen, "ana")
+    assert "el más reciente: REC-" in r and "Sin luz desde las 8" not in r
+
+
+def test_el_resumen_de_un_cliente_vacio_o_anonimo():
+    assert "nada guardado" in resumen_de_actividad(InMemoryStore(), "ana")
+    assert "anónimo" in resumen_de_actividad(InMemoryStore(), "anonimo")
+    assert resumen_de_mi_actividad.tool_call_schema.model_json_schema()["properties"] == {}
+
+
+def test_el_resumen_recibe_el_contexto_del_cliente_aunque_el_modelo_no_lo_ve():
+    from taaml.herramientas_servicio import SoloElCliente
+
+    assert resumen_de_mi_actividad.args_schema is SoloElCliente and "runtime" in SoloElCliente.model_fields
