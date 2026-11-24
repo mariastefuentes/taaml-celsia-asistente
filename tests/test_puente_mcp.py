@@ -129,3 +129,30 @@ def test_el_plugin_reemplaza_el_telefono_por_el_remitente_verificado(tmp_path):
     assert salida["sin_remitente"]["block"] is True
     assert salida["otra_herramienta"] is None
     assert salida["basura"] == ""
+
+
+def test_telefono_vacio_o_sin_formato_no_llega_al_agente(monkeypatch):
+    monkeypatch.setattr(puente_mcp.requests, "post", lambda *a, **k: pytest.fail("no debía llamar al agente"))
+    assert atender("hola", "") == MENSAJE_NO_AUTORIZADO
+    assert atender("hola", "   ") == MENSAJE_NO_AUTORIZADO
+    assert atender("hola", None) == MENSAJE_NO_AUTORIZADO  # sin número no se consulta al agente
+
+
+def test_respuesta_sin_texto_y_429_sin_detalle_reciben_el_mensaje_de_fallo(monkeypatch):
+    monkeypatch.setattr(puente_mcp.requests, "post", lambda *a, **k: _Respuesta(cuerpo={}))
+    assert atender("hola", "+573001112233") == MENSAJE_DE_FALLO  # falta la clave «respuesta»
+    monkeypatch.setattr(puente_mcp.requests, "post", lambda *a, **k: _Respuesta(429))
+    assert atender("hola", "+573001112233") == MENSAJE_DE_FALLO  # sin detalle del proveedor
+
+
+def test_url_con_barra_final_no_duplica_el_slash_y_respuesta_no_texto_no_rompe(monkeypatch):
+    enviado = {}
+
+    def falso_post(url, json, headers, timeout):
+        enviado.update(url=url)
+        return _Respuesta(cuerpo={"respuesta": 12345})  # lo convierte a texto
+
+    monkeypatch.setattr(puente_mcp.requests, "post", falso_post)
+    monkeypatch.setenv("CELSIA_API_URL", "http://127.0.0.1:8000/")
+    assert atender("hola", "+573001112233") == "12345"
+    assert enviado["url"] == "http://127.0.0.1:8000/chat"
