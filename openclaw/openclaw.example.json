@@ -1,6 +1,12 @@
 {
-  "$comentario": "Plantilla saneada de la configuración endurecida de OpenClaw (decisión D35). Las claves ${...} se resuelven con las variables de entorno al instalar: scripts/47_openclaw_instalar.py. No pongas claves reales aquí.",
+  "env": {
+    "shellEnv": {
+      "enabled": true,
+      "timeoutMs": 15000
+    }
+  },
   "gateway": {
+    "mode": "local",
     "bind": "loopback",
     "port": 18789,
     "auth": {
@@ -8,18 +14,33 @@
       "token": "${OPENCLAW_GATEWAY_TOKEN}"
     }
   },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
   "agents": {
     "defaults": {
-      "workspace": "~/openclaw-workspace",
+      "workspace": "~/.openclaw/workspace",
       "model": {
         "primary": "deepseek/deepseek-flash",
         "fallbacks": ["google/gemini-3.8-flash"]
       },
       "sandbox": {
-        "mode": "docker",
-        "scope": "all",
+        "mode": "all",
+        "backend": "docker",
+        "scope": "agent",
         "workspaceAccess": "none",
-        "image": "openclaw-sandbox:trixie-slim"
+        "docker": {
+          "image": "openclaw-sandbox:trixie-slim"
+        }
+      }
+    },
+    "entries": {
+      "main": {
+        "workspace": "~/.openclaw/workspace",
+        "model": {
+          "primary": "deepseek/deepseek-flash",
+          "fallbacks": ["google/gemini-3.8-flash"]
+        }
       }
     }
   },
@@ -30,13 +51,9 @@
       "workspaceOnly": true
     },
     "exec": {
-      "mode": "deny",
-      "requireApproval": true
+      "mode": "deny"
     },
     "elevated": {
-      "enabled": false
-    },
-    "browser": {
       "enabled": false
     },
     "sandbox": {
@@ -48,8 +65,8 @@
   "channels": {
     "whatsapp": {
       "enabled": true,
-      "dmScope": "per-channel-peer",
-      "allowlist": ["${WHATSAPP_ALLOWLIST}"]
+      "dmPolicy": "allowlist",
+      "allowFrom": ${WHATSAPP_ALLOWLIST_ARRAY}
     }
   },
   "mcp": {
@@ -59,8 +76,8 @@
         "command": "uv",
         "args": ["run", "python", "-m", "taaml.servidor_mcp"],
         "cwd": "${REPO_CELSIA}",
-        "tools": {
-          "allow": [
+        "toolFilter": {
+          "include": [
             "buscar_informacion_celsia",
             "consultar_sedes_celsia",
             "consultar_contactos_celsia",
@@ -73,6 +90,13 @@
             "consultar_politica_de_datos_celsia"
           ]
         }
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "whatsapp": {
+        "enabled": true
       }
     }
   }
