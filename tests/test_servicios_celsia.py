@@ -97,3 +97,19 @@ def test_la_herramienta_calcula_y_rechaza_argumentos_invalidos():
     assert set(calcular_factura_estimada.tool_call_schema.model_json_schema()["properties"]) == {
         "consumo_kwh", "tarifa_cop_kwh", "cargo_fijo_cop", "ajuste_pct",
     }
+
+
+def test_pesos_con_valores_extremos():
+    assert pesos(1.4) == "$1" and pesos(999999999.5) == "$1.000.000.000" and pesos(0.4) == "$0"
+
+
+def test_factura_con_solo_cargo_fijo_y_consumo_fraccionario():
+    r = factura_estimada(100, 1000, cargo_fijo_cop=5000)
+    assert "Cargo fijo: $5.000" in r and "Total estimado: $105.000" in r
+    r2 = factura_estimada(1.5, 700)
+    assert "1.5 kWh × $700 por kWh = $1.050" in r2 and "Total estimado: $1.050" in r2
+
+
+def test_verificar_canal_entradas_con_espacios_circundantes_y_vacias():
+    assert verificar_canal("  01 8000 112 115  ").startswith("Sí figura")
+    assert verificar_canal("").startswith("No entendí")  # vacío no se dice oficial
