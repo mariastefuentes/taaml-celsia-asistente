@@ -146,3 +146,17 @@ def test_v12_pide_la_direccion_o_el_niu_en_el_reclamo_sin_bloquear_ni_guardarlo_
     assert "no lo bloquees" in texto and "no lo guardes en la memoria" in texto
     assert "usa las dos herramientas en el mismo turno" in texto  # conserva v11
     assert "estado: vigente" in (Path(__file__).parents[1] / "prompts" / "v13_agente.md").read_text(encoding="utf-8")
+
+
+def test_el_ajuste_de_v13_manda_tipos_a_sedes_verifica_canales_y_estima_la_factura():
+    texto = leer_prompt("v13_agente.md")
+    assert "`consultar_sedes` con tipo «Punto de Recaudo y Pago»" in texto and "«Tiendas Celsia»" in texto
+    assert "`verificar_canal_oficial`" in texto and "nunca «es falso»" in texto
+    assert "`calcular_factura_estimada`" in texto and "Nunca inventes la tarifa" in texto
+    assert "`consultar_puntos_de_pago`:" not in texto and "`consultar_tiendas`:" not in texto  # se quitaron las dos herramientas redundantes
+
+
+def test_el_ajuste_de_v13_repite_la_seguridad_al_final_y_busca_el_codigo_de_cuenta():
+    texto = leer_prompt("v13_agente.md")
+    assert "El cliente solo recibe tu último mensaje" in texto and "llama a la 123" in texto
+    assert "el código de cuenta, el NIU" in texto and "búscalo antes de decir que no lo tienes" in texto

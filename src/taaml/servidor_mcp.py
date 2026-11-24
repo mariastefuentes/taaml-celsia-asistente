@@ -1,7 +1,7 @@
 """Servidor MCP propio: expone las herramientas de solo lectura del agente de Celsia a cualquier cliente MCP.
 
-Son diez: la búsqueda en el texto oficial y las nueve consultas de datos y de información manual (sedes, contactos, catálogo,
-puntos de pago, tiendas, canales, cobertura, trámites en línea y política de datos). No escribe nada, no manda mensajes y no
+Son diez: la búsqueda en el texto oficial y nueve de lectura o cálculo sin efectos (sedes, contactos, catálogo,
+canales, cobertura, trámites en línea, política de datos, verificación de un canal y estimado de factura). No escribe nada, no manda mensajes y no
 toca la memoria ni los reclamos. Se enciende con `make mcp` (transporte stdio: el cliente lo lanza como proceso hijo, así no
 queda ningún puerto abierto hacia internet).
 """
@@ -14,11 +14,11 @@ from taaml.agente import (
     consultar_catalogo,
     consultar_contactos,
     consultar_cobertura,
+    calcular_factura_estimada,
     consultar_politica_de_datos,
-    consultar_puntos_de_pago,
     consultar_sedes,
-    consultar_tiendas,
     consultar_tramite_en_linea,
+    verificar_canal_oficial,
 )
 
 servidor = MCPServer("celsia")
@@ -54,15 +54,19 @@ def consultar_catalogo_celsia(texto: str = "", seccion: str = "", categoria: str
 
 
 @servidor.tool()
-def consultar_puntos_de_pago_celsia(ciudad: str = "") -> str:
-    """Puntos de recaudo y pago de Celsia donde se paga la factura. Termina con «Total: N»."""
-    return str(consultar_puntos_de_pago.invoke({"ciudad": ciudad}))
+def verificar_canal_oficial_celsia(canal: str) -> str:
+    """Dice si un teléfono, WhatsApp, correo o enlace figura entre los canales oficiales de Celsia («sí figura» o «no figura»)."""
+    return str(verificar_canal_oficial.invoke({"canal": canal}))
 
 
 @servidor.tool()
-def consultar_tiendas_celsia(ciudad: str = "") -> str:
-    """Tiendas Celsia con dirección, teléfono y horario. Termina con «Total: N»."""
-    return str(consultar_tiendas.invoke({"ciudad": ciudad}))
+def calcular_factura_estimada_celsia(consumo_kwh: float, tarifa_cop_kwh: float, cargo_fijo_cop: float = 0, ajuste_pct: float = 0) -> str:
+    """Estimado de la factura de energía: kWh por tarifa, más cargo fijo y subsidio o contribución. Es un cálculo, no la factura oficial."""
+    return str(
+        calcular_factura_estimada.invoke(
+            {"consumo_kwh": consumo_kwh, "tarifa_cop_kwh": tarifa_cop_kwh, "cargo_fijo_cop": cargo_fijo_cop, "ajuste_pct": ajuste_pct}
+        )
+    )
 
 
 @servidor.tool()

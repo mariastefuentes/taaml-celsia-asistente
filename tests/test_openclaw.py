@@ -18,12 +18,12 @@ NAMES_MCP = [
     "consultar_sedes_celsia",
     "consultar_contactos_celsia",
     "consultar_catalogo_celsia",
-    "consultar_puntos_de_pago_celsia",
-    "consultar_tiendas_celsia",
     "consultar_canales_de_atencion_celsia",
     "consultar_cobertura_celsia",
     "consultar_tramite_en_linea_celsia",
     "consultar_politica_de_datos_celsia",
+    "verificar_canal_oficial_celsia",
+    "calcular_factura_estimada_celsia",
 ]
 
 
