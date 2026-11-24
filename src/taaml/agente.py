@@ -824,6 +824,7 @@ def errores_amables(request: Any, handler: Any) -> Any:
     except GraphBubbleUp:
         raise
     except ToolInvocationError as e:
+        log.warning("argumentos inválidos de «%s»", nombre)
         campos = ", ".join(str(".".join(map(str, d["loc"]))) for d in (e.filtered_errors or []) if d.get("loc"))
         contenido = f"Argumentos inválidos para «{nombre}» ({campos or 'revisa los campos'}). Corrígelos y vuelve a intentarlo."
     except Exception:
@@ -1115,6 +1116,9 @@ def conversar(
         for m in mensajes[ultimo:]
         for ll in getattr(m, "tool_calls", [])
     ]
+    log.info(
+        "turno del agente: hilo=%s modelo=%s herramientas=%s", thread_id, modelo, [ll["herramienta"] for ll in llamadas]
+    )
     if resultado.get("__interrupt__"):  # el agente se pausó pidiendo aprobación: el cliente recibe el aviso, no un texto vacío
         return MENSAJE_EN_REVISION, llamadas
     return mensajes[-1].text.strip(), llamadas
