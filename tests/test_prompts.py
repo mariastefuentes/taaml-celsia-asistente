@@ -219,3 +219,8 @@ def test_v13_escala_a_un_asesor_sin_prometer_llamadas_ni_tiempos():
 def test_v13_registra_la_calificacion_sin_inventar_el_puntaje():
     texto = leer_prompt("v13_agente.md")
     assert "`calificar_atencion`" in texto and "nunca inventes el puntaje" in texto
+
+
+def test_v13_borra_los_datos_solo_con_la_confirmacion_del_cliente():
+    texto = leer_prompt("v13_agente.md")
+    assert "`olvidar_datos_del_cliente`" in texto and "Nunca borres sin esa confirmación" in texto

@@ -349,6 +349,54 @@ def radicar_reclamo(
     return f"Reclamo radicado con el número {numero}."
 
 
+class ConfirmacionDeBorrado(EsquemaConRuntime):
+    """Esquema de entrada de `olvidar_datos_del_cliente`."""
+
+    confirmo: bool = Field(
+        default=False,
+        description="False para pedir el borrado (la herramienta avisa qué se borraría y pide confirmación); True solo si el cliente, "
+        "después de ese aviso, respondió con claridad que sí quiere borrar todo.",
+    )
+
+
+ESPACIOS_DEL_CLIENTE = (("perfil", "datos"), ("reclamos", "reclamos"), ("escalamientos", "solicitudes de asesor"), ("calificaciones", "calificaciones"))
+
+
+def _resumen_de_lo_guardado(almacen: Any, usuario: str) -> str:
+    partes = [f"{n} {nombre}" for espacio, nombre in ESPACIOS_DEL_CLIENTE if (n := len(almacen.search((espacio, usuario), limit=1000)))]
+    return ", ".join(partes)
+
+
+def borrar_datos_con_confirmacion(almacen: Any, usuario: str, confirmo: bool) -> str:
+    """Borra lo guardado de un cliente solo en dos pasos: primero avisa qué se borraría y deja una marca; después, con la confirmación, borra."""
+    if usuario == ANONIMO:
+        return "No hay un cliente identificado: de un cliente anónimo no se guarda nada."
+    marca = ("borrado_pendiente", usuario)
+    resumen = _resumen_de_lo_guardado(almacen, usuario)
+    if not confirmo:
+        if not resumen:
+            return "No hay nada guardado de este cliente; no hay nada que borrar."
+        almacen.put(marca, "pendiente", {"resumen": resumen})
+        return (
+            f"Antes de borrar necesito su confirmación. Se borraría: {resumen}. No se puede deshacer. "
+            "Pregúntele al cliente si quiere borrarlo todo y espere su respuesta."
+        )
+    if almacen.get(marca, "pendiente") is None:
+        return "No se borró nada: primero hay que avisar al cliente qué se borraría y esperar su confirmación."
+    almacen.delete(marca, "pendiente")
+    borrados = olvidar_cliente(usuario, almacen)
+    return f"Listo: se borraron {borrados} datos guardados de este cliente ({resumen})."
+
+
+@tool(args_schema=ConfirmacionDeBorrado)
+def olvidar_datos_del_cliente(runtime: ToolRuntime[Contexto], confirmo: bool = False) -> str:
+    """Borra todo lo guardado del cliente (lo que contó de sí mismo, sus reclamos, solicitudes de asesor y calificaciones) cuando él
+    pide que lo olvides o que borres sus datos. Funciona en dos pasos: primero llámala con confirmo=false, cuéntale lo que devuelve
+    y pregúntale si está seguro; solo si en su siguiente mensaje responde con claridad que sí, llámala con confirmo=true.
+    Nunca pongas confirmo=true en el mismo turno en que pide el borrado."""
+    return borrar_datos_con_confirmacion(_almacen(runtime), runtime.context.usuario, confirmo)
+
+
 HERRAMIENTAS = [
     buscar_en_base,
     consultar_datos,
@@ -368,6 +416,7 @@ HERRAMIENTAS = [
     agregar_detalle_a_reclamo,
     escalar_a_asesor,
     calificar_atencion,
+    olvidar_datos_del_cliente,
 ]
 
 # Herramientas que una persona debe aprobar antes de que corran (HumanInTheLoopMiddleware): las que cambian algo fuera de la conversación.

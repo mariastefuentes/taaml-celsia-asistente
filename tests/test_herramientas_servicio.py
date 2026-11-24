@@ -481,3 +481,51 @@ def test_el_borrado_del_cliente_tambien_elimina_sus_calificaciones():
 def test_esquema_de_la_calificacion():
     assert set(calificar_atencion.tool_call_schema.model_json_schema()["properties"]) == {"puntaje", "comentario"}
     assert {type(m).__name__ for m in CalificacionDeAtencion.model_fields["puntaje"].metadata} >= {"Ge", "Le"}
+
+
+from taaml.agente import ConfirmacionDeBorrado, borrar_datos_con_confirmacion, olvidar_datos_del_cliente  # noqa: E402
+
+
+def _almacen_con_datos():
+    almacen = InMemoryStore()
+    almacen.put(("perfil", "ana"), "d1", {"dato": "vive en Cali"})
+    registrar_calificacion(almacen, "ana", 5)
+    solicitar_asesor(almacen, "ana", "quiero un asesor")
+    registrar_calificacion(almacen, "luis", 2)
+    return almacen
+
+
+def test_pedir_el_borrado_solo_avisa_y_no_borra():
+    almacen = _almacen_con_datos()
+    r = borrar_datos_con_confirmacion(almacen, "ana", False)
+    assert "confirmación" in r and "1 datos" in r and "1 calificaciones" in r and "1 solicitudes de asesor" in r and "No se puede deshacer" in r
+    assert len(almacen.search(("perfil", "ana"))) == 1 and len(almacen.search(("calificaciones", "ana"))) == 1
+
+
+def test_confirmar_sin_haber_avisado_antes_no_borra_nada():
+    almacen = _almacen_con_datos()
+    assert "No se borró nada" in borrar_datos_con_confirmacion(almacen, "ana", True)
+    assert len(almacen.search(("perfil", "ana"))) == 1
+
+
+def test_con_aviso_y_confirmacion_borra_todo_de_ese_cliente_y_la_marca_no_sirve_dos_veces():
+    almacen = _almacen_con_datos()
+    borrar_datos_con_confirmacion(almacen, "ana", False)
+    assert "se borraron 3 datos" in borrar_datos_con_confirmacion(almacen, "ana", True)
+    for espacio in ("perfil", "calificaciones", "escalamientos", "borrado_pendiente"):
+        assert almacen.search((espacio, "ana")) == []
+    assert len(almacen.search(("calificaciones", "luis"))) == 1
+    assert "No se borró nada" in borrar_datos_con_confirmacion(almacen, "ana", True)
+
+
+def test_la_marca_de_un_cliente_no_autoriza_el_borrado_de_otro_y_el_anonimo_no_tiene_nada():
+    almacen = _almacen_con_datos()
+    borrar_datos_con_confirmacion(almacen, "luis", False)
+    assert "No se borró nada" in borrar_datos_con_confirmacion(almacen, "ana", True)
+    assert "anónimo" in borrar_datos_con_confirmacion(almacen, "anonimo", True)
+    assert "nada que borrar" in borrar_datos_con_confirmacion(InMemoryStore(), "ana", False)
+
+
+def test_esquema_del_borrado():
+    assert set(olvidar_datos_del_cliente.tool_call_schema.model_json_schema()["properties"]) == {"confirmo"}
+    assert ConfirmacionDeBorrado.model_fields["confirmo"].default is False
