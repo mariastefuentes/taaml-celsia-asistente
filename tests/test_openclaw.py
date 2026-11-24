@@ -103,3 +103,57 @@ def test_instalar_escribe_configuracion_y_respeta_lo_existente(tmp_path):
 def test_el_script_existe_y_la_plantilla_esta_versionada():
     assert (RAIZ / "scripts" / "47_openclaw_instalar.py").exists()
     assert (RAIZ / "openclaw" / "openclaw.example.json").exists()
+
+
+def _problemas_con_mutante(mutante):
+    config = configuracion(ENTORMO)
+    mutante(config)
+    return problemas(config)
+
+
+def test_eliminar_el_sandbox_completo_se_detecta():
+    def mutante(config):
+        sandbox = config["agents"]["defaults"]["sandbox"]
+        sandbox["mode"] = "none"
+        sandbox["backend"] = "local"
+        sandbox["scope"] = "nope"
+        sandbox["workspaceAccess"] = "workspace"
+        sandbox["docker"] = {}
+
+    fallos = _problemas_con_mutante(mutante)
+    assert any("mode" in f for f in fallos) and any("backend" in f for f in fallos)
+    assert any("scope" in f for f in fallos) and any("workspaceAccess" in f for f in fallos)
+    assert any("docker.image" in f for f in fallos)
+
+
+def test_herramientas_fuera_del_deny_exec_elevated_y_allowFrom_vacias_se_detectan():
+    def mutante(config):
+        config["tools"]["deny"] = []
+        config["tools"]["exec"]["mode"] = "allow"
+        config["tools"]["elevated"]["enabled"] = True
+        config["channels"]["whatsapp"]["allowFrom"] = []
+
+    fallos = _problemas_con_mutante(mutante)
+    assert any("deny" in f for f in fallos)
+    assert any("exec" in f for f in fallos) and any("elevated" in f for f in fallos)
+    assert any("allowFrom" in f for f in fallos)
+
+
+def test_servidor_puente_eliminado_o_plugin_desactivado_se_detectan():
+    def mutante(config):
+        del config["mcp"]["servers"]["puente"]
+    assert any("puente" in f for f in _problemas_con_mutante(mutante))
+
+    def mutante_plugin(config):
+        config["plugins"]["entries"]["puente-celsia"]["enabled"] = False
+    assert any("puente-celsia" in f for f in _problemas_con_mutante(mutante_plugin))
+
+
+def test_tool_search_habilitado_se_detecta():
+    def mutante(config):
+        config["tools"]["toolSearch"] = True
+    assert any("toolSearch" in f for f in _problemas_con_mutante(mutante))
+
+
+def test_la_plantilla_vigente_no_tiene_fallos():
+    assert problemas(configuracion(ENTORMO)) == []
