@@ -4,13 +4,13 @@
 
 ## Dictamen: NO APTO — existen incumplimientos obligatorios (según el prompt)
 
-Hay dos bloqueos: solo hay 5 herramientas (se exigen 20) y OpenClaw no está conectado a WhatsApp ni tiene su espacio de trabajo completo.
+Actualización del 23/11 (misma fecha, tras trabajar los hallazgos): las herramientas pasaron de 5 a 20 (cada una con esquema, pruebas y medición con el agente real; ver [herramientas.md](herramientas.md) y D41), el espacio de trabajo de OpenClaw quedó completo y se archivó `openclaw security audit`. Lo que sigue bloqueando un «APTO» es el ensayo de WhatsApp real con un teléfono externo, que no se puede hacer sin el equipo y Meta. La tabla y los hallazgos de abajo muestran el estado al auditar, con notas de lo ya cerrado.
 
 ## Matriz de los 15 criterios
 
 | # | Criterio (peso) | Estado | Evidencia revisada | Brecha para 5.0 |
 |---|---|---|---|---|
-| 1.1 | Herramientas, catálogo de 20 (10 %) | **NO CUMPLE** (20 de 20 el 23/11: se añade una por vez, en la rama `herramientas-20`) | `HERRAMIENTAS` en `src/taaml/agente.py:368` tiene 5, con esquema Pydantic (`@tool(args_schema=…)`); `servidor_mcp.py` expone 2 más, que son envoltorios de las mismas búsquedas | Faltan 15 herramientas reales, cada una con esquema, prueba y uso demostrable |
+| 1.1 | Herramientas, catálogo de 20 (10 %) | **CUMPLE** (20 de 20 el 23/11, en la rama `herramientas-20`; al auditar eran 5) | `HERRAMIENTAS` en `src/taaml/agente.py:368` tenía 5 al auditar y ahora tiene 20, todas con esquema Pydantic (`@tool(args_schema=…)`); `servidor_mcp.py` expone 2 más, que son envoltorios de las mismas búsquedas | Demostrar cada una en vivo en la sustentación |
 | 1.2 | Router y razonamiento (8 %) | CUMPLE PARCIAL | Matriz de enrutamiento 42/43, banco 49/49 (medido hoy), `errores_amables` | Con 20 herramientas hay que ampliar la matriz; R31 sigue marcada |
 | 1.3 | Memoria por capas (7 %) | CUMPLE PARCIAL | PostgresSaver + Store, `thread_id`, aislamiento por usuario en pruebas | Falta demostrar persistencia tras reiniciar en vivo y edición/auditoría de memoria por el usuario |
 | 2.1 | Pipeline de datos M1 (5 %) | CUMPLE PARCIAL | `data/1_bronze → 2_silver → 3_gold`, scripts numerados | No se volvió a ejecutar de cero en esta auditoría |
@@ -30,7 +30,7 @@ Hay dos bloqueos: solo hay 5 herramientas (se exigen 20) y OpenClaw no está con
 
 | Sev. | Hallazgo | Causa | Corrección | Cierre |
 |---|---|---|---|---|
-| CRÍTICO | 5 herramientas en vez de 20 | El alcance del Taller 2 se quedó en 5 | Diseñar 15 herramientas útiles para Celsia, con `args_schema`, prueba por herramienta y entradas en la matriz del router | Un inventario de 20 filas; cada una con una prueba que la invoca |
+| CRÍTICO (cerrado el 23/11) | 5 herramientas en vez de 20 | El alcance del Taller 2 se quedó en 5 | Diseñar 15 herramientas útiles para Celsia, con `args_schema`, prueba por herramienta y entradas en la matriz del router | Hecho: [inventario de 20 filas](herramientas.md), cada una con prueba y medición con el agente real |
 | CRÍTICO | WhatsApp real sin ensayo registrado | Depende de Meta, túnel y número propio | Ensayo completo con un teléfono externo, registrar trazas | Capturas más logs de un hilo con herramienta y memoria |
 | ALTO | Workspace sin `MEMORY.md` ni bitácora | Solo se generó lo que crea el asistente de OpenClaw | Crear `MEMORY.md` y la bitácora del día; ampliar `SOUL.md` | Archivos presentes y citados en el guion |
 | ALTO | Sin modelos de respaldo en OpenClaw | Solo `primary` configurado | Añadir `fallbacks` (p. ej. `deepseek-v4-pro`) | `openclaw.json` con fallbacks, probado apagando el primario |
@@ -43,4 +43,4 @@ Hay dos bloqueos: solo hay 5 herramientas (se exigen 20) y OpenClaw no está con
 Texto oficial del Anuncio 007 y de la rúbrica (pesos exactos, si OpenClaw debe ser el canal de WhatsApp en Ruta A, qué cuenta como «herramienta»); WhatsApp real; instalación en limpio; `openclaw security audit`; bonificaciones (inglés, LangSmith, Telegram).
 
 ## Estimación de nota (sin evidencia completa; no es nota oficial)
-Con lo verificado, el ítem 1.1 quedaría en 1.0–2.0 y el 3.3 en 3.0; el resto depende de pruebas pendientes. No se calcula nota ponderada final porque 5 de 15 ítems están sin verificar.
+Con lo verificado, el ítem 1.1 quedaba en 1.0–2.0 y el 3.3 en 3.0 (ya corregidos: 20 herramientas y espacio de trabajo completo); el resto depende de pruebas pendientes. No se calcula nota ponderada final porque 5 de 15 ítems están sin verificar.
