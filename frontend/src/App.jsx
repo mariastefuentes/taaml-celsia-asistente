@@ -56,6 +56,43 @@ function QrWhatsApp() {
   );
 }
 
+// Acción de copiar la respuesta del asistente: el texto completo con clipboard, confirmación visual.
+function AccionesRespuesta({ texto }) {
+  const [copiado, setCopiado] = useState(false);
+
+  const hacerCopiar = async () => {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(texto);
+      ok = true;
+    } catch {
+      try {
+        const tmp = document.createElement("textarea");
+        tmp.value = texto;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand("copy");
+        document.body.removeChild(tmp);
+        ok = true;
+      } catch {
+        ok = false;
+      }
+    }
+    if (ok) {
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    }
+  };
+
+  return (
+    <div className="acciones-respuesta" aria-label="Acciones de la respuesta del asistente">
+      <button type="button" className="acc-btn" onClick={hacerCopiar} title="Copiar la respuesta" aria-label="Copiar">
+        {copiado ? "Copiado" : <span className="icono" aria-hidden="true">📋</span>}
+      </button>
+    </div>
+  );
+}
+
 function Fuentes({ fuentes, texto }) {
   if (!fuentes?.length || sinEvidencia(texto)) return null;
   return (
@@ -249,7 +286,8 @@ export default function App() {
           </section>
         )}
         {mensajes.map((m, i) => (
-          <article key={i} className={`burbuja ${m.rol}`}>
+          <div key={i} className="bloque-mensaje">
+            <article className={`burbuja ${m.rol}`}>
             {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
               <p className={`herramienta ${tipoDeUso(m).clase}`}>
                 <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ? [...new Set(m.usadas.split("; "))].join("; ") : [...new Set(m.herramientas.map(etiqueta))].join(" · ")}
@@ -261,7 +299,9 @@ export default function App() {
             )}
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
-          </article>
+            </article>
+            {m.rol === "assistant" && <AccionesRespuesta texto={m.texto} />}
+          </div>
         ))}
         <div ref={fin} />
       </main>
