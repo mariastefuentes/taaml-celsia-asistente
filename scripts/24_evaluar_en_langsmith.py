@@ -5,7 +5,7 @@ con permiso para crear datasets (LANGSMITH_API_KEY en el .env; la de «solo traz
 Qué hace:
 1. Sube docs/2 - Conjunto de prueba/matriz_enrutamiento.csv como el dataset «celsia-matriz-enrutamiento» (una vez; si ya existe, lo reutiliza).
 2. Corre el agente sobre cada ejemplo con `Client.evaluate` y puntúa tres cosas: `ruta_ok` (herramienta esperada), `detalle_ok` (parámetros y texto esperados) y `n_llamadas`.
-3. Cada configuración queda como un experimento del dataset. En smith.langchain.com → Datasets → celsia-matriz-enrutamiento → Experiments se marcan dos y se pulsa Compare.
+3. Cada configuración queda como un experimento del dataset. En smith.langchain.com → Datasets → celsia-matriz-enrutamiento-20 → Experiments se marcan dos y se pulsa Compare.
 
 Configuraciones: «con_tope» (el agente entregado: 4 herramientas por pregunta como máximo) y «sin_tope» (el mismo agente sin ese límite).
 LangSmith aquí solo observa y puntúa: el agente se orquesta con `create_agent`.
@@ -29,7 +29,7 @@ _spec.loader.exec_module(
     matriz
 )  # reutiliza las reglas de puntuación de la matriz: lo que se mide aquí es lo mismo que allá
 
-NOMBRE_DATASET = "celsia-matriz-enrutamiento"
+NOMBRE_DATASET = "celsia-matriz-enrutamiento-20"  # nombre nuevo: el dataset anterior esperaba herramientas que ya no existen
 CONFIGURACIONES = {"con_tope": 4, "sin_tope": 1000}  # herramientas máximas por pregunta
 
 
@@ -53,7 +53,7 @@ def ruta_ok(inputs: dict, outputs: dict, reference_outputs: dict) -> dict:
     usadas = {ll["herramienta"] for ll in outputs["llamadas"]}
     return {
         "key": "ruta_ok",
-        "score": int(matriz.enrutamiento_ok(inputs["id"], reference_outputs["herramienta_esperada"], usadas)),
+        "score": int(matriz.enrutamiento_ok(reference_outputs["herramienta_esperada"], usadas)),
     }
 
 
