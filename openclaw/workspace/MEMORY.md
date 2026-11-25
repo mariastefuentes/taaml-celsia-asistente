@@ -25,8 +25,8 @@ Lo que el cliente cuenta de sí mismo vive en el Store del asistente, con su con
 ## Estado actual (25 de noviembre de 2026)
 
 - Sustentación: sábado 28 de noviembre, de 10:45 a 11:00.
-- WhatsApp: el repositorio prepara dos vías, OpenClaw con QR público (D54) y el webhook propio de Meta. El equipo debe confirmar cuál es la principal, porque los documentos aún no coinciden.
-- Aprueba los reclamos la persona asignada en `APROBADOR_WHATSAPP`; nunca quien presenta la demo.
+- WhatsApp: la demo va solo por OpenClaw con QR público (D54). El webhook de Meta no se usa (D56).
+- Los reclamos los aprueba en el panel (`/panel`) una persona asignada del equipo; nunca quien presenta la demo.
 - La matriz de enrutamiento con las 20 herramientas se midió el 24/11: 41 de 43 (D53).
 - Número del bot: el equipo informa (25/11) que ya respondió desde otro teléfono. Falta guardar la prueba y la salida de `openclaw channels status --probe`.
 - Pendiente: correr `openclaw config validate` y `openclaw security audit` sobre la configuración final en el equipo de la demo y guardar la salida.

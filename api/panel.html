@@ -15,6 +15,15 @@
   button { background:var(--acento); color:#06101f; border:0; padding:8px 14px; border-radius:8px; font-weight:600; cursor:pointer; }
   #estado { color:var(--suave); font-size:14px; }
   main { padding:16px 24px; }
+  #pendientes:empty { display:none; }
+  .pendiente-caja { background:var(--panel); border:1px solid var(--borde); border-left:4px solid var(--aviso); border-radius:12px; padding:12px 16px; margin:0 0 12px; }
+  .pendiente-caja h2 { margin:0 0 4px; font-size:16px; }
+  .pendiente-caja p { margin:2px 0; color:var(--suave); font-size:14px; overflow-wrap:anywhere; }
+  .pendiente-caja div { display:flex; gap:8px; margin-top:8px; }
+  button.rechazar { background:var(--mal); }
+  button:disabled { opacity:.5; cursor:default; }
+  #aviso-decision { color:var(--aviso); }
+  #aviso-decision:empty { display:none; }
   table { width:100%; border-collapse:collapse; }
   th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--borde); vertical-align:top; }
   th { color:var(--suave); font-weight:500; font-size:13px; text-transform:uppercase; letter-spacing:.04em; }
@@ -50,6 +59,8 @@
       <p>Escanea el código con la cámara y escribe tu pregunta por WhatsApp.</p>
     </div>
   </section>
+  <p id="aviso-decision" role="status"></p>
+  <section id="pendientes" aria-label="Pendientes de aprobación"></section>
   <p class="resumen" id="resumen" aria-live="polite">
     <span>Respuestas<b id="n-resp">0</b></span>
     <span>Con nota de dato sin respaldo<b id="n-notas">0</b></span>
@@ -79,6 +90,42 @@
     filas.prepend(tr);
     if (f.estado === "respondido" || f.estado.startsWith("pendiente")) { nResp++; if (f.nota) nNotas++; costoTotal += f.costo || 0; resumir(); }
   }
+  const ACCIONES = { radicar_reclamo: "Radicar un reclamo", cancelar_reclamo: "Cancelar un reclamo", reportar_dano_electrico: "Reportar un daño eléctrico" };
+  const caja = document.getElementById("pendientes"), avisoDecision = document.getElementById("aviso-decision");
+  let codigos = null;  // null obliga a repintar, incluso si la lista queda vacía
+  function elemento(tipo, texto) { const e = document.createElement(tipo); e.textContent = texto; return e; }
+  async function decidir(codigo, decision, botones) {
+    botones.forEach(b => b.disabled = true); avisoDecision.textContent = "Aplicando la decisión…";
+    try {
+      const r = await fetch("/api/pendientes/" + codigo, { method: "POST", headers: { "X-Aprobador": token, "Content-Type": "application/json" }, body: JSON.stringify({ decision }) });
+      if (!r.ok) { avisoDecision.textContent = "No se pudo (error " + r.status + ")."; botones.forEach(b => b.disabled = false); return; }
+      const d = await r.json();
+      const hecho = decision === "aprobar" ? "Aprobado. " : "Rechazado. ";
+      avisoDecision.textContent = hecho + (d.avisado_por_whatsapp ? "Se le envió la respuesta al cliente." : "No se le pudo enviar: la recibe cuando vuelva a escribir.");
+      codigos = null; consultarPendientes();
+    } catch { avisoDecision.textContent = "Sin conexión con la API."; botones.forEach(b => b.disabled = false); }
+  }
+  async function consultarPendientes() {
+    try {
+      const r = await fetch("/api/pendientes", { headers: { "X-Aprobador": token } });
+      if (!r.ok) return;
+      const lista = (await r.json()).pendientes, ahora = lista.map(p => p.codigo).join();
+      if (ahora === codigos) return;
+      codigos = ahora;
+      caja.replaceChildren(...lista.map(p => {
+        const div = document.createElement("div"); div.className = "pendiente-caja";
+        const si = elemento("button", "Aprobar"), no = elemento("button", "Rechazar"), botones = document.createElement("div");
+        no.className = "rechazar";
+        si.addEventListener("click", () => decidir(p.codigo, "aprobar", [si, no]));
+        no.addEventListener("click", () => decidir(p.codigo, "rechazar", [si, no]));
+        botones.append(si, no);
+        div.append(elemento("h2", "Por aprobar: " + (ACCIONES[p.herramienta] || p.herramienta)), elemento("p", "Canal: " + p.canal + " · cliente " + p.quien));
+        Object.entries(p.args).forEach(([k, v]) => div.append(elemento("p", k + ": " + v)));
+        div.append(botones);
+        return div;
+      }));
+    } catch {}
+  }
   async function consultar() {
     try {
       const r = await fetch("/api/actividad?desde=" + ultimo, { headers: { "X-Aprobador": token } });
@@ -88,11 +135,13 @@
       d.filas.forEach(pintar); ultimo = d.ultimo;
       vacio.style.display = filas.children.length ? "none" : "block";
       estado.textContent = "En vivo";
+      consultarPendientes();
     } catch { estado.textContent = "Sin conexión con la API"; }
   }
   function parar() { clearInterval(temporizador); temporizador = null; }
   document.getElementById("entrar").addEventListener("click", () => {
     token = document.getElementById("token").value; ultimo = 0; filas.innerHTML = ""; nResp = nNotas = costoTotal = 0; resumir(); parar();
+    codigos = null; caja.replaceChildren(); avisoDecision.textContent = "";
     consultar(); temporizador = setInterval(consultar, 2000);
   });
 </script>

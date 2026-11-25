@@ -22,6 +22,20 @@ def sin_clave_de_chat(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def sin_avisos_reales(monkeypatch):
+    """Ninguna prueba manda mensajes por OpenClaw ni hereda pendientes de otra."""
+    monkeypatch.delenv("OPENCLAW_AVISOS", raising=False)
+    try:
+        from taaml import aprobaciones
+    except ImportError:
+        yield
+        return
+    aprobaciones.vaciar()
+    yield
+    aprobaciones.vaciar()
+
+
+@pytest.fixture(autouse=True)
 def sin_limite_de_mensajes(monkeypatch):
     """El límite por teléfono de la API se apaga en las pruebas que no lo miden (varias escriben muchos mensajes seguidos)."""
     try:

@@ -1,8 +1,8 @@
 # Guía de despliegue de OpenClaw (sustentación final)
 
-Esta guía lleva el asistente de Celsia al gateway de OpenClaw que pide la rúbrica del 28 de noviembre de 2026: **3.1** (gateway con configuración versionada), **3.2** (WhatsApp real con allowlist E.164), **3.3** (workspace) y **4.2** (sandbox y auditoría). La alternativa —el webhook propio con la API Cloud de Meta— sigue siendo la vía principal de la demo y se describe al final.
+Esta guía lleva el asistente de Celsia al gateway de OpenClaw que pide la rúbrica del 28 de noviembre de 2026: **3.1** (gateway con configuración versionada), **3.2** (WhatsApp real con allowlist E.164), **3.3** (workspace) y **4.2** (sandbox y auditoría). **La demo va solo por este canal** (QR de OpenClaw, D56). El webhook propio con la API de Meta sigue en el código, pero no se usa.
 
-> **Estado.** La configuración se versionó el 23/11/2026 (`openclaw/openclaw.example.json`, decisiones D47 y D48) a partir de la que funcionó en D35. **No se validó en el equipo donde corre esta guía**: aquí no hay OpenClaw instalado. Antes de la demo hay que ejecutar los pasos 3, 6 y 7 y corregir lo que cambie de nombre entre versiones.
+> **Estado.** La configuración se versionó el 23/11/2026 (`openclaw/openclaw.example.json`, decisiones D47 y D48) a partir de la que funcionó en D35. Antes de la demo hay que ejecutar en el equipo del bot los pasos 3, 6 y 7 y corregir lo que cambie de nombre entre versiones.
 
 ## 0. Qué se necesita
 
@@ -11,7 +11,6 @@ Esta guía lleva el asistente de Celsia al gateway de OpenClaw que pide la rúbr
 | OpenClaw instalado y en el `PATH` | Gateway y canales |
 | Docker | Imagen del sandbox (`openclaw-sandbox:trixie-slim`) |
 | `uv` y este repositorio | El servidor MCP `celsia` corre con `uv run` |
-| Cuenta de Meta con la app de WhatsApp | Canal de WhatsApp de la vía alterna (webhook propio) |
 | Número dedicado para el bot | Chip prepago o eSIM de voz/SMS en un celular de repuesto (nunca el personal de un integrante); ver la sección 6 |
 | Clave del proveedor del modelo | `deepseek/deepseek-flash` (la plantilla vigente; respaldo apagado) |
 
@@ -19,6 +18,9 @@ Esta guía lleva el asistente de Celsia al gateway de OpenClaw que pide la rúbr
 
 ```text
 OPENCLAW_GATEWAY_TOKEN=<cadena larga y aleatoria>
+CHAT_TOKEN=<otra cadena larga: la comparten la API y el puente>
+APROBADOR_TOKEN=<la clave de quien aprueba en el panel>
+OPENCLAW_AVISOS=1
 WHATSAPP_ALLOWLIST=*
 REPO_CELSIA=C:/ruta/absoluta/a/taaml-celsia-asistente
 ```
@@ -106,7 +108,7 @@ make qr-whatsapp ARGS="+57<numero-del-bot> --html --app"    # + página para pro
 
 El QR abre `wa.me` con un «Hola» precargado. Quien lo escanea entra al chat del número vinculado, sin instalar nada ni estar en una lista. Con `--app` queda en `assets/whatsapp_qr.png`, que el chat web y el panel en vivo muestran en `/qr-whatsapp.png`.
 
-6. Probar desde dos teléfonos que **no** sean del equipo: una pregunta de sedes (tool de tabla), un «¿qué sabes de mí?» (memoria) y un reclamo con aprobación humana. La traza debe mostrar la herramienta elegida.
+6. Probar desde dos teléfonos que **no** sean del equipo: una pregunta de sedes (tool de tabla), un «¿qué sabes de mí?» (memoria) y un reclamo que otra persona aprueba en el panel (ver «Aprobar en el panel»). El panel debe mostrar la herramienta elegida.
 
 ### El puente: las 20 herramientas por el canal de OpenClaw (D52)
 
@@ -119,7 +121,28 @@ cliente → WhatsApp (QR) → OpenClaw → atender_cliente_celsia → POST /chat
 - **Quién escribe lo fija OpenClaw, no el modelo.** OpenClaw no manda el remitente a los MCP por stdio (se comprobó con un servidor espejo), así que el plugin `openclaw/plugins/puente-celsia.js` usa el gancho `before_tool_call` y reemplaza `telefono` con `ctx.requester.senderId`, el remitente verificado del canal. Sin remitente, bloquea la llamada. El puente además exige que el número esté en `WHATSAPP_ALLOWLIST`.
 - **Requisitos:** la API encendida (`make api`), `CHAT_TOKEN` igual en `.env` y en el entorno de OpenClaw, y el plugin del canal instalado (`openclaw plugins install npm:@openclaw/whatsapp`).
 - **Instrucciones al modelo:** `workspace/AGENTS.md` (sección «Canal de WhatsApp») manda llamar la herramienta en cada mensaje y devolver su texto sin cambios; `tools.toolSearch: false` deja el esquema a la vista.
-- **Si falla el puente**, responde la frase de contingencia con la línea 01 8000 112 115 y la demo sigue por el webhook propio de Meta.
+- **Si falla el puente**, responde la frase de contingencia con la línea 01 8000 112 115 y la demo sigue por el chat web.
+
+### Aprobar en el panel (D56)
+
+Radicar un reclamo, cancelarlo o reportar un daño deja la conversación en pausa hasta que una persona decide:
+
+1. En el computador del bot, abrir `http://127.0.0.1:8000/panel`, escribir la clave `APROBADOR_TOKEN` y pulsar «Ver».
+2. Arriba aparece **Por aprobar**, con lo que pidió el cliente y sin su teléfono. Pulsar **Aprobar** o **Rechazar**.
+3. La API le escribe el resultado al cliente con `openclaw message send`. Necesita `OPENCLAW_AVISOS=1`, `CHAT_TOKEN` y el gateway encendido; `/api/salud` debe decir `"avisos_openclaw": true`.
+4. Si el envío falla, el panel lo dice y el cliente recibe el resultado junto con la respuesta a su siguiente mensaje.
+
+Antes de la demo, probar el envío con un teléfono del equipo. La primera orden solo muestra lo que se mandaría; la segunda lo manda:
+
+```powershell
+openclaw message send --channel whatsapp --target "+57<numero-de-prueba>" --message "Prueba de aviso" --dry-run
+```
+
+```powershell
+openclaw message send --channel whatsapp --target "+57<numero-de-prueba>" --message "Prueba de aviso"
+```
+
+La lista de pendientes vive en memoria: si la API se reinicia, cada pendiente vuelve a aparecer cuando su cliente escribe de nuevo.
 
 ### El número propio del bot (D54)
 
@@ -132,9 +155,9 @@ El canal de OpenClaw se vincula como **dispositivo vinculado** de una cuenta de 
 
 **Los dos QR no son el mismo.** El de `openclaw channels login` se escanea **una sola vez**, desde el celular del chip, para que OpenClaw quede vinculado. El de `make qr-whatsapp` es el que se proyecta al auditorio: cualquier invitado lo escanea con la cámara y abre el chat con el bot. Si el QR de invitados se escaneara desde el celular del chip, no vincularía nada: solo abriría un chat del bot consigo mismo.
 
-**Riesgo.** La automatización de OpenClaw no es oficial: un uso intensivo puede hacer que WhatsApp banee el número. Se usa un número dedicado y el webhook de Meta queda como plan B.
+**Riesgo.** La automatización de OpenClaw no es oficial: un uso intensivo puede hacer que WhatsApp banee el número. Se usa un número dedicado; el respaldo es el chat web y el plan B grabado.
 
-**Si el canal de OpenClaw no queda listo**, la demo no se cae: el bot sigue respondiendo por el webhook propio de Meta (apartado 8).
+**Si el canal de OpenClaw no queda listo** no hay otro WhatsApp: la demo sigue por el chat web y el plan B grabado (apartado 9).
 
 ## 7. Evidencia para el repositorio
 
@@ -147,26 +170,19 @@ openclaw channels status --probe
 
 con fecha, equipo y quién lo corrió. **No se inventa la salida**: si algo queda en amarillo, se documenta y se explica en la sustentación.
 
-## 8. Vía alterna: webhook propio con Meta (la de la demo)
+## 8. Webhook propio de Meta (no se usa en la demo)
 
-Es la que ya funciona y la que usa el agente con las 20 herramientas:
-
-```bash
-make api                       # API + PostgreSQL local
-make ensayo-whatsapp           # chequeo previo gratis
-make ensayo-whatsapp ARGS="--tunel https://<tunel>"
-```
-
-El túnel https se registra en el panel de Meta como `https://<túnel>/webhook/whatsapp`. La allowlist E.164 del webhook propio se define con la misma variable `WHATSAPP_ALLOWLIST` y se ve en `/api/salud` (`allowlist_whatsapp`).
+El código y sus pruebas siguen en el repositorio (`/webhook/whatsapp`, `src/taaml/whatsapp.py`), pero la demostración no pasa por Meta (D56): no hace falta cuenta, token ni túnel de Meta. Los pasos para activarlo están en el README.
 
 ## 9. Plan de contingencia (en orden)
 
 | Falla | Qué se hace |
 |---|---|
-| El canal de WhatsApp de OpenClaw no responde | Mostrar el bot por el webhook propio de Meta; explicar que es la misma API y el mismo agente |
-| Meta no entrega (token vencido, número no registrado) | Chat web por QR (`make chat-web`, `make qr-chat-web`) y plan B grabado (`make demo-plan-b`) |
+| El canal de WhatsApp de OpenClaw no responde | `openclaw channels status --probe`; si no vuelve, chat web por QR (`make chat-web`, `make qr-chat-web`) |
+| El chat web tampoco abre (sin red o sin túnel) | Plan B grabado (`make demo-plan-b`) |
+| Se aprobó un reclamo y la respuesta no llega | Pedir a la persona que escriba otra vez y pregunte por su reclamo (si el panel dijo que no se pudo enviar, el resultado le llega con esa respuesta) |
 | El gateway no arranca | Mostrar `openclaw config validate` y la configuración versionada; explicar qué falló |
-| Sin cuota del modelo | El respaldo `gemini-3.8-flash` entra solo; si tampoco, la respuesta guardada de la evaluación |
+| Sin cuota del modelo | El agente de la API usa su respaldo (`gemini-3.8-flash`, luego `deepseek-v4-pro`); el modelo de OpenClaw no tiene respaldo |
 
 ## 10. Lista de verificación del viernes
 
@@ -177,19 +193,20 @@ make openclaw-check
 openclaw gateway
 openclaw channels status --probe
 openclaw security audit
-make ensayo-whatsapp
+Invoke-RestMethod http://127.0.0.1:8000/api/salud   # almacen qdrant y avisos_openclaw true
 make qr-whatsapp ARGS="+57<numero-del-bot> --html --app"
 git status                      # sin .env ni claves
 ```
 
-Y desde el teléfono de un invitado real: escanear el QR, pedir una sede, pedir «¿qué sabes de mí?» y radicar un reclamo (que otra persona apruebe).
+Y desde el teléfono de un invitado real: escanear el QR, pedir una sede, pedir «¿qué sabes de mí?» y radicar un reclamo (que otra persona apruebe en el panel y llegue al WhatsApp).
 
 ## Límites conocidos
 
 - La plantilla se validó contra OpenClaw 2026.11.7 (esquema del ejecutable instalado localmente). Verificar en el equipo de la demo con `openclaw config validate`: si una clave cambió, se corrige la plantilla y sus pruebas en el mismo PR.
 - La allowlist autentica el número, no a la persona.
 - Con `WHATSAPP_ALLOWLIST=*` el canal es público: cualquiera que tenga el QR puede escribir y consumir cuota del modelo; solo lo frena el límite por teléfono (8 mensajes por minuto). Es una decisión de demo, no de producción.
-- El número del bot es una cuenta de WhatsApp normal: si WhatsApp la bloquea por automatización, el QR deja de funcionar. Número dedicado y plan B (webhook de Meta o chat web).
-- El servidor MCP `celsia` es de solo lectura; los reclamos y la memoria del cliente los atiende el agente de Celsia, al que OpenClaw llega por el puente `puente` (más una llamada al modelo: la respuesta tarda más que por el webhook).
+- El número del bot es una cuenta de WhatsApp normal: si WhatsApp la bloquea por automatización, el QR deja de funcionar. Número dedicado y respaldo con el chat web o el plan B grabado.
+- El servidor MCP `celsia` es de solo lectura; los reclamos y la memoria del cliente los atiende el agente de Celsia, al que OpenClaw llega por el puente `puente` (más una llamada al modelo: la respuesta tarda más que con un solo modelo).
 - El puente se probó de punta a punta con la CLI de OpenClaw y un remitente de prueba (memoria por cliente incluida); falta el ensayo con el chip real (el plugin lee `ctx.requester.senderId`, que solo existe en mensajes que llegan por un canal).
+- El aviso de la aprobación (`openclaw message send`) no se ha probado con el canal real vinculado.
 - `openclaw security audit` no se automatiza; su salida se pega a mano con fecha.
