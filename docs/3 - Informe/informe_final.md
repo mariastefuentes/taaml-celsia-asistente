@@ -10,9 +10,9 @@
 
 ## Resumen
 
-Celsia publica su información en más de mil páginas y un cliente no tiene dónde preguntar y recibir la respuesta con su fuente. El proyecto construyó un asistente que responde con el contenido oficial de celsia.com y dice «no tengo esa información» cuando la fuente no lo trae. Tiene un agente de LangChain con **20 herramientas** de esquema Pydantic estricto, memoria por capas en PostgreSQL, aprobación humana para lo que cambia algo fuera de la conversación, una API en FastAPI, un **gateway de OpenClaw** versionado en el repositorio con un puente hacia ese agente y un webhook propio de WhatsApp como vía de contingencia. Los modelos se consultan por API en la nube: no se usa ningún modelo local.
+Celsia publica su información en más de mil páginas y un cliente no tiene dónde preguntar y recibir la respuesta con su fuente. El proyecto construyó un asistente que responde con el contenido oficial de celsia.com y dice «no tengo esa información» cuando la fuente no lo trae. Tiene un agente de LangChain con **20 herramientas** de esquema Pydantic estricto, memoria por capas en PostgreSQL, aprobación humana para lo que cambia algo fuera de la conversación, una API en FastAPI, un **gateway de OpenClaw** versionado en el repositorio con un puente hacia ese agente. Un webhook propio para la API de Meta quedó en el código, pero no se usa en la demostración. Los modelos se consultan por API en la nube: no se usa ningún modelo local.
 
-Medido el 24 de noviembre con el modelo real: banco verificable **49 de 49**, ataques directos **11 de 11** resistidos, matriz de enrutamiento **41 de 43** y recuperación del dato en **32 de 35** preguntas (91 %) con 12 fragmentos. Hay 457 pruebas automáticas que corren sin modelos ni red.
+Medido el 24 de noviembre con el modelo real: banco verificable **49 de 49**, ataques directos **11 de 11** resistidos, matriz de enrutamiento **41 de 43** y recuperación del dato en **32 de 35** preguntas (91 %) con 12 fragmentos. Hay 480 pruebas automáticas que corren sin modelos ni red.
 
 Lo que **falta** se declara en la sección 11. Lo principal: el canal de WhatsApp de OpenClaw no se ha vinculado todavía con un número real.
 
@@ -35,7 +35,7 @@ Lo que **falta** se declara en la sección 11. Lo principal: el canal de WhatsAp
 Hay **un solo agente** y varias entradas:
 
 1. **OpenClaw (canal pedido en este módulo).** El gateway recibe el mensaje de WhatsApp. El plugin `puente-celsia` fija el número del remitente verificado y la herramienta MCP `atender_cliente_celsia` envía el mensaje a `POST /chat`. La respuesta vuelve sin cambios.
-2. **Webhook de Meta (contingencia).** La API Cloud de WhatsApp entrega el aviso firmado en `/webhook/whatsapp`.
+2. **Webhook de Meta (sin uso en la demostración).** El código recibe avisos firmados en `/webhook/whatsapp`; la demo no pasa por él (D56).
 3. **Frontend React y chat web** por `POST /api/chat`, con respuesta en streaming.
 
 Dentro de la API, el agente lee la conversación en PostgreSQL, arma el prompt v13, decide si responde o llama a una herramienta, y guarda el turno. Antes de enviar, cada cifra, correo y enlace de la respuesta se busca en lo que devolvieron las herramientas; si algo no aparece, se agrega una nota para verificarlo (avisa, no bloquea).
@@ -60,7 +60,7 @@ El agente se construye con `create_agent` de LangChain 1.x, que corre sobre Lang
 
 **Modelos.** Principal: `deepseek-flash`. Respaldo en cadena: `gemini-3.8-flash` y luego `deepseek-v4-pro`. Todos por API, con las claves en variables de entorno (D51).
 
-**Aprobación humana.** Radicar un reclamo, cancelarlo o reportar un daño pausa el agente. Una persona decide con `POST /aprobar` (aprobar, rechazar o responder con un mensaje) o con botones de WhatsApp por el webhook de Meta. La pausa se guarda en PostgreSQL. Los reclamos, reportes y solicitudes de asesor son **registros simulados**: no llegan a un sistema de Celsia y `derivar_a_asesor` no transfiere la conversación ni promete tiempos.
+**Aprobación humana.** Radicar un reclamo, cancelarlo o reportar un daño pausa el agente. Una persona decide en el panel en vivo (o con `POST /aprobar`) y la API le envía el resultado al cliente por el WhatsApp de OpenClaw; si no se le puede enviar, le llega con su siguiente mensaje (D56). Ese envío no se ha probado con el canal real. La pausa se guarda en PostgreSQL. Los reclamos, reportes y solicitudes de asesor son **registros simulados**: no llegan a un sistema de Celsia y `derivar_a_asesor` no transfiere la conversación ni promete tiempos.
 
 ## 4. Memoria por capas
 
@@ -113,13 +113,14 @@ Las skills de `.opencode/skills/` se usaron para construir el proyecto; el gatew
 | `POST /aprobar` | Decisión de una persona sobre lo pendiente |
 | `GET /api/salud` | Estado, modelo, almacén vectorial, memoria y allowlist |
 | `GET /panel`, `GET /api/actividad` | Panel en vivo |
+| `GET /api/pendientes`, `POST /api/pendientes/{código}` | Lo que espera aprobación y la decisión de una persona |
 | `GET /api/hilos/{hilo}/mensajes`, `GET` y `DELETE /api/usuarios/{usuario}/datos` | Historial y datos del cliente |
 
 La entrada se valida con Pydantic (teléfono de 7 a 15 dígitos, mensaje de 1 a 1.000 caracteres). Si el modelo falla, `POST /chat` devuelve un mensaje cortés con `ok: false`, para que el canal siempre tenga algo que responder.
 
-**Acceso por número.** `WHATSAPP_ALLOWLIST` (formato E.164) limita quién es atendido en el webhook (D49) y en el puente (D52); si la variable no está definida, quedan abiertos. Al 24 de noviembre la plantilla de OpenClaw trae el canal de WhatsApp **apagado** y con política abierta (`dmPolicy: open`, `allowFrom: ["*"]`): para OpenClaw, la restricción por número depende hoy de la variable que aplica el puente.
+**Acceso por número.** `WHATSAPP_ALLOWLIST` (formato E.164) limita quién es atendido en el puente (D52) y en el webhook (D49); con `*` o sin definir quedan abiertos. La plantilla de OpenClaw trae el canal de WhatsApp encendido y abierto al auditorio (D54); la defensa de la cuota es el límite por teléfono.
 
-**Webhook de Meta.** Comprueba la firma HMAC, responde 200 de inmediato, descarta repetidos y ofrece menú con botones. En una versión anterior del agente (20 de noviembre, con el número de prueba de Meta) un celular real conversó, y un reclamo se aprobó y se rechazó con botones. Ese ensayo no se ha repetido con el agente actual.
+**Webhook de Meta (sin uso en la demostración).** Comprueba la firma HMAC, responde 200 de inmediato, descarta repetidos y ofrece menú con botones. En una versión anterior del agente (20 de noviembre, con el número de prueba de Meta) un celular real conversó, y un reclamo se aprobó y se rechazó con botones. Ese ensayo no se ha repetido con el agente actual.
 
 ## 8. Evaluación
 
@@ -131,7 +132,7 @@ La entrada se valida con Pydantic (teléfono de 7 a 15 dígitos, mensaje de 1 a 
 | Preguntas hostiles (22) | Sin fallas automáticas; 2 se leyeron a mano |
 | Latencia por turno, sin canal | Mediana 3,9 s y máximo 11,2 s (la primera pregunta en frío, 25 s); en la matriz, mediana 4,8 s y máximo 22,8 s |
 | Inyección indirecta (8 casos, Módulo 2, otro modelo y prompt) | 8 de 8 sin obedecer; **no se repitió** |
-| Pruebas automáticas | 457 en `main`, sin modelos ni red |
+| Pruebas automáticas | 480, sin modelos ni red |
 
 **Recuperación** (35 preguntas con respuesta):
 
@@ -154,7 +155,7 @@ Con lo que ve el agente (mezcla, 4 fragmentos) el dato aparece en **28 de 35** (
 - **Datos como datos.** El contexto recuperado se limpia de caracteres invisibles y de cierres falsos del bloque; el modelo tiene la orden de no obedecer instrucciones dentro de los datos.
 - **Acciones.** Lo que cambia algo fuera de la conversación exige una persona.
 - **Datos personales.** No se piden cédulas, claves ni tarjetas; la política está en `docs/politica_de_privacidad.md`.
-- **Acceso.** `POST /chat` exige `X-Api-Key` si el servidor define `CHAT_TOKEN`; `POST /aprobar` y el panel exigen `X-Aprobador`; el webhook exige la firma de Meta.
+- **Acceso.** `POST /chat` exige `X-Api-Key` si el servidor define `CHAT_TOKEN`; `POST /aprobar`, el panel y los pendientes exigen `X-Aprobador`; el webhook exige la firma de Meta. La API solo le escribe a un cliente por OpenClaw si hay `CHAT_TOKEN`.
 - **Abuso.** Límite de 8 mensajes por minuto por teléfono.
 - **OpenClaw.** Controles de la sección 6. **Falta** correr `openclaw security audit` sobre la configuración final y guardar su salida.
 - **Secretos.** Ningún `.env` en el repositorio; una prueba revisa que la plantilla no tenga claves.
@@ -180,16 +181,14 @@ Con lo que ve el agente (mezcla, 4 fragmentos) el dato aparece en **28 de 35** (
 
 | Pendiente al 24/11 | Efecto |
 |---|---|
-| Vincular un número real al canal de WhatsApp de OpenClaw y probar el puente desde un teléfono externo | Es el criterio del canal |
-| Encender el canal en la plantilla y fijar la allowlist E.164 en OpenClaw | Hoy apagado y abierto |
+| Guardar la prueba del puente desde un teléfono externo y probar en el equipo del bot el aviso de aprobación | Es el criterio del canal |
 | Configurar un modelo de respaldo en OpenClaw | Si falla DeepSeek, el gateway no tiene alternativa |
-| Unificar la guía de despliegue (nombra Gemini) con la plantilla (usa DeepSeek) | Evita instalar algo distinto a lo descrito |
 | Correr `openclaw security audit` sobre la configuración final | Evidencia de endurecimiento |
 | Repetir el análisis t-SNE con Gemini | Las cifras de la sección 10 son anteriores |
 | Rehacer los diagramas interactivos de `docs/*.html` | Algunos aún muestran herramientas y modelos anteriores |
 
 **Limitaciones.**
-- El sistema corre en un computador local: si se apaga o cambia de red, deja de responder. El webhook de Meta necesita además un túnel cuya dirección cambia.
+- El sistema corre en un computador local: si se apaga o cambia de red, deja de responder.
 - Reclamos, reportes y solicitudes de asesor son simulados.
 - No se ha probado con muchas personas a la vez.
 - El índice vectorial no se versiona: cada copia lo reconstruye con `make indice` y una clave de Google. Si la API de embeddings falla, la búsqueda cae a palabras (54 %).

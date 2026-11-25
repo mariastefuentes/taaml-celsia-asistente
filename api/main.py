@@ -7,6 +7,7 @@ Endpoints:
                                      con CHAT_TOKEN definida exige el encabezado X-Api-Key (401 si falta o no coincide)
   GET/POST /webhook/whatsapp         WhatsApp (Meta): verificación del webhook y mensajes entrantes (se responde por WhatsApp en segundo plano)
   POST /aprobar                      una persona aprueba o rechaza lo que el agente dejó pendiente (necesita el encabezado X-Aprobador)
+  GET/POST /api/pendientes[/{código}] lo que espera a una persona y su decisión sin conocer el teléfono (X-Aprobador; lo usa el panel)
   GET  /api/hilos/{hilo}/mensajes    la conversación guardada, para recuperarla al recargar la página
   GET  /api/usuarios/{usuario}/datos    lo que el agente recuerda del cliente (memoria de largo plazo)
   DELETE /api/usuarios/{usuario}/datos  borra todo lo que el agente recuerda del cliente
@@ -53,7 +54,7 @@ from taaml.agente import (
     reiniciar_conversacion,
     resolver_aprobacion,
 )
-from taaml import actividad, voz
+from taaml import actividad, aprobaciones, avisos_openclaw, voz
 from taaml.limite import TEXTO_LIMITE, limite_desde_entorno
 from taaml.recuperacion import almacen_vectorial
 from taaml.whatsapp import (
@@ -108,7 +109,11 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
     """Un turno del agente como secuencia de eventos; un fallo del modelo sale como evento `error` sin detalles internos."""
     yield _evento("hilo", {"hilo": hilo})
     try:
+        if previo := aprobaciones.tomar_sin_entregar(hilo):  # lo que una persona decidió desde el último mensaje
+            yield _evento("texto", {"texto": f"{previo}\n\n"})
         for e in conversar_en_vivo(mensaje, hilo, usuario=usuario):
+            if e["tipo"] == "pendiente":  # queda a la vista en el panel para que una persona decida
+                aprobaciones.registrar(hilo, usuario, e, "web")
             yield _evento(e["tipo"], {k: v for k, v in e.items() if k != "tipo"})
     except Exception:  # el detalle va al registro del servidor; el cliente recibe un mensaje que no filtra nada interno
         log.exception("falló el turno del hilo %s", hilo)
@@ -129,6 +134,7 @@ def salud() -> dict:
         "almacen": almacen_vectorial(),
         "memoria": "postgresql" if os.environ.get("DATABASE_URL") else "sqlite",
         "allowlist_whatsapp": len(numeros_autorizados()) or "abierta",
+        "avisos_openclaw": avisos_openclaw.activos(),  # ¿se le puede escribir al cliente cuando una persona decide su reclamo?
     }
 
 
@@ -227,6 +233,11 @@ def responder_a_telefono(telefono: str, mensaje: str, canal: str = "chat") -> Re
     texto += nota
     if pendiente:
         log.info("pendiente de aprobación en el hilo %s: %s", hilo, pendiente["herramienta"])
+        aprobaciones.registrar(hilo, usuario, pendiente, canal, telefono)
+    else:
+        aprobaciones.quitar(hilo)
+        if previo := aprobaciones.tomar_sin_entregar(hilo):  # la decisión que no se le pudo enviar va con esta respuesta
+            texto = f"{previo}\n\n{texto}"
     herramientas = [ll["herramienta"] for ll in llamadas]
     estado = "pendiente de aprobación" if pendiente else "respondido"
     actividad.registrar(canal, telefono, mensaje, estado, herramientas, time.monotonic() - inicio, nota=bool(nota), costo=costo_del_turno(hilo))
@@ -270,12 +281,77 @@ def _exigir_aprobador(x_aprobador: str | None) -> None:
 def _decidir(telefono: str, decision: str, mensaje: str | None = None) -> dict:
     """Aplica la decisión de la persona sobre lo pendiente de ese teléfono y le avisa al cliente por WhatsApp (si está configurado)."""
     hilo, usuario = ids_del_telefono(telefono)
-    if not pendiente_de_aprobacion(hilo):
-        raise HTTPException(status_code=404, detail="No hay nada pendiente de aprobación para ese teléfono")
-    texto, _ = resolver_aprobacion(hilo, decision, usuario=usuario, **({"mensaje": mensaje} if mensaje else {}))
-    avisado = enviar_texto(telefono, texto)  # el cliente se entera por WhatsApp (si está configurado)
-    actividad.registrar("aprobación", telefono, f"decisión: {decision}", "aprobación")
-    return {"decision": decision, "respuesta": texto, "avisado_por_whatsapp": avisado}
+    anotado = aprobaciones.por_hilo(hilo)
+    return _resolver(hilo, usuario, telefono, anotado.canal if anotado else "chat", decision, mensaje)
+
+
+def _resolver(hilo: str, usuario: str, telefono: str | None, canal: str, decision: str, mensaje: str | None = None) -> dict:
+    """Aplica la decisión sobre una conversación pausada y le hace llegar el resultado al cliente.
+
+    Si no se le puede enviar (chat web, o el envío falla), el resultado queda guardado y sale con su siguiente mensaje.
+    """
+    if not aprobaciones.empezar_decision(hilo):
+        raise HTTPException(status_code=409, detail="Esa decisión ya se está aplicando")
+    try:
+        anotado = aprobaciones.por_hilo(hilo)
+        if not pendiente_de_aprobacion(hilo):
+            aprobaciones.quitar(hilo)
+            raise HTTPException(status_code=404, detail="No hay nada pendiente de aprobación en esa conversación")
+        texto, _ = resolver_aprobacion(hilo, decision, usuario=usuario, **({"mensaje": mensaje} if mensaje else {}))
+        aprobaciones.quitar(hilo)
+        if anotado and (otro := pendiente_de_aprobacion(hilo)):  # al seguir, el agente pidió aprobar algo más
+            aprobaciones.registrar(hilo, usuario, otro, canal, telefono)
+        avisado = bool(telefono) and _avisar_al_cliente(telefono, texto, canal)
+        if anotado and not avisado:
+            aprobaciones.guardar_sin_entregar(hilo, texto)
+        actividad.registrar("aprobación", telefono or hilo, f"decisión: {decision}", "aprobación")
+        return {"decision": decision, "respuesta": texto, "avisado_por_whatsapp": avisado}
+    finally:
+        aprobaciones.terminar_decision(hilo)
+
+
+def _avisar_al_cliente(telefono: str, texto: str, canal: str) -> bool:
+    """Por el mismo WhatsApp por el que escribió: OpenClaw (entra por POST /chat) o la API de Meta (entra por el webhook)."""
+    if not canal.startswith("whatsapp") and avisos_openclaw.activos():
+        return avisos_openclaw.enviar(telefono, texto)
+    return enviar_texto(telefono, texto)
+
+
+@app.get("/api/pendientes")
+def pendientes(x_aprobador: str | None = Header(default=None)) -> dict:
+    """Lo que espera la decisión de una persona. Trae lo que pidió el cliente (por eso pide el token), pero no su teléfono."""
+    _exigir_aprobador(x_aprobador)
+    ahora = time.time()
+    return {
+        "avisos_openclaw": avisos_openclaw.activos(),
+        "pendientes": [
+            {
+                "codigo": p.codigo,
+                "herramienta": p.herramienta,
+                "args": p.args,
+                "canal": p.canal,
+                "quien": actividad.quien(p.telefono or p.hilo),
+                "hace_s": int(ahora - p.desde),
+            }
+            for p in aprobaciones.todos()
+        ],
+    }
+
+
+class DecisionDelPanel(BaseModel):
+    """Cuerpo de POST /api/pendientes/{código}."""
+
+    decision: Literal["aprobar", "rechazar"]
+
+
+@app.post("/api/pendientes/{codigo}")
+def decidir_pendiente(codigo: str, cuerpo: DecisionDelPanel, x_aprobador: str | None = Header(default=None)) -> dict:
+    """Una persona de Celsia aprueba o rechaza desde el panel uno de los pendientes de la lista."""
+    _exigir_aprobador(x_aprobador)
+    p = aprobaciones.por_codigo(codigo)
+    if not p:
+        raise HTTPException(status_code=404, detail="Ese pendiente ya no está en la lista")
+    return {"canal": p.canal, **_resolver(p.hilo, p.usuario, p.telefono, p.canal, cuerpo.decision)}
 
 
 PANEL = Path(__file__).with_name("panel.html")
