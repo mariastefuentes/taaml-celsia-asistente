@@ -11,7 +11,7 @@ def test_el_dataset_sale_de_la_matriz_con_todas_sus_preguntas():
     ejemplos = ev.cargar_ejemplos()
     assert len(ejemplos) == 43  # las 33 de antes (R01 a R33) y las 10 de la ampliación (R34 a R43, D36)
     r01 = ejemplos[0]
-    assert r01["inputs"]["id"] == "R01" and r01["outputs"]["herramienta_esperada"] == "consultar_datos"
+    assert r01["inputs"]["id"] == "R01" and r01["outputs"]["herramienta_esperada"] == "consultar_sedes"
     assert next(e for e in ejemplos if e["inputs"]["id"] == "R19")["inputs"][
         "previo"
     ]  # las de memoria llevan su turno de preparación
@@ -62,3 +62,21 @@ def test_n_llamadas_cuenta_las_herramientas_pedidas():
 
 def test_las_dos_configuraciones_difieren_en_el_tope_de_herramientas():
     assert ev.CONFIGURACIONES["con_tope"] == 4 and ev.CONFIGURACIONES["sin_tope"] > 4
+
+
+def test_la_matriz_solo_espera_herramientas_que_el_agente_tiene():
+    """Si una herramienta se renombra o se quita, la matriz debe cambiar con ella (antes seguía esperando `consultar_datos`)."""
+    from taaml.agente import HERRAMIENTAS
+
+    reales = {h.name for h in HERRAMIENTAS} | {"ninguna"}
+    for ejemplo in ev.cargar_ejemplos():
+        nombres = set(ejemplo["outputs"]["herramienta_esperada"].replace("+", "|").split("|"))
+        assert nombres <= reales, (ejemplo["inputs"]["id"], nombres - reales)
+
+
+def test_la_sintaxis_de_la_matriz_distingue_alternativas_y_obligatorias():
+    ok = ev.matriz.enrutamiento_ok
+    assert ok("a|b", {"b"}) and ok("a|b", {"a", "z"}) and not ok("a|b", {"z"}) and not ok("a|b", set())
+    assert ok("a|b+c", {"b", "c"}) and not ok("a|b+c", {"a"}) and not ok("a|b+c", {"c"})
+    assert ok("ninguna", set()) and not ok("ninguna", {"a"})
+    assert ok("ninguna|a", set()) and ok("ninguna|a", {"a"}) and not ok("ninguna|a", {"a", "z"})
