@@ -33,6 +33,7 @@ def test_la_plantilla_cumple_el_endurecimiento_de_la_rubrica():
     assert config["gateway"]["mode"] == "local"
     assert config["gateway"]["bind"] == "loopback"
     assert config["tools"]["fs"]["workspaceOnly"] is True
+    assert config["channels"]["whatsapp"]["enabled"] is True
     assert config["channels"]["whatsapp"]["dmPolicy"] == "open"
     assert config["channels"]["whatsapp"]["allowFrom"] == ["*"]
     assert config["session"]["dmScope"] == "per-channel-peer"
@@ -79,6 +80,22 @@ def test_allowlist_que_no_es_e164_se_marca():
     config["channels"]["whatsapp"]["dmPolicy"] = "allowlist"
     config["channels"]["whatsapp"]["allowFrom"] = ["3001112233"]
     assert any("E.164" in fallo for fallo in problemas(config))
+
+
+def test_el_asterisco_es_una_allowlist_valida_para_el_puente():
+    assert problemas(configuracion({**ENTORMO, "WHATSAPP_ALLOWLIST": "*"})) == []
+
+
+def test_la_allowlist_del_puente_que_no_es_e164_se_marca():
+    config = configuracion({**ENTORMO, "WHATSAPP_ALLOWLIST": "3001112233"})
+    assert any("E.164" in fallo for fallo in problemas(config))
+
+
+def test_un_canal_de_whatsapp_apagado_se_detecta():
+    def mutante(config):
+        config["channels"]["whatsapp"]["enabled"] = False
+
+    assert any("whatsapp.enabled" in fallo for fallo in _problemas_con_mutante(mutante))
 
 
 def test_un_endurecimiento_debilitado_se_detecta():

@@ -222,3 +222,29 @@ def test_con_lista_solo_pasan_los_autorizados(monkeypatch):
     assert autorizado("+57 300 111 2233")
     assert not autorizado("573009999999")
     assert not autorizado("")
+
+
+def test_el_asterisco_abre_el_canal_para_el_auditorio(monkeypatch):
+    from taaml.whatsapp import autorizado, numeros_autorizados
+
+    monkeypatch.setenv("WHATSAPP_ALLOWLIST", " * ")
+    assert numeros_autorizados() == set()
+    assert autorizado("573001112233") and autorizado("+1 555 555 5555")
+
+
+def test_una_lista_sin_numeros_validos_cierra_el_canal_en_vez_de_abrirlo(monkeypatch):
+    from taaml.whatsapp import autorizado
+
+    monkeypatch.setenv("WHATSAPP_ALLOWLIST", " , ; ")
+    assert not autorizado("573001112233")
+
+
+def test_el_enlace_wa_me_normaliza_el_numero_y_codifica_el_saludo():
+    from taaml.whatsapp import enlace_wa_me
+
+    assert enlace_wa_me(" +57 300-111 2233 ") == "https://wa.me/573001112233?text=Hola"
+    assert enlace_wa_me("+573001112233", "Hola, quiero saber") == (
+        "https://wa.me/573001112233?text=Hola%2C%20quiero%20saber"
+    )
+    with pytest.raises(ValueError):
+        enlace_wa_me("300")

@@ -6,14 +6,15 @@ Configuración **versionada y saneada** del gateway de OpenClaw que pide la rúb
 
 | Archivo | Para qué |
 |---|---|
-| `openclaw.example.json` | Plantilla de la configuración endurecida, validada contra OpenClaw 2026.11.7 (decisión D35): `bind: loopback`, token de gateway, modelo primario y respaldo, `tools.deny`, `fs.workspaceOnly`, sandbox (`mode: all`, `backend: docker`, `scope: agent`, `docker.image`), acceso público a mensajes directos de WhatsApp (`dmPolicy: open`, `allowFrom: ["*"]`), `session.dmScope: per-channel-peer`, el servidor MCP `celsia` con sus diez herramientas (`toolFilter`) y el puente `puente` con el plugin `puente-celsia` (D52) |
+| `openclaw.example.json` | Plantilla de la configuración endurecida, validada contra OpenClaw 2026.11.7 (decisión D35): `bind: loopback`, token de gateway, modelo primario y respaldo, `tools.deny`, `fs.workspaceOnly`, sandbox (`mode: all`, `backend: docker`, `scope: agent`, `docker.image`), canal de WhatsApp encendido y público (`enabled: true`, `dmPolicy: open`, `allowFrom: ["*"]`, D53), `session.dmScope: per-channel-peer`, el servidor MCP `celsia` con sus diez herramientas (`toolFilter`) y el puente `puente` con el plugin `puente-celsia` (D52) |
 | `workspace/` | Identidad y memoria legibles y editables: `SOUL.md`, `AGENTS.md`, `USER.md`, `MEMORY.md` y la bitácora diaria |
 
 ## Instalación
 
 ```bash
 # 1. Completa las variables en .env (no las subas con valores reales)
-#    OPENCLAW_GATEWAY_TOKEN=...   WHATSAPP_ALLOWLIST=+57...,+57...   REPO_CELSIA=C:/ruta/al/repo
+#    OPENCLAW_GATEWAY_TOKEN=...   WHATSAPP_ALLOWLIST=*   REPO_CELSIA=C:/ruta/al/repo
+#    (con «*» el canal queda abierto al auditorio; con números, solo esos pasan)
 
 # 2. Valida la plantilla sin escribir nada
 make openclaw-check
@@ -23,9 +24,13 @@ make openclaw-instalar
 #    Si ya había una configuración: make openclaw-instalar ARGS="--forzar" (deja un .bak)
 
 # 4. Con el Gateway apagado, registra el MCP y comprueba el canal
+openclaw channels login --channel whatsapp   # QR: escanéalo desde el celular del número dedicado
 openclaw gateway
 openclaw channels status --probe
 openclaw security audit
+
+# 5. QR para el auditorio (número del bot, no el personal)
+make qr-whatsapp ARGS="+57<numero-del-bot> --html"
 ```
 
 ## Qué se comprueba en las pruebas
@@ -36,7 +41,7 @@ openclaw security audit
 - `tools.deny` con los grupos de automatización, ejecución y sistema de archivos, y `sessions_spawn`.
 - `tools.fs.workspaceOnly` en `true` y `tools.exec.mode` en `deny`.
 - Sandbox en modo `all` con backend `docker`, scope `agent`, `workspaceAccess: none` y el MCP `celsia__*` permitido dentro.
-- `channels.whatsapp` con `dmPolicy: open` y `allowFrom: ["*"]` (acceso público a mensajes directos).
+- `channels.whatsapp` encendido y abierto (`enabled: true`, `dmPolicy: open`, `allowFrom: ["*"]`) para el auditorio, y `WHATSAPP_ALLOWLIST` en `*` o con números E.164.
 - `session.dmScope: per-channel-peer`.
 - El servidor MCP `celsia` con sus diez herramientas y el puente `puente` (`atender_cliente_celsia`), con el plugin `puente-celsia` activo y `toolSearch` apagado.
 - Ningún secreto en la plantilla.

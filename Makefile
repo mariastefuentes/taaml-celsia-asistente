@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend chat-web qr-chat-web demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida banco-verificable verificar-clon test lint tipos skills-check check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp openclaw-check openclaw-instalar
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend chat-web qr-chat-web qr-whatsapp demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida banco-verificable verificar-clon test lint tipos skills-check check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp openclaw-check openclaw-instalar
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -37,6 +37,7 @@ ayuda:
 	$(info     make exportar-chats  exporta los chats reales de los ensayos para el analisis t-SNE)
 	$(info     make ensayo          revisa que la demo este lista, sin gastar cuota)
 	$(info     make ensayo-whatsapp chequeo previo de WhatsApp: claves, token de Meta, API y panel (gratis; con ARGS="--tunel URL" prueba el tunel))
+	$(info     make qr-whatsapp   QR de WhatsApp del bot para el auditorio: make qr-whatsapp ARGS="+57... --html")
 	$(info     make preguntas-hostiles  12 preguntas incomodas tipo profesor al agente real (GASTA CUOTA: unas 15 a 25 llamadas))
 	$(info     make herramienta-caida   rompe herramientas a proposito con el modelo real y mira que el agente avise sin inventar (GASTA CUOTA: unas 4 a 8 llamadas))
 	$(info     make informe-borrador    genera docs/3 - Informe/borrador_informe_final.md con los datos del repo (gratis))
@@ -93,6 +94,10 @@ chat-web:
 qr-chat-web:
 	uv run python scripts/44_qr_chat_web.py $(ARGS)
 
+# QR de WhatsApp del número vinculado al bot: el auditorio lo escanea y cae en el chat (no es el chat web).
+qr-whatsapp:
+	uv run python scripts/48_qr_whatsapp.py $(ARGS)
+
 db-up:
 	uv run python scripts/34_postgres_local.py
 
@@ -112,6 +117,7 @@ exportar-chats:
 	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run python scripts/38_exportar_conversaciones_reales.py $(ARGS)
 
 # Chequeo previo de la demo por WhatsApp (no llama al modelo). Ejemplo: make ensayo-whatsapp ARGS="--tunel https://algo.trycloudflare.com"
+# Con el canal de OpenClaw como vía pública: make ensayo-whatsapp ARGS="--openclaw"
 ensayo-whatsapp:
 	uv run python scripts/39_chequeo_whatsapp.py $(ARGS)
 
