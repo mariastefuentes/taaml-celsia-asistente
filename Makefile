@@ -72,17 +72,22 @@ app: frontend
 app-taller1:
 	uv run streamlit run app/asistente.py
 
+# Variable portátil: en PowerShell y cmd de Windows no se puede asignar variables de entorno con
+# `VAR=val cmd`; los recetas de la API asignan las variables dentro del mismo proceso que arranca
+# uvicorn (os.environ + uvicorn.run), así funciona igual en Linux/WSL, PowerShell y cmd.
+API_DATABASE_URL = $(shell uv run python scripts/34_postgres_local.py)
+
 # La API usa PostgreSQL (PostgresSaver y PostgresStore): si DATABASE_URL ya está definida la respeta; si no, levanta un PostgreSQL local sin Docker.
 api:
-	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run uvicorn api.main:app --port 8000
+	uv run python -c "import os; os.environ['DATABASE_URL'] = os.environ.get('DATABASE_URL') or '$(API_DATABASE_URL)'.strip(); from uvicorn import run; run('api.main:app', port=8000)"
 
 # La API con RAG EN CADENA: un dynamic_prompt inyecta los fragmentos recuperados en cada turno y se quita la herramienta buscar_en_base (D12).
 api-cadena:
-	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" RAG_MODO=cadena uv run uvicorn api.main:app --port 8000
+	uv run python -c "import os; os.environ['DATABASE_URL'] = os.environ.get('DATABASE_URL') or '$(API_DATABASE_URL)'.strip(); os.environ['RAG_MODO'] = 'cadena'; from uvicorn import run; run('api.main:app', port=8000)"
 
 # La misma API con la memoria en archivos SQLite (sin servidor de base de datos).
 api-sqlite:
-	DATABASE_URL= uv run uvicorn api.main:app --port 8000
+	uv run python -c "import os; os.environ['DATABASE_URL'] = ''; from uvicorn import run; run('api.main:app', port=8000)"
 
 frontend:
 	cd frontend && npm install && npm run dev
@@ -106,7 +111,7 @@ db-down:
 
 # Limpia la memoria de la misma base que usa `make api` (PostgreSQL local, o el de DATABASE_URL si está definida).
 demo-limpiar:
-	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run python scripts/30_limpiar_memoria_demo.py --borrar
+	uv run python -c "import os, sys, subprocess; os.environ['DATABASE_URL'] = os.environ.get('DATABASE_URL') or '$(API_DATABASE_URL)'.strip(); subprocess.run([sys.executable, 'scripts/30_limpiar_memoria_demo.py', '--borrar'])"
 
 # Plan B de la demostración: repite en pantalla una conversación real grabada (avisa que es una repetición).
 demo-plan-b:
@@ -114,7 +119,7 @@ demo-plan-b:
 
 # Exporta los chats reales de los ensayos (de la base que usa `make api`) para el análisis t-SNE.
 exportar-chats:
-	DATABASE_URL="$${DATABASE_URL:-$$(uv run python scripts/34_postgres_local.py)}" uv run python scripts/38_exportar_conversaciones_reales.py $(ARGS)
+	uv run python -c "import os, sys, subprocess; os.environ['DATABASE_URL'] = os.environ.get('DATABASE_URL') or '$(API_DATABASE_URL)'.strip(); subprocess.run([sys.executable, 'scripts/38_exportar_conversaciones_reales.py'] + [x for x in '$(ARGS)'.split() if x])"
 
 # Chequeo previo de la demo por WhatsApp (no llama al modelo). Ejemplo: make ensayo-whatsapp ARGS="--tunel https://algo.trycloudflare.com"
 # Con el canal de OpenClaw como vía pública: make ensayo-whatsapp ARGS="--openclaw"
