@@ -49,7 +49,7 @@ Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra pers
 | 9:15 – 10:00 | **Memoria y evaluación**: `PostgresSaver` frente a `Store`; el hilo sobrevive al reinicio; t-SNE/UMAP de 114 conversaciones simuladas y sus límites | María Stella |
 | 10:00 – 10:45 | **OpenClaw**: `openclaw.json` versionado, `bind: loopback`, `tools.deny`, `fs.workspaceOnly`, sandbox Docker, allowlist E.164 y `security audit`; workspace con identidad y límites separados | Jensen |
 | 10:45 – 11:30 | **Seguridad**: inyección directa e indirecta (11/11 y 8/8 leídos a mano), límite por teléfono, clave en `/chat`, HITL, sin `.env` en el repo | Nicolás |
-| 11:30 – 12:00 | **Calidad**: `uv sync`, 480 pruebas, ruff, pre-commit, CI y `make verificar-clon`; lo que no está probado (muchas personas a la vez) | Nicolás |
+| 11:30 – 12:00 | **Calidad**: `uv sync`, 482 pruebas, ruff, pre-commit, CI y `make verificar-clon`; lo que no está probado (muchas personas a la vez) | Nicolás |
 
 Cada quien responde lo suyo. Si una pregunta cae en terreno ajeno, se contesta con lo que se sabe y se pasa la palabra; no se improvisa una cifra.
 
