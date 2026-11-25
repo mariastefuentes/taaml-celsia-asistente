@@ -2,10 +2,12 @@
 
 from pathlib import Path
 
-from taaml.openclaw import RAIZ, instalar
+from taaml.openclaw import RAIZ, configuracion, instalar
+from taaml.skills import verificar_skills
 
 WORKSPACE = RAIZ / "openclaw" / "workspace"
 OBLIGATORIOS = ("SOUL.md", "AGENTS.md", "USER.md", "MEMORY.md")
+SKILL = "atencion-whatsapp-celsia"
 
 
 def test_el_workspace_tiene_los_cuatro_archivos_y_la_bitacora():
@@ -41,4 +43,23 @@ def test_el_instalador_copia_tambien_la_bitacora(tmp_path):
     for nombre in OBLIGATORIOS:
         assert destino / nombre in escritos
     assert (destino / "bitacora" / "PLANTILLA.md").exists()
+    assert (destino / "skills" / SKILL / "SKILL.md").exists()
     assert Path(tmp_path / "openclaw.json").exists()
+
+
+def test_la_skill_de_openclaw_es_valida_y_sigue_el_puente():
+    assert verificar_skills(WORKSPACE / "skills") == []
+    skill = (WORKSPACE / "skills" / SKILL / "SKILL.md").read_text(encoding="utf-8")
+    assert "user-invocable: false" in skill  # ningún cliente la dispara como comando
+    for pieza in ("atender_cliente_celsia", "puente-celsia", "01 8000 112 115", "AGENTS.md", "aprobación de una persona"):
+        assert pieza in skill, pieza
+
+
+def test_la_plantilla_deja_leer_solo_las_skills_del_proyecto():
+    entorno = {"OPENCLAW_GATEWAY_TOKEN": "token", "WHATSAPP_ALLOWLIST": "*", "REPO_CELSIA": str(RAIZ)}
+    config = configuracion(entorno)
+    propias = sorted(p.parent.name for p in (WORKSPACE / "skills").glob("*/SKILL.md"))
+    assert config["agents"]["defaults"]["skills"] == propias == [SKILL]  # sin las skills que trae OpenClaw
+    assert "skills_read" in config["tools"]["alsoAllow"]
+    assert "skills_read" in config["tools"]["sandbox"]["tools"]["alsoAllow"]
+    assert "group:fs" in config["tools"]["deny"]  # leer la skill no abre el sistema de archivos

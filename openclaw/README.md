@@ -33,6 +33,14 @@ openclaw security audit
 make qr-whatsapp ARGS="+57<numero-del-bot> --html"
 ```
 
+## Skill del proyecto (D55)
+
+`workspace/skills/atencion-whatsapp-celsia/SKILL.md` describe cómo atender cada mensaje de WhatsApp con el puente. La plantilla solo deja ver las skills del proyecto (`agents.defaults.skills`) y permite leerlas con `skills_read`, sin abrir el sistema de archivos (`group:fs` sigue denegado). `make openclaw-instalar` la copia con el workspace. Para comprobarlo en el equipo de la demo:
+
+```bash
+openclaw skills list --agent main
+```
+
 ## Qué se comprueba en las pruebas
 
 `tests/test_openclaw.py` no valida el esquema de OpenClaw (para eso está `openclaw config validate` en el equipo donde está instalado). Comprueba lo que la rúbrica exige y el equipo decidió:
@@ -44,6 +52,7 @@ make qr-whatsapp ARGS="+57<numero-del-bot> --html"
 - `channels.whatsapp` encendido y abierto (`enabled: true`, `dmPolicy: open`, `allowFrom: ["*"]`) para el auditorio, y `WHATSAPP_ALLOWLIST` en `*` o con números E.164.
 - `session.dmScope: per-channel-peer`.
 - El servidor MCP `celsia` con sus diez herramientas y el puente `puente` (`atender_cliente_celsia`), con el plugin `puente-celsia` activo y `toolSearch` apagado.
+- La skill del proyecto es válida, es la única visible, `skills_read` está permitido y el instalador la copia (`tests/test_openclaw_workspace.py`).
 - Ningún secreto en la plantilla.
 
 ## Límites
