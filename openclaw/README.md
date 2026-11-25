@@ -6,7 +6,7 @@ Configuración **versionada y saneada** del gateway de OpenClaw que pide la rúb
 
 | Archivo | Para qué |
 |---|---|
-| `openclaw.example.json` | Plantilla de la configuración endurecida, validada contra OpenClaw 2026.11.7 (decisión D35): `bind: loopback`, token de gateway, modelo primario y respaldo, `tools.deny`, `fs.workspaceOnly`, sandbox (`mode: all`, `backend: docker`, `scope: agent`, `docker.image`), canal de WhatsApp encendido y público (`enabled: true`, `dmPolicy: open`, `allowFrom: ["*"]`, D53), `session.dmScope: per-channel-peer`, el servidor MCP `celsia` con sus diez herramientas (`toolFilter`) y el puente `puente` con el plugin `puente-celsia` (D52) |
+| `openclaw.example.json` | Plantilla de la configuración endurecida, validada contra OpenClaw 2026.11.7 (decisión D35): `bind: loopback`, token de gateway, modelo primario y respaldo, `tools.deny`, `fs.workspaceOnly`, sandbox (`mode: all`, `backend: docker`, `scope: agent`, `docker.image`), canal de WhatsApp encendido y público (`enabled: true`, `dmPolicy: open`, `allowFrom: ["*"]`, D54), `session.dmScope: per-channel-peer`, el servidor MCP `celsia` con sus diez herramientas (`toolFilter`) y el puente `puente` con el plugin `puente-celsia` (D52) |
 | `workspace/` | Identidad y memoria legibles y editables: `SOUL.md`, `AGENTS.md`, `USER.md`, `MEMORY.md` y la bitácora diaria |
 
 ## Instalación

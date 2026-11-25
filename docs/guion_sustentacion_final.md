@@ -35,7 +35,7 @@ Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra pers
 | 2:00 – 4:30 | **Demo real.** «Escriba al bot, por favor»: el invitado pregunta una sede, algo de tarifas y qué sabe de él. | El teléfono del invitado y la terminal con la traza |
 | 4:30 – 5:30 | **Un reclamo con aprobación humana.** El invitado pide un reclamo, alguien del equipo lo aprueba desde otro teléfono y llega el radicado. | Los dos teléfonos y la pausa en la terminal |
 | 5:30 – 6:20 | **Lo que se midió.** Banco verificable 49 de 49, ataques 11 de 11 y matriz de enrutamiento 41 de 43, los tres con las 20 herramientas el 24/11 (D53). Si una cifra no se volvió a medir, se dice. | El panel en vivo, no una lámina |
-| 6:20 – 7:00 | **Cierre.** Lo que falta (medir la matriz con las 20 herramientas, más tráfico real) y por qué el municipio del Valle y el Tolima puede usarlo mañana. | — |
+| 6:20 – 7:00 | **Cierre.** Lo que falta (más tráfico real) y por qué el municipio del Valle y el Tolima puede usarlo mañana. | — |
 
 **Reglas del pitch:** no decir «nuestro chatbot»; decir qué problema resuelve. No prometer integración con sistemas de Celsia. No citar una cifra que no esté en el repositorio.
 

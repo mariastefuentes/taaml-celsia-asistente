@@ -23,7 +23,7 @@ WHATSAPP_ALLOWLIST=*
 REPO_CELSIA=C:/ruta/absoluta/a/taaml-celsia-asistente
 ```
 
-`REPO_CELSIA` es la ruta donde OpenClaw lanzará `uv run python -m taaml.servidor_mcp`; tiene que ser la del equipo que hace la demo, no la de un compañero. `WHATSAPP_ALLOWLIST=*` deja el canal abierto al auditorio (D53); si prefieres una lista cerrada, escribe los números en E.164 separados por comas, pero entonces los invitados que no estén en ella recibirán «Este número no está autorizado».
+`REPO_CELSIA` es la ruta donde OpenClaw lanzará `uv run python -m taaml.servidor_mcp`; tiene que ser la del equipo que hace la demo, no la de un compañero. `WHATSAPP_ALLOWLIST=*` deja el canal abierto al auditorio (D54); si prefieres una lista cerrada, escribe los números en E.164 separados por comas, pero entonces los invitados que no estén en ella recibirán «Este número no está autorizado».
 
 ## 2. Instalar configuración y workspace
 
@@ -91,7 +91,7 @@ openclaw mcp doctor celsia --probe   # «celsia: ok»
 openclaw mcp list                    # lista el servidor «celsia»
 ```
 
-4. Definir la allowlist. Para el auditorio, `WHATSAPP_ALLOWLIST=*` (canal abierto, D53); para una lista cerrada, los números en E.164 separados por comas:
+4. Definir la allowlist. Para el auditorio, `WHATSAPP_ALLOWLIST=*` (canal abierto, D54); para una lista cerrada, los números en E.164 separados por comas:
 
 ```text
 WHATSAPP_ALLOWLIST=*
@@ -121,7 +121,7 @@ cliente → WhatsApp (QR) → OpenClaw → atender_cliente_celsia → POST /chat
 - **Instrucciones al modelo:** `workspace/AGENTS.md` (sección «Canal de WhatsApp») manda llamar la herramienta en cada mensaje y devolver su texto sin cambios; `tools.toolSearch: false` deja el esquema a la vista.
 - **Si falla el puente**, responde la frase de contingencia con la línea 01 8000 112 115 y la demo sigue por el webhook propio de Meta.
 
-### El número propio del bot (D53)
+### El número propio del bot (D54)
 
 El canal de OpenClaw se vincula como **dispositivo vinculado** de una cuenta de WhatsApp: el bot responde desde ese número. Por eso hace falta un número dedicado, no el personal de un integrante:
 
