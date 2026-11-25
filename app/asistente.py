@@ -132,7 +132,7 @@ with tab_qa:
                             )
                         else:
                             st.warning(
-                                "La búsqueda se hizo por palabras porque Ollama no respondió: es menos precisa (54 % frente a 89 % con embeddings en la evaluación). Enciende Ollama y vuelve a preguntar."
+                                "La búsqueda se hizo por palabras porque la API de embeddings no respondió: es menos precisa (51 % frente a 83 % con embeddings en la evaluación). Revisa GOOGLE_API_KEY y vuelve a preguntar."
                             )
                     if dudosos := datos_sin_respaldo(respuesta, fragmentos):
                         st.warning(

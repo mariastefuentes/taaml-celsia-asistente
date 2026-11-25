@@ -114,3 +114,16 @@ def test_con_respaldo_con_cadena_vacia_falla_con_un_error_claro(monkeypatch):
     monkeypatch.setattr("taaml.respaldo.cadena_de_modelos", lambda elegido: [])
     with pytest.raises(RuntimeError, match="vacía"):
         con_respaldo(lambda m: "ok", "gemini-3.5-flash")
+
+
+def test_cadena_con_el_modelo_de_ultimo_recurso_como_elegido():
+    assert cadena_de_modelos(respaldo.MODELO_LOCAL) == [respaldo.MODELO_LOCAL]
+
+
+def test_mas_patrones_de_falla_del_proveedor_quedan_clasificados():
+    assert es_falla_del_proveedor(RuntimeError("503 Service Unavailable: the model is overloaded"))
+    assert es_falla_del_proveedor(RuntimeError("429: quota exceeded"))
+    assert es_falla_del_proveedor(TimeoutError("timed out waiting for the response"))
+    assert es_falla_del_proveedor(ConnectionError("connecterror: connection refused"))
+    assert not es_falla_del_proveedor(RuntimeError("TypeError: invalid literal for int"))
+    assert not es_falla_del_proveedor(ValueError("cannot convert"))

@@ -44,25 +44,9 @@ def _resolver(texto: str, entorno: dict[str, str] | None = None) -> str:
     return resuelto
 
 
-def _allowlist_json(crudo: str) -> str:
-    """Convierte WHATSAPP_ALLOWLIST (separado por comas, punto y comas o espacios) en un array JSON de E.164."""
-    numeros = []
-    for parte in re.split(r"[,;]", crudo):
-        digitos = re.sub(r"\D", "", parte)
-        if digitos:
-            numeros.append("+" + digitos)
-    return json.dumps(numeros)
-
-
 def configuracion(entorno: dict[str, str] | None = None, plantilla: Path | None = None) -> dict:
-    """Devuelve la configuración como diccionario, con las variables ya sustituidas.
-
-    El `allowFrom` del canal de WhatsApp sale de `WHATSAPP_ALLOWLIST` (derivado aquí); una lista vacía queda
-    marcada en `problemas()` con el nombre de la variable que hay que definir.
-    """
-    ent = {**os.environ, **(entorno or {})}
-    ent["WHATSAPP_ALLOWLIST_ARRAY"] = _allowlist_json(ent.get("WHATSAPP_ALLOWLIST", ""))
-    texto = _resolver((plantilla or PLANTILLA).read_text(encoding="utf-8"), ent)
+    """Devuelve la configuración como diccionario, con las variables ya sustituidas."""
+    texto = _resolver((plantilla or PLANTILLA).read_text(encoding="utf-8"), entorno)
     return json.loads(texto)
 
 
@@ -111,16 +95,28 @@ def problemas(config: dict) -> list[str]:
     if "celsia__*" not in herramientas.get("sandbox", {}).get("tools", {}).get("alsoAllow", []):
         fallos.append("el sandbox debe permitir el servidor MCP «celsia__*»")
     whatsapp = config.get("channels", {}).get("whatsapp", {})
-    if whatsapp.get("dmPolicy") != "allowlist":
-        fallos.append("channels.whatsapp.dmPolicy debe ser «allowlist»")
+    dm_policy = whatsapp.get("dmPolicy")
+    if dm_policy not in ("allowlist", "open"):
+        fallos.append("channels.whatsapp.dmPolicy debe ser «allowlist» o «open»")
     allowlist = whatsapp.get("allowFrom", [])
     if not allowlist:
-        fallos.append("channels.whatsapp.allowFrom está vacía (defina WHATSAPP_ALLOWLIST)")
-    for numero in allowlist:
-        if not E164.match(str(numero).strip()):
-            fallos.append(f"«{numero}» no está en formato E.164 (+57…)")
+        fallos.append("channels.whatsapp.allowFrom está vacía")
+    if dm_policy == "open" and "*" not in allowlist:
+        fallos.append("con dmPolicy «open», allowFrom debe contener «*»")
+    if dm_policy == "allowlist":
+        for numero in allowlist:
+            if not E164.match(str(numero).strip()):
+                fallos.append(f"«{numero}» no está en formato E.164 (+57…)")
     if not config.get("mcp", {}).get("servers", {}).get("celsia"):
         fallos.append("falta el servidor MCP propio «celsia»")
+    if not config.get("mcp", {}).get("servers", {}).get("puente"):
+        fallos.append("falta el servidor MCP «puente» (lleva los mensajes al agente de Celsia con sus 20 herramientas)")
+    if "puente__*" not in herramientas.get("sandbox", {}).get("tools", {}).get("alsoAllow", []):
+        fallos.append("el sandbox debe permitir el servidor MCP «puente__*»")
+    if config.get("plugins", {}).get("entries", {}).get("puente-celsia", {}).get("enabled") is not True:
+        fallos.append("falta el plugin «puente-celsia» (fija el teléfono del cliente con el remitente verificado)")
+    if herramientas.get("toolSearch") is not False:
+        fallos.append("tools.toolSearch debe ser false: el modelo tiene que ver la herramienta del puente sin buscarla")
     return fallos
 
 

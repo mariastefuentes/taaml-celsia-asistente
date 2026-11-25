@@ -92,12 +92,12 @@ def test_el_agente_tiene_las_herramientas():
         "consultar_sedes",
         "consultar_contactos",
         "consultar_catalogo",
-        "consultar_puntos_de_pago",
-        "consultar_tiendas",
         "consultar_canales_de_atencion",
         "consultar_cobertura",
         "consultar_tramite_en_linea",
         "consultar_politica_de_datos",
+        "verificar_canal_oficial",
+        "calcular_factura_estimada",
         "guardar_dato_del_cliente",
         "recordar_datos_del_cliente",
         "listar_datos_del_cliente",
@@ -139,18 +139,24 @@ def test_las_herramientas_por_tabla_solo_piden_lo_suyo():
     assert set(ConsultaCatalogo.model_fields) == {"texto", "seccion", "categoria"}
 
 
-def test_los_puntos_de_pago_salen_de_la_tabla_de_sedes():
-    from taaml.agente import consultar_puntos_de_pago
+def test_los_puntos_de_pago_salen_de_la_tabla_de_sedes_con_su_tipo():
+    from taaml.agente import consultar_sedes
 
-    salida = consultar_puntos_de_pago.invoke({})
-    assert "Punto de Recaudo y Pago" in salida and "Total:" in salida
+    salida = consultar_sedes.invoke({"tipo": "Punto de Recaudo y Pago"})
+    assert "Punto de Recaudo y Pago" in salida and "Total:" in salida and "Tiendas Celsia" not in salida
 
 
-def test_las_tiendas_salen_de_la_tabla_de_sedes():
-    from taaml.agente import consultar_tiendas
+def test_las_tiendas_salen_de_la_tabla_de_sedes_con_su_tipo():
+    from taaml.agente import consultar_sedes
 
-    salida = consultar_tiendas.invoke({"ciudad": "Ibagué"})
+    salida = consultar_sedes.invoke({"ciudad": "Ibagué", "tipo": "Tiendas Celsia"})
     assert "Tiendas Celsia" in salida and "Total:" in salida
+
+
+def test_las_herramientas_redundantes_ya_no_existen():
+    import taaml.agente as agente
+
+    assert not hasattr(agente, "consultar_tiendas") and not hasattr(agente, "consultar_puntos_de_pago")
 
 
 def test_los_canales_devuelven_contactos_con_su_para_que():
@@ -182,7 +188,7 @@ def test_la_politica_de_datos_responde_por_tema():
     assert "borrar" in salida.lower() or "corregir" in salida.lower()
 
 
-# --- memoria conversacional (modelo simulado: no llama a Gemini ni a Ollama) ---
+# --- memoria conversacional (modelo simulado: no llama a modelos reales) ---
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel  # noqa: E402
 from langchain_core.messages import AIMessage  # noqa: E402
 import pytest  # noqa: E402
