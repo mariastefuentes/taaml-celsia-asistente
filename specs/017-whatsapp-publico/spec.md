@@ -15,7 +15,7 @@ El canal de WhatsApp de OpenClaw quedó probado con el número personal de un in
 
 1. Permitir un **modo abierto explícito** de la allowlist (`WHATSAPP_ALLOWLIST=*`), sin que un valor mal escrito abra el canal por accidente.
 2. Que la plantilla de OpenClaw instale el canal de WhatsApp **encendido** (`channels.whatsapp.enabled: true`), con `dmPolicy: open` y `allowFrom: ["*"]` ya vigentes.
-3. Generar el **QR de WhatsApp** (`make qr-whatsapp ARGS="+57…"`) con el enlace `wa.me` y un saludo precargado, para proyectarlo o imprimirlo.
+3. Generar el **QR de WhatsApp** (`make qr-whatsapp ARGS="+57…"`) con el enlace `wa.me` y un saludo precargado, para proyectarlo o imprimirlo, y mostrarlo **dentro de la app** (chat web y panel en vivo).
 4. Mantener el límite por teléfono (`limite.py`) como única defensa de cuota y documentar el riesgo de la vía no oficial.
 
 ## Fuera de alcance
@@ -28,7 +28,8 @@ El canal de WhatsApp de OpenClaw quedó probado con el número personal de un in
 
 - [ ] `WHATSAPP_ALLOWLIST=*` deja abiertos el webhook propio y el puente; sin la variable también queda abierto; una lista mal escrita **cierra** el canal en vez de abrirlo.
 - [ ] `make openclaw-check` acepta `*` y la plantilla exige `channels.whatsapp.enabled: true`.
-- [ ] `make qr-whatsapp ARGS="+57…"` genera `qr_whatsapp.png` y muestra el enlace `wa.me`.
+- [ ] `make qr-whatsapp ARGS="+57…"` genera `qr_whatsapp.png` y muestra el enlace `wa.me`; con `--app` actualiza `assets/whatsapp_qr.png`.
+- [ ] El chat web y el panel en vivo muestran el QR en `/qr-whatsapp.png`, y si falta el archivo lo dicen sin romperse.
 - [ ] `/api/salud` sigue informando `allowlist_whatsapp: "abierta"` en modo abierto.
 - [ ] Las pruebas cubren el modo abierto, el cierre ante una lista inválida y el enlace `wa.me`.
 - [ ] La guía de despliegue y el guion de la demo explican el QR, el número dedicado y el plan B.

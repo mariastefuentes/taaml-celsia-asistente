@@ -43,6 +43,19 @@ function sinEvidencia(texto) {
   return /no tengo esa informaci[oó]n/i.test(texto ?? "");
 }
 
+// QR del WhatsApp del bot: el mismo agente que atiende esta página, para quien prefiera escribir desde el celular.
+function QrWhatsApp() {
+  return (
+    <section className="qr-whatsapp" aria-label="Habla con el asistente por WhatsApp">
+      <img src="/qr-whatsapp.png" alt="Código QR para abrir el chat de WhatsApp del asistente" />
+      <div>
+        <strong>¿Prefieres WhatsApp?</strong>
+        <p>Escanea el código con la cámara de tu celular y escríbele al asistente. Te responde el mismo agente, con sus 20 herramientas.</p>
+      </div>
+    </section>
+  );
+}
+
 function Fuentes({ fuentes, texto }) {
   if (!fuentes?.length || sinEvidencia(texto)) return null;
   return (
@@ -82,6 +95,7 @@ export default function App() {
   const [enCurso, setEnCurso] = useState(false);
   const [error, setError] = useState("");
   const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
+  const [verQr, setVerQr] = useState(false); // QR de WhatsApp plegado; en el inicio se muestra siempre
   const [salud, setSalud] = useState(null); // null = aún no se sabe; false = la API no responde
   const fin = useRef(null);
   const ultimaPregunta = useRef("");
@@ -200,9 +214,12 @@ export default function App() {
             </span>
           )}
           <button className="secundario" onClick={verRecuerdos}>Lo que recuerdo</button>
+          <button className="secundario" onClick={() => setVerQr((v) => !v)} aria-expanded={verQr}>WhatsApp</button>
           <button className="secundario" onClick={nueva} disabled={enCurso}>Nueva conversación</button>
         </div>
       </header>
+
+      {verQr && (mensajes.length > 0 || recuperando) && <QrWhatsApp />}
 
       {recuerdos && (
         <section className="recuerdos" aria-label="Memoria de largo plazo">
@@ -228,6 +245,7 @@ export default function App() {
                 </button>
               ))}
             </div>
+            <QrWhatsApp />
           </section>
         )}
         {mensajes.map((m, i) => (

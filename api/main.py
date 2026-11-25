@@ -12,6 +12,7 @@ Endpoints:
   DELETE /api/usuarios/{usuario}/datos  borra todo lo que el agente recuerda del cliente
   GET  /panel                        página del panel en vivo de la demostración (pide el token del aprobador en la pantalla)
   GET  /api/actividad                lo que hizo el agente en los últimos turnos (necesita X-Aprobador; lo lee el panel)
+  GET  /qr-whatsapp.png             el QR de WhatsApp del bot que muestran el chat web y el panel (assets/whatsapp_qr.png)
   GET  /                             el chat web (frontend compilado en frontend/dist), si existe y SERVIR_FRONTEND no es 0: el público lo abre desde su celular
 Uso:  uv run uvicorn api.main:app --reload --port 8000
 """
@@ -33,7 +34,7 @@ from uuid import uuid4
 
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as ErrorHTTP
 from pydantic import BaseModel, Field, model_validator
@@ -278,12 +279,24 @@ def _decidir(telefono: str, decision: str, mensaje: str | None = None) -> dict:
 
 
 PANEL = Path(__file__).with_name("panel.html")
+QR_WHATSAPP = Path(__file__).resolve().parent.parent / "assets" / "whatsapp_qr.png"
 
 
 @app.get("/panel", response_class=HTMLResponse)
 def panel() -> str:
     """La página del panel en vivo. No lleva datos: los pide a /api/actividad con el token que se escribe en la pantalla."""
     return PANEL.read_text(encoding="utf-8")
+
+
+@app.get("/qr-whatsapp.png", include_in_schema=False)
+def qr_whatsapp() -> FileResponse:
+    """El QR de WhatsApp del bot que muestran el chat web y el panel en vivo.
+
+    El archivo lo deja `make qr-whatsapp ARGS="+57... --app"`; si falta, se avisa en vez de devolver un hueco.
+    """
+    if not QR_WHATSAPP.is_file():
+        raise HTTPException(status_code=404, detail="Falta assets/whatsapp_qr.png: genéralo con make qr-whatsapp ARGS=\"+57... --app\"")
+    return FileResponse(QR_WHATSAPP, media_type="image/png")
 
 
 @app.get("/api/actividad")

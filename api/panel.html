@@ -26,7 +26,11 @@
   .resumen b { color:var(--texto); font-size:20px; margin-left:6px; }
   .alerta { color:var(--aviso); }
   .nota { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:12px; color:#06101f; background:var(--aviso); }
-  @media (max-width: 700px) { header, main { padding:12px; } .ocultar { display:none; } }
+  .qr { display:flex; align-items:center; gap:16px; background:var(--panel); border:1px solid var(--borde); border-left:4px solid #25d366; border-radius:12px; padding:12px 16px; margin:0 0 16px; }
+  .qr img { width:120px; height:120px; background:#fff; padding:6px; border-radius:8px; flex:none; }
+  .qr strong { display:block; font-size:16px; }
+  .qr p { margin:4px 0 0; color:var(--suave); font-size:14px; }
+  @media (max-width: 700px) { header, main { padding:12px; } .ocultar { display:none; } .qr { flex-direction:column; text-align:center; } .qr img { width:160px; height:160px; } }
 </style>
 </head>
 <body>
@@ -39,6 +43,13 @@
   </div>
 </header>
 <main>
+  <section class="qr" aria-label="Escanea para hablar con el asistente por WhatsApp">
+    <img src="/qr-whatsapp.png" alt="Código QR para abrir el chat de WhatsApp del asistente">
+    <div>
+      <strong>Prueba el asistente desde tu celular</strong>
+      <p>Escanea el código con la cámara y escribe tu pregunta por WhatsApp.</p>
+    </div>
+  </section>
   <p class="resumen" id="resumen" aria-live="polite">
     <span>Respuestas<b id="n-resp">0</b></span>
     <span>Con nota de dato sin respaldo<b id="n-notas">0</b></span>

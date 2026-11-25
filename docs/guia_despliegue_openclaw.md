@@ -100,11 +100,11 @@ WHATSAPP_ALLOWLIST=*
 5. Generar el QR del número del bot y proyectarlo:
 
 ```bash
-make qr-whatsapp ARGS="+57<numero-del-bot>"          # qr_whatsapp.png
-make qr-whatsapp ARGS="+57<numero-del-bot> --html"   # además qr_whatsapp.html a pantalla completa
+make qr-whatsapp ARGS="+57<numero-del-bot>"                 # qr_whatsapp.png
+make qr-whatsapp ARGS="+57<numero-del-bot> --html --app"    # + página para proyectar y QR dentro de la app
 ```
 
-El QR abre `wa.me` con un «Hola» precargado. Quien lo escanea entra al chat del número vinculado, sin instalar nada ni estar en una lista.
+El QR abre `wa.me` con un «Hola» precargado. Quien lo escanea entra al chat del número vinculado, sin instalar nada ni estar en una lista. Con `--app` queda en `assets/whatsapp_qr.png`, que el chat web y el panel en vivo muestran en `/qr-whatsapp.png`.
 
 6. Probar desde dos teléfonos que **no** sean del equipo: una pregunta de sedes (tool de tabla), un «¿qué sabes de mí?» (memoria) y un reclamo con aprobación humana. La traza debe mostrar la herramienta elegida.
 
@@ -178,7 +178,7 @@ openclaw gateway
 openclaw channels status --probe
 openclaw security audit
 make ensayo-whatsapp
-make qr-whatsapp ARGS="+57<numero-del-bot> --html"
+make qr-whatsapp ARGS="+57<numero-del-bot> --html --app"
 git status                      # sin .env ni claves
 ```
 
