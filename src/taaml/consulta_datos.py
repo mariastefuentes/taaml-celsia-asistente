@@ -1,7 +1,7 @@
 """Consulta de datos estructurados de Celsia (sedes, contactos y catálogo del corpus) con filtros exactos.
 
 No usa embeddings ni modelos: filtra los archivos versionados en data/. La herramienta del agente (`consultar_datos`) solo envuelve
-estas funciones, así se prueban sin Gemini ni Ollama.
+estas funciones, así se prueban sin Gemini ni red.
 """
 
 import csv
