@@ -801,6 +801,35 @@ MENSAJE_EN_REVISION = (
 )
 MENSAJE_RECHAZADO = "Una persona de Celsia revisó tu reclamo y por ahora no lo aprobó, así que todavía no está radicado. Puedes escribirme de nuevo con más detalles (ciudad, qué pasó y desde cuándo) para intentarlo otra vez, o llamar a la línea 01 8000 112 115."
 
+# Cada acción con aprobación tiene su propio texto: rechazar una cancelación deja el reclamo activo, no «sin radicar».
+MENSAJES_EN_REVISION = {
+    "radicar_reclamo": MENSAJE_EN_REVISION,
+    "cancelar_reclamo": (
+        "Recibí tu solicitud de cancelación y una persona de Celsia la está revisando. Mientras no la apruebe, tu reclamo sigue activo. "
+        "Te escribo aquí cuando decida. Si es urgente, puedes llamar a la línea 01 8000 112 115."
+    ),
+    "reportar_dano_electrico": (
+        "Recibí tu reporte de daño y una persona de Celsia lo está revisando antes de registrarlo. Apenas lo apruebe, te escribo aquí con "
+        "el número del reporte. Si hay un cable caído, chispas o cualquier peligro, aléjate y llama al 123 o a la línea 01 8000 112 115."
+    ),
+}
+MENSAJES_RECHAZADO = {
+    "radicar_reclamo": MENSAJE_RECHAZADO,
+    "cancelar_reclamo": (
+        "Una persona de Celsia revisó tu solicitud y no aprobó la cancelación: el reclamo no se canceló y sigue activo. "
+        "Puedes escribirme el motivo para intentarlo otra vez, o llamar a la línea 01 8000 112 115."
+    ),
+    "reportar_dano_electrico": (
+        "Una persona de Celsia revisó tu reporte de daño y por ahora no lo aprobó, así que todavía no está registrado. "
+        "Si hay peligro, llama al 123 o a la línea 01 8000 112 115. También puedes escribirme de nuevo con más detalles (ciudad, qué pasó y dónde)."
+    ),
+}
+
+
+def mensaje_en_revision(pendiente: dict | None) -> str:
+    """El aviso de espera que corresponde a lo que quedó pausado; si no se sabe qué es, el del reclamo."""
+    return MENSAJES_EN_REVISION.get((pendiente or {}).get("herramienta"), MENSAJE_EN_REVISION)
+
 
 MENSAJE_HERRAMIENTA_CAIDA = (
     "La herramienta «{herramienta}» no está disponible en este momento. No inventes la respuesta: dile al cliente, con cortesía, "
@@ -1100,8 +1129,8 @@ def conversar(
     Mismo `thread_id` = misma conversación (el agente ve los turnos anteriores); otro `thread_id` empieza en blanco.
     """
     agente = agente or _agente(modelo)
-    if pendiente_de_aprobacion(thread_id, agente=agente):  # esta conversación espera a una persona: no se sigue hasta que decida
-        return MENSAJE_EN_REVISION, []
+    if pendiente := pendiente_de_aprobacion(thread_id, agente=agente):  # esta conversación espera a una persona: no se sigue hasta que decida
+        return mensaje_en_revision(pendiente), []
     resultado = agente.invoke(
         {"messages": [{"role": "user", "content": quitar_invisibles(pregunta)}]},
         config={"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente"]},
@@ -1120,7 +1149,7 @@ def conversar(
         "turno del agente: hilo=%s modelo=%s herramientas=%s", thread_id, modelo, [ll["herramienta"] for ll in llamadas]
     )
     if resultado.get("__interrupt__"):  # el agente se pausó pidiendo aprobación: el cliente recibe el aviso, no un texto vacío
-        return MENSAJE_EN_REVISION, llamadas
+        return mensaje_en_revision(_lo_pausado(resultado["__interrupt__"])), llamadas
     return mensajes[-1].text.strip(), llamadas
 
 
@@ -1139,7 +1168,12 @@ def reiniciar_conversacion(thread_id: str, modelo: str = MODELO_AGENTE, agente: 
 def pendiente_de_aprobacion(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> dict | None:
     """Lo que una persona debe aprobar en esta conversación (el nombre de la herramienta y sus argumentos), o None si no hay nada pendiente."""
     agente = agente or _agente(modelo)
-    for pausa in agente.get_state({"configurable": {"thread_id": thread_id}}).interrupts:
+    return _lo_pausado(agente.get_state({"configurable": {"thread_id": thread_id}}).interrupts)
+
+
+def _lo_pausado(pausas: Any) -> dict | None:
+    """La primera acción que piden las pausas de aprobación (nombre de la herramienta y argumentos), o None."""
+    for pausa in pausas:
         for pedido in pausa.value.get("action_requests", []):
             return {"herramienta": pedido["name"], "args": pedido["args"]}
     return None
@@ -1166,7 +1200,8 @@ def resolver_aprobacion(
     elif decision == "aprobar":
         respuesta = {"type": "approve"}
     else:
-        respuesta = {"type": "reject", "message": MENSAJE_RECHAZADO}
+        pausado = pendiente_de_aprobacion(thread_id, agente=agente) or {}
+        respuesta = {"type": "reject", "message": MENSAJES_RECHAZADO.get(pausado.get("herramienta"), MENSAJE_RECHAZADO)}
     resultado = agente.invoke(
         Command(resume={"decisions": [respuesta]}),
         config={"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente", "aprobacion"]},
@@ -1196,7 +1231,7 @@ def aviso_de_datos_dudosos(thread_id: str, respuesta: str, modelo: str = MODELO_
     La web ya muestra este aviso aparte; por WhatsApp y `POST /chat` no hay dónde, así que va como texto. Si algo falla al revisar, no se añade nada:
     es una ayuda, no debe tumbar la respuesta.
     """
-    if respuesta == MENSAJE_EN_REVISION:
+    if respuesta in MENSAJES_EN_REVISION.values():
         return ""
     try:
         agente = agente or _agente(modelo)
@@ -1234,8 +1269,8 @@ def conversar_en_vivo(
     agente = agente or _agente(modelo)
     if pendiente := pendiente_de_aprobacion(thread_id, agente=agente):  # espera a una persona: no se sigue hasta que decida
         yield {"tipo": "pendiente", **pendiente}
-        yield {"tipo": "texto", "texto": MENSAJE_EN_REVISION}
-        yield {"tipo": "fin", "usadas": "Reclamo en revisión", "tokens_entrada": 0, "tokens_salida": 0, "costo_usd": 0.0}
+        yield {"tipo": "texto", "texto": mensaje_en_revision(pendiente)}
+        yield {"tipo": "fin", "usadas": "En revisión de una persona", "tokens_entrada": 0, "tokens_salida": 0, "costo_usd": 0.0}
         return
     entrada = {"messages": [{"role": "user", "content": quitar_invisibles(pregunta)}]}
     config = {"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente"]}
@@ -1252,7 +1287,7 @@ def conversar_en_vivo(
         else:
             if "__interrupt__" in datos:  # el agente se pausó pidiendo aprobación humana
                 hubo_texto = True
-                yield {"tipo": "texto", "texto": MENSAJE_EN_REVISION}
+                yield {"tipo": "texto", "texto": mensaje_en_revision(_lo_pausado(datos["__interrupt__"]))}
                 continue
             for actualizacion in datos.values():
                 for m in (actualizacion or {}).get("messages", []):

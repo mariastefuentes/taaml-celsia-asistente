@@ -1125,6 +1125,34 @@ def test_en_vivo_avisa_que_hay_un_reclamo_pendiente():
     assert next(e for e in eventos if e["tipo"] == "pendiente")["herramienta"] == "radicar_reclamo"
 
 
+@pytest.mark.parametrize(
+    "herramienta, args, al_esperar, al_rechazar",
+    [
+        ("cancelar_reclamo", {"radicado": "RC-20261125-0001"}, "reclamo sigue activo", "no se canceló y sigue activo"),
+        ("reportar_dano_electrico", {"ciudad": "Ibagué", "descripcion": "Cable caído frente a la casa"}, "reporte de daño", "todavía no está registrado"),
+    ],
+)
+def test_cada_accion_con_aprobacion_tiene_su_propio_aviso_y_rechazo(herramienta, args, al_esperar, al_rechazar):
+    from taaml.agente import MENSAJES_EN_REVISION, conversar_en_vivo, resolver_aprobacion
+
+    def pedir(id_):
+        return AIMessage(content="", tool_calls=[{"name": herramienta, "args": args, "id": id_}])
+
+    agente, _ = _agente_con_mensajes(pedir("a1"), AIMessage(content="Listo."))
+    texto, _ = conversar("Hazlo", "h-accion", agente=agente, usuario="ca")
+    assert al_esperar in texto and texto == MENSAJES_EN_REVISION[herramienta] and "radicado." not in texto
+    assert conversar("¿ya?", "h-accion", agente=agente, usuario="ca") == (texto, [])
+    resolver_aprobacion("h-accion", "rechazar", usuario="ca", agente=agente)
+    visto = [m for m in agente.get_state({"configurable": {"thread_id": "h-accion"}}).values["messages"] if m.type == "tool"][-1]
+    assert al_rechazar in visto.content  # lo que el modelo recibe para contarle al cliente
+
+    from langgraph.store.memory import InMemoryStore
+
+    otro = crear_agente(llm=ModeloSinTrozos(messages=iter([pedir("b1")]), vistos=[]), store=InMemoryStore())
+    eventos = list(conversar_en_vivo("Hazlo", "h-accion-viva", agente=otro, usuario="cb"))
+    assert "".join(e["texto"] for e in eventos if e["tipo"] == "texto") == MENSAJES_EN_REVISION[herramienta]
+
+
 # --- herramientas estrictas y errores corteses ---
 def _mensajes_de_herramienta(agente, hilo):
     return [m for m in agente.get_state({"configurable": {"thread_id": hilo}}).values["messages"] if m.type == "tool"]
