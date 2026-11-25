@@ -56,9 +56,29 @@ function QrWhatsApp() {
   );
 }
 
-// Acción de reaccionar a la respuesta del asistente: 👍 y 👎 con estado visual y exclusividad (nunca ambos activos).
-function AccionesRespuesta({ indice, reaccion, onReaccion }) {
+// Acciones de la respuesta: reacciones 👍/👎 (exclusivas) y, si el navegador lo permite, escuchar en español.
+function AccionesRespuesta({ indice, reaccion, onReaccion, texto }) {
+  const [escuchando, setEscuchando] = useState(false);
+  const soportaVoz = typeof speechSynthesis !== "undefined";
   const activa = (seleccionada) => (seleccionada ? "acc-btn activa" : "acc-btn");
+
+  useEffect(() => () => { if (soportaVoz) speechSynthesis.cancel(); }, [soportaVoz]);
+
+  const hacerEscuchar = () => {
+    if (escuchando) {
+      speechSynthesis.cancel();
+      setEscuchando(false);
+      return;
+    }
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "es";
+    voz.onend = () => setEscuchando(false);
+    voz.onerror = () => setEscuchando(false);
+    speechSynthesis.cancel(); // evita que dos respuestas suenen a la vez
+    speechSynthesis.speak(voz);
+    setEscuchando(true);
+  };
+
   return (
     <div className="acciones-respuesta" aria-label="Acciones de la respuesta del asistente">
       <button type="button" className={activa(reaccion === "up")} onClick={() => onReaccion(indice, "up")} title="Útil" aria-label="Reaccionar: útil">
@@ -67,6 +87,11 @@ function AccionesRespuesta({ indice, reaccion, onReaccion }) {
       <button type="button" className={activa(reaccion === "down")} onClick={() => onReaccion(indice, "down")} title="No útil" aria-label="Reaccionar: no útil">
         👎
       </button>
+      {soportaVoz && (
+        <button type="button" className={activa(escuchando)} onClick={hacerEscuchar} title="Escuchar la respuesta" aria-label="Escuchar">
+          {escuchando ? "⏹" : "🔊"}
+        </button>
+      )}
     </div>
   );
 }
@@ -284,7 +309,7 @@ export default function App() {
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
             </article>
-            {m.rol === "assistant" && <AccionesRespuesta indice={i} reaccion={reacciones[i] ?? null} onReaccion={registrarReaccion} />}
+            {m.rol === "assistant" && <AccionesRespuesta indice={i} reaccion={reacciones[i] ?? null} onReaccion={registrarReaccion} texto={m.texto} />}
           </div>
         ))}
         <div ref={fin} />
