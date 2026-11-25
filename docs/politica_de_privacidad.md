@@ -1,6 +1,6 @@
 # Política de privacidad: Asistente Celsia (proyecto académico)
 
-Última actualización: 19 de noviembre de 2026.
+Última actualización: 25 de noviembre de 2026.
 
 ## Quién es responsable
 Este asistente es un **proyecto académico** de la Maestría en Inteligencia Artificial y Ciencia de Datos de la Universidad Autónoma de Occidente (UAO), asignatura «Técnicas avanzadas de IA», Grupo 4. **No es un servicio oficial de Celsia** ni lo opera Celsia. Responde con información pública del sitio celsia.com.
@@ -10,7 +10,7 @@ Contacto para cualquier consulta o solicitud sobre tus datos: **mariastella.1807
 ## Qué datos se tratan
 Cuando escribes al asistente por WhatsApp, se tratan:
 - **El texto de tus mensajes** y las respuestas del asistente (la conversación).
-- **Un identificador derivado de tu número de teléfono.** El número no se guarda en claro: se guarda solo un código irreversible (hash) que permite reconocer que la conversación es la misma. Para responderte, el servidor usa tu número en el momento, a través de WhatsApp.
+- **Tu número de teléfono.** La base de datos del asistente no lo guarda en claro: usa un código derivado del número (hash) para reconocer que la conversación es la misma; ese código no te hace anónimo. El programa que conecta con WhatsApp (OpenClaw), en el equipo del proyecto, sí guarda el historial del chat asociado a tu número. Si un reclamo espera aprobación, el servidor tiene tu número en memoria para poder responderte. En el chat web no se pide número: se usa un identificador al azar guardado en tu navegador.
 - **Datos que tú le cuentes al asistente y le pidas recordar** (por ejemplo, tu nombre o tu ciudad), si decides compartirlos.
 - Si radicas un reclamo de prueba, **los datos que escribas en él** (no se envía a ninguna empresa real).
 
@@ -23,15 +23,16 @@ No se piden ni se deben escribir cédulas, claves, datos de tarjetas ni datos de
 
 ## Con quién se comparten
 - **Meta (WhatsApp):** transporta los mensajes, según sus propias condiciones.
-- **DeepSeek:** el modelo de lenguaje recibe el texto de la conversación para generar la respuesta.
-- Los vectores de búsqueda (embeddings) de las preguntas se calculan en el mismo equipo del proyecto, no en un tercero.
-- No se venden datos ni se usan para publicidad.
+- **DeepSeek:** el modelo de lenguaje recibe el texto de la conversación, y lo que le pidas recordar, para generar la respuesta.
+- **Google (Gemini):** recibe el texto de las búsquedas, que puede incluir lo que escribiste, para encontrar la información del sitio; si DeepSeek falla, recibe la conversación para responder. También recibe el texto de las conversaciones que se analicen para el informe.
+- **LangSmith (de LangChain):** si el equipo tiene activo el registro de trazas, recibe el texto de la conversación y los datos que usa cada herramienta, para revisar fallas y evaluar.
+- Cada servicio trata esos datos según sus propias condiciones. No se venden datos ni se usan para publicidad.
 
 ## Dónde y por cuánto tiempo
-Las conversaciones y los datos recordados se guardan en una base de datos en el equipo del proyecto, mientras dure el proyecto y su evaluación. El panel de la demostración guarda en memoria solo un resumen corto y se borra al reiniciar el servidor. Las conversaciones usadas en el análisis no se publican.
+Las conversaciones y los datos recordados se guardan en una base de datos en el equipo del proyecto, y el historial de WhatsApp también en los archivos de OpenClaw de ese equipo, mientras dure el proyecto y su evaluación. Las copias que reciban DeepSeek, Google o LangSmith se conservan según las condiciones de cada uno. El panel de la demostración guarda en memoria solo un resumen corto y se borra al reiniciar el servidor. Las conversaciones usadas en el análisis no se publican.
 
 ## Tus derechos
-Puedes pedir en cualquier momento **conocer, corregir o borrar** lo que el asistente guardó de ti, escribiendo al correo de contacto. Para borrar, indícanos desde qué número escribiste, y se eliminan tus conversaciones y los datos recordados. Escribir `/nuevo` al asistente borra la conversación guardada en ese momento (lo que contaste de ti se conserva hasta que pidas borrarlo).
+Puedes preguntarle al asistente qué recuerda de ti y pedirle que olvide un dato (por ejemplo, «olvida dónde vivo»): lo borra de lo que recuerda, pero no borra la conversación. Puedes pedir en cualquier momento **conocer, corregir o borrar** lo que se guardó de ti escribiendo al correo de contacto. Para borrar, indícanos desde qué número escribiste, y el equipo elimina tus conversaciones y los datos recordados que guarda en su equipo.
 
 ## Cambios
 Si esta política cambia, se actualiza esta página y la fecha de arriba.
