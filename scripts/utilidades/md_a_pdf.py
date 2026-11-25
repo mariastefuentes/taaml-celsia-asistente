@@ -33,6 +33,7 @@ body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 10.5pt; line-heigh
 h1 { font-size: 20pt; border-bottom: 2px solid #2563eb; padding-bottom: 6px; color: #1e3a8a; }
 h2 { font-size: 14.5pt; margin-top: 22px; color: #1e3a8a; border-bottom: 1px solid #d1d5db; padding-bottom: 3px; }
 h3 { font-size: 12pt; margin-top: 16px; }
+h2, h3 { break-after: avoid; page-break-after: avoid; }
 table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 9.5pt; page-break-inside: avoid; }
 th, td { border: 1px solid #d1d5db; padding: 5px 8px; vertical-align: top; text-align: left; }
 th { background: #eff6ff; }
@@ -42,6 +43,7 @@ code { font-family: Consolas, 'Courier New', monospace; background: #f3f4f6; pad
 pre code { background: none; padding: 0; }
 hr { border: none; border-top: 1px solid #d1d5db; margin: 18px 0; }
 li { margin: 2px 0; }
+img { max-width: 100%; max-height: 240mm; height: auto; display: block; margin: 8px auto; }
 """
 ITEM = re.compile(r"^\s*([-*]|\d+\.)\s")
 
@@ -66,7 +68,7 @@ def a_html(texto: str) -> str:
     return f"<!doctype html><html lang='es'><head><meta charset='utf-8'><style>{CSS}</style></head><body>{cuerpo}</body></html>"
 
 
-PDF_DEL_REPOSITORIO = {"3 - Informe/informe_taller1.md", "3 - Informe/informe_taller2.md"}
+PDF_DEL_REPOSITORIO = {"3 - Informe/informe_taller1.md", "3 - Informe/informe_taller2.md", "3 - Informe/informe_final.md"}
 
 
 def convertir(md: Path, pdf: Path, edge: str) -> None:

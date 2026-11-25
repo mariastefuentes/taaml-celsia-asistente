@@ -34,7 +34,7 @@ Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra pers
 | 1:20 – 2:00 | **Qué es distinto.** 20 herramientas tipadas que el modelo elige solo, memoria que sobrevive al reinicio y una persona que aprueba los reclamos. | El diagrama de enrutamiento (los caminos de una pregunta) |
 | 2:00 – 4:30 | **Demo real.** «Escriba al bot, por favor»: el invitado pregunta una sede, algo de tarifas y qué sabe de él. | El teléfono del invitado y la terminal con la traza |
 | 4:30 – 5:30 | **Un reclamo con aprobación humana.** El invitado pide un reclamo, alguien del equipo lo aprueba desde otro teléfono y llega el radicado. | Los dos teléfonos y la pausa en la terminal |
-| 5:30 – 6:20 | **Lo que se midió.** Banco verificable 49 de 49 y ataques 11 de 11 con el prompt v12 (D40); matriz de enrutamiento 42 de 43 con el prompt v9. Si una cifra no se volvió a medir, se dice. | El panel en vivo, no una lámina |
+| 5:30 – 6:20 | **Lo que se midió.** Banco verificable 49 de 49, ataques 11 de 11 y matriz de enrutamiento 41 de 43, los tres con las 20 herramientas el 24/11 (D53). Si una cifra no se volvió a medir, se dice. | El panel en vivo, no una lámina |
 | 6:20 – 7:00 | **Cierre.** Lo que falta (medir la matriz con las 20 herramientas, más tráfico real) y por qué el municipio del Valle y el Tolima puede usarlo mañana. | — |
 
 **Reglas del pitch:** no decir «nuestro chatbot»; decir qué problema resuelve. No prometer integración con sistemas de Celsia. No citar una cifra que no esté en el repositorio.
@@ -45,7 +45,7 @@ Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra pers
 |---|---|---|
 | 7:00 – 7:40 | **Recorrido de un mensaje**: WhatsApp → Meta → nuestro webhook (firma, deduplicación, allowlist) → agente → herramienta → PostgreSQL → respuesta | Juan José |
 | 7:40 – 8:30 | **20 herramientas**: por qué 20 y no 5; esquemas Pydantic, `APROBACION_HUMANA`, qué se retiró (`consultar_datos`) y por qué; el MCP de solo lectura | Jensen |
-| 8:30 – 9:15 | **Datos y RAG**: Bronze → Silver → Gold → curaduría → fragmentos; Qdrant con payload; mezcla significado + palabras; 89 % de recuperación del Q&A (medido con 12 fragmentos) | María Stella |
+| 8:30 – 9:15 | **Datos y RAG**: Bronze → Silver → Gold → curaduría → fragmentos; Qdrant con payload; mezcla significado + palabras; recuperación: 91 % en el Q&A (12 fragmentos) y 80 % en el agente (4 fragmentos), sobre 35 preguntas | María Stella |
 | 9:15 – 10:00 | **Memoria y evaluación**: `PostgresSaver` frente a `Store`; el hilo sobrevive al reinicio; t-SNE/UMAP de 114 conversaciones simuladas y sus límites | María Stella |
 | 10:00 – 10:45 | **OpenClaw**: `openclaw.json` versionado, `bind: loopback`, `tools.deny`, `fs.workspaceOnly`, sandbox Docker, allowlist E.164 y `security audit`; workspace con identidad y límites separados | Jensen |
 | 10:45 – 11:30 | **Seguridad**: inyección directa e indirecta (11/11 y 8/8 leídos a mano), límite por teléfono, clave en `/chat`, HITL, sin `.env` en el repo | Nicolás |
@@ -69,7 +69,7 @@ Si se sustenta en inglés, el pitch y la discusión se hacen en inglés; las pre
 2. **What we built** — a WhatsApp assistant grounded on official content: it cites its source, remembers what the customer told it, refuses to invent, and routes each question to one of 20 typed tools.
 3. **Demo** — a guest types: a branch in Ibagué, a billing question, "what do you know about me?", then a complaint that a human approves from another phone.
 4. **Technical highlights** — FastAPI webhook with signature checks and an E.164 allowlist; PostgreSQL checkpointer and Store; Qdrant with hybrid retrieval; LangGraph middleware for summarization, tool limits and human-in-the-loop; OpenClaw gateway with a versioned hardened config, Docker sandbox and a read-only MCP server.
-5. **Evidence** — verified bank 49/49 and prompt-injection 11/11 under prompt v12; routing matrix 42/43 under prompt v9. We say which numbers were not re-measured after adding the 20 tools.
+5. **Evidence** — verified bank 49/49, prompt-injection 11/11 and routing matrix 41/43, all measured with the 20 tools on 24 November. We say which numbers were not re-measured.
 6. **Limits and next steps** — real Celsia systems are out of scope; next is re-running the routing matrix with the full tool set and measuring real traffic.
 
 ## Si algo falla

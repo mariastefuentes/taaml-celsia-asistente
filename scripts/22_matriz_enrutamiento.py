@@ -1,7 +1,7 @@
 """MATRIZ DE ENRUTAMIENTO (Taller 2): ¿el agente elige la herramienta correcta? GASTA CUOTA del modelo de pago (una llamada de agente por pregunta, más 2 de preparación).
 
 Lee docs/2 - Conjunto de prueba/matriz_enrutamiento.csv, hace cada pregunta en una conversación nueva (las de memoria llevan antes un turno de preparación)
-y compara las herramientas usadas con las esperadas. Mide además tokens, costo y segundos por turno. Necesita GOOGLE_API_KEY con facturación y GOOGLE_API_KEY en .env.
+y compara las herramientas usadas con las esperadas. Mide además tokens, costo y segundos por turno. Necesita DEEPSEEK_API_KEY (agente) y GOOGLE_API_KEY (embeddings) en .env.
 Uso:  uv run python scripts/22_matriz_enrutamiento.py          (corre todo)
       uv run python scripts/22_matriz_enrutamiento.py --seco   (solo muestra el plan, no llama al modelo)
       uv run python scripts/22_matriz_enrutamiento.py R01 R15  (solo esas)
@@ -30,9 +30,6 @@ PREPARACION = {  # turno previo que sustituye al «contexto_previo» escrito en 
 }
 OTRO_HILO = {"R30": "Me llamo Ana y trabajo en Carvajal."}  # el cliente lo cuenta en una conversación y pregunta en otra: lo único compartido es el Store
 CLIENTE_COMPARTIDO = {"R29", "R30"}  # mismo cliente en las dos filas: el dato se cuenta una sola vez y se borra al final
-ALTERNAS = {
-    "R09": {"buscar_en_base"}
-}  # un enlace de pago puede estar en las tablas o en el texto: cualquiera de las dos vale
 TEXTO_ESPERADO = {
     "R19": ["Ana", "Cali"],
     "R20": ["solo atiendo temas de Celsia"],
@@ -66,29 +63,29 @@ def sin_tildes(texto: str) -> str:
     return "".join(c for c in unicodedata.normalize("NFD", texto.lower()) if unicodedata.category(c) != "Mn")
 
 
-def enrutamiento_ok(id_: str, esperada: str, usadas: set[str]) -> bool:
-    if usadas == ALTERNAS.get(id_):
-        return True
-    if esperada == "ninguna":
-        return not usadas
-    if esperada == "ninguna_o_consultar_datos":
-        return usadas <= {"consultar_datos"}
-    if esperada == "ambas":
-        return usadas >= {"consultar_datos", "buscar_en_base"}
-    return esperada in usadas  # herramienta extra (p. ej. buscar tras «Sin resultados») no se penaliza
+def enrutamiento_ok(esperada: str, usadas: set[str]) -> bool:
+    """¿Las herramientas usadas cumplen lo que pide la matriz?
+
+    «a» exige esa herramienta; «a|b» acepta cualquiera; «a+b» exige las dos (cada parte puede traer alternativas). «ninguna» exige no usar
+    herramientas y «ninguna|a» permite no usar ninguna o usar solo esas. Una herramienta de más (p. ej. buscar tras «Sin resultados») no se penaliza.
+    """
+    grupos = [set(g.split("|")) for g in esperada.split("+")]
+    if "ninguna" in grupos[0]:
+        return usadas <= grupos[0] - {"ninguna"}
+    return all(usadas & grupo for grupo in grupos)
 
 
 def parametros_ok(esperados: str, llamadas: list[dict]) -> bool | None:
-    """Revisa tabla, ciudad, tipo, categoría o región en alguna llamada a consultar_datos o buscar_en_base. None si la matriz no pide parámetros."""
+    """Revisa ciudad, tipo, categoría o región en alguna llamada a una herramienta de consulta o de búsqueda. None si la matriz no pide parámetros."""
     pedidos = dict(
         p.strip().split("=", 1)
         for p in esperados.replace(" + ", ";").split(";")
-        if p.strip().startswith(("tabla=", "ciudad=", "tipo=", "categoria=", "region="))
+        if p.strip().startswith(("ciudad=", "tipo=", "categoria=", "region="))
     )
     if not pedidos:
         return None
     for ll in llamadas:
-        if ll["herramienta"] in ("consultar_datos", "buscar_en_base") and all(
+        if ll["herramienta"].startswith(("consultar_", "buscar_")) and all(
             sin_tildes(v.strip()) in sin_tildes(str(ll["args"].get(k, ""))) for k, v in pedidos.items()
         ):
             return True
@@ -148,7 +145,7 @@ def main() -> None:
         if f["id"] not in CLIENTE_COMPARTIDO:
             olvidar_cliente(hilo)  # no deja datos de prueba en el Store
         usadas = {ll["herramienta"] for ll in llamadas}
-        ok_ruta = enrutamiento_ok(f["id"], f["herramienta_esperada"], usadas)
+        ok_ruta = enrutamiento_ok(f["herramienta_esperada"], usadas)
         ok_params = parametros_ok(f["parametros_esperados"], llamadas)
         ok_texto = all(t in respuesta for t in TEXTO_ESPERADO.get(f["id"], [])) if f["id"] in TEXTO_ESPERADO else None
         total += costo

@@ -17,7 +17,7 @@ Revisión del 23 de noviembre de 2026. Cada fila dice **dónde está la evidenci
 | Ítem | Peso | Evidencia | Falta |
 |---|---|---|---|
 | **1.1** 20 tools `@tool` con Pydantic | 10 % | `src/taaml/agente.py` (`HERRAMIENTAS`, 20), `specs/015-herramientas-de-dominio/`, pruebas en `tests/test_agente.py`, traza en LangSmith | Ninguna para el código |
-| **1.2** Router y planificación | 8 % | `prompts/v13_agente.md`, `scripts/22_matriz_enrutamiento.py`, `docs/enrutamiento.html` | **Volver a medir la matriz con las 20 herramientas** (el 42/43 es del prompt v9) |
+| **1.2** Router y planificación | 8 % | `prompts/v13_agente.md`, `scripts/22_matriz_enrutamiento.py`, `docs/enrutamiento.html` | Medida con las 20 herramientas el 24/11: 41/43 (D53). Repetir si cambia el prompt |
 | **1.3** Memoria por capas | 7 % | `PostgresSaver` + `PostgresStore`, `docs/memoria.html`, `tests/test_memoria_postgres.py` | Ensayar el reinicio en vivo |
 | **2.1** Pipeline de datos | 5 % | `scripts/01`–`06`, `docs/pipeline.html`, `make datos` | Ninguna |
 | **2.2** RAG sobre Qdrant con citas | 6 % | `src/taaml/recuperacion.py`, `src/taaml/vectorstore.py`, nota de dato sin respaldo, `docs/arquitectura_agente.html` | Ninguna |
@@ -40,11 +40,11 @@ Revisión del 23 de noviembre de 2026. Cada fila dice **dónde está la evidenci
 3. **Correr `openclaw security audit`** y guardar la salida real en `docs/auditoria_openclaw.md` con fecha.
 4. **Definir `WHATSAPP_ALLOWLIST=*`** para el auditorio, comprobar `/api/salud` y generar el QR con `make qr-whatsapp ARGS="+57<numero-del-bot> --html"`.
 5. **Ensayar el guion completo** una vez, con el teléfono de un invitado real.
-6. **Mergear la rama `informe-final-unificado`** (trae `informe_final.md` y su PDF) y regenerar el PDF si cambia.
+6. **Informe final** (`docs/3 - Informe/informe_final.md`): actualizar su sección 11 cuando se cierre un pendiente y regenerar el PDF con `make pdf`.
 7. Cerrar o rebasar las PR abiertas antiguas (#118, #138, #139) para que el CI no falle el viernes.
 
 ## Lo que no se afirma
 
-- Que el router acierte con 20 herramientas: la cifra vigente (42/43) es del prompt v9 y con cinco herramientas.
+- Que el router acierte siempre: con las 20 herramientas la matriz da 41/43 (24/11, D53), es una sola corrida y las rutas varían entre corridas.
 - Que el canal de OpenClaw esté vinculado: la configuración está versionada y validada, pero no se probó en este equipo.
 - Que el bot esté desplegado en un servidor: corre en el equipo de la demo con un túnel https.
