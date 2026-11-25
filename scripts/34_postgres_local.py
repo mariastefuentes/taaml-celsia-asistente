@@ -62,8 +62,21 @@ def main() -> None:
         pgserver.get_server(RUTA).cleanup()
         print("PostgreSQL local detenido", file=sys.stderr)
         return
-    _arrancar()
-    print(_esperar_listo().get_uri())
+    # El 0xC0000142 en Windows puede matar al servidor poco después de su arranque ("aborting startup
+    # due to startup process failure"); reintentamos el ciclo de arranque mientras la ventana de conexión se abre.
+    for intento in range(1, 4):
+        try:
+            _arrancar()
+            pinfo = _esperar_listo()
+            with psycopg.connect(pinfo.get_uri(), autocommit=True) as conn:
+                conn.execute("select 1")
+            print(pinfo.get_uri())
+            return
+        except Exception as e:
+            if intento == 3:
+                raise
+            print(f"intento {intento} sin servidor disponible ({e!r}); reintentando en 2 s", file=sys.stderr)
+            time.sleep(2)
 
 
 if __name__ == "__main__":
