@@ -56,14 +56,47 @@ function QrWhatsApp() {
   );
 }
 
-// Acción de regenerar la respuesta del asistente: vuelve a ejecutar la pregunta que la generó (con indicador de carga).
-function AccionesRespuesta({ indice, regenerando, onRegenerar }) {
+// Acciones de la respuesta: reacciones 👍/👎 (exclusivas), escuchar en español y regenerar la última respuesta.
+function AccionesRespuesta({ indice, reaccion, onReaccion, texto, regenerando, onRegenerar, puedeRegenerar }) {
+  const [escuchando, setEscuchando] = useState(false);
+  const soportaVoz = typeof speechSynthesis !== "undefined";
   const activa = (seleccionada) => (seleccionada ? "acc-btn activa" : "acc-btn");
+
+  useEffect(() => () => { if (soportaVoz) speechSynthesis.cancel(); }, [soportaVoz]);
+
+  const hacerEscuchar = () => {
+    if (escuchando) {
+      speechSynthesis.cancel();
+      setEscuchando(false);
+      return;
+    }
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "es";
+    voz.onend = () => setEscuchando(false);
+    voz.onerror = () => setEscuchando(false);
+    speechSynthesis.cancel(); // evita que dos respuestas suenen a la vez
+    speechSynthesis.speak(voz);
+    setEscuchando(true);
+  };
+
   return (
     <div className="acciones-respuesta" aria-label="Acciones de la respuesta del asistente">
-      <button type="button" className={activa(regenerando)} onClick={() => onRegenerar(indice)} title="Regenerar la respuesta" aria-label="Regenerar" disabled={regenerando}>
-        {regenerando ? "⏳" : "🔄"}
+      <button type="button" className={activa(reaccion === "up")} onClick={() => onReaccion(indice, "up")} title="Útil" aria-label="Reaccionar: útil">
+        👍
       </button>
+      <button type="button" className={activa(reaccion === "down")} onClick={() => onReaccion(indice, "down")} title="No útil" aria-label="Reaccionar: no útil">
+        👎
+      </button>
+      {soportaVoz && (
+        <button type="button" className={activa(escuchando)} onClick={hacerEscuchar} title="Escuchar la respuesta" aria-label="Escuchar">
+          {escuchando ? "⏹" : "🔊"}
+        </button>
+      )}
+      {puedeRegenerar && (
+        <button type="button" className={activa(false)} onClick={() => onRegenerar(indice)} title="Regenerar la respuesta" aria-label="Regenerar" disabled={regenerando}>
+          {regenerando ? "⏳" : "🔄"}
+        </button>
+      )}
     </div>
   );
 }
@@ -109,6 +142,7 @@ export default function App() {
   const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
   const [verQr, setVerQr] = useState(false); // QR de WhatsApp plegado; en el inicio se muestra siempre
   const [salud, setSalud] = useState(null); // null = aún no se sabe; false = la API no responde
+  const [reacciones, setReacciones] = useState({}); // por índice de respuesta: "up" | "down"; visuales, no se persisten
   const [regenerando, setRegenerando] = useState(null); // índice de la respuesta que se está regenerando
   const fin = useRef(null);
   const ultimaPregunta = useRef("");
@@ -182,16 +216,25 @@ export default function App() {
     }
   }
 
-  // Regenerar: vuelve a ejecutar la pregunta que generó esa respuesta, manteniendo hilo y historial; el mensaje se sustituye.
+  // Reacciones: visualmente, por índice de respuesta; pulsar la que está seleccionada la desactiva.
+  function registrarReaccion(indice, tipo) {
+    setReacciones((r) => ({ ...r, [indice]: r[indice] === tipo ? undefined : tipo }));
+  }
+
+  // Regenerar: repite la última pregunta y sustituye su respuesta, sin duplicar mensajes en pantalla.
   async function hacerRegenerar(indice) {
-    if (enCurso || regenerando) return;
+    if (enCurso || regenerando !== null) return;
     const pregunta = [...mensajes.slice(0, indice)].reverse().find((m) => m.rol === "user")?.texto;
     if (!pregunta) return;
     ultimaPregunta.current = pregunta;
     setError("");
     setRegenerando(indice);
-    setMensajes((m) => m.slice(0, indice)); // quita la respuesta anterior; el usuario que la generó queda
-    setMensajes((m) => [...m, { rol: "assistant", texto: "" }]);
+    setReacciones((r) => {
+      const copia = { ...r };
+      delete copia[indice]; // la respuesta nueva empieza sin reacción
+      return copia;
+    });
+    setMensajes((m) => [...m.slice(0, indice), { rol: "assistant", texto: "" }]); // quita la respuesta anterior
     try {
       await enviar(pregunta, hilo, alEvento);
     } catch {
@@ -228,6 +271,9 @@ export default function App() {
 
   if (!direccionConocida || (hiloDeLaRuta && !HILO_VALIDO.test(hiloDeLaRuta))) return <Navigate to="/" replace />;
   if (!hiloDeLaRuta && hiloViejo && HILO_VALIDO.test(hiloViejo)) return <Navigate to={`/c/${hiloViejo}`} replace />;
+
+  // Solo la última respuesta se puede regenerar: así lo que se ve y lo que guarda el hilo no se separan.
+  const ultimoAsistente = mensajes.reduce((ultimo, m, i) => (m.rol === "assistant" ? i : ultimo), -1);
 
   return (
     <div className="app">
@@ -295,7 +341,17 @@ export default function App() {
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
             </article>
-            {m.rol === "assistant" && <AccionesRespuesta indice={i} regenerando={regenerando === i} onRegenerar={hacerRegenerar} />}
+            {m.rol === "assistant" && (
+              <AccionesRespuesta
+                indice={i}
+                reaccion={reacciones[i] ?? null}
+                onReaccion={registrarReaccion}
+                texto={m.texto}
+                regenerando={regenerando === i}
+                onRegenerar={hacerRegenerar}
+                puedeRegenerar={i === ultimoAsistente}
+              />
+            )}
           </div>
         ))}
         <div ref={fin} />
