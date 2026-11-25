@@ -23,7 +23,7 @@ Revisión del 23 de noviembre de 2026. Cada fila dice **dónde está la evidenci
 | **2.2** RAG sobre Qdrant con citas | 6 % | `src/taaml/recuperacion.py`, `src/taaml/vectorstore.py`, nota de dato sin respaldo, `docs/arquitectura_agente.html` | Ninguna |
 | **2.3** Evaluación del conocimiento | 4 % | `ranking_k10.csv`, `metricas_logs.csv`, `notebooks/analisis_conversaciones.ipynb` (t-SNE, UMAP, PCA) | Ninguna |
 | **3.1** Gateway OpenClaw | 8 % | `openclaw/openclaw.example.json`, `docs/guia_despliegue_openclaw.md`, D47 | **`openclaw config validate` en el equipo de la demo** |
-| **3.2** WhatsApp con allowlist E.164 | 10 % | Webhook propio con allowlist (`src/taaml/whatsapp.py`, D49) + canal de OpenClaw | **Vincular el canal de OpenClaw y probarlo desde un teléfono** |
+| **3.2** WhatsApp con allowlist E.164 | 10 % | Webhook propio con allowlist (`src/taaml/whatsapp.py`, D49), modo abierto `*` y QR del auditorio (`make qr-whatsapp`, D53) + canal de OpenClaw | **Vincular el canal de OpenClaw con el número dedicado y probarlo desde dos teléfonos externos** |
 | **3.3** Workspace operativo | 7 % | `openclaw/workspace/` (`SOUL`, `AGENTS`, `USER`, `MEMORY`, bitácora), D48 | Escribir la bitácora del día |
 | **3.4** Skills/MCP | 5 % | `src/taaml/servidor_mcp.py` (10 herramientas), `tests/test_servidor_mcp.py`, `.opencode/skills/` | Ninguna |
 | **4.1** Código, pruebas y `uv` | 7 % | 409 pruebas, ruff, pre-commit, CI, `make verificar-clon` | Ninguna |
@@ -38,7 +38,7 @@ Revisión del 23 de noviembre de 2026. Cada fila dice **dónde está la evidenci
 1. **Medir el router con las 20 herramientas** (`make` no lo hace: `uv run python scripts/22_matriz_enrutamiento.py` gasta cuota). Es lo único que puede bajar una nota ya ganada.
 2. **Vincular el canal de WhatsApp de OpenClaw** en el equipo de la demo y correr `openclaw channels status --probe`.
 3. **Correr `openclaw security audit`** y guardar la salida real en `docs/auditoria_openclaw.md` con fecha.
-4. **Definir `WHATSAPP_ALLOWLIST`** con los teléfonos de los invitados y comprobar `/api/salud`.
+4. **Definir `WHATSAPP_ALLOWLIST=*`** para el auditorio, comprobar `/api/salud` y generar el QR con `make qr-whatsapp ARGS="+57<numero-del-bot> --html"`.
 5. **Ensayar el guion completo** una vez, con el teléfono de un invitado real.
 6. **Informe final** (`docs/3 - Informe/informe_final.md`): actualizar su sección 11 cuando se cierre un pendiente y regenerar el PDF con `make pdf`.
 7. Cerrar o rebasar las PR abiertas antiguas (#118, #138, #139) para que el CI no falle el viernes.

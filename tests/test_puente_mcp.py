@@ -55,6 +55,19 @@ def test_un_numero_fuera_de_la_allowlist_o_mal_escrito_no_llega_al_agente(monkey
     assert atender("hola", "+570000000000") == MENSAJE_NO_AUTORIZADO  # el comodín que escribe el modelo se reemplaza antes en el plugin
 
 
+def test_con_la_lista_abierta_cualquier_numero_valido_pasa(monkeypatch):
+    monkeypatch.setenv("WHATSAPP_ALLOWLIST", "*")
+    enviado = {}
+
+    def falso_post(url, json, headers, timeout):
+        enviado.update(json=json)
+        return _Respuesta(cuerpo={"respuesta": "Hola, ¿en qué te ayudo?"})
+
+    monkeypatch.setattr(puente_mcp.requests, "post", falso_post)
+    assert atender("hola", "+573009998877") == "Hola, ¿en qué te ayudo?"
+    assert enviado["json"]["telefono"] == "+573009998877"
+
+
 def test_si_el_agente_falla_el_cliente_recibe_un_mensaje_cortes_sin_detalles(monkeypatch):
     def caido(*a, **k):
         raise ConnectionError("connection refused 127.0.0.1:8000")

@@ -7,6 +7,7 @@ Meta y el nuestro, así se prueba sin red ni claves. Las claves viven en el `.en
   WHATSAPP_TOKEN            token de acceso para enviar mensajes
   WHATSAPP_PHONE_NUMBER_ID  identificador del número de WhatsApp Business desde el que se responde
   WHATSAPP_API_VERSION      versión de la API de Graph (opcional; por defecto la de VERSION_API)
+  WHATSAPP_ALLOWLIST        números autorizados (E.164, separados por comas); `*` o sin definir deja el canal abierto para el público
   APROBADOR_WHATSAPP        (opcional) teléfono de la persona de Celsia que aprueba reclamos con botones; sin él solo funciona POST /aprobar
 """
 
@@ -16,6 +17,7 @@ import logging
 import os
 import re
 from typing import Any
+from urllib.parse import quote
 
 import requests
 
@@ -71,10 +73,14 @@ def configurado() -> bool:
     return bool(os.environ.get("WHATSAPP_TOKEN") and os.environ.get("WHATSAPP_PHONE_NUMBER_ID"))
 
 
+LISTA_ABIERTA = "*"  # modo público de la demo: cualquier número puede escribir (el límite por teléfono sigue aplicando)
+
+
 def numeros_autorizados() -> set[str]:
     """Los teléfonos de `WHATSAPP_ALLOWLIST`, en dígitos (Meta manda `573001112233` sin «+»).
 
     Se acepta la lista separada por comas, punto y coma o espacios; los «+» y los espacios de cada número se ignoran.
+    Con `*` devuelve el conjunto vacío: el canal está abierto y `/api/salud` lo informa como «abierta».
     """
     crudo = os.environ.get("WHATSAPP_ALLOWLIST", "")
     numeros = (re.sub(r"\D", "", n) for n in re.split(r"[,;]+", crudo))
@@ -82,12 +88,26 @@ def numeros_autorizados() -> set[str]:
 
 
 def autorizado(telefono: str) -> bool:
-    """¿Este teléfono puede usar el bot? Sin lista configurada queda abierto (para los ensayos); con lista, solo los suyos.
+    """¿Este teléfono puede usar el bot?
 
-    La lista es la allowlist E.164 de la rúbrica: si está definida, cualquier otro número se ignora sin llamar al modelo.
+    Sin `WHATSAPP_ALLOWLIST` o con `*` queda abierto: es el modo público del auditorio (el límite por teléfono protege la cuota).
+    Con una lista de números solo pasan esos; una lista que no trae ningún número válido **cierra** el canal en lugar de abrirlo.
     """
-    permitidos = numeros_autorizados()
-    return not permitidos or re.sub(r"\D", "", telefono) in permitidos
+    crudo = os.environ.get("WHATSAPP_ALLOWLIST", "").strip()
+    if not crudo or crudo == LISTA_ABIERTA:
+        return True
+    return re.sub(r"\D", "", telefono) in numeros_autorizados()
+
+
+def enlace_wa_me(numero: str, saludo: str = "Hola") -> str:
+    """Enlace `wa.me` del número del bot, con un saludo precargado, para el QR del auditorio.
+
+    El número va con indicativo (`+57…`); se aceptan espacios, guiones y paréntesis. Falla si no parece E.164, en vez de adivinar.
+    """
+    digitos = re.sub(r"\D", "", numero or "")
+    if not 8 <= len(digitos) <= 15:
+        raise ValueError("El número del bot debe ir con indicativo y entre 8 y 15 dígitos (+57…).")
+    return f"https://wa.me/{digitos}" + (f"?text={quote(saludo)}" if saludo else "")
 
 
 def enviar_texto(telefono: str, texto: str) -> bool:

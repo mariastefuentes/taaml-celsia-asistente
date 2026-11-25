@@ -65,7 +65,7 @@
   },
   "channels": {
     "whatsapp": {
-      "enabled": false,
+      "enabled": true,
       "dmPolicy": "open",
       "allowFrom": ["*"]
     }

@@ -2,6 +2,7 @@
 
   make ensayo-whatsapp                                                       # revisa todo lo local y, si hay claves, el token de Meta
   uv run python scripts/39_chequeo_whatsapp.py --tunel https://algo.trycloudflare.com   # además prueba el camino túnel -> API
+  make ensayo-whatsapp ARGS="--openclaw"                                     # el canal público es el de OpenClaw (Meta solo como plan B)
 
 Revisa: las claves (solo si existen; nunca se imprimen), los embeddings y el índice, la API local (`make api` encendida, memoria, panel),
 que el token de Meta siga vivo (el de prueba vence a las 24 horas y es la falla más común) y, con `--tunel`, que la dirección pública
@@ -45,7 +46,7 @@ def pedir(url: str, cabeceras: dict | None = None, tiempo: int = 6) -> tuple[int
         return 0, type(e).__name__
 
 
-def revisar_variables() -> None:
+def revisar_variables(openclaw: bool = False) -> None:
     for nombre, para in [
         ("DEEPSEEK_API_KEY", "el modelo del agente"),
         ("WHATSAPP_TOKEN", "enviar mensajes por Meta"),
@@ -54,7 +55,24 @@ def revisar_variables() -> None:
         ("WHATSAPP_VERIFY_TOKEN", "registrar el webhook en Meta"),
         ("APROBADOR_TOKEN", "aprobar reclamos y ver el panel en vivo"),
     ]:
+        # Con --openclaw el canal público es el de OpenClaw: las variables de Meta solo hacen falta para el plan B.
+        if openclaw and nombre.startswith("WHATSAPP_"):
+            if os.environ.get(nombre):
+                resultados.append(("OK   ", f"{nombre} definida ({para})", ""))
+            else:
+                resultados.append(("INFO ", f"{nombre} sin definir: solo hace falta para el plan B de Meta", ""))
+            continue
         anotar(bool(os.environ.get(nombre)), f"{nombre} definida ({para})", "agrégala al .env (ver .env.example)")
+    crudo = os.environ.get("WHATSAPP_ALLOWLIST", "").strip()
+    if not crudo or crudo == "*":
+        resultados.append(("INFO ", "WhatsApp abierto para el auditorio (WHATSAPP_ALLOWLIST vacía o «*»)", ""))
+    elif openclaw:
+        resultados.append(("INFO ", f"WhatsApp con {len(crudo.split(','))} número(s) autorizado(s); el resto no podrá escribir", ""))
+    qr = ROOT / "qr_whatsapp.png"
+    if qr.exists():
+        resultados.append(("INFO ", f"QR de WhatsApp del auditorio ({qr.name}) listo para proyectar", ""))
+    else:
+        resultados.append(("AVISO", "QR de WhatsApp del auditorio", "genéralo con make qr-whatsapp ARGS=\"+57<numero-del-bot>\""))
     anotar(bool(os.environ.get("CHAT_TOKEN")), "CHAT_TOKEN definida (protege POST /chat)", "opcional pero recomendada: sin ella /chat está abierto a quien tenga la URL", critico=False)
     anotar(None, "APROBADOR_WHATSAPP (aprobar con botones, opcional)" if not os.environ.get("APROBADOR_WHATSAPP") else "APROBADOR_WHATSAPP definida", "opcional: sin ella se aprueba con POST /aprobar", critico=False)
     if os.environ.get("APROBADOR_WHATSAPP"):
@@ -90,10 +108,13 @@ def revisar_api() -> None:
         anotar(codigo == 200 and cuerpo == "prueba123", "verificación del webhook responde (GET como lo hace Meta)", "WHATSAPP_VERIFY_TOKEN / WHATSAPP_APP_SECRET no coinciden con los de la API en marcha")
 
 
-def revisar_token_de_meta() -> None:
+def revisar_token_de_meta(openclaw: bool = False) -> None:
     token, numero = os.environ.get("WHATSAPP_TOKEN", ""), os.environ.get("WHATSAPP_PHONE_NUMBER_ID", "")
     if not (token and numero):
-        anotar(False, "token de Meta vivo", "primero define WHATSAPP_TOKEN y WHATSAPP_PHONE_NUMBER_ID")
+        if openclaw:
+            resultados.append(("INFO ", "token de Meta: no aplica con el canal de OpenClaw (solo plan B)", ""))
+        else:
+            anotar(False, "token de Meta vivo", "primero define WHATSAPP_TOKEN y WHATSAPP_PHONE_NUMBER_ID")
         return
     codigo, cuerpo = pedir(f"https://graph.facebook.com/{VERSION}/{numero}?fields=display_phone_number,verified_name", {"Authorization": f"Bearer {token}"})
     if codigo == 200:
@@ -116,13 +137,14 @@ def revisar_tunel(url: str) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--tunel", help="dirección pública (https://...) para probar el camino túnel -> API")
+    ap.add_argument("--openclaw", action="store_true", help="el canal público es el de OpenClaw: las variables de Meta solo cuentan para el plan B")
     args = ap.parse_args()
     if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
         sys.stdout.reconfigure(encoding="utf-8")
-    revisar_variables()
+    revisar_variables(openclaw=args.openclaw)
     revisar_embeddings_e_indice()
     revisar_api()
-    revisar_token_de_meta()
+    revisar_token_de_meta(openclaw=args.openclaw)
     if args.tunel:
         revisar_tunel(args.tunel)
     for estado, que, arreglo in resultados:

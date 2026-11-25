@@ -10,6 +10,8 @@ import os
 import re
 from pathlib import Path
 
+from taaml.whatsapp import LISTA_ABIERTA
+
 RAIZ = Path(__file__).resolve().parents[2]
 PLANTILLA = RAIZ / "openclaw" / "openclaw.example.json"
 WORKSPACE = RAIZ / "openclaw" / "workspace"
@@ -95,6 +97,8 @@ def problemas(config: dict) -> list[str]:
     if "celsia__*" not in herramientas.get("sandbox", {}).get("tools", {}).get("alsoAllow", []):
         fallos.append("el sandbox debe permitir el servidor MCP «celsia__*»")
     whatsapp = config.get("channels", {}).get("whatsapp", {})
+    if whatsapp.get("enabled") is not True:
+        fallos.append("channels.whatsapp.enabled debe ser true: el canal público de la demo es WhatsApp")
     dm_policy = whatsapp.get("dmPolicy")
     if dm_policy not in ("allowlist", "open"):
         fallos.append("channels.whatsapp.dmPolicy debe ser «allowlist» o «open»")
@@ -107,6 +111,13 @@ def problemas(config: dict) -> list[str]:
         for numero in allowlist:
             if not E164.match(str(numero).strip()):
                 fallos.append(f"«{numero}» no está en formato E.164 (+57…)")
+    allowlist_puente = str(
+        config.get("mcp", {}).get("servers", {}).get("puente", {}).get("env", {}).get("WHATSAPP_ALLOWLIST", "")
+    ).strip()
+    if allowlist_puente and allowlist_puente != LISTA_ABIERTA:
+        for numero in re.split(r"[,;]+", allowlist_puente):
+            if numero.strip() and not E164.match(numero.strip()):
+                fallos.append(f"WHATSAPP_ALLOWLIST del puente: «{numero.strip()}» no está en formato E.164 (+57…)")
     if not config.get("mcp", {}).get("servers", {}).get("celsia"):
         fallos.append("falta el servidor MCP propio «celsia»")
     if not config.get("mcp", {}).get("servers", {}).get("puente"):
