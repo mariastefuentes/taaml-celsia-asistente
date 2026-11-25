@@ -45,7 +45,7 @@ Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra pers
 |---|---|---|
 | 7:00 – 7:40 | **Recorrido de un mensaje**: WhatsApp → Meta → nuestro webhook (firma, deduplicación, allowlist) → agente → herramienta → PostgreSQL → respuesta | Juan José |
 | 7:40 – 8:30 | **20 herramientas**: por qué 20 y no 5; esquemas Pydantic, `APROBACION_HUMANA`, qué se retiró (`consultar_datos`) y por qué; el MCP de solo lectura | Jensen |
-| 8:30 – 9:15 | **Datos y RAG**: Bronze → Silver → Gold → curaduría → fragmentos; Qdrant con payload; mezcla significado + palabras; 89 % de recuperación del Q&A (medido con 12 fragmentos) | María Stella |
+| 8:30 – 9:15 | **Datos y RAG**: Bronze → Silver → Gold → curaduría → fragmentos; Qdrant con payload; mezcla significado + palabras; recuperación: 91 % en el Q&A (12 fragmentos) y 80 % en el agente (4 fragmentos), sobre 35 preguntas | María Stella |
 | 9:15 – 10:00 | **Memoria y evaluación**: `PostgresSaver` frente a `Store`; el hilo sobrevive al reinicio; t-SNE/UMAP de 114 conversaciones simuladas y sus límites | María Stella |
 | 10:00 – 10:45 | **OpenClaw**: `openclaw.json` versionado, `bind: loopback`, `tools.deny`, `fs.workspaceOnly`, sandbox Docker, allowlist E.164 y `security audit`; workspace con identidad y límites separados | Jensen |
 | 10:45 – 11:30 | **Seguridad**: inyección directa e indirecta (11/11 y 8/8 leídos a mano), límite por teléfono, clave en `/chat`, HITL, sin `.env` en el repo | Nicolás |

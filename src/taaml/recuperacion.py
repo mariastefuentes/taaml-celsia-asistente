@@ -37,7 +37,7 @@ QDRANT = (
 COLECCION = "celsia"
 MODELO_EMBEDDINGS = "models/gemini-embedding-001"
 FRAGMENTOS_POR_DEFECTO = (
-    12  # con 5, 8, 12 y 16 se midió 71, 74, 81 y 81 % de aciertos (scripts/10_evaluar_recuperacion.py)
+    12  # elegido con la primera búsqueda (5, 8, 12 y 16: 71, 74, 81 y 81 % de aciertos); hoy a 12 acierta 91 % (D51, scripts/10)
 )
 
 
