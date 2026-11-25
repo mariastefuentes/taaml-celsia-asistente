@@ -23,7 +23,7 @@ Revisión del 23 de noviembre de 2026. Cada fila dice **dónde está la evidenci
 | **2.2** RAG sobre Qdrant con citas | 6 % | `src/taaml/recuperacion.py`, `src/taaml/vectorstore.py`, nota de dato sin respaldo, `docs/arquitectura_agente.html` | Ninguna |
 | **2.3** Evaluación del conocimiento | 4 % | `ranking_k10.csv`, `metricas_logs.csv`, `notebooks/analisis_conversaciones.ipynb` (t-SNE, UMAP, PCA) | Ninguna |
 | **3.1** Gateway OpenClaw | 8 % | `openclaw/openclaw.example.json`, `docs/guia_despliegue_openclaw.md`, D47 | **`openclaw config validate` en el equipo de la demo** |
-| **3.2** WhatsApp con allowlist E.164 | 10 % | Webhook propio con allowlist (`src/taaml/whatsapp.py`, D49), modo abierto `*` y QR del auditorio (`make qr-whatsapp`, D53) + canal de OpenClaw | **Vincular el canal de OpenClaw con el número dedicado y probarlo desde dos teléfonos externos** |
+| **3.2** WhatsApp con allowlist E.164 | 10 % | Webhook propio con allowlist (`src/taaml/whatsapp.py`, D49), modo abierto `*`, QR del auditorio (`make qr-whatsapp`, D54) visible en el chat web y el panel (`/qr-whatsapp.png`) + canal de OpenClaw | **Vincular el canal de OpenClaw con el número dedicado y probarlo desde dos teléfonos externos** |
 | **3.3** Workspace operativo | 7 % | `openclaw/workspace/` (`SOUL`, `AGENTS`, `USER`, `MEMORY`, bitácora), D48 | Escribir la bitácora del día |
 | **3.4** Skills/MCP | 5 % | `src/taaml/servidor_mcp.py` (10 herramientas), `tests/test_servidor_mcp.py`, `.opencode/skills/` | Ninguna |
 | **4.1** Código, pruebas y `uv` | 7 % | 409 pruebas, ruff, pre-commit, CI, `make verificar-clon` | Ninguna |

@@ -31,6 +31,12 @@ button.tarjeta:hover:not(:disabled) { border-color: var(--marca); transform: tra
 button.tarjeta .icono { font-size: 1.5rem; line-height: 1; }
 button.tarjeta strong { font-size: .95rem; }
 button.tarjeta .ejemplo { color: var(--suave); font-size: .82rem; line-height: 1.35; }
+.qr-whatsapp { display: flex; align-items: center; gap: 16px; width: 100%; max-width: 640px; margin: 12px auto 0; padding: 14px 16px; text-align: left; background: var(--tarjeta); border: 1px solid var(--borde); border-left: 4px solid #25d366; border-radius: 16px; box-shadow: var(--sombra); }
+.qr-whatsapp img { width: 120px; height: 120px; flex: none; padding: 6px; border-radius: 10px; background: #fff; }
+.qr-whatsapp strong { display: block; color: var(--texto); font-size: .95rem; }
+.qr-whatsapp p { margin: 4px 0 0; color: var(--suave); font-size: .85rem; line-height: 1.4; }
+@media (max-width: 520px) { .qr-whatsapp { flex-direction: column; text-align: center; } }
+@media (max-height: 820px) { .qr-whatsapp { padding: 10px 14px; } .qr-whatsapp img { width: 96px; height: 96px; } }
 @media (max-height: 820px) { .vacio { padding: 4px 0; } .vacio .logo-grande { width: 84px; margin-bottom: 0; } .vacio h2 { font-size: 1.15rem; } .vacio p { margin-bottom: 0; } .sugerencias { gap: 8px; margin-top: 4px; } button.tarjeta { padding: 10px 14px; } button.tarjeta .icono { font-size: 1.2rem; } header { padding: 8px 0; } .marca img { width: 38px; height: 38px; } }
 .estado { display: inline-flex; align-items: center; gap: 6px; font-size: .78rem; color: var(--suave); padding: 4px 10px; border: 1px solid var(--borde); border-radius: 999px; background: var(--tarjeta); }
 .estado::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 3px rgba(22, 163, 74, .2); }

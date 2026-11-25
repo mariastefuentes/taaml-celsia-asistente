@@ -96,9 +96,9 @@ Abrir `notebooks/analisis_conversaciones.ipynb` y mostrar el mapa t-SNE:
 | Gemini o DeepSeek no responden | El agente cae solo al modelo de respaldo; es más lento y acierta menos. Decirlo y seguir |
 | Ollama apagado | `buscar_en_base` cae a búsqueda por palabras; las tablas siguen funcionando. Encenderlo y repetir |
 
-## QR de WhatsApp para el auditorio (canal de OpenClaw, D53)
+## QR de WhatsApp para el auditorio (canal de OpenClaw, D54)
 Con el número dedicado vinculado a OpenClaw y `WHATSAPP_ALLOWLIST=*`, cualquier persona del auditorio puede escribirle al bot por WhatsApp:
-1. `make qr-whatsapp ARGS="+57<numero-del-bot> --html"` genera `qr_whatsapp.png` y una página a pantalla completa.
+1. `make qr-whatsapp ARGS="+57<numero-del-bot> --html --app"` genera `qr_whatsapp.png`, una página a pantalla completa y el QR que muestran el chat web (`/`) y el panel en vivo (`/panel`).
 2. Proyectar el QR: quien lo escanee abre el chat con un «Hola» precargado.
 3. Los invitados escriben primero (el bot no inicia conversaciones) y el límite de 8 mensajes por minuto por teléfono protege la cuota.
 4. Ensayar antes con dos teléfonos que no sean del equipo. Si el número se bloquea o el canal no responde, pasar al plan B.

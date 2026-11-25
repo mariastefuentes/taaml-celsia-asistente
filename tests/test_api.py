@@ -1,5 +1,6 @@
 import json
 import threading
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 
@@ -31,6 +32,20 @@ def test_salud_dice_que_memoria_usa_la_api(monkeypatch):
     assert cliente.get("/api/salud").json()["memoria"] == "postgresql"
     monkeypatch.setenv("DATABASE_URL", "")  # lo que hace `make api-sqlite`: vacía, no cuenta
     assert cliente.get("/api/salud").json()["memoria"] == "sqlite"
+
+
+def test_el_qr_de_whatsapp_se_sirve_para_el_chat_y_el_panel():
+    r = cliente.get("/qr-whatsapp.png")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "image/png"
+    assert r.content[:8] == b"\x89PNG\r\n\x1a\n"
+    assert "/qr-whatsapp.png" in cliente.get("/panel").text
+
+
+def test_si_falta_el_qr_lo_dice(monkeypatch):
+    monkeypatch.setattr("api.main.QR_WHATSAPP", Path("no-existe.png"))
+    r = cliente.get("/qr-whatsapp.png")
+    assert r.status_code == 404 and "make qr-whatsapp" in r.json()["detail"]
 
 
 def test_chat_transmite_los_eventos_del_agente(monkeypatch):

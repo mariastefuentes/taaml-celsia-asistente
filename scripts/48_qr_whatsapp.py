@@ -2,14 +2,16 @@
 
 Uso:
     make qr-whatsapp ARGS="+573001112233"
-    make qr-whatsapp ARGS="+573001112233 --saludo 'Hola, quiero saber de Celsia' --html"
+    make qr-whatsapp ARGS="+573001112233 --saludo 'Hola, quiero saber de Celsia' --html --app"
 
 Genera `qr_whatsapp.png` (ignorado por Git) con el enlace `wa.me` del número que quedó vinculado al canal de OpenClaw. El número
-va con indicativo y debe ser el del bot, no el personal de un integrante. Si se pasa la bandera `--html`, además escribe
-`qr_whatsapp.html`, una página a pantalla completa para proyectar.
+va con indicativo y debe ser el del bot, no el personal de un integrante. Con `--html` escribe también `qr_whatsapp.html`, una
+página a pantalla completa para proyectar. Con `--app` copia el QR a `assets/whatsapp_qr.png`, el que muestran el chat web
+(`frontend/`) y el panel en vivo (`api/panel.html`) desde la ruta `/qr-whatsapp.png`.
 """
 
 import argparse
+import shutil
 import sys
 from pathlib import Path
 
@@ -22,6 +24,7 @@ from taaml.whatsapp import enlace_wa_me  # noqa: E402
 
 SALIDA_PNG = RAIZ / "qr_whatsapp.png"
 SALIDA_HTML = RAIZ / "qr_whatsapp.html"
+SALIDA_APP = RAIZ / "assets" / "whatsapp_qr.png"
 
 PLANTILLA_HTML = """<!doctype html>
 <html lang="es">
@@ -50,6 +53,7 @@ def main() -> int:
     ap.add_argument("numero", help="número del bot con indicativo, por ejemplo +573001112233")
     ap.add_argument("--saludo", default="Hola", help="texto precargado en el chat (por defecto «Hola»)")
     ap.add_argument("--html", action="store_true", help="además escribe qr_whatsapp.html para proyectar")
+    ap.add_argument("--app", action="store_true", help="copia el QR a assets/whatsapp_qr.png para el chat web y el panel")
     args = ap.parse_args()
     if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
         sys.stdout.reconfigure(encoding="utf-8")
@@ -65,6 +69,10 @@ def main() -> int:
     if args.html:
         SALIDA_HTML.write_text(PLANTILLA_HTML.format(enlace=enlace), encoding="utf-8")
         print(f"Página para proyectar -> {SALIDA_HTML}")
+    if args.app:
+        SALIDA_APP.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(SALIDA_PNG, SALIDA_APP)
+        print(f"QR para el chat web y el panel -> {SALIDA_APP}")
     return 0
 
 
