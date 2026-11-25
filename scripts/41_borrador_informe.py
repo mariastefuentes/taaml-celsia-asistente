@@ -75,7 +75,7 @@ def main() -> None:
         "## 7. Conclusiones\nCOMPLETAR.",
         "## Anexo A. Especificaciones\n" + "\n".join(especificaciones()),
         "## Anexo B. Scripts\n| Script | Qué hace |\n|---|---|\n" + "\n".join(scripts()),
-        "## Anexo C. Declaración de uso de IA\nTexto vigente: `docs/3 - Informe/declaracion_uso_ia_modulo3.md`.",
+        "## Anexo C. Declaración de uso de IA\nTexto vigente: `docs/3 - Informe/informe_final.md`, Anexo C.",
     ]
     SALIDA.write_text("\n\n".join(partes) + "\n", encoding="utf-8")
     print(f"Listo: {SALIDA} ({SALIDA.stat().st_size // 1024} KB). Busca «COMPLETAR» para ver lo que falta.")

@@ -40,7 +40,7 @@ Revisión del 23 de noviembre de 2026. Cada fila dice **dónde está la evidenci
 3. **Correr `openclaw security audit`** y guardar la salida real en `docs/auditoria_openclaw.md` con fecha.
 4. **Definir `WHATSAPP_ALLOWLIST`** con los teléfonos de los invitados y comprobar `/api/salud`.
 5. **Ensayar el guion completo** una vez, con el teléfono de un invitado real.
-6. **Mergear la rama `informe-final-unificado`** (trae `informe_final.md` y su PDF) y regenerar el PDF si cambia.
+6. **Informe final** (`docs/3 - Informe/informe_final.md`): actualizar su sección 11 cuando se cierre un pendiente y regenerar el PDF con `make pdf`.
 7. Cerrar o rebasar las PR abiertas antiguas (#118, #138, #139) para que el CI no falle el viernes.
 
 ## Lo que no se afirma
