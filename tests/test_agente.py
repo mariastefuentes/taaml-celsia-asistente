@@ -188,7 +188,7 @@ def test_la_politica_de_datos_responde_por_tema():
     assert "borrar" in salida.lower() or "corregir" in salida.lower()
 
 
-# --- memoria conversacional (modelo simulado: no llama a Gemini ni a Ollama) ---
+# --- memoria conversacional (modelo simulado: no llama a modelos reales) ---
 from langchain_core.language_models.fake_chat_models import GenericFakeChatModel  # noqa: E402
 from langchain_core.messages import AIMessage  # noqa: E402
 import pytest  # noqa: E402

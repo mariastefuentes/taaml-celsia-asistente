@@ -77,7 +77,7 @@ HILO = re.compile(
 
 @asynccontextmanager
 async def _ciclo_de_vida(_: FastAPI):
-    """Al arrancar, calienta el agente y Ollama en segundo plano para que la primera pregunta no tarde ~15 s; la API ya responde mientras tanto."""
+    """Al arrancar, calienta el agente en segundo plano para que la primera pregunta no tarde ~15 s; la API ya responde mientras tanto."""
     threading.Thread(target=calentar, name="calentamiento", daemon=True).start()
     yield
 
