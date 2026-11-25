@@ -242,7 +242,8 @@ def test_el_agente_por_modelo_se_reutiliza(monkeypatch):
     mod._AGENTES.clear()
 
 
-def test_conversar_informa_la_herramienta_usada_solo_en_este_turno():
+def test_conversar_informa_la_herramienta_usada_solo_en_este_turno(caplog):
+    caplog.set_level("INFO", logger="taaml.agente")
     llamada = AIMessage(
         content="", tool_calls=[{"name": "consultar_datos", "args": {"tabla": "sedes", "ciudad": "Ibagué"}, "id": "1"}]
     )
@@ -255,6 +256,9 @@ def test_conversar_informa_la_herramienta_usada_solo_en_este_turno():
         {"herramienta": "consultar_datos", "args": {"tabla": "sedes", "ciudad": "Ibagué"}}
     ]
     assert conversar("gracias", "h", agente=agente) == ("ok", [])  # el turno anterior no se arrastra
+    trazas = [r.getMessage() for r in caplog.records if r.getMessage().startswith("turno del agente")]
+    assert trazas[0].endswith("herramientas=['consultar_datos']") and trazas[1].endswith("herramientas=[]")
+    assert "Ibagué" not in "".join(trazas)  # la traza no lleva lo que escribió el cliente
 
 
 # --- modelo del agente ---
@@ -417,9 +421,10 @@ class ModeloSinTrozos(ModeloEspia):
     _stream = BaseChatModel._stream
 
 
-def test_conversar_en_vivo_emite_herramienta_texto_y_fin():
+def test_conversar_en_vivo_emite_herramienta_texto_y_fin(caplog):
     from taaml.agente import conversar_en_vivo
 
+    caplog.set_level("INFO", logger="taaml.agente")
     llamada = AIMessage(
         content="", tool_calls=[{"name": "consultar_datos", "args": {"tabla": "sedes", "ciudad": "Ibagué"}, "id": "t1"}]
     )
@@ -432,6 +437,7 @@ def test_conversar_en_vivo_emite_herramienta_texto_y_fin():
     ] == "Ibagué"
     assert "".join(e["texto"] for e in eventos if e["tipo"] == "texto").strip() == "Hay sedes en Ibagué"
     assert tipos[-1] == "fin" and "consultó la tabla sedes" in eventos[-1]["usadas"]
+    assert "herramientas=['consultar_datos']" in caplog.text  # el chat web deja la misma traza que el de teléfono
 
 
 def test_conversar_en_vivo_guarda_el_turno_en_la_memoria():
