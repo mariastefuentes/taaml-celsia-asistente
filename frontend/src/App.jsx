@@ -56,6 +56,18 @@ function QrWhatsApp() {
   );
 }
 
+// Acción de regenerar la respuesta del asistente: vuelve a ejecutar la pregunta que la generó (con indicador de carga).
+function AccionesRespuesta({ indice, regenerando, onRegenerar }) {
+  const activa = (seleccionada) => (seleccionada ? "acc-btn activa" : "acc-btn");
+  return (
+    <div className="acciones-respuesta" aria-label="Acciones de la respuesta del asistente">
+      <button type="button" className={activa(regenerando)} onClick={() => onRegenerar(indice)} title="Regenerar la respuesta" aria-label="Regenerar" disabled={regenerando}>
+        {regenerando ? "⏳" : "🔄"}
+      </button>
+    </div>
+  );
+}
+
 function Fuentes({ fuentes, texto }) {
   if (!fuentes?.length || sinEvidencia(texto)) return null;
   return (
@@ -97,6 +109,7 @@ export default function App() {
   const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
   const [verQr, setVerQr] = useState(false); // QR de WhatsApp plegado; en el inicio se muestra siempre
   const [salud, setSalud] = useState(null); // null = aún no se sabe; false = la API no responde
+  const [regenerando, setRegenerando] = useState(null); // índice de la respuesta que se está regenerando
   const fin = useRef(null);
   const ultimaPregunta = useRef("");
 
@@ -166,6 +179,25 @@ export default function App() {
       setMensajes((m) => (m.at(-1)?.texto === "" ? m.slice(0, -1) : m));
     } finally {
       setEnCurso(false);
+    }
+  }
+
+  // Regenerar: vuelve a ejecutar la pregunta que generó esa respuesta, manteniendo hilo y historial; el mensaje se sustituye.
+  async function hacerRegenerar(indice) {
+    if (enCurso || regenerando) return;
+    const pregunta = [...mensajes.slice(0, indice)].reverse().find((m) => m.rol === "user")?.texto;
+    if (!pregunta) return;
+    ultimaPregunta.current = pregunta;
+    setError("");
+    setRegenerando(indice);
+    setMensajes((m) => m.slice(0, indice)); // quita la respuesta anterior; el usuario que la generó queda
+    setMensajes((m) => [...m, { rol: "assistant", texto: "" }]);
+    try {
+      await enviar(pregunta, hilo, alEvento);
+    } catch {
+      setError("No pude volver a generar la respuesta; intenta de nuevo.");
+    } finally {
+      setRegenerando(null);
     }
   }
 
@@ -249,7 +281,8 @@ export default function App() {
           </section>
         )}
         {mensajes.map((m, i) => (
-          <article key={i} className={`burbuja ${m.rol}`}>
+          <div key={i} className="bloque-mensaje">
+            <article className={`burbuja ${m.rol}`}>
             {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
               <p className={`herramienta ${tipoDeUso(m).clase}`}>
                 <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ? [...new Set(m.usadas.split("; "))].join("; ") : [...new Set(m.herramientas.map(etiqueta))].join(" · ")}
@@ -261,7 +294,9 @@ export default function App() {
             )}
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
-          </article>
+            </article>
+            {m.rol === "assistant" && <AccionesRespuesta indice={i} regenerando={regenerando === i} onRegenerar={hacerRegenerar} />}
+          </div>
         ))}
         <div ref={fin} />
       </main>

@@ -93,3 +93,19 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 @media (max-width: 480px) { .sugerencias { grid-template-columns: 1fr; } .burbuja.assistant { margin-left: 0; } .burbuja.assistant::before { display: none; } .burbuja { max-width: 95%; } header { flex-direction: column; align-items: flex-start; } .vacio .logo-grande { width: 120px; } }
 .vacio .pensando { margin-left: 4px; }
+
+/* Acción de regenerar la respuesta del asistente: botón con estado activo (cargando) */
+.acciones-respuesta { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.acciones-respuesta .acc-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 32px; padding: 6px 10px;
+  font-size: .85rem; font-weight: 500;
+  border: 1px solid var(--borde); border-radius: 999px;
+  background: var(--tarjeta); color: var(--texto);
+  transition: background .1s, border-color .1s, opacity .1s, transform .05s;
+}
+.acciones-respuesta .acc-btn .icono { font-size: 1.1rem; line-height: 1; }
+.acciones-respuesta .acc-btn:hover:not(:disabled) { border-color: var(--marca); opacity: 1; transform: translateY(-1px); }
+.acciones-respuesta .acc-btn.activa { border-color: var(--marca); background: var(--azul-suave); color: var(--azul); font-weight: 600; }
+.bloque-mensaje { display: flex; flex-direction: column; gap: 2px; }
+@media (max-width: 520px) { .acciones-respuesta { gap: 4px; margin-top: 6px; } .acciones-respuesta .acc-btn { height: 30px; padding: 5px 8px; font-size: .8rem; } .acciones-respuesta .acc-btn .icono { font-size: 1rem; } }
