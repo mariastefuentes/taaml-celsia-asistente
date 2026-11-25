@@ -1,5 +1,7 @@
 # Guion de la sustentación del Módulo 3 (WhatsApp)
 
+> **Reemplazado.** Este es el guion preparado para el 21/11 y se conserva como registro. El vigente, para el 28 de noviembre de 2026, es [`guion_sustentacion_final.md`](guion_sustentacion_final.md). El procedimiento del QR de WhatsApp está en [`guia_despliegue_openclaw.md`](guia_despliegue_openclaw.md).
+
 Sábado 21 de noviembre de 2026, 8:00 a. m. Duración: **15 minutos, sin diapositivas**. El profesor y el público le escriben al bot por WhatsApp mientras se muestra la terminal. Lo que no se pueda mostrar en vivo se muestra con el diagrama de `docs/arquitectura_agente.html` (diagrama interactivo, hecho con Archify) y el cuaderno de t-SNE.
 
 Estado de las pruebas con Meta real (20 de noviembre): ya se probaron el mensaje de texto, la memoria, el reclamo con aprobación por botones (aprobar y rechazar) y el aviso de que no se leen notas de voz. Lo que siga marcado como **(verificar)** no se ha probado con Meta real.
