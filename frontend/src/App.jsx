@@ -56,10 +56,13 @@ function QrWhatsApp() {
   );
 }
 
-// Acción de reproducir en audio la respuesta del asistente con SpeechSynthesis (español), con estado activo y botón de detener.
-function AccionesRespuesta({ texto }) {
+// Acciones de la respuesta: reacciones 👍/👎 (exclusivas) y, si el navegador lo permite, escuchar en español.
+function AccionesRespuesta({ indice, reaccion, onReaccion, texto }) {
   const [escuchando, setEscuchando] = useState(false);
   const soportaVoz = typeof speechSynthesis !== "undefined";
+  const activa = (seleccionada) => (seleccionada ? "acc-btn activa" : "acc-btn");
+
+  useEffect(() => () => { if (soportaVoz) speechSynthesis.cancel(); }, [soportaVoz]);
 
   const hacerEscuchar = () => {
     if (escuchando) {
@@ -70,17 +73,25 @@ function AccionesRespuesta({ texto }) {
     const voz = new SpeechSynthesisUtterance(texto);
     voz.lang = "es";
     voz.onend = () => setEscuchando(false);
+    voz.onerror = () => setEscuchando(false);
     speechSynthesis.cancel(); // evita que dos respuestas suenen a la vez
     speechSynthesis.speak(voz);
     setEscuchando(true);
   };
 
-  if (!soportaVoz) return null; // navegadores sin SpeechSynthesis: no hay botón
   return (
     <div className="acciones-respuesta" aria-label="Acciones de la respuesta del asistente">
-      <button type="button" className={`acc-btn ${escuchando ? "activa" : ""}`} onClick={hacerEscuchar} title="Escuchar la respuesta" aria-label="Escuchar">
-        {escuchando ? "⏹" : "🔊"}
+      <button type="button" className={activa(reaccion === "up")} onClick={() => onReaccion(indice, "up")} title="Útil" aria-label="Reaccionar: útil">
+        👍
       </button>
+      <button type="button" className={activa(reaccion === "down")} onClick={() => onReaccion(indice, "down")} title="No útil" aria-label="Reaccionar: no útil">
+        👎
+      </button>
+      {soportaVoz && (
+        <button type="button" className={activa(escuchando)} onClick={hacerEscuchar} title="Escuchar la respuesta" aria-label="Escuchar">
+          {escuchando ? "⏹" : "🔊"}
+        </button>
+      )}
     </div>
   );
 }
@@ -126,6 +137,7 @@ export default function App() {
   const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
   const [verQr, setVerQr] = useState(false); // QR de WhatsApp plegado; en el inicio se muestra siempre
   const [salud, setSalud] = useState(null); // null = aún no se sabe; false = la API no responde
+  const [reacciones, setReacciones] = useState({}); // por índice de respuesta: "up" | "down"; visuales, no se persisten
   const fin = useRef(null);
   const ultimaPregunta = useRef("");
 
@@ -196,6 +208,11 @@ export default function App() {
     } finally {
       setEnCurso(false);
     }
+  }
+
+  // Reacciones: visualmente, por índice de respuesta; pulsar la que está seleccionada la desactiva.
+  function registrarReaccion(indice, tipo) {
+    setReacciones((r) => ({ ...r, [indice]: r[indice] === tipo ? undefined : tipo }));
   }
 
   async function verRecuerdos() {
@@ -292,7 +309,7 @@ export default function App() {
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
             </article>
-            {m.rol === "assistant" && <AccionesRespuesta texto={m.texto} />}
+            {m.rol === "assistant" && <AccionesRespuesta indice={i} reaccion={reacciones[i] ?? null} onReaccion={registrarReaccion} texto={m.texto} />}
           </div>
         ))}
         <div ref={fin} />

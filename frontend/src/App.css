@@ -109,5 +109,6 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .bloque-mensaje { display: flex; flex-direction: column; gap: 2px; }
 @media (max-width: 520px) { .acciones-respuesta { gap: 4px; margin-top: 6px; } .acciones-respuesta .acc-btn { height: 30px; padding: 5px 8px; font-size: .8rem; } .acciones-respuesta .acc-btn .icono { font-size: 1rem; } }
 
-/* Acción de reproducir en audio la respuesta del asistente: botón con estado activo (cargando/reproduciendo) */
+/* Acciones de la respuesta (reacciones y audio): estado activo (.activa) */
 .acciones-respuesta .acc-btn.activa { border-color: var(--marca); background: var(--azul-suave); color: var(--azul); font-weight: 600; }
+.acciones-respuesta .acc-btn.activa:hover:not(:disabled) { background: var(--azul-suave); opacity: 1; }
