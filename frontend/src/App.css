@@ -108,3 +108,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .acciones-respuesta .acc-btn:hover:not(:disabled) { border-color: var(--marca); opacity: 1; transform: translateY(-1px); }
 .bloque-mensaje { display: flex; flex-direction: column; gap: 2px; }
 @media (max-width: 520px) { .acciones-respuesta { gap: 4px; margin-top: 6px; } .acciones-respuesta .acc-btn { height: 30px; padding: 5px 8px; font-size: .8rem; } .acciones-respuesta .acc-btn .icono { font-size: 1rem; } }
+
+/* Acción de reaccionar a la respuesta del asistente: 👍 / 👎 con estado activo (.activa) */
+.acciones-respuesta .acc-btn.activa { border-color: var(--marca); background: var(--azul-suave); color: var(--azul); font-weight: 600; }
+.acciones-respuesta .acc-btn.activa:hover:not(:disabled) { background: var(--azul-suave); opacity: 1; }

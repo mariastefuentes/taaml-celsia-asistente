@@ -56,38 +56,16 @@ function QrWhatsApp() {
   );
 }
 
-// Acción de copiar la respuesta del asistente: el texto completo con clipboard, confirmación visual.
-function AccionesRespuesta({ texto }) {
-  const [copiado, setCopiado] = useState(false);
-
-  const hacerCopiar = async () => {
-    let ok = false;
-    try {
-      await navigator.clipboard.writeText(texto);
-      ok = true;
-    } catch {
-      try {
-        const tmp = document.createElement("textarea");
-        tmp.value = texto;
-        document.body.appendChild(tmp);
-        tmp.select();
-        document.execCommand("copy");
-        document.body.removeChild(tmp);
-        ok = true;
-      } catch {
-        ok = false;
-      }
-    }
-    if (ok) {
-      setCopiado(true);
-      setTimeout(() => setCopiado(false), 2000);
-    }
-  };
-
+// Acción de reaccionar a la respuesta del asistente: 👍 y 👎 con estado visual y exclusividad (nunca ambos activos).
+function AccionesRespuesta({ indice, reaccion, onReaccion }) {
+  const activa = (seleccionada) => (seleccionada ? "acc-btn activa" : "acc-btn");
   return (
     <div className="acciones-respuesta" aria-label="Acciones de la respuesta del asistente">
-      <button type="button" className="acc-btn" onClick={hacerCopiar} title="Copiar la respuesta" aria-label="Copiar">
-        {copiado ? "Copiado" : <span className="icono" aria-hidden="true">📋</span>}
+      <button type="button" className={activa(reaccion === "up")} onClick={() => onReaccion(indice, "up")} title="Útil" aria-label="Reaccionar: útil">
+        👍
+      </button>
+      <button type="button" className={activa(reaccion === "down")} onClick={() => onReaccion(indice, "down")} title="No útil" aria-label="Reaccionar: no útil">
+        👎
       </button>
     </div>
   );
@@ -134,6 +112,7 @@ export default function App() {
   const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
   const [verQr, setVerQr] = useState(false); // QR de WhatsApp plegado; en el inicio se muestra siempre
   const [salud, setSalud] = useState(null); // null = aún no se sabe; false = la API no responde
+  const [reacciones, setReacciones] = useState({}); // por índice de respuesta: "up" | "down"; visuales, no se persisten
   const fin = useRef(null);
   const ultimaPregunta = useRef("");
 
@@ -204,6 +183,11 @@ export default function App() {
     } finally {
       setEnCurso(false);
     }
+  }
+
+  // Reacciones: visualmente, por índice de respuesta; pulsar la que está seleccionada la desactiva.
+  function registrarReaccion(indice, tipo) {
+    setReacciones((r) => ({ ...r, [indice]: r[indice] === tipo ? undefined : tipo }));
   }
 
   async function verRecuerdos() {
@@ -300,7 +284,7 @@ export default function App() {
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
             </article>
-            {m.rol === "assistant" && <AccionesRespuesta texto={m.texto} />}
+            {m.rol === "assistant" && <AccionesRespuesta indice={i} reaccion={reacciones[i] ?? null} onReaccion={registrarReaccion} />}
           </div>
         ))}
         <div ref={fin} />
