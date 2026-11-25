@@ -25,7 +25,7 @@ Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energ�
 | Respuestas correctas (Taller 1, con `gemini-3.5-flash`) | Según el juez automático: 31 de 35 con respuesta y 21 de 24 negativas bien resueltas. Con la revisión asistida: 29 de 35 y 19 de 24. Los veredictos de la revisión los propuso el asistente de código y los ratificó María Stella Fuentes |
 | Costo frente a pegar toda la base en el prompt | unas 80 veces menor por pregunta |
 
-El detalle y las limitaciones están en el [informe del Taller 1](docs/3%20-%20Informe/informe_taller1.md); el agente del Taller 2, en su [informe](docs/3%20-%20Informe/informe_taller2.md); y las decisiones de arquitectura (D1 a D49), con su porqué, en [docs/decisiones.md](docs/decisiones.md).
+El detalle y las limitaciones están en el [informe del Taller 1](docs/3%20-%20Informe/informe_taller1.md); el agente del Taller 2, en su [informe](docs/3%20-%20Informe/informe_taller2.md); el sistema actual y lo que falta, en el [informe final](docs/3%20-%20Informe/informe_final.md); y las decisiones de arquitectura (D1 en adelante), con su porqué, en [docs/decisiones.md](docs/decisiones.md).
 
 ## Arquitectura
 
