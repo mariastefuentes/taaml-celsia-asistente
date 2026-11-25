@@ -13,19 +13,37 @@ const SUGERENCIAS = [
 
 const ALMACENES = { qdrant: "Qdrant", numpy: "búsqueda local", ninguno: "sin índice" };
 
+const DISTINTIVOS = {
+  mixto: { icono: "🧭", clase: "mixto" },
+  gestion: { icono: "📝", clase: "datos" }, // reclamos, reportes de daño y paso a un asesor
+  datos: { icono: "📊", clase: "datos" },
+  texto: { icono: "📄", clase: "texto" },
+  memoria: { icono: "🧠", clase: "memoria" },
+  directa: { icono: "💬", clase: "directa" },
+};
+const GESTIONES = ["radicar_reclamo", "consultar_mis_reclamos", "consultar_estado_reclamo", "cancelar_reclamo", "derivar_a_asesor", "reportar_dano_electrico"];
+
+function tipoDeHerramienta(nombre) {
+  if (nombre === "buscar_en_base") return "texto";
+  if (/_datos?_del_cliente$/.test(nombre)) return "memoria";
+  return GESTIONES.includes(nombre) ? "gestion" : "datos";
+}
+
+// Una conversación recuperada al recargar solo trae la frase («Usó: consultó las sedes; …»), no los nombres de las herramientas.
+function tipoDeFrase(frase) {
+  if (/texto del sitio/.test(frase)) return "texto";
+  if (/reclamo|asesor|daño/.test(frase)) return "gestion";
+  return /(sabe|dato) del cliente/.test(frase) ? "memoria" : "datos";
+}
+
 // Qué hizo el router en este turno, para el distintivo de la respuesta: una herramienta (con su ícono) o ninguna.
 function tipoDeUso(m) {
-  const nombres = (m.herramientas ?? []).map((h) => h.herramienta);
-  if (nombres.includes("consultar_datos") && nombres.includes("buscar_en_base")) return { icono: "🧭", clase: "mixto" };
-  if (nombres.includes("consultar_datos")) return { icono: "📊", clase: "datos" };
-  if (nombres.includes("buscar_en_base")) return { icono: "📄", clase: "texto" };
-  if (nombres.some((n) => n.includes("dato")) ) return { icono: "🧠", clase: "memoria" };
-  const t = m.usadas ?? "";
-  if (/tabla/i.test(t) && /texto/i.test(t)) return { icono: "🧭", clase: "mixto" };
-  if (/tabla/i.test(t)) return { icono: "📊", clase: "datos" };
-  if (/texto/i.test(t)) return { icono: "📄", clase: "texto" };
-  if (/cliente/i.test(t)) return { icono: "🧠", clase: "memoria" };
-  return { icono: "💬", clase: "directa" };
+  const usadas = m.usadas ?? "";
+  let tipos = (m.herramientas ?? []).map((h) => tipoDeHerramienta(h.herramienta));
+  if (!tipos.length && usadas.startsWith("Usó: ")) tipos = usadas.slice(5).split("; ").map(tipoDeFrase);
+  if (!tipos.length && /revisión/.test(usadas)) tipos = ["gestion"];
+  if (tipos.includes("datos") && tipos.includes("texto")) return DISTINTIVOS.mixto;
+  return DISTINTIVOS[["gestion", "datos", "texto", "memoria"].find((t) => tipos.includes(t)) ?? "directa"];
 }
 
 const HILO_VALIDO = /^[0-9a-f]{32}$/; // los hilos son uuid4 en hexadecimal; cualquier otra cosa en la dirección no es una conversación
@@ -56,13 +74,34 @@ function QrWhatsApp() {
   );
 }
 
-// Acciones de la respuesta: reacciones 👍/👎 (exclusivas), escuchar en español y regenerar la última respuesta.
+// Acciones de la respuesta: copiar, reacciones 👍/👎 (exclusivas), escuchar en español y regenerar la última respuesta.
 function AccionesRespuesta({ indice, reaccion, onReaccion, texto, regenerando, onRegenerar, puedeRegenerar }) {
+  const [copiado, setCopiado] = useState(false);
   const [escuchando, setEscuchando] = useState(false);
   const soportaVoz = typeof speechSynthesis !== "undefined";
   const activa = (seleccionada) => (seleccionada ? "acc-btn activa" : "acc-btn");
 
   useEffect(() => () => { if (soportaVoz) speechSynthesis.cancel(); }, [soportaVoz]);
+
+  const hacerCopiar = async () => {
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(texto);
+      ok = true;
+    } catch {
+      // Sin permiso o sin https (el chat abierto por la dirección de la red): copia con un campo temporal.
+      const tmp = document.createElement("textarea");
+      tmp.value = texto;
+      document.body.appendChild(tmp);
+      tmp.select();
+      ok = document.execCommand("copy");
+      document.body.removeChild(tmp);
+    }
+    if (ok) {
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000);
+    }
+  };
 
   const hacerEscuchar = () => {
     if (escuchando) {
@@ -81,6 +120,9 @@ function AccionesRespuesta({ indice, reaccion, onReaccion, texto, regenerando, o
 
   return (
     <div className="acciones-respuesta" aria-label="Acciones de la respuesta del asistente">
+      <button type="button" className="acc-btn" onClick={hacerCopiar} title="Copiar la respuesta" aria-label="Copiar">
+        {copiado ? "Copiado" : <span className="icono" aria-hidden="true">📋</span>}
+      </button>
       <button type="button" className={activa(reaccion === "up")} onClick={() => onReaccion(indice, "up")} title="Útil" aria-label="Reaccionar: útil">
         👍
       </button>
@@ -122,7 +164,7 @@ function etiqueta(h) {
   if (h.herramienta === "buscar_en_base") return "Buscando en el texto del sitio";
   if (h.herramienta === "guardar_dato_del_cliente") return "Guardando un dato del cliente";
   if (h.herramienta === "recordar_datos_del_cliente") return "Recordando lo que sabe del cliente";
-  return `Consultando la tabla ${h.args?.tabla ?? ""}`;
+  return h.args?.tabla ? `Consultando la tabla ${h.args.tabla}` : "Consultando una herramienta";
 }
 
 export default function App() {
@@ -229,6 +271,7 @@ export default function App() {
     ultimaPregunta.current = pregunta;
     setError("");
     setRegenerando(indice);
+    setEnCurso(true); // como en un turno normal: no se envía nada más hasta que termine, o las dos respuestas se mezclan
     setReacciones((r) => {
       const copia = { ...r };
       delete copia[indice]; // la respuesta nueva empieza sin reacción
@@ -240,6 +283,7 @@ export default function App() {
     } catch {
       setError("No pude volver a generar la respuesta; intenta de nuevo.");
     } finally {
+      setEnCurso(false);
       setRegenerando(null);
     }
   }
