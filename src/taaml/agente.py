@@ -565,7 +565,7 @@ def listar_datos_del_cliente(runtime: ToolRuntime[Contexto]) -> str:
 def olvidar_dato_del_cliente(dato: str, runtime: ToolRuntime[Contexto]) -> str:
     """Borra de la memoria de largo plazo lo que el cliente pida olvidar (su derecho a la supresión). Úsala solo cuando el
     cliente lo pida o se arrepienta de haber contado algo; borra el dato que coincida con lo que escriba y confírmalo.
-    No borra la conversación: para eso está /nuevo."""
+    No borra la conversación: eso se pide al correo de contacto de la política de datos."""
     if runtime.context.usuario == ANONIMO:
         return "No se borró nada: este cliente es anónimo y no tiene memoria de largo plazo."
     almacen = _almacen(runtime)
