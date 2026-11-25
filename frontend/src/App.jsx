@@ -56,6 +56,35 @@ function QrWhatsApp() {
   );
 }
 
+// Acción de reproducir en audio la respuesta del asistente con SpeechSynthesis (español), con estado activo y botón de detener.
+function AccionesRespuesta({ texto }) {
+  const [escuchando, setEscuchando] = useState(false);
+  const soportaVoz = typeof speechSynthesis !== "undefined";
+
+  const hacerEscuchar = () => {
+    if (escuchando) {
+      speechSynthesis.cancel();
+      setEscuchando(false);
+      return;
+    }
+    const voz = new SpeechSynthesisUtterance(texto);
+    voz.lang = "es";
+    voz.onend = () => setEscuchando(false);
+    speechSynthesis.cancel(); // evita que dos respuestas suenen a la vez
+    speechSynthesis.speak(voz);
+    setEscuchando(true);
+  };
+
+  if (!soportaVoz) return null; // navegadores sin SpeechSynthesis: no hay botón
+  return (
+    <div className="acciones-respuesta" aria-label="Acciones de la respuesta del asistente">
+      <button type="button" className={`acc-btn ${escuchando ? "activa" : ""}`} onClick={hacerEscuchar} title="Escuchar la respuesta" aria-label="Escuchar">
+        {escuchando ? "⏹" : "🔊"}
+      </button>
+    </div>
+  );
+}
+
 function Fuentes({ fuentes, texto }) {
   if (!fuentes?.length || sinEvidencia(texto)) return null;
   return (
@@ -249,7 +278,8 @@ export default function App() {
           </section>
         )}
         {mensajes.map((m, i) => (
-          <article key={i} className={`burbuja ${m.rol}`}>
+          <div key={i} className="bloque-mensaje">
+            <article className={`burbuja ${m.rol}`}>
             {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
               <p className={`herramienta ${tipoDeUso(m).clase}`}>
                 <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ? [...new Set(m.usadas.split("; "))].join("; ") : [...new Set(m.herramientas.map(etiqueta))].join(" · ")}
@@ -261,7 +291,9 @@ export default function App() {
             )}
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
-          </article>
+            </article>
+            {m.rol === "assistant" && <AccionesRespuesta texto={m.texto} />}
+          </div>
         ))}
         <div ref={fin} />
       </main>
