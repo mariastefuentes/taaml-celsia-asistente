@@ -56,6 +56,21 @@ function QrWhatsApp() {
   );
 }
 
+// Acción de reaccionar a la respuesta del asistente: 👍 y 👎 con estado visual y exclusividad (nunca ambos activos).
+function AccionesRespuesta({ indice, reaccion, onReaccion }) {
+  const activa = (seleccionada) => (seleccionada ? "acc-btn activa" : "acc-btn");
+  return (
+    <div className="acciones-respuesta" aria-label="Acciones de la respuesta del asistente">
+      <button type="button" className={activa(reaccion === "up")} onClick={() => onReaccion(indice, "up")} title="Útil" aria-label="Reaccionar: útil">
+        👍
+      </button>
+      <button type="button" className={activa(reaccion === "down")} onClick={() => onReaccion(indice, "down")} title="No útil" aria-label="Reaccionar: no útil">
+        👎
+      </button>
+    </div>
+  );
+}
+
 function Fuentes({ fuentes, texto }) {
   if (!fuentes?.length || sinEvidencia(texto)) return null;
   return (
@@ -97,6 +112,7 @@ export default function App() {
   const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
   const [verQr, setVerQr] = useState(false); // QR de WhatsApp plegado; en el inicio se muestra siempre
   const [salud, setSalud] = useState(null); // null = aún no se sabe; false = la API no responde
+  const [reacciones, setReacciones] = useState({}); // por índice de respuesta: "up" | "down"; visuales, no se persisten
   const fin = useRef(null);
   const ultimaPregunta = useRef("");
 
@@ -167,6 +183,11 @@ export default function App() {
     } finally {
       setEnCurso(false);
     }
+  }
+
+  // Reacciones: visualmente, por índice de respuesta; pulsar la que está seleccionada la desactiva.
+  function registrarReaccion(indice, tipo) {
+    setReacciones((r) => ({ ...r, [indice]: r[indice] === tipo ? undefined : tipo }));
   }
 
   async function verRecuerdos() {
@@ -249,7 +270,8 @@ export default function App() {
           </section>
         )}
         {mensajes.map((m, i) => (
-          <article key={i} className={`burbuja ${m.rol}`}>
+          <div key={i} className="bloque-mensaje">
+            <article className={`burbuja ${m.rol}`}>
             {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
               <p className={`herramienta ${tipoDeUso(m).clase}`}>
                 <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ? [...new Set(m.usadas.split("; "))].join("; ") : [...new Set(m.herramientas.map(etiqueta))].join(" · ")}
@@ -261,7 +283,9 @@ export default function App() {
             )}
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
-          </article>
+            </article>
+            {m.rol === "assistant" && <AccionesRespuesta indice={i} reaccion={reacciones[i] ?? null} onReaccion={registrarReaccion} />}
+          </div>
         ))}
         <div ref={fin} />
       </main>
