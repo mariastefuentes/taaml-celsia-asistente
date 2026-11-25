@@ -23,6 +23,8 @@ import logging
 import os
 import re
 import secrets
+import subprocess
+import sys
 import threading
 import time
 import unicodedata
@@ -32,6 +34,7 @@ from pathlib import Path
 from typing import Literal
 from uuid import uuid4
 
+import requests
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse, StreamingResponse
@@ -130,6 +133,73 @@ def salud() -> dict:
         "memoria": "postgresql" if os.environ.get("DATABASE_URL") else "sqlite",
         "allowlist_whatsapp": len(numeros_autorizados()) or "abierta",
     }
+
+
+# --- WhatsApp – Conectar agente: estado del gateway de OpenClaw, QR y página del QR ---
+RAIZ = Path(__file__).resolve().parents[1]
+NUMERO_AGENTE = "+573150154664"  # el bot del canal de OpenClaw que esta interfaz permite vincular (no se toma de archivos ni de stdin)
+QR_PAGINA = RAIZ / "qr_whatsapp.html"
+QR_PNG = RAIZ / "qr_whatsapp.png"
+GATEWAY_HEALTH = "http://127.0.0.1:18789/health"  # health del gateway de OpenClaw (puerto de la plantilla); no pide credenciales
+
+
+def _estado_openclaw() -> dict:
+    """Probamos el health del gateway de OpenClaw: responde `{"ok":true,"status":"live"}` si está levantado."""
+    try:
+        r = requests.get(GATEWAY_HEALTH, timeout=5)
+        detalle = r.json().get("status", "") if r.ok else ""
+        return {"conectado": r.ok, "detalle": detalle}
+    except requests.RequestException:
+        return {"conectado": False, "detalle": ""}
+
+
+@app.get("/api/whatsapp/estado")
+def estado_whatsapp() -> dict:
+    """Estado real de la conexión de WhatsApp, consultando el health del gateway de OpenClaw."""
+    probado = _estado_openclaw()
+    return {
+        "estado": "conectado" if probado["conectado"] else "desconectado",
+        "numero": NUMERO_AGENTE,
+        "gateway": probado["detalle"],
+    }
+
+
+@app.post("/api/whatsapp/qr")
+def generar_qr_whatsapp(peticion: Request) -> dict:
+    """Genera el QR con el mecanismo existente (`make qr-whatsapp ARGS="+573150154664 --html"`).
+
+    Solo se permite desde la interfaz local de este servidor (el origen es loopback); el número del bot es el fijo.
+    """
+    if peticion.client.host not in ("127.0.0.1", "::1", "localhost"):
+        raise HTTPException(status_code=403, detail="Solo se genera el QR desde la interfaz local de este servidor")
+    try:
+        salida = subprocess.run(
+            [sys.executable, str(RAIZ / "scripts" / "48_qr_whatsapp.py"), NUMERO_AGENTE, "--html"],
+            capture_output=True, text=True, timeout=60, check=False,
+        )
+    except subprocess.TimeoutExpired:
+        log.exception("la generación del QR de WhatsApp se acabó")
+        raise HTTPException(status_code=500, detail="La generación del QR tardó demasiado; intenta de nuevo")
+    if salida.returncode != 0 or not QR_PAGINA.is_file():
+        log.error("falló al generar el QR (rc=%s): %s", salida.returncode, (salida.stderr or "")[:300])
+        raise HTTPException(status_code=500, detail="No se pudo generar el QR; intenta de nuevo")
+    return {"ok": True, "url": "/api/whatsapp/qr-pagina"}
+
+
+@app.get("/api/whatsapp/qr-pagina", response_class=HTMLResponse)
+def qr_whatsapp_pagina() -> str:
+    """La página HTML del QR generada por `scripts/48_qr_whatsapp.py`; su `<img>` apunta a `/api/whatsapp/qr-png`."""
+    if not QR_PAGINA.is_file():
+        raise HTTPException(status_code=404, detail="Falta qr_whatsapp.html: genera el QR desde la interfaz")
+    return QR_PAGINA.read_text(encoding="utf-8").replace('src="qr_whatsapp.png"', 'src="/api/whatsapp/qr-png"')
+
+
+@app.get("/api/whatsapp/qr-png")
+def qr_whatsapp_png() -> FileResponse:
+    """El QR (qr_whatsapp.png) que muestra la página de arriba."""
+    if not QR_PNG.is_file():
+        raise HTTPException(status_code=404, detail="Falta qr_whatsapp.png: genera el QR desde la interfaz")
+    return FileResponse(QR_PNG, media_type="image/png")
 
 
 def _origen(peticion: Request) -> str:
