@@ -20,6 +20,7 @@
   "agents": {
     "defaults": {
       "workspace": "~/.openclaw/workspace",
+      "skills": ["atencion-whatsapp-celsia"],
       "model": {
         "primary": "deepseek/deepseek-flash",
         "fallbacks": []
@@ -47,6 +48,7 @@
   "tools": {
     "toolSearch": false,
     "profile": "messaging",
+    "alsoAllow": ["skills_read"],
     "deny": ["group:automation", "group:runtime", "group:fs", "sessions_spawn"],
     "fs": {
       "workspaceOnly": true
@@ -59,7 +61,7 @@
     },
     "sandbox": {
       "tools": {
-        "alsoAllow": ["celsia__*", "puente__*"]
+        "alsoAllow": ["celsia__*", "puente__*", "skills_read"]
       }
     }
   },

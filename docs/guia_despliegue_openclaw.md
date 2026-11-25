@@ -38,7 +38,7 @@ Si ya había una configuración, `make openclaw-instalar ARGS="--forzar"` deja u
 - `tools.deny`: `group:automation`, `group:runtime`, `group:fs`, `sessions_spawn`.
 - `tools.fs.workspaceOnly: true` y `tools.exec.mode: deny`.
 - Permisos elevados y navegador apagados.
-- Sandbox Docker en modo `all` con `workspaceAccess: none`, permitiendo dentro solo `celsia__*`.
+- Sandbox Docker en modo `all` con `workspaceAccess: none`, permitiendo dentro `celsia__*`, `puente__*` y `skills_read`, que solo lee la skill del proyecto (D55).
 - Modelo primario y respaldo.
 - Servidor MCP `celsia` con sus diez herramientas de solo lectura.
 
