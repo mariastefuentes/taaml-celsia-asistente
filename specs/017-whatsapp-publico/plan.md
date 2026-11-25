@@ -10,7 +10,7 @@
 | `scripts/48_qr_whatsapp.py` | Nuevo: QR del número del bot (`wa.me`), salida `qr_whatsapp.png`. |
 | `Makefile` | Objetivo `qr-whatsapp`. |
 | `tests/test_whatsapp.py`, `tests/test_openclaw.py`, `tests/test_puente_mcp.py` | Pruebas del modo abierto, del cierre y del enlace. |
-| `docs/guia_despliegue_openclaw.md`, `docs/guion_demo_whatsapp.md`, `docs/decisiones.md`, `openclaw/README.md`, `.env.example`, `README.md` | Procedimiento y decisión D53. |
+| `docs/guia_despliegue_openclaw.md`, `docs/guion_demo_whatsapp.md`, `docs/decisiones.md`, `openclaw/README.md`, `.env.example`, `README.md` | Procedimiento y decisión D54. |
 
 ## Riesgos
 
