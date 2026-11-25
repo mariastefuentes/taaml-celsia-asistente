@@ -56,8 +56,8 @@ function QrWhatsApp() {
   );
 }
 
-// Acciones de la respuesta: reacciones 👍/👎 (exclusivas) y, si el navegador lo permite, escuchar en español.
-function AccionesRespuesta({ indice, reaccion, onReaccion, texto }) {
+// Acciones de la respuesta: reacciones 👍/👎 (exclusivas), escuchar en español y regenerar la última respuesta.
+function AccionesRespuesta({ indice, reaccion, onReaccion, texto, regenerando, onRegenerar, puedeRegenerar }) {
   const [escuchando, setEscuchando] = useState(false);
   const soportaVoz = typeof speechSynthesis !== "undefined";
   const activa = (seleccionada) => (seleccionada ? "acc-btn activa" : "acc-btn");
@@ -90,6 +90,11 @@ function AccionesRespuesta({ indice, reaccion, onReaccion, texto }) {
       {soportaVoz && (
         <button type="button" className={activa(escuchando)} onClick={hacerEscuchar} title="Escuchar la respuesta" aria-label="Escuchar">
           {escuchando ? "⏹" : "🔊"}
+        </button>
+      )}
+      {puedeRegenerar && (
+        <button type="button" className={activa(false)} onClick={() => onRegenerar(indice)} title="Regenerar la respuesta" aria-label="Regenerar" disabled={regenerando}>
+          {regenerando ? "⏳" : "🔄"}
         </button>
       )}
     </div>
@@ -138,6 +143,7 @@ export default function App() {
   const [verQr, setVerQr] = useState(false); // QR de WhatsApp plegado; en el inicio se muestra siempre
   const [salud, setSalud] = useState(null); // null = aún no se sabe; false = la API no responde
   const [reacciones, setReacciones] = useState({}); // por índice de respuesta: "up" | "down"; visuales, no se persisten
+  const [regenerando, setRegenerando] = useState(null); // índice de la respuesta que se está regenerando
   const fin = useRef(null);
   const ultimaPregunta = useRef("");
 
@@ -215,6 +221,29 @@ export default function App() {
     setReacciones((r) => ({ ...r, [indice]: r[indice] === tipo ? undefined : tipo }));
   }
 
+  // Regenerar: repite la última pregunta y sustituye su respuesta, sin duplicar mensajes en pantalla.
+  async function hacerRegenerar(indice) {
+    if (enCurso || regenerando !== null) return;
+    const pregunta = [...mensajes.slice(0, indice)].reverse().find((m) => m.rol === "user")?.texto;
+    if (!pregunta) return;
+    ultimaPregunta.current = pregunta;
+    setError("");
+    setRegenerando(indice);
+    setReacciones((r) => {
+      const copia = { ...r };
+      delete copia[indice]; // la respuesta nueva empieza sin reacción
+      return copia;
+    });
+    setMensajes((m) => [...m.slice(0, indice), { rol: "assistant", texto: "" }]); // quita la respuesta anterior
+    try {
+      await enviar(pregunta, hilo, alEvento);
+    } catch {
+      setError("No pude volver a generar la respuesta; intenta de nuevo.");
+    } finally {
+      setRegenerando(null);
+    }
+  }
+
   async function verRecuerdos() {
     if (recuerdos) return setRecuerdos(null);
     try {
@@ -242,6 +271,9 @@ export default function App() {
 
   if (!direccionConocida || (hiloDeLaRuta && !HILO_VALIDO.test(hiloDeLaRuta))) return <Navigate to="/" replace />;
   if (!hiloDeLaRuta && hiloViejo && HILO_VALIDO.test(hiloViejo)) return <Navigate to={`/c/${hiloViejo}`} replace />;
+
+  // Solo la última respuesta se puede regenerar: así lo que se ve y lo que guarda el hilo no se separan.
+  const ultimoAsistente = mensajes.reduce((ultimo, m, i) => (m.rol === "assistant" ? i : ultimo), -1);
 
   return (
     <div className="app">
@@ -309,7 +341,17 @@ export default function App() {
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
             {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
             </article>
-            {m.rol === "assistant" && <AccionesRespuesta indice={i} reaccion={reacciones[i] ?? null} onReaccion={registrarReaccion} texto={m.texto} />}
+            {m.rol === "assistant" && (
+              <AccionesRespuesta
+                indice={i}
+                reaccion={reacciones[i] ?? null}
+                onReaccion={registrarReaccion}
+                texto={m.texto}
+                regenerando={regenerando === i}
+                onRegenerar={hacerRegenerar}
+                puedeRegenerar={i === ultimoAsistente}
+              />
+            )}
           </div>
         ))}
         <div ref={fin} />
