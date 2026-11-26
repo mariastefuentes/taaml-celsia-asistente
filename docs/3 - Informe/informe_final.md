@@ -92,7 +92,7 @@ La configuración está versionada y sin secretos en `openclaw/openclaw.example.
 | Sesiones | Una por persona y canal (`per-channel-peer`) |
 | Herramientas | Perfil `messaging`; negados automatización, ejecución, archivos y `sessions_spawn`; sin permisos elevados |
 | Sandbox | `mode: all`, Docker, sin acceso al workspace; dentro solo los MCP `celsia` y `puente` |
-| Modelo | `deepseek/deepseek-flash`, **sin respaldo configurado** |
+| Modelo | `deepseek/deepseek-flash`; respaldo `deepseek/deepseek-v4-pro` (misma clave, D68) |
 | Workspace | `SOUL.md` (identidad), `AGENTS.md` (límites), `USER.md`, `MEMORY.md` y bitácora |
 | MCP | `celsia` (10 herramientas de solo lectura) y `puente` (`atender_cliente_celsia`) |
 | Plugin | `puente-celsia` |

@@ -488,3 +488,11 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Medición (26/11, DeepSeek, una corrida, con D66).** Banco verificable 49/49 (conversación 8/8, aislamiento 1/1). Matriz: ruta 40/43, parámetros 15/15, texto 9/10; mediana 2,8 s y máximo 15,9 s. Fallan R08, R16 y R17; en texto, R22.
 - **Límites.** La matriz bajó de 41 a 40 frente al 24/11 y dio 40 antes y después de D66 el mismo día. Los ataques, las preguntas hostiles y la recuperación son del 24/11. La traza de LangSmith del README sigue siendo de una versión anterior. Los diagramas del Taller 1 y del informe del Taller 2 no se tocan. La revisión en navegador de Archify no se corrió; las capturas se revisaron a ojo.
 - **Evidencia.** `docs/*.json`, `docs/*.html`, `docs/capturas/`, `docs/3 - Informe/diagrama_memoria.svg`, `docs/2 - Conjunto de prueba/resultados/matriz_enrutamiento_resultados.csv`.
+
+## D68. Modelo de respaldo en el gateway de OpenClaw
+- **Contexto.** La rúbrica (3.1) pide modelo primario y respaldo. La plantilla tenía la lista de respaldo vacía.
+- **Decisión.** `deepseek/deepseek-v4-pro` como respaldo de `deepseek/deepseek-flash`, declarado en `agents.defaults` y en `agents.entries.main` (el del agente manda sobre el general). Usa la misma clave, así que no agrega secretos. Un respaldo de otro proveedor exigiría otra clave en el equipo del bot.
+- **Medición (26/11, OpenClaw 2026.11.6, carpeta temporal sin WhatsApp, herramientas ni sandbox, una corrida por caso).** Titular sano: contestó `deepseek-flash` en 139 s. Titular simulado caído (503): tras 7 pedidos fallidos contestó `deepseek-v4-pro`, en 296 s. Con un nombre de modelo inexistente (400) no hubo respaldo: OpenClaw lo trata como error de formato.
+- **Límites.** No cubre una caída de todo DeepSeek. El cambio es lento y no se probó acortar los reintentos. Los tiempos incluyen el arranque del agente en cada prueba y no equivalen a los de WhatsApp. No se ha probado en el equipo del bot; para aplicarlo allí hay que reinstalar la configuración (`make openclaw-instalar ARGS="--forzar"`).
+- **Evidencia.** `openclaw/openclaw.example.json`, `tests/test_openclaw.py`.
+

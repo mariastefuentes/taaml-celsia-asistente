@@ -185,6 +185,14 @@ def test_el_proveedor_del_modelo_viene_declarado_y_la_clave_no_se_escribe():
     assert "clave-que-no-debe-escribirse" not in json.dumps(config)
 
 
+def test_el_modelo_tiene_un_respaldo_declarado():
+    """La rúbrica (3.1) pide modelo primario y respaldo; el del agente manda sobre el de `defaults`, así que van los dos."""
+    agentes = configuracion(ENTORMO)["agents"]
+    for modelo in (agentes["defaults"]["model"], agentes["entries"]["main"]["model"]):
+        assert modelo["primary"] == "deepseek/deepseek-flash"
+        assert modelo["fallbacks"] == ["deepseek/deepseek-v4-pro"]
+
+
 def test_un_modelo_sin_proveedor_declarado_se_detecta():
     config = configuracion(ENTORMO)
     del config["models"]

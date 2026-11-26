@@ -12,7 +12,7 @@ Esta guía lleva el asistente de Celsia al gateway de OpenClaw que pide la rúbr
 | Docker | Imagen del sandbox (`openclaw-sandbox:trixie-slim`) |
 | `uv` y este repositorio | El servidor MCP `celsia` corre con `uv run` |
 | Número dedicado para el bot | Chip prepago o eSIM de voz/SMS en un celular de repuesto (nunca el personal de un integrante); ver la sección 6 |
-| Clave del proveedor del modelo | `DEEPSEEK_API_KEY`, para `deepseek/deepseek-flash` (la plantilla declara el proveedor; respaldo apagado) |
+| Clave del proveedor del modelo | `DEEPSEEK_API_KEY`, para `deepseek/deepseek-flash` (la plantilla declara el proveedor; respaldo `deepseek/deepseek-v4-pro` con la misma clave, D68) |
 
 ## 1. Variables (en `.env`, nunca en el repositorio)
 
@@ -190,7 +190,7 @@ El código y sus pruebas siguen en el repositorio (`/webhook/whatsapp`, `src/taa
 | El chat web tampoco abre (sin red o sin túnel) | Plan B grabado (`make demo-plan-b`) |
 | Se aprobó un reclamo y la respuesta no llega | Pedir a la persona que escriba otra vez y pregunte por su reclamo (si el panel dijo que no se pudo enviar, el resultado le llega con esa respuesta) |
 | El gateway no arranca | Mostrar `openclaw config validate` y la configuración versionada; explicar qué falló |
-| Sin cuota del modelo | El agente de la API usa su respaldo (`gemini-3.8-flash`, luego `deepseek-v4-pro`); el modelo de OpenClaw no tiene respaldo |
+| Sin cuota del modelo | El agente de la API usa su respaldo (`gemini-3.8-flash`, luego `deepseek-v4-pro`); el de OpenClaw pasa de `deepseek-flash` a `deepseek-v4-pro`, con la misma clave: no cubre una caída de todo DeepSeek |
 
 ## 10. Lista de verificación del viernes
 
