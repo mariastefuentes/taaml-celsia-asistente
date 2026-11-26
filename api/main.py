@@ -58,8 +58,9 @@ from taaml.agente import (
     resolver_aprobacion,
 )
 from taaml import actividad, aprobaciones, avisos_openclaw, voz
+from taaml.citas import pide_la_fuente, texto_de_fuentes
 from taaml.limite import TEXTO_LIMITE, limite_desde_entorno
-from taaml.recuperacion import almacen_vectorial
+from taaml.recuperacion import almacen_vectorial, cargar_fragmentos
 from taaml.whatsapp import (
     TEXTO_NO_SOPORTADO,
     autorizado,
@@ -319,6 +320,11 @@ def responder_a_telefono(telefono: str, mensaje: str, canal: str = "chat") -> Re
     hilo, usuario = ids_del_telefono(telefono)
     inicio = time.monotonic()
     try:
+        if pide_la_fuente(mensaje) and not pendiente_de_aprobacion(hilo):  # la contesta el programa con lo guardado, sin llamar al modelo
+            textos = {f["chunk_id"]: f["texto"] for f in cargar_fragmentos()}
+            texto = texto_de_fuentes(historial_visible(hilo), textos)
+            actividad.registrar(canal, telefono, mensaje, "respondido", segundos=time.monotonic() - inicio, costo=0.0)
+            return RespuestaDelAgente(respuesta=texto, herramientas=[])
         texto, llamadas = conversar(mensaje, hilo, usuario=usuario)
     except Exception:  # el detalle va al registro; al cliente no se le filtra nada interno
         log.exception("falló el turno del hilo %s", hilo)
