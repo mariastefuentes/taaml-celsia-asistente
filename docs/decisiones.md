@@ -424,3 +424,11 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Reemplaza.** El límite de D57 «la respuesta sigue saliendo con el siguiente mensaje», solo para el chat web.
 - **Límites.** Sigue habiendo resumen en conversaciones cortas (una llamada más al modelo) y el recorte de historial puede dejar el resumen por fuera: se revisa aparte, con modelo real. Si la API se reinicia, la lista de pendientes y de entregas se pierde.
 - **Evidencia.** `api/main.py`, `api/panel.html`, `frontend/src/App.jsx`, `frontend/src/App.css`, `src/taaml/agente.py`, `src/taaml/aprobaciones.py`, `tests/test_agente.py`, `tests/test_aprobaciones.py`.
+
+## D59. El chat web habla como al cliente; los detalles técnicos se muestran a pedido
+- **Contexto.** Cada respuesta mostraba las herramientas usadas, los tokens y el costo; el encabezado hablaba de agente, memoria y Qdrant; en un celular de 375 px el encabezado medía 179 px, y las fuentes salían abiertas con los extractos completos.
+- **Decisión.** Un botón «Ver detalles técnicos», apagado al entrar y recordado en el navegador, muestra herramientas, tokens, costo, base de búsqueda y fuentes abiertas. Sin él, cada respuesta de texto conserva «Fuentes (N)», que se abre al tocarlo. El aviso de dato sin respaldo y la marca de respuesta revisada por una persona se ven siempre. En el celular los botones van en una fila con nombres cortos.
+- **Por qué.** El cliente necesita la respuesta y poder verificarla; el jurado necesita además la trazabilidad, que queda a un toque.
+- **Reemplaza.** La cita abierta por defecto bajo cada respuesta en el chat web. WhatsApp no cambia.
+- **Límites.** El botón no es un control de acceso: la API sigue entregando los mismos datos al navegador. En la sustentación hay que encenderlo para que las fuentes se vean abiertas.
+- **Evidencia.** `frontend/src/App.jsx`, `frontend/src/App.css`, `docs/guion_sustentacion_final.md`.

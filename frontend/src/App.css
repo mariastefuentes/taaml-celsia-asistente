@@ -79,8 +79,8 @@ button.tarjeta .ejemplo { color: var(--suave); font-size: .82rem; line-height: 1
 .pensando i:nth-child(3) { animation-delay: .3s; }
 .error { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--rojo); border: 1px solid var(--rojo); border-radius: 12px; padding: 8px 12px; margin-bottom: 8px; font-size: .9rem; }
 .pendiente-aviso { color: var(--azul); border: 1px solid var(--azul); background: var(--azul-suave); border-radius: 12px; padding: 8px 12px; margin-bottom: 8px; font-size: .9rem; }
-form { display: flex; gap: 8px; padding: 12px 0 16px; }
-input { flex: 1; padding: 12px 18px; border-radius: 999px; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); font-size: 1rem; box-shadow: var(--sombra); }
+form { display: flex; gap: 8px; padding: 12px 0 6px; }
+input { flex: 1; min-width: 0; padding: 12px 18px; border-radius: 999px; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); font-size: 1rem; box-shadow: var(--sombra); }
 input:focus { outline: 2px solid var(--marca); outline-offset: 1px; }
 button { padding: 10px 18px; border-radius: 999px; border: 0; background: var(--azul); color: #fff; font-size: .95rem; font-weight: 600; cursor: pointer; transition: transform .1s, filter .15s; }
 button:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); }
@@ -95,6 +95,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 @media (max-width: 480px) { .sugerencias { grid-template-columns: 1fr; } .burbuja.assistant { margin-left: 0; } .burbuja.assistant::before { display: none; } .burbuja { max-width: 95%; } header { flex-direction: column; align-items: flex-start; } .vacio .logo-grande { width: 120px; } }
 .vacio .pensando { margin-left: 4px; }
 @media (min-width: 1100px) { .sugerencias { grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1200px; } }
+button.detalles-btn { align-self: center; margin-bottom: 8px; padding: 2px 10px; background: transparent; color: var(--suave); font-size: .75rem; font-weight: 400; text-decoration: underline; }
+.corto { display: none; }
+@media (max-width: 480px) { .largo { display: none; } .corto { display: inline; } header { gap: 8px; padding: 8px 0; } .marca img { width: 34px; height: 34px; } header p { font-size: .75rem; } .acciones { gap: 6px; align-items: center; } .acciones button { padding: 6px 10px; font-size: .8rem; white-space: nowrap; } .estado { padding: 4px 8px; white-space: nowrap; } }
 
 /* Acciones de la respuesta del asistente: reacciones, audio y regenerar */
 .acciones-respuesta { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
