@@ -130,8 +130,9 @@ def main() -> None:
         for dup in grupo[1:]:
             registro.append((dup[0], dup[1], "duplicado_exacto", f"igual a {slug}"))
 
+    # el índice crece al volver a descargar (una copia limpia anota otra vez cada página): se cuenta la última captura de cada una
     (SILVER / "_descubrimiento.json").write_text(
-        json.dumps(resumen_descubrimiento(filas), ensure_ascii=False, indent=2) + chr(10), encoding="utf-8"
+        json.dumps(resumen_descubrimiento(list(indice.values())), ensure_ascii=False, indent=2) + chr(10), encoding="utf-8"
     )
     with (SILVER / "_registro.csv").open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)

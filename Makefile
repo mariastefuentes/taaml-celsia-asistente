@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend chat-web qr-chat-web qr-whatsapp demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida banco-verificable verificar-clon test lint tipos skills-check check format clean datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp openclaw-check openclaw-instalar
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend chat-web qr-chat-web qr-whatsapp demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida banco-verificable verificar-clon test lint tipos skills-check check format clean corpus revisar-corpus descargar datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp openclaw-check openclaw-instalar
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -28,6 +28,8 @@ ayuda:
 	$(info )
 	$(info   DATOS Y SCRAPING)
 	$(info     make scraping-demo   borra la carpeta de demo y descarga 5 paginas del blog (no toca data/1_bronze ni gasta cuota))
+	$(info     make corpus          TODO el corpus de una vez: descarga celsia.com, limpia, fragmenta e indexa (unos 30 min; cambia data/; necesita GOOGLE_API_KEY))
+	$(info     make descargar       solo la descarga: HTML de celsia.com y sedes en data/1_bronze (no gasta cuota))
 	$(info     make datos           reconstruye silver, gold, curaduria y fragmentos (necesita el HTML de Bronze))
 	$(info     make indice          construye el indice de vectores con embeddings de Gemini (en la nube; sube la busqueda del 51 % al 83 %))
 	$(info )
@@ -182,6 +184,19 @@ format:
 
 clean:
 	@uv run python -c "import pathlib, shutil; [shutil.rmtree(p, ignore_errors=True) for pat in ('.pytest_cache', '.ruff_cache', '**/__pycache__') for p in pathlib.Path('.').glob(pat) if '.venv' not in p.parts]"
+
+# El corpus completo con un solo comando, desde una copia limpia: comprueba la clave, descarga, limpia, cura, fragmenta e indexa.
+# Cambia los datos versionados (el sitio cambia con el tiempo): revisa con `git status` antes de guardar nada. Apaga antes la API (bloquea Qdrant).
+corpus: revisar-corpus descargar datos indice
+
+# Falla al comienzo, y no después de media hora de descarga, si falta la clave que usa `make indice`.
+revisar-corpus:
+	uv run python -c "import os, sys; from dotenv import load_dotenv; load_dotenv('.env'); sys.exit(0 if os.environ.get('GOOGLE_API_KEY') else 'Falta GOOGLE_API_KEY en .env: la necesita el indice de busqueda.')"
+
+# Capa Bronze: visita celsia.com (respeta robots.txt, 1 s entre páginas, unos 30 minutos la primera vez) y consulta las sedes. Si se corta, retoma.
+descargar:
+	uv run python scripts/01_scrape_celsia.py --sections page,blog-celsia,noticias
+	uv run python scripts/02_obtener_sedes.py
 
 datos:
 	uv run python scripts/03_construir_silver.py

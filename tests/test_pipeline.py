@@ -185,3 +185,26 @@ def test_gold_conserva_la_seccion_del_sitemap():
     ]
     assert all(d.get("section") for d in corpus)
     assert {d["section"] for d in corpus} >= {"page", "blog-celsia", "noticias"}
+
+
+def test_volver_a_descargar_no_cuenta_dos_veces_la_misma_pagina(tmp_path, monkeypatch):
+    # en una copia limpia el índice versionado ya tiene la captura y el scraper anota otra vez cada página
+    bronze, salida = tmp_path / "bronze", tmp_path / "silver"
+    bronze.mkdir()
+    fila = {"slug": "es-a", "url": "https://www.celsia.com/es/a/", "section": "page", "http": 200, "fetched_at": "2026-10-17"}
+    nueva = {**fila, "fetched_at": "2026-11-26"}
+    (bronze / "_indice.jsonl").write_text("".join(json.dumps(f) + "\n" for f in (fila, nueva)), encoding="utf-8")
+    cuerpo = "Texto de ejemplo sobre el servicio de energía. " * 10
+    (bronze / "es-a.html").write_text(f"<html><body><main><h1>A</h1><p>{cuerpo}</p></main></body></html>", encoding="utf-8")
+    monkeypatch.setattr(silver, "BRONZE", bronze)
+    monkeypatch.setattr(silver, "SILVER", salida)
+    silver.main()
+    resumen = json.loads((salida / "_descubrimiento.json").read_text(encoding="utf-8"))
+    assert (resumen["descubiertas"], resumen["descargadas"]) == (1, 1)
+
+
+def test_un_solo_comando_reconstruye_el_corpus_en_orden():
+    makefile = (RAIZ / "Makefile").read_text(encoding="utf-8")
+    assert "\ncorpus: revisar-corpus descargar datos indice\n" in makefile
+    receta = makefile.split("\ndescargar:\n", 1)[1].split("\n\n", 1)[0]
+    assert "01_scrape_celsia.py --sections page,blog-celsia,noticias" in receta and "02_obtener_sedes.py" in receta
