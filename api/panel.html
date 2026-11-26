@@ -28,6 +28,7 @@
   th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--borde); vertical-align:top; }
   th { color:var(--suave); font-weight:500; font-size:13px; text-transform:uppercase; letter-spacing:.04em; }
   td.msg { max-width:46ch; }
+  td.ocultar { white-space:nowrap; }
   .etiqueta { display:inline-block; padding:2px 8px; border-radius:999px; font-size:13px; background:var(--panel); border:1px solid var(--borde); margin-right:4px; }
   .respondido { color:var(--ok); } .pendiente { color:var(--aviso); } .limite, .error, .nosop { color:var(--mal); }
   .vacio { color:var(--suave); padding:24px 0; }
@@ -35,11 +36,27 @@
   .resumen b { color:var(--texto); font-size:20px; margin-left:6px; }
   .alerta { color:var(--aviso); }
   .nota { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:12px; color:#06101f; background:var(--aviso); }
-  .qr { display:flex; align-items:center; gap:16px; background:var(--panel); border:1px solid var(--borde); border-left:4px solid #25d366; border-radius:12px; padding:12px 16px; margin:0 0 16px; }
-  .qr img { width:120px; height:120px; background:#fff; padding:6px; border-radius:8px; flex:none; }
-  .qr strong { display:block; font-size:16px; }
-  .qr p { margin:4px 0 0; color:var(--suave); font-size:14px; }
-  @media (max-width: 700px) { header, main { padding:12px; } .ocultar { display:none; } .qr { flex-direction:column; text-align:center; } .qr img { width:160px; height:160px; } }
+  .qr { display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--borde); border-left:4px solid #25d366; border-radius:12px; padding:8px 12px; margin:0 0 16px; }
+  .qr-abrir { background:#fff; padding:3px; line-height:0; flex:none; cursor:zoom-in; }
+  .qr-abrir img { width:56px; height:56px; }
+  .qr strong { display:block; font-size:15px; }
+  .qr p { margin:2px 0 0; color:var(--suave); font-size:13px; }
+  #qr-grande { border:0; border-radius:16px; padding:24px; background:#fff; color:#0b1020; text-align:center; cursor:zoom-out; }
+  #qr-grande::backdrop { background:rgba(0,0,0,.85); }
+  #qr-grande img { display:block; width:70vmin; height:70vmin; }
+  #qr-grande p { margin:12px 0 0; font-size:18px; font-weight:600; }
+  @media (max-width: 700px) {
+    header, main { padding:12px; }
+    .ocultar, thead { display:none; }
+    table, tbody { display:block; }
+    /* En el celular cada mensaje es una tarjeta: hora, canal y estado arriba; debajo el mensaje, las herramientas y el tiempo. */
+    tbody tr { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:10px 12px; margin:0 0 10px; }
+    td { border:0; padding:0; }
+    td:nth-child(4) { order:1; flex-basis:100%; max-width:none; overflow-wrap:anywhere; }
+    td:nth-child(5) { order:2; }
+    td:nth-child(6) { order:3; margin-left:auto; color:var(--suave); }
+    td:nth-child(8) { margin-left:auto; }
+  }
 </style>
 </head>
 <body>
@@ -52,19 +69,26 @@
   </div>
 </header>
 <main>
-  <section class="qr" aria-label="Escanea para hablar con el asistente por WhatsApp">
-    <img src="/qr-whatsapp.png" alt="Código QR para abrir el chat de WhatsApp del asistente">
-    <div>
-      <strong>Prueba el asistente desde tu celular</strong>
-      <p>Escanea el código con la cámara y escribe tu pregunta por WhatsApp.</p>
-    </div>
-  </section>
   <p id="aviso-decision" role="status"></p>
   <section id="pendientes" aria-label="Pendientes de aprobación"></section>
+  <section class="qr" aria-label="Escanea para hablar con el asistente por WhatsApp">
+    <button id="qr-abrir" class="qr-abrir" aria-label="Agrandar el código QR">
+      <img src="/qr-whatsapp.png" alt="Código QR para abrir el chat de WhatsApp del asistente">
+    </button>
+    <div>
+      <strong>Prueba el asistente desde tu celular</strong>
+      <p>Toca el código para agrandarlo.</p>
+    </div>
+  </section>
+  <dialog id="qr-grande" aria-label="Código QR en grande">
+    <img src="/qr-whatsapp.png" alt="Código QR para abrir el chat de WhatsApp del asistente">
+    <p>Escanea con la cámara y escribe tu pregunta por WhatsApp</p>
+  </dialog>
   <p class="resumen" id="resumen" aria-live="polite">
     <span>Respuestas<b id="n-resp">0</b></span>
     <span>Con nota de dato sin respaldo<b id="n-notas">0</b></span>
     <span>Costo total<b id="n-costo">US$ 0</b></span>
+    <span>Tiempo promedio<b id="n-tiempo">—</b></span>
   </p>
   <table>
     <thead><tr><th>Hora</th><th>Canal</th><th class="ocultar">Quién</th><th>Mensaje</th><th>Herramientas</th><th>Tiempo</th><th class="ocultar">Costo</th><th>Estado</th></tr></thead>
@@ -73,9 +97,11 @@
   <p id="vacio" class="vacio">Escribe el token y pulsa «Ver». Aquí aparece cada mensaje que llega al agente, con la herramienta que eligió y lo que tardó.</p>
 </main>
 <script>
-  let token = "", ultimo = 0, temporizador = null, nResp = 0, nNotas = 0, costoTotal = 0;
+  let token = "", ultimo = 0, temporizador = null, nResp = 0, nNotas = 0, costoTotal = 0, nTiempos = 0, sumaSegundos = 0;
   const dinero = v => "US$ " + (v < 0.01 ? v.toFixed(5) : v.toFixed(3));
-  function resumir() { document.getElementById("n-resp").textContent = nResp; document.getElementById("n-notas").textContent = nNotas; document.getElementById("n-costo").textContent = dinero(costoTotal); }
+  function resumir() { document.getElementById("n-resp").textContent = nResp; document.getElementById("n-notas").textContent = nNotas; document.getElementById("n-costo").textContent = dinero(costoTotal); document.getElementById("n-tiempo").textContent = nTiempos ? (sumaSegundos / nTiempos).toFixed(1) + " s" : "—"; }
+  const TITULO = document.title;
+  function avisarEnPestana(cuantos) { document.title = cuantos ? "(" + cuantos + ") Por aprobar" : TITULO; }  // se ve aunque se esté en otra pestaña
   const filas = document.getElementById("filas"), estado = document.getElementById("estado"), vacio = document.getElementById("vacio");
   const SIN_CLAVE = vacio.textContent, SIN_FILAS = "Todavía no ha llegado ningún mensaje. Aquí aparece cada uno, con la herramienta que eligió el agente y lo que tardó.";
   const clase = e => e.startsWith("pendiente") ? "pendiente" : e === "respondido" || e === "aprobación" ? "respondido" : e === "no soportado" ? "nosop" : e === "límite" ? "limite" : "error";
@@ -89,7 +115,7 @@
     (f.herramientas.length ? f.herramientas : ["ninguna"]).forEach(h => { const s = document.createElement("span"); s.className = "etiqueta"; s.textContent = h; herr.append(s); });
     tr.append(herr, celda(f.segundos == null ? "" : f.segundos + " s"), celda(f.costo == null ? "" : dinero(f.costo), "ocultar"), celda(f.estado, clase(f.estado)));
     filas.prepend(tr);
-    if (f.estado === "respondido" || f.estado.startsWith("pendiente")) { nResp++; if (f.nota) nNotas++; costoTotal += f.costo || 0; resumir(); }
+    if (f.estado === "respondido" || f.estado.startsWith("pendiente")) { nResp++; if (f.nota) nNotas++; costoTotal += f.costo || 0; if (f.segundos != null) { nTiempos++; sumaSegundos += f.segundos; } resumir(); }
   }
   const ACCIONES = { radicar_reclamo: "Radicar un reclamo", cancelar_reclamo: "Cancelar un reclamo", reportar_dano_electrico: "Reportar un daño eléctrico" };
   const caja = document.getElementById("pendientes"), avisoDecision = document.getElementById("aviso-decision");
@@ -112,6 +138,7 @@
       const r = await fetch("/api/pendientes", { headers: { "X-Aprobador": token } });
       if (!r.ok) return;
       const lista = (await r.json()).pendientes, ahora = lista.map(p => p.codigo).join();
+      avisarEnPestana(lista.length);
       if (ahora === codigos) return;
       codigos = ahora;
       caja.replaceChildren(...lista.map(p => {
@@ -141,9 +168,12 @@
       consultarPendientes();
     } catch { estado.textContent = "Sin conexión con la API"; }
   }
-  function parar() { clearInterval(temporizador); temporizador = null; }
+  function parar() { clearInterval(temporizador); temporizador = null; avisarEnPestana(0); }
+  const qrGrande = document.getElementById("qr-grande");
+  document.getElementById("qr-abrir").addEventListener("click", () => qrGrande.showModal());
+  qrGrande.addEventListener("click", () => qrGrande.close());  // también se cierra con la tecla Esc
   document.getElementById("entrar").addEventListener("click", () => {
-    token = document.getElementById("token").value; ultimo = 0; filas.innerHTML = ""; nResp = nNotas = costoTotal = 0; resumir(); parar();
+    token = document.getElementById("token").value; ultimo = 0; filas.innerHTML = ""; nResp = nNotas = costoTotal = nTiempos = sumaSegundos = 0; resumir(); parar();
     codigos = null; caja.replaceChildren(); avisoDecision.textContent = ""; vacio.textContent = SIN_CLAVE; vacio.style.display = "block";
     consultar(); temporizador = setInterval(consultar, 2000);
   });
