@@ -118,7 +118,7 @@ cd taaml-celsia-asistente
 make setup               # uv sync + .env
 # o paso a paso:
 # uv sync
-# cp .env.example .env   # completa DEEPSEEK_API_KEY (agente y tareas); GOOGLE_API_KEY es opcional (respaldo Gemini); sin ellas responde el modelo local
+# cp .env.example .env   # completa DEEPSEEK_API_KEY (agente y tareas); GOOGLE_API_KEY: búsqueda por significado y respaldo Gemini (sin ella se busca por palabras)
 make indice              # construye el índice de vectores con Gemini, unos 2 minutos y centavos de dólar (el repositorio no versiona el .npz ni Qdrant)
 ```
 
