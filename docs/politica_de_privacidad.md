@@ -1,6 +1,6 @@
 # Política de privacidad: Asistente Celsia (proyecto académico)
 
-Última actualización: 25 de noviembre de 2026.
+Última actualización: 26 de noviembre de 2026.
 
 ## Quién es responsable
 Este asistente es un **proyecto académico** de la Maestría en Inteligencia Artificial y Ciencia de Datos de la Universidad Autónoma de Occidente (UAO), asignatura «Técnicas avanzadas de IA», Grupo 4. **No es un servicio oficial de Celsia** ni lo opera Celsia. Responde con información pública del sitio celsia.com.
@@ -29,7 +29,7 @@ No se piden ni se deben escribir cédulas, claves, datos de tarjetas ni datos de
 - Cada servicio trata esos datos según sus propias condiciones. No se venden datos ni se usan para publicidad.
 
 ## Dónde y por cuánto tiempo
-Las conversaciones y los datos recordados se guardan en una base de datos en el equipo del proyecto, y el historial de WhatsApp también en los archivos de OpenClaw de ese equipo, mientras dure el proyecto y su evaluación. Las copias que reciban DeepSeek, Google o LangSmith se conservan según las condiciones de cada uno. El panel de la demostración guarda en memoria solo un resumen corto y se borra al reiniciar el servidor. Las conversaciones usadas en el análisis no se publican.
+Las conversaciones y los datos recordados se guardan en una base de datos en el equipo del proyecto, y el historial de WhatsApp también en los archivos de OpenClaw de ese equipo, mientras dure el proyecto y su evaluación. Las copias que reciban DeepSeek, Google o LangSmith se conservan según las condiciones de cada uno. El panel de la demostración, al que solo entra quien tiene la clave del equipo, guarda en memoria las últimas 200 interacciones: el comienzo de cada mensaje, la respuesta del asistente (que puede repetir datos que hayas escrito) y las fuentes que consultó; no guarda el número de teléfono desde el que escribes y se borra al reiniciar el servidor. Durante la sustentación ese panel puede mostrarse en pantalla. Las conversaciones usadas en el análisis no se publican.
 
 ## Tus derechos
 Puedes preguntarle al asistente qué recuerda de ti y pedirle que olvide un dato (por ejemplo, «olvida dónde vivo»): lo borra de lo que recuerda, pero no borra la conversación. Puedes pedir en cualquier momento **conocer, corregir o borrar** lo que se guardó de ti escribiendo al correo de contacto. Para borrar, indícanos desde qué número escribiste, y el equipo elimina tus conversaciones y los datos recordados que guarda en su equipo.

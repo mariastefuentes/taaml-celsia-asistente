@@ -1,6 +1,7 @@
 """Panel en vivo, aprobación con botones de WhatsApp y notas de voz (tentativo)."""
 
 import json
+from types import SimpleNamespace
 
 import pytest
 import requests
@@ -9,6 +10,7 @@ from fastapi.testclient import TestClient
 import api.main as api_main
 from api.main import RespuestaDelAgente, app
 from taaml import actividad, voz, whatsapp
+from taaml.agente import fuentes_del_turno
 
 cliente = TestClient(app)
 CLIENTE = "573001234567"
@@ -208,3 +210,87 @@ def test_la_actividad_guarda_si_hubo_nota_de_dato_sin_respaldo_y_el_costo():
     assert sin["nota"] is False and sin["costo"] is None  # sin datos, el panel no muestra nada
     con = actividad.registrar("whatsapp", CLIENTE, "dame un dato", "respondido", ["buscar_en_base"], 2.0, nota=True, costo=0.0012345678)
     assert con["nota"] is True and con["costo"] == 0.00123
+
+
+# --- respuesta y fuentes, herramientas usadas y semáforo ---
+def _fuente(n, **extra):
+    return {"documento": "Doc", "fragmento": f"{n} de 9", "fuente": "https://www.celsia.com/x", "chunk_id": f"d-{n}", **extra}
+
+
+def test_la_actividad_recorta_la_respuesta_y_guarda_pocas_fuentes_sin_repetir():
+    muchas = [_fuente(1, extracto="e" * 900), _fuente(1), *(_fuente(n) for n in range(2, 12))]
+    fila = actividad.registrar("chat", CLIENTE, "x", "respondido", respuesta="r" * 5000, fuentes=muchas)
+    assert len(fila["respuesta"]) == actividad.MAX_RESPUESTA and len(fila["fuentes"]) == actividad.MAX_FUENTES
+    assert [f["fragmento"] for f in fila["fuentes"][:2]] == ["1 de 9", "2 de 9"]
+    assert set(fila["fuentes"][0]) == {"documento", "fragmento", "fuente", "extracto"}
+    assert len(fila["fuentes"][0]["extracto"]) <= actividad.MAX_EXTRACTO
+
+
+def test_las_herramientas_usadas_se_cuentan_aunque_la_fila_ya_haya_salido(monkeypatch):
+    actividad.registrar("chat", CLIENTE, "x", "respondido", ["consultar_sedes"])
+    for _ in range(actividad.MAXIMO):
+        actividad.registrar("chat", CLIENTE, "y", "respondido", ["buscar_en_base"])
+    assert actividad.herramientas_usadas() == ["buscar_en_base", "consultar_sedes"]
+    monkeypatch.setenv("APROBADOR_TOKEN", "secreto-largo")
+    r = cliente.get("/api/actividad", headers={"X-Aprobador": "secreto-largo"}).json()
+    assert r["usadas"] == ["buscar_en_base", "consultar_sedes"] and r["total_herramientas"] == 20
+
+
+def test_el_panel_recibe_la_respuesta_y_las_fuentes_de_un_turno_por_telefono(monkeypatch):
+    monkeypatch.setattr(api_main, "conversar", lambda m, h, usuario: ("Puedes pagar en línea.", [{"herramienta": "buscar_en_base"}]))
+    monkeypatch.setattr(api_main, "pendiente_de_aprobacion", lambda hilo: None)
+    monkeypatch.setattr(api_main, "aviso_de_datos_dudosos", lambda hilo, texto: "")
+    monkeypatch.setattr(api_main, "costo_del_turno", lambda hilo: 0.001)
+    monkeypatch.setattr(api_main, "fuentes_del_turno", lambda hilo: [_fuente(3)])
+    cliente.post("/chat", json={"mensaje": "¿Cómo pago?", "telefono": CLIENTE})
+    fila = actividad.recientes()[-1]
+    assert fila["respuesta"] == "Puedes pagar en línea." and fila["fuentes"][0]["fragmento"] == "3 de 9"
+
+
+def test_el_panel_recibe_la_respuesta_y_las_fuentes_de_un_turno_del_chat_web(monkeypatch):
+    eventos = [
+        {"tipo": "herramienta", "herramienta": "buscar_en_base", "args": {}},
+        {"tipo": "fuentes", "fuentes": [_fuente(4)]},
+        {"tipo": "texto", "texto": "Puedes pagar "},
+        {"tipo": "texto", "texto": "en línea."},
+        {"tipo": "fin", "costo_usd": 0.002},
+    ]
+    monkeypatch.setattr(api_main, "conversar_en_vivo", lambda m, h, usuario: iter(eventos))
+    list(api_main._turno("¿Cómo pago?", "a" * 32, "b" * 32))
+    fila = actividad.recientes()[-1]
+    assert fila["respuesta"] == "Puedes pagar en línea." and fila["fuentes"][0]["fragmento"] == "4 de 9"
+
+
+def test_el_semaforo_pide_token_y_marca_lo_que_no_responde(monkeypatch):
+    monkeypatch.setenv("APROBADOR_TOKEN", "secreto-largo")
+    assert cliente.get("/api/semaforo").status_code == 401
+
+    def memoria_caida():
+        raise ConnectionError("sin base de datos")
+
+    monkeypatch.setattr(api_main, "almacen_vectorial", lambda: "qdrant")
+    monkeypatch.setattr(api_main, "almacen_compartido", memoria_caida)
+    monkeypatch.setattr(api_main, "_estado_openclaw", lambda: {"conectado": False, "detalle": ""})
+    r = cliente.get("/api/semaforo", headers={"X-Aprobador": "secreto-largo"}).json()
+    assert {luz["nombre"]: luz["encendida"] for luz in r["luces"]} == {
+        "Asistente": True,
+        "Búsqueda": True,
+        "Memoria": False,
+        "Puente de WhatsApp": False,
+    }
+
+
+def test_las_fuentes_del_turno_son_solo_las_del_ultimo_mensaje():
+    def m(tipo, **extra):
+        return SimpleNamespace(type=tipo, **extra)
+
+    mensajes = [
+        m("human"),
+        m("tool", name="buscar_en_base", artifact=[_fuente(1)]),
+        m("human"),
+        m("tool", name="consultar_sedes", artifact=None),
+        m("tool", name="buscar_en_base", artifact=[_fuente(2)]),
+    ]
+    agente = SimpleNamespace(get_state=lambda config: SimpleNamespace(values={"messages": mensajes}))
+    assert [f["fragmento"] for f in fuentes_del_turno("hilo", agente=agente)] == ["2 de 9"]
+    assert fuentes_del_turno("hilo", agente=object()) == []  # si no se puede leer, no rompe nada

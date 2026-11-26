@@ -13,6 +13,7 @@ Endpoints:
   DELETE /api/usuarios/{usuario}/datos  borra todo lo que el agente recuerda del cliente
   GET  /panel                        página del panel en vivo de la demostración (pide el token del aprobador en la pantalla)
   GET  /api/actividad                lo que hizo el agente en los últimos turnos (necesita X-Aprobador; lo lee el panel)
+  GET  /api/semaforo                 si la búsqueda, la memoria y el puente de WhatsApp contestan (X-Aprobador; lo lee el panel)
   GET  /qr-whatsapp.png             el QR de WhatsApp del bot que muestran el chat web y el panel (assets/whatsapp_qr.png)
   GET  /                             el chat web (frontend compilado en frontend/dist), si existe y SERVIR_FRONTEND no es 0: el público lo abre desde su celular
 Uso:  uv run uvicorn api.main:app --reload --port 8000
@@ -44,13 +45,16 @@ from starlette.exceptions import HTTPException as ErrorHTTP
 from pydantic import BaseModel, Field, model_validator
 
 from taaml.agente import (
+    HERRAMIENTAS,
     MODELO_AGENTE,
+    almacen_compartido,
     aviso_de_datos_dudosos,
     calentar,
     costo_del_turno,
     conversar,
     conversar_en_vivo,
     datos_del_cliente,
+    fuentes_del_turno,
     historial_visible,
     olvidar_cliente,
     pendiente_de_aprobacion,
@@ -129,6 +133,7 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
     yield _evento("hilo", {"hilo": hilo})
     inicio = time.monotonic()
     estado, herramientas, nota, costo = "respondido", [], False, None  # lo que queda en la fila del panel
+    trozos, fuentes = [], []
     try:
         if previo := aprobaciones.tomar_sin_entregar(hilo):  # lo que una persona decidió desde el último mensaje
             yield _evento("texto", {"texto": f"{previo}\n\n"})
@@ -136,6 +141,10 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
             if e["tipo"] == "pendiente":  # queda a la vista en el panel para que una persona decida
                 aprobaciones.registrar(hilo, usuario, e, "web")
                 estado = "pendiente de aprobación"
+            elif e["tipo"] == "texto":
+                trozos.append(e["texto"])
+            elif e["tipo"] == "fuentes":
+                fuentes += e["fuentes"]
             elif e["tipo"] == "herramienta":
                 herramientas.append(e["herramienta"])
             elif e["tipo"] == "aviso":
@@ -152,7 +161,10 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
                 "mensaje": "No pude responder en este momento. Intenta de nuevo; si sigue fallando, llama a la línea 01 8000 112 115."
             },
         )
-    actividad.registrar("web", hilo, mensaje, estado, herramientas, time.monotonic() - inicio, nota=nota, costo=costo)
+    actividad.registrar(
+        "web", hilo, mensaje, estado, herramientas, time.monotonic() - inicio, nota=nota, costo=costo,
+        respuesta="".join(trozos), fuentes=fuentes,
+    )
 
 
 @app.get("/api/salud")
@@ -323,7 +335,7 @@ def responder_a_telefono(telefono: str, mensaje: str, canal: str = "chat") -> Re
         if pide_la_fuente(mensaje) and not pendiente_de_aprobacion(hilo):  # la contesta el programa con lo guardado, sin llamar al modelo
             textos = {f["chunk_id"]: f["texto"] for f in cargar_fragmentos()}
             texto = texto_de_fuentes(historial_visible(hilo), textos)
-            actividad.registrar(canal, telefono, mensaje, "respondido", segundos=time.monotonic() - inicio, costo=0.0)
+            actividad.registrar(canal, telefono, mensaje, "respondido", segundos=time.monotonic() - inicio, costo=0.0, respuesta=texto)
             return RespuestaDelAgente(respuesta=texto, herramientas=[])
         texto, llamadas = conversar(mensaje, hilo, usuario=usuario)
     except Exception:  # el detalle va al registro; al cliente no se le filtra nada interno
@@ -342,7 +354,10 @@ def responder_a_telefono(telefono: str, mensaje: str, canal: str = "chat") -> Re
             texto = f"{previo}\n\n{texto}"
     herramientas = [ll["herramienta"] for ll in llamadas]
     estado = "pendiente de aprobación" if pendiente else "respondido"
-    actividad.registrar(canal, telefono, mensaje, estado, herramientas, time.monotonic() - inicio, nota=bool(nota), costo=costo_del_turno(hilo))
+    actividad.registrar(
+        canal, telefono, mensaje, estado, herramientas, time.monotonic() - inicio, nota=bool(nota), costo=costo_del_turno(hilo),
+        respuesta=texto, fuentes=fuentes_del_turno(hilo) if "buscar_en_base" in herramientas else [],
+    )
     return RespuestaDelAgente(respuesta=texto, herramientas=herramientas, pendiente=pendiente)
 
 
@@ -480,10 +495,41 @@ def qr_whatsapp() -> FileResponse:
 
 @app.get("/api/actividad")
 def lo_que_hizo_el_agente(desde: int = Query(default=0, ge=0), x_aprobador: str | None = Header(default=None)) -> dict:
-    """Los turnos recientes del agente (herramientas, tiempo, estado), de más vieja a más nueva. Muestra lo que escriben los clientes, por eso pide el token."""
+    """Los turnos recientes del agente (respuesta, fuentes, herramientas, tiempo, estado), de más viejo a más nuevo, y qué herramientas distintas
+    se han usado. Muestra lo que escriben los clientes, por eso pide el token."""
     _exigir_aprobador(x_aprobador)
     filas = actividad.recientes(desde)
-    return {"filas": filas, "ultimo": filas[-1]["n"] if filas else desde}
+    return {
+        "filas": filas,
+        "ultimo": filas[-1]["n"] if filas else desde,
+        "usadas": actividad.herramientas_usadas(),
+        "total_herramientas": len(HERRAMIENTAS),
+    }
+
+
+def _funciona(prueba) -> bool:
+    """Si una comprobación termina bien; cualquier fallo cuenta como apagado (el detalle va al registro)."""
+    try:
+        return bool(prueba())
+    except Exception:  # noqa: BLE001
+        log.warning("falló una comprobación del semáforo", exc_info=True)
+        return False
+
+
+@app.get("/api/semaforo")
+def semaforo(x_aprobador: str | None = Header(default=None)) -> dict:
+    """Las luces del panel: comprueba de verdad que la búsqueda y la memoria contestan y que el puente de WhatsApp de este equipo responde.
+
+    No llama al modelo. El puente encendido no garantiza que el celular siga vinculado.
+    """
+    _exigir_aprobador(x_aprobador)
+    luces = [
+        ("Asistente", True),
+        ("Búsqueda", _funciona(lambda: almacen_vectorial() != "ninguno")),
+        ("Memoria", _funciona(lambda: almacen_compartido().search(("semaforo",), limit=1) is not None)),
+        ("Puente de WhatsApp", _funciona(lambda: _estado_openclaw()["conectado"])),
+    ]
+    return {"luces": [{"nombre": nombre, "encendida": encendida} for nombre, encendida in luces]}
 
 
 @app.get("/api/hilos/{hilo}/estado")

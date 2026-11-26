@@ -19,7 +19,21 @@
   .pendiente-caja { background:var(--panel); border:1px solid var(--borde); border-left:4px solid var(--aviso); border-radius:12px; padding:12px 16px; margin:0 0 12px; }
   .pendiente-caja h2 { margin:0 0 4px; font-size:16px; }
   .pendiente-caja p { margin:2px 0; color:var(--suave); font-size:14px; overflow-wrap:anywhere; }
-  .pendiente-caja div { display:flex; gap:8px; margin-top:8px; }
+  .pendiente-caja div { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; }
+  .pendiente-caja p.espera { color:var(--aviso); }
+  #luces { display:flex; flex-wrap:wrap; gap:8px 16px; padding:8px 24px; border-bottom:1px solid var(--borde); font-size:14px; }
+  #luces:empty { display:none; }
+  .luz::before { content:""; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; background:var(--ok); }
+  .luz.apagada { color:var(--mal); }
+  .luz.apagada::before { background:var(--mal); }
+  td.msg details { margin-top:4px; }
+  td.msg summary { color:var(--acento); cursor:pointer; font-size:14px; }
+  td.msg details p { margin:6px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; font-size:14px; }
+  td.msg details a { color:var(--acento); }
+  td.msg details p span { display:block; color:var(--suave); font-size:13px; }
+  .usadas { margin:-4px 0 12px; color:var(--suave); font-size:14px; }
+  .usadas summary { cursor:pointer; }
+  .usadas p { margin:6px 0 0; overflow-wrap:anywhere; }
   button.rechazar { background:var(--mal); }
   button:disabled { opacity:.5; cursor:default; }
   #aviso-decision { color:var(--aviso); }
@@ -47,6 +61,7 @@
   #qr-grande p { margin:12px 0 0; font-size:18px; font-weight:600; }
   @media (max-width: 700px) {
     header, main { padding:12px; }
+    #luces { padding:8px 12px; }
     .ocultar, thead { display:none; }
     table, tbody { display:block; }
     /* En el celular cada mensaje es una tarjeta: hora, canal y estado arriba; debajo el mensaje, las herramientas y el tiempo. */
@@ -68,6 +83,7 @@
     <span id="estado" role="status"></span>
   </div>
 </header>
+<div id="luces" role="group" aria-label="Estado del sistema"></div>
 <main>
   <p id="aviso-decision" role="status"></p>
   <section id="pendientes" aria-label="Pendientes de aprobación"></section>
@@ -89,7 +105,12 @@
     <span>Con nota de dato sin respaldo<b id="n-notas">0</b></span>
     <span>Costo total<b id="n-costo">US$ 0</b></span>
     <span>Tiempo promedio<b id="n-tiempo">—</b></span>
+    <span>Herramientas usadas<b id="n-herr">—</b></span>
   </p>
+  <details class="usadas">
+    <summary>Ver cuáles herramientas se han usado</summary>
+    <p id="cuales">Todavía ninguna.</p>
+  </details>
   <table>
     <thead><tr><th>Hora</th><th>Canal</th><th class="ocultar">Quién</th><th>Mensaje</th><th>Herramientas</th><th>Tiempo</th><th class="ocultar">Costo</th><th>Estado</th></tr></thead>
     <tbody id="filas"></tbody>
@@ -106,10 +127,23 @@
   const SIN_CLAVE = vacio.textContent, SIN_FILAS = "Todavía no ha llegado ningún mensaje. Aquí aparece cada uno, con la herramienta que eligió el agente y lo que tardó.";
   const clase = e => e.startsWith("pendiente") ? "pendiente" : e === "respondido" || e === "aprobación" ? "respondido" : e === "no soportado" ? "nosop" : e === "límite" ? "limite" : "error";
   function celda(texto, extra) { const td = document.createElement("td"); td.textContent = texto; if (extra) td.className = extra; return td; }
+  function respuestaDe(f) {  // lo que contestó el asistente y los textos que consultó; todo entra como texto, nunca como HTML
+    const d = document.createElement("details"), fuentes = f.fuentes || [];
+    d.append(elemento("summary", "Ver respuesta" + (fuentes.length ? " (fuentes: " + fuentes.length + ")" : "")), elemento("p", f.respuesta));
+    fuentes.forEach(x => {
+      const p = document.createElement("p"), a = elemento("a", x.documento + " · fragmento " + x.fragmento);
+      if (x.fuente.startsWith("https://")) { a.href = x.fuente; a.target = "_blank"; a.rel = "noopener noreferrer"; }
+      p.append(a);
+      if (x.extracto) p.append(elemento("span", x.extracto));
+      d.append(p);
+    });
+    return d;
+  }
   function pintar(f) {
     const tr = document.createElement("tr");
     const msg = celda(f.mensaje, "msg");
     if (f.nota) { const n = document.createElement("span"); n.className = "nota"; n.textContent = "dato sin respaldo"; msg.append(n); }
+    if (f.respuesta) msg.append(respuestaDe(f));
     tr.append(celda(f.hora), celda(f.canal), celda(f.quien, "ocultar"), msg);
     const herr = document.createElement("td");
     (f.herramientas.length ? f.herramientas : ["ninguna"]).forEach(h => { const s = document.createElement("span"); s.className = "etiqueta"; s.textContent = h; herr.append(s); });
@@ -139,21 +173,50 @@
       if (!r.ok) return;
       const lista = (await r.json()).pendientes, ahora = lista.map(p => p.codigo).join();
       avisarEnPestana(lista.length);
-      if (ahora === codigos) return;
-      codigos = ahora;
-      caja.replaceChildren(...lista.map(p => {
-        const div = document.createElement("div"); div.className = "pendiente-caja";
-        const si = elemento("button", "Aprobar"), no = elemento("button", "Rechazar"), botones = document.createElement("div");
-        no.className = "rechazar";
-        si.addEventListener("click", () => decidir(p.codigo, "aprobar", [si, no]));
-        no.addEventListener("click", () => decidir(p.codigo, "rechazar", [si, no]));
-        botones.append(si, no);
-        div.append(elemento("h2", "Por aprobar: " + (ACCIONES[p.herramienta] || p.herramienta)), elemento("p", "Canal: " + p.canal + " · cliente " + p.quien));
-        Object.entries(p.args).forEach(([k, v]) => div.append(elemento("p", k + ": " + v)));
-        div.append(botones);
-        return div;
-      }));
+      if (ahora !== codigos) {
+        codigos = ahora;
+        caja.replaceChildren(...lista.map(p => {
+          const div = document.createElement("div"); div.className = "pendiente-caja";
+          const si = elemento("button", "Aprobar"), no = elemento("button", "Rechazar"), botones = document.createElement("div");
+          no.className = "rechazar";
+          si.addEventListener("click", () => decidir(p.codigo, "aprobar", [si, no]));
+          no.addEventListener("click", () => pedirConfirmacion(p.codigo, botones, [si, no]));
+          botones.append(si, no);
+          const desde = elemento("p", ""); desde.className = "espera"; desde.dataset.codigo = p.codigo;
+          div.append(elemento("h2", "Por aprobar: " + (ACCIONES[p.herramienta] || p.herramienta)), elemento("p", "Canal: " + p.canal + " · cliente " + p.quien), desde);
+          Object.entries(p.args).forEach(([k, v]) => div.append(elemento("p", k + ": " + v)));
+          div.append(botones);
+          return div;
+        }));
+      }
+      caja.querySelectorAll(".espera").forEach(e => { const p = lista.find(x => x.codigo === e.dataset.codigo); if (p) e.textContent = espera(p.hace_s); });
     } catch {}
+  }
+  function espera(segundos) {
+    const min = Math.floor(segundos / 60);
+    if (!min) return "Esperando hace menos de un minuto";
+    return "Esperando hace " + (min < 60 ? min + " min" : Math.floor(min / 60) + " h " + (min % 60) + " min");
+  }
+  function pedirConfirmacion(codigo, botones, originales) {  // rechazar pide un segundo toque; aprobar sigue siendo de uno
+    const si = elemento("button", "Sí, rechazar"), volver = elemento("button", "No, volver");
+    si.className = "rechazar";
+    si.addEventListener("click", () => decidir(codigo, "rechazar", [si, volver]));
+    volver.addEventListener("click", () => botones.replaceChildren(...originales));
+    botones.replaceChildren(elemento("span", "¿Seguro que quieres rechazarlo?"), si, volver);
+  }
+  const luces = document.getElementById("luces");
+  let temporizadorLuces = null, mirandoLuces = false;
+  function pintarLuces(lista) {
+    luces.replaceChildren(...lista.map(l => { const s = elemento("span", l.nombre + ": " + (l.encendida ? "bien" : "no responde")); s.className = "luz" + (l.encendida ? "" : " apagada"); return s; }));
+  }
+  async function consultarLuces() {
+    if (mirandoLuces) return;
+    mirandoLuces = true;
+    try {
+      const r = await fetch("/api/semaforo", { headers: { "X-Aprobador": token } });
+      if (r.ok && temporizador) pintarLuces((await r.json()).luces);
+    } catch { if (temporizador) pintarLuces([{ nombre: "Asistente", encendida: false }]); }
+    mirandoLuces = false;
   }
   async function consultar() {
     try {
@@ -162,20 +225,26 @@
       if (!r.ok) { estado.textContent = "Error " + r.status; return; }
       const d = await r.json();
       d.filas.forEach(pintar); ultimo = d.ultimo;
+      if (d.total_herramientas) {
+        document.getElementById("n-herr").textContent = d.usadas.length + " de " + d.total_herramientas;
+        document.getElementById("cuales").textContent = d.usadas.join(", ") || "Todavía ninguna.";
+      }
       vacio.textContent = SIN_FILAS;
       vacio.style.display = filas.children.length ? "none" : "block";
       estado.textContent = "En vivo";
       consultarPendientes();
-    } catch { estado.textContent = "Sin conexión con la API"; }
+    } catch { estado.textContent = "Sin conexión con la API"; pintarLuces([{ nombre: "Asistente", encendida: false }]); }
   }
-  function parar() { clearInterval(temporizador); temporizador = null; avisarEnPestana(0); }
+  function parar() { clearInterval(temporizador); clearInterval(temporizadorLuces); temporizador = null; avisarEnPestana(0); luces.replaceChildren(); }
   const qrGrande = document.getElementById("qr-grande");
   document.getElementById("qr-abrir").addEventListener("click", () => qrGrande.showModal());
   qrGrande.addEventListener("click", () => qrGrande.close());  // también se cierra con la tecla Esc
   document.getElementById("entrar").addEventListener("click", () => {
     token = document.getElementById("token").value; ultimo = 0; filas.innerHTML = ""; nResp = nNotas = costoTotal = nTiempos = sumaSegundos = 0; resumir(); parar();
     codigos = null; caja.replaceChildren(); avisoDecision.textContent = ""; vacio.textContent = SIN_CLAVE; vacio.style.display = "block";
-    consultar(); temporizador = setInterval(consultar, 2000);
+    document.getElementById("n-herr").textContent = "—"; document.getElementById("cuales").textContent = "Todavía ninguna.";
+    temporizador = setInterval(consultar, 2000); temporizadorLuces = setInterval(consultarLuces, 10000);
+    consultar(); consultarLuces();
   });
 </script>
 </body>
