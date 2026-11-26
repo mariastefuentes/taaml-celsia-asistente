@@ -14,7 +14,7 @@
       "label": "Cliente",
       "sublabel": "WhatsApp",
       "pos": [
-        40,
+        30,
         300
       ],
       "size": [
@@ -23,33 +23,34 @@
       ]
     },
     {
-      "id": "meta",
+      "id": "gateway",
       "type": "cloud",
-      "label": "Meta",
-      "sublabel": "API Cloud de WhatsApp",
+      "label": "Gateway OpenClaw",
+      "sublabel": "plugin y MCP «puente»",
       "pos": [
-        240,
-        300
-      ],
-      "size": [
-        140,
-        60
-      ]
-    },
-    {
-      "id": "api",
-      "type": "backend",
-      "label": "API FastAPI",
-      "sublabel": "webhook · /chat · /api/chat",
-      "pos": [
-        450,
+        210,
         300
       ],
       "size": [
         150,
         60
       ],
-      "tag": "firma + mensaje ya visto"
+      "tag": "fija el remitente"
+    },
+    {
+      "id": "api",
+      "type": "backend",
+      "label": "API FastAPI",
+      "sublabel": "/chat · /api/chat",
+      "pos": [
+        460,
+        300
+      ],
+      "size": [
+        150,
+        60
+      ],
+      "tag": "clave + límite"
     },
     {
       "id": "limite",
@@ -57,7 +58,7 @@
       "label": "Límite por teléfono",
       "sublabel": "8 mensajes por minuto",
       "pos": [
-        450,
+        460,
         460
       ],
       "size": [
@@ -69,9 +70,9 @@
       "id": "frontend",
       "type": "frontend",
       "label": "Frontend React",
-      "sublabel": "streaming SSE (Módulo 2)",
+      "sublabel": "chat con streaming",
       "pos": [
-        450,
+        460,
         140
       ],
       "size": [
@@ -83,24 +84,24 @@
       "id": "agente",
       "type": "backend",
       "label": "Agente",
-      "sublabel": "create_agent · prompt v12",
+      "sublabel": "create_agent · prompt v13",
       "pos": [
-        680,
+        690,
         300
       ],
       "size": [
         150,
         60
       ],
-      "tag": "pausa en reclamos"
+      "tag": "pausa para aprobar"
     },
     {
       "id": "modelo",
       "type": "cloud",
-      "label": "Modelo de lenguaje",
-      "sublabel": "DeepSeek, Gemini",
+      "label": "deepseek-flash",
+      "sublabel": "respaldo: Gemini y V4 Pro",
       "pos": [
-        680,
+        690,
         140
       ],
       "size": [
@@ -112,10 +113,24 @@
       "id": "persona",
       "type": "external",
       "label": "Persona de Celsia",
-      "sublabel": "aprueba o rechaza",
+      "sublabel": "aprueba en el panel",
       "pos": [
-        240,
+        230,
         140
+      ],
+      "size": [
+        160,
+        60
+      ]
+    },
+    {
+      "id": "herramientas",
+      "type": "backend",
+      "label": "20 herramientas",
+      "sublabel": "esquemas Pydantic estrictos",
+      "pos": [
+        950,
+        300
       ],
       "size": [
         150,
@@ -123,13 +138,13 @@
       ]
     },
     {
-      "id": "herramientas",
-      "type": "backend",
-      "label": "5 herramientas",
-      "sublabel": "esquemas Pydantic estrictos",
+      "id": "tablas",
+      "type": "database",
+      "label": "Tablas oficiales",
+      "sublabel": "sedes, contactos, catálogo",
       "pos": [
-        940,
-        300
+        950,
+        140
       ],
       "size": [
         150,
@@ -139,10 +154,10 @@
     {
       "id": "qdrant",
       "type": "database",
-      "label": "Qdrant + embeddings Gemini",
+      "label": "Qdrant + Gemini",
       "sublabel": "1.690 fragmentos",
       "pos": [
-        940,
+        950,
         460
       ],
       "size": [
@@ -155,9 +170,9 @@
       "id": "postgres",
       "type": "database",
       "label": "PostgreSQL",
-      "sublabel": "PostgresSaver · PostgresStore",
+      "sublabel": "conversación y memoria",
       "pos": [
-        680,
+        690,
         460
       ],
       "size": [
@@ -166,27 +181,26 @@
       ]
     },
     {
-      "id": "openclaw",
+      "id": "clientes",
       "type": "external",
-      "label": "OpenClaw",
-      "sublabel": "Taller 3 · sandbox Docker",
+      "label": "Clientes MCP",
+      "sublabel": "por ejemplo, OpenClaw",
       "pos": [
-        1180,
+        1190,
         140
       ],
       "size": [
         150,
         60
-      ],
-      "tag": "solo celsia__*"
+      ]
     },
     {
       "id": "mcp",
       "type": "backend",
-      "label": "Servidor MCP «celsia»",
-      "sublabel": "stdio · solo lectura",
+      "label": "MCP «celsia»",
+      "sublabel": "10 consultas de lectura",
       "pos": [
-        1180,
+        1190,
         300
       ],
       "size": [
@@ -197,25 +211,25 @@
   ],
   "connections": [
     {
-      "id": "cliente-meta",
+      "id": "cliente-gateway",
       "from": "cliente",
-      "to": "meta",
+      "to": "gateway",
       "label": "escribe",
       "variant": "emphasis",
       "labelDy": 19
     },
     {
-      "id": "meta-api",
-      "from": "meta",
+      "id": "gateway-api",
+      "from": "gateway",
       "to": "api",
-      "label": "webhook",
+      "label": "POST /chat",
       "variant": "emphasis",
       "labelDy": 19
     },
     {
-      "id": "api-meta",
+      "id": "api-gateway",
       "from": "api",
-      "to": "meta",
+      "to": "gateway",
       "label": "respuesta",
       "variant": "dashed",
       "labelDy": -19
@@ -257,7 +271,7 @@
       "id": "persona-api",
       "from": "persona",
       "to": "api",
-      "label": "/aprobar",
+      "label": "decide",
       "variant": "security",
       "fromSide": "right",
       "toSide": "top"
@@ -266,8 +280,16 @@
       "id": "agente-herramientas",
       "from": "agente",
       "to": "herramientas",
-      "label": "function calling",
+      "label": "llama",
       "labelDy": 19
+    },
+    {
+      "id": "herramientas-tablas",
+      "from": "herramientas",
+      "to": "tablas",
+      "label": "datos",
+      "fromSide": "top",
+      "toSide": "bottom"
     },
     {
       "id": "herramientas-qdrant",
@@ -281,17 +303,16 @@
       "id": "agente-postgres",
       "from": "agente",
       "to": "postgres",
-      "label": "guarda el turno",
+      "label": "guarda",
       "variant": "dashed",
       "fromSide": "bottom",
       "toSide": "top"
     },
     {
-      "id": "openclaw-mcp",
-      "from": "openclaw",
+      "id": "clientes-mcp",
+      "from": "clientes",
       "to": "mcp",
       "label": "MCP",
-      "variant": "emphasis",
       "fromSide": "bottom",
       "toSide": "top"
     },
@@ -299,7 +320,7 @@
       "id": "mcp-herramientas",
       "from": "mcp",
       "to": "herramientas",
-      "label": "mismas consultas",
+      "label": "consultas",
       "variant": "dashed",
       "labelDy": 19
     }
@@ -309,9 +330,9 @@
       "dot": "cyan",
       "title": "Entrada",
       "items": [
-        "Meta firma cada aviso (X-Hub-Signature-256)",
-        "Se responde 200 enseguida y el mensaje se atiende una sola vez",
-        "Pasado el límite no se llama al modelo"
+        "El plugin pone el número verificado del remitente: nadie puede pedir los datos de otro",
+        "La API pide su clave y pasado el límite no llama al modelo",
+        "El webhook de Meta sigue en el código y no se usa en la demo (D56)"
       ]
     },
     {
@@ -320,34 +341,32 @@
       "items": [
         "El modelo elige la herramienta por function calling",
         "Cada herramienta valida sus argumentos con Pydantic",
-        "Radicar un reclamo queda pausado hasta que una persona decide"
+        "Radicar, cancelar y reportar un daño esperan a una persona"
       ]
     },
     {
       "dot": "rose",
       "title": "Memoria y datos",
       "items": [
-        "Una conversación por teléfono (se guarda su hash, no el número)",
-        "PostgreSQL guarda la conversación y lo que el cliente cuenta de sí mismo",
-        "Qdrant responde las preguntas sobre el sitio de Celsia"
+        "Una conversación por teléfono (se usa su hash, no el número)",
+        "PostgreSQL guarda la conversación, lo que el cliente cuenta y sus reclamos (registros simulados)",
+        "Las consultas leen tablas oficiales y el texto del sitio de Celsia"
       ]
     },
     {
       "dot": "amber",
-      "title": "Segundo cliente (Taller 3)",
+      "title": "OpenClaw",
       "items": [
-        "OpenClaw usa las dos consultas por un servidor MCP de solo lectura",
         "Perfil messaging, sandbox Docker y sin comandos ni archivos",
         "Un chat separado por persona; permisos elevados apagados"
       ]
     },
     {
       "dot": "violet",
-      "title": "Panel y respaldo",
+      "title": "Panel",
       "items": [
-        "El panel en vivo (/panel) muestra la herramienta, el tiempo y el costo de cada respuesta",
-        "Si una cifra no aparece en lo que devolvieron las herramientas, la respuesta lo avisa",
-        "Chat web con QR cuando Meta limita a cinco celulares"
+        "/panel muestra cada respuesta con sus fuentes, herramientas, tiempo y costo, y permite aprobar",
+        "Si una cifra no aparece en lo que devolvieron las herramientas, la respuesta lo avisa"
       ]
     }
   ]

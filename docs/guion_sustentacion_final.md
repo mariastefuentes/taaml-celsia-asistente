@@ -35,7 +35,7 @@ Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra pers
 | 1:20 – 2:00 | **Qué es distinto.** 20 herramientas tipadas que el modelo elige solo, memoria que sobrevive al reinicio y una persona que aprueba los reclamos. | El diagrama de enrutamiento (los caminos de una pregunta) |
 | 2:00 – 4:30 | **Demo real.** «Escriba al bot, por favor»: el invitado pregunta una sede, algo de tarifas y qué sabe de él. | El teléfono del invitado y la terminal con la traza |
 | 4:30 – 5:30 | **Un reclamo con aprobación humana.** El invitado pide un reclamo, alguien del equipo lo aprueba en el panel y la respuesta le llega a su WhatsApp. | El teléfono del invitado y el panel |
-| 5:30 – 6:20 | **Lo que se midió.** Banco verificable 49 de 49, ataques 11 de 11 y matriz de enrutamiento 41 de 43, los tres con las 20 herramientas el 24/11 (D53). Si una cifra no se volvió a medir, se dice. | El panel en vivo, no una lámina |
+| 5:30 – 6:20 | **Lo que se midió.** Banco verificable 49 de 49 y matriz de enrutamiento 40 de 43, con las 20 herramientas el 26/11 (D67); ataques directos 11 de 11 el 24/11, sin repetir. Si una cifra no se volvió a medir, se dice. | El panel en vivo, no una lámina |
 | 6:20 – 7:00 | **Cierre.** Lo que falta (más tráfico real) y por qué el municipio del Valle y el Tolima puede usarlo mañana. | — |
 
 **Reglas del pitch:** no decir «nuestro chatbot»; decir qué problema resuelve. No prometer integración con sistemas de Celsia. No citar una cifra que no esté en el repositorio.
@@ -49,17 +49,17 @@ Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra pers
 | 8:30 – 9:15 | **Datos y RAG**: Bronze → Silver → Gold → curaduría → fragmentos; Qdrant con payload; mezcla significado + palabras; recuperación: 91 % en el Q&A (12 fragmentos) y 80 % en el agente (4 fragmentos), sobre 35 preguntas | María Stella |
 | 9:15 – 10:00 | **Memoria y evaluación**: `PostgresSaver` frente a `Store`; el hilo sobrevive al reinicio; t-SNE/UMAP de 114 conversaciones simuladas y sus límites | María Stella |
 | 10:00 – 10:45 | **OpenClaw**: `openclaw.json` versionado, `bind: loopback`, `tools.deny`, `fs.workspaceOnly`, sandbox Docker, allowlist E.164 y `security audit`; workspace con identidad y límites separados | Jensen |
-| 10:45 – 11:30 | **Seguridad**: inyección directa e indirecta (11/11 y 8/8 leídos a mano), límite por teléfono, clave en `/chat`, HITL, sin `.env` en el repo | Nicolás |
-| 11:30 – 12:00 | **Calidad**: `uv sync`, 482 pruebas, ruff, pre-commit, CI y `make verificar-clon`; lo que no está probado (muchas personas a la vez) | Nicolás |
+| 10:45 – 11:30 | **Seguridad**: inyección directa (11/11 el 24/11) e indirecta (8/8 en el Módulo 2, sin repetir), límite por teléfono, clave en `/chat`, HITL, sin `.env` en el repo | Nicolás |
+| 11:30 – 12:00 | **Calidad**: `uv sync`, 531 pruebas, ruff, pre-commit, CI y `make verificar-clon`; lo que no está probado (muchas personas a la vez) | Nicolás |
 
 Cada quien responde lo suyo. Si una pregunta cae en terreno ajeno, se contesta con lo que se sabe y se pasa la palabra; no se improvisa una cifra.
 
 ### 12:00 – 15:00 · Preguntas del público
 
-Tres respuestas preparadas, por si aparecen:
+Respuestas preparadas, por si aparecen:
 
 - **«¿De dónde sacó eso?»** En el mismo WhatsApp se escribe «fuente» y salen el documento, el fragmento y el enlace de la última respuesta (D61).
-- **«¿Y si el modelo alucina?»** Tres capas: solo fragmentos recuperados, nota «dato sin respaldo» cuando una cifra no está en la fuente y banco verificable de 49 casos: 49/49 el 24/11, con las 20 herramientas.
+- **«¿Y si el modelo alucina?»** Tres capas: solo fragmentos recuperados, nota «dato sin respaldo» cuando una cifra no está en la fuente y banco verificable de 49 casos: 49/49 el 26/11, con las 20 herramientas.
 - **«¿Por qué no un modelo local?»** Un modelo en un portátil no resiste a los invitados: el agente, los embeddings (Gemini) y los respaldos son APIs en la nube. No se usa ningún modelo local (D51).
 - **«¿Qué pasa si falla WhatsApp?»** El plan B: chat web con QR y la conversación grabada (`make demo-plan-b`), con el mismo agente.
 
@@ -71,8 +71,8 @@ Si se sustenta en inglés, el pitch y la discusión se hacen en inglés; las pre
 2. **What we built** — a WhatsApp assistant grounded on official content: it cites its source, remembers what the customer told it, refuses to invent, and routes each question to one of 20 typed tools.
 3. **Demo** — a guest types: a branch in Ibagué, a billing question, "what do you know about me?", then a complaint that a team member approves on the live panel.
 4. **Technical highlights** — an OpenClaw gateway with a versioned hardened config and Docker sandbox; a plugin that fixes the verified sender and bridges to the FastAPI agent; PostgreSQL checkpointer and Store; Qdrant with hybrid retrieval; LangGraph middleware for summarization, tool limits and human-in-the-loop; a read-only MCP server.
-5. **Evidence** — verified bank 49/49, prompt-injection 11/11 and routing matrix 41/43, all measured with the 20 tools on 24 November. We say which numbers were not re-measured.
-6. **Limits and next steps** — real Celsia systems are out of scope; next is re-running the routing matrix with the full tool set and measuring real traffic.
+5. **Evidence** — verified bank 49/49 and routing matrix 40/43, measured with the 20 tools on 26 November; direct prompt-injection 11/11 on 24 November. We say which numbers were not re-measured.
+6. **Limits and next steps** — real Celsia systems are out of scope; next is measuring real traffic.
 
 ## Si algo falla
 

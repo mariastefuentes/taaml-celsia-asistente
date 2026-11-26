@@ -1,33 +1,252 @@
 {
   "schema_version": 1,
   "diagram_type": "architecture",
-  "meta": { "title": "Enrutamiento: cómo elige el agente la herramienta", "output": "enrutamiento.html", "locale": "es", "quality_profile": "showcase" },
+  "meta": {
+    "title": "Enrutamiento: cómo elige el agente la herramienta",
+    "output": "enrutamiento.html",
+    "locale": "es",
+    "quality_profile": "showcase"
+  },
   "components": [
-    { "id": "pregunta", "type": "external", "label": "Pregunta", "sublabel": "texto + historial recortado", "pos": [40, 300], "size": [140, 60] },
-    { "id": "modelo", "type": "cloud", "label": "Modelo + prompt v12", "sublabel": "function calling", "pos": [260, 300], "size": [150, 60], "tag": "elige por esquema" },
-    { "id": "buscar", "type": "database", "label": "buscar_en_base", "sublabel": "trámites, tarifas, noticias", "pos": [520, 120], "size": [170, 60], "tag": "significado + palabras" },
-    { "id": "consultar", "type": "database", "label": "consultar_datos", "sublabel": "sedes, contactos, catálogo", "pos": [520, 230], "size": [170, 60] },
-    { "id": "guardar", "type": "backend", "label": "guardar_dato_del_cliente", "sublabel": "el cliente cuenta algo", "pos": [520, 340], "size": [170, 60] },
-    { "id": "recordar", "type": "backend", "label": "recordar_datos_del_cliente", "sublabel": "pregunta por sí mismo", "pos": [520, 450], "size": [170, 60] },
-    { "id": "radicar", "type": "security", "label": "radicar_reclamo", "sublabel": "datos completos del reclamo", "pos": [520, 560], "size": [170, 60] },
-    { "id": "aprobacion", "type": "external", "label": "Persona de Celsia", "sublabel": "aprobar, editar, rechazar, responder", "pos": [790, 560], "size": [170, 60] },
-    { "id": "respuesta", "type": "frontend", "label": "Respuesta", "sublabel": "texto plano, con fuente", "pos": [790, 285], "size": [170, 60] },
-    { "id": "sindato", "type": "backend", "label": "Sin dato", "sublabel": "dice que no sabe + línea 01 8000", "pos": [790, 120], "size": [170, 60] }
+    {
+      "id": "pregunta",
+      "type": "external",
+      "label": "Pregunta",
+      "sublabel": "texto + historial recortado",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        140,
+        60
+      ]
+    },
+    {
+      "id": "modelo",
+      "type": "cloud",
+      "label": "Modelo + prompt v13",
+      "sublabel": "function calling",
+      "pos": [
+        260,
+        300
+      ],
+      "size": [
+        160,
+        60
+      ],
+      "tag": "20 herramientas"
+    },
+    {
+      "id": "buscar",
+      "type": "database",
+      "label": "buscar_en_base",
+      "sublabel": "texto del sitio de Celsia",
+      "pos": [
+        530,
+        60
+      ],
+      "size": [
+        200,
+        60
+      ],
+      "tag": "significado + palabras"
+    },
+    {
+      "id": "consultas",
+      "type": "database",
+      "label": "9 consultas oficiales",
+      "sublabel": "sedes, contactos, trámites…",
+      "pos": [
+        530,
+        175
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "memoria",
+      "type": "backend",
+      "label": "4 de memoria",
+      "sublabel": "guardar, recordar, listar, olvidar",
+      "pos": [
+        530,
+        300
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "seguimiento",
+      "type": "backend",
+      "label": "3 de seguimiento",
+      "sublabel": "mis reclamos, estado, asesor",
+      "pos": [
+        530,
+        420
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "aprobables",
+      "type": "security",
+      "label": "3 con aprobación",
+      "sublabel": "radicar, cancelar, reportar daño",
+      "pos": [
+        530,
+        545
+      ],
+      "size": [
+        200,
+        60
+      ]
+    },
+    {
+      "id": "aprobacion",
+      "type": "external",
+      "label": "Persona de Celsia",
+      "sublabel": "decide en el panel",
+      "pos": [
+        840,
+        545
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "respuesta",
+      "type": "frontend",
+      "label": "Respuesta",
+      "sublabel": "texto claro para el cliente",
+      "pos": [
+        840,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "sindato",
+      "type": "backend",
+      "label": "Sin dato",
+      "sublabel": "dice que no sabe + línea 01 8000",
+      "pos": [
+        840,
+        60
+      ],
+      "size": [
+        190,
+        60
+      ]
+    }
   ],
   "connections": [
-    { "id": "pregunta-modelo", "from": "pregunta", "to": "modelo", "label": "turno", "variant": "emphasis" },
-    { "id": "modelo-buscar", "from": "modelo", "to": "buscar", "label": "texto del sitio", "fromSide": "top", "toSide": "left" },
-    { "id": "modelo-consultar", "from": "modelo", "to": "consultar", "label": "lugar o número", "fromSide": "top", "toSide": "left" },
-    { "id": "modelo-guardar", "from": "modelo", "to": "guardar", "label": "dato nuevo", "fromSide": "bottom", "toSide": "left" },
-    { "id": "modelo-recordar", "from": "modelo", "to": "recordar", "label": "pregunta por él", "fromSide": "bottom", "toSide": "left" },
-    { "id": "modelo-radicar", "from": "modelo", "to": "radicar", "label": "reclamo", "variant": "security", "fromSide": "bottom", "toSide": "left" },
-    { "id": "buscar-sindato", "from": "buscar", "to": "sindato", "label": "sin resultados", "variant": "dashed" },
-    { "id": "consultar-respuesta", "from": "consultar", "to": "respuesta", "label": "datos" },
-    { "id": "radicar-aprobacion", "from": "radicar", "to": "aprobacion", "label": "pausa", "variant": "security" },
-    { "id": "aprobacion-respuesta", "from": "aprobacion", "to": "respuesta", "label": "decisión", "variant": "security", "fromSide": "top", "toSide": "bottom" }
+    {
+      "id": "pregunta-modelo",
+      "from": "pregunta",
+      "to": "modelo",
+      "label": "turno",
+      "variant": "emphasis"
+    },
+    {
+      "id": "modelo-buscar",
+      "from": "modelo",
+      "to": "buscar",
+      "label": "cómo se hace",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "modelo-consultas",
+      "from": "modelo",
+      "to": "consultas",
+      "label": "lugar o número",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "modelo-memoria",
+      "from": "modelo",
+      "to": "memoria",
+      "label": "sobre sí mismo"
+    },
+    {
+      "id": "modelo-seguimiento",
+      "from": "modelo",
+      "to": "seguimiento",
+      "label": "su caso",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "modelo-aprobables",
+      "from": "modelo",
+      "to": "aprobables",
+      "label": "cambia algo",
+      "variant": "security",
+      "fromSide": "bottom",
+      "toSide": "left"
+    },
+    {
+      "id": "buscar-sindato",
+      "from": "buscar",
+      "to": "sindato",
+      "label": "sin resultados",
+      "variant": "dashed"
+    },
+    {
+      "id": "consultas-respuesta",
+      "from": "consultas",
+      "to": "respuesta",
+      "label": "datos"
+    },
+    {
+      "id": "aprobables-aprobacion",
+      "from": "aprobables",
+      "to": "aprobacion",
+      "label": "pausa",
+      "variant": "security"
+    },
+    {
+      "id": "aprobacion-respuesta",
+      "from": "aprobacion",
+      "to": "respuesta",
+      "label": "decisión",
+      "variant": "security",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Quién decide", "items": ["El modelo ve las 5 herramientas con su esquema Pydantic y responde con una llamada estructurada", "El prompt guía la elección; no hay enrutamiento por texto libre", "Un pedido mixto (trámite y lugar) usa dos herramientas en el mismo turno", "Medido con la matriz de 43 preguntas: 42 enrutan a la herramienta esperada (D36)"] },
-    { "dot": "emerald", "title": "Casos especiales", "items": ["Sin resultados en consultar_datos: prueba buscar_en_base antes de rendirse", "Una pregunta corta retoma el turno anterior", "Sin dato en ninguna herramienta: dice que no sabe y da la línea de atención; ante «quiero hablar con una persona» entrega los canales oficiales (D37)"] }
+    {
+      "dot": "cyan",
+      "title": "Quién decide",
+      "items": [
+        "El modelo ve las 20 herramientas con su esquema Pydantic y responde con una llamada estructurada",
+        "El prompt guía la elección; no hay enrutamiento por texto libre",
+        "Máximo 4 llamadas a herramientas por turno",
+        "Matriz de 43 preguntas (26/11): 40 usan la herramienta esperada y los parámetros salen 15 de 15"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Casos especiales",
+      "items": [
+        "Un pedido mixto (trámite y lugar) usa dos herramientas en el mismo turno",
+        "Un lugar sin sedes: dice que no tiene el dato y no añade horarios de otras partes (D66)",
+        "Sin dato en ninguna herramienta: dice que no sabe y da la línea de atención"
+      ]
+    }
   ]
 }

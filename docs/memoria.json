@@ -1,24 +1,159 @@
 {
   "schema_version": 1,
   "diagram_type": "architecture",
-  "meta": { "title": "Memoria: checkpointer frente a Store", "output": "memoria.html", "locale": "es", "quality_profile": "showcase" },
+  "meta": {
+    "title": "Memoria: checkpointer frente a Store",
+    "output": "memoria.html",
+    "locale": "es",
+    "quality_profile": "showcase"
+  },
   "components": [
-    { "id": "agente", "type": "backend", "label": "Agente", "sublabel": "un turno = un mensaje del cliente", "pos": [60, 300], "size": [170, 60] },
-    { "id": "checkpointer", "type": "database", "label": "Checkpointer", "sublabel": "PostgresSaver · llave thread_id", "pos": [400, 140], "size": [190, 60], "tag": "corto plazo" },
-    { "id": "vista", "type": "cloud", "label": "Lo que ve el modelo", "sublabel": "últimos 3.000 tokens", "pos": [740, 140], "size": [170, 60], "tag": "resume a los 8.000" },
-    { "id": "herramientas", "type": "backend", "label": "Herramientas de memoria", "sublabel": "guardar y recordar, máximo 20 datos", "pos": [400, 300], "size": [190, 60] },
-    { "id": "store", "type": "database", "label": "Store", "sublabel": "PostgresStore · (\"perfil\", cliente)", "pos": [400, 460], "size": [190, 60], "tag": "largo plazo" },
-    { "id": "panel", "type": "frontend", "label": "Panel «Lo que recuerdo»", "sublabel": "el cliente ve y borra", "pos": [740, 460], "size": [170, 60] }
+    {
+      "id": "agente",
+      "type": "backend",
+      "label": "Agente",
+      "sublabel": "un turno = un mensaje del cliente",
+      "pos": [
+        60,
+        300
+      ],
+      "size": [
+        170,
+        60
+      ]
+    },
+    {
+      "id": "checkpointer",
+      "type": "database",
+      "label": "Checkpointer",
+      "sublabel": "PostgresSaver · llave thread_id",
+      "pos": [
+        400,
+        140
+      ],
+      "size": [
+        190,
+        60
+      ],
+      "tag": "corto plazo"
+    },
+    {
+      "id": "vista",
+      "type": "cloud",
+      "label": "Lo que ve el modelo",
+      "sublabel": "últimos 3.000 tokens",
+      "pos": [
+        740,
+        140
+      ],
+      "size": [
+        170,
+        60
+      ],
+      "tag": "resume a los 8.000"
+    },
+    {
+      "id": "herramientas",
+      "type": "backend",
+      "label": "Memoria y reclamos",
+      "sublabel": "herramientas del agente",
+      "pos": [
+        400,
+        300
+      ],
+      "size": [
+        190,
+        60
+      ]
+    },
+    {
+      "id": "store",
+      "type": "database",
+      "label": "Store",
+      "sublabel": "perfil y reclamos por cliente",
+      "pos": [
+        400,
+        460
+      ],
+      "size": [
+        190,
+        60
+      ],
+      "tag": "largo plazo"
+    },
+    {
+      "id": "panel",
+      "type": "frontend",
+      "label": "Lo que recuerdo",
+      "sublabel": "chat web: ver y borrar",
+      "pos": [
+        740,
+        460
+      ],
+      "size": [
+        170,
+        60
+      ]
+    }
   ],
   "connections": [
-    { "id": "agente-checkpointer", "from": "agente", "to": "checkpointer", "label": "cada paso", "variant": "emphasis", "fromSide": "top", "toSide": "left" },
-    { "id": "checkpointer-vista", "from": "checkpointer", "to": "vista", "label": "recorta" },
-    { "id": "agente-herramientas", "from": "agente", "to": "herramientas", "label": "si cuenta algo", "variant": "dashed" },
-    { "id": "herramientas-store", "from": "herramientas", "to": "store", "label": "put · search", "fromSide": "bottom", "toSide": "top" },
-    { "id": "store-panel", "from": "store", "to": "panel", "label": "leer · borrar", "variant": "security" }
+    {
+      "id": "agente-checkpointer",
+      "from": "agente",
+      "to": "checkpointer",
+      "label": "cada paso",
+      "variant": "emphasis",
+      "fromSide": "top",
+      "toSide": "left"
+    },
+    {
+      "id": "checkpointer-vista",
+      "from": "checkpointer",
+      "to": "vista",
+      "label": "recorta"
+    },
+    {
+      "id": "agente-herramientas",
+      "from": "agente",
+      "to": "herramientas",
+      "label": "si hace falta",
+      "variant": "dashed"
+    },
+    {
+      "id": "herramientas-store",
+      "from": "herramientas",
+      "to": "store",
+      "label": "guarda · lee · borra",
+      "fromSide": "bottom",
+      "toSide": "top"
+    },
+    {
+      "id": "store-panel",
+      "from": "store",
+      "to": "panel",
+      "label": "leer · borrar",
+      "variant": "security"
+    }
   ],
   "cards": [
-    { "dot": "cyan", "title": "Checkpointer", "items": ["Guarda todos los mensajes del hilo, con las llamadas a herramientas", "Sirve para continuar, repetir y bifurcar la conversación", "Otro hilo empieza en blanco; sin DATABASE_URL usa SQLite"] },
-    { "dot": "rose", "title": "Store", "items": ["Datos cortos que el cliente cuenta de sí mismo", "Un espacio por cliente (hash del teléfono), nunca se mezcla", "Ejemplo: en otra conversación, «¿dónde trabajo?» se responde desde aquí"] }
+    {
+      "dot": "cyan",
+      "title": "Checkpointer",
+      "items": [
+        "Guarda todos los mensajes del hilo, con las llamadas a herramientas",
+        "Sirve para continuar, repetir y bifurcar la conversación",
+        "Otro hilo empieza en blanco; make api usa PostgreSQL y make api-sqlite usa SQLite"
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Store",
+      "items": [
+        "4 herramientas de memoria: guardar, recordar, listar y olvidar (máximo 20 datos)",
+        "También guarda los reclamos y las solicitudes de asesor",
+        "Un espacio por cliente (hash del teléfono), nunca se mezcla",
+        "Ejemplo: en otra conversación, «¿dónde trabajo?» se responde desde aquí"
+      ]
+    }
   ]
 }

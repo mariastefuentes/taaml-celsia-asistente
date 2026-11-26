@@ -7,7 +7,7 @@
     "locale": "es",
     "viewBox": [
       1080,
-      520
+      600
     ],
     "column_fit": "spread",
     "quality_profile": "showcase"
@@ -20,16 +20,16 @@
       "sublabel": "WhatsApp"
     },
     {
-      "id": "meta",
+      "id": "openclaw",
       "type": "cloud",
-      "label": "Meta",
-      "sublabel": "API Cloud"
+      "label": "OpenClaw",
+      "sublabel": "gateway y puente"
     },
     {
       "id": "api",
       "type": "backend",
       "label": "API FastAPI",
-      "sublabel": "webhook"
+      "sublabel": "POST /chat"
     },
     {
       "id": "agente",
@@ -41,13 +41,13 @@
       "id": "modelo",
       "type": "cloud",
       "label": "DeepSeek",
-      "sublabel": "V4.1 Flash"
+      "sublabel": "deepseek-flash"
     },
     {
       "id": "herramientas",
       "type": "backend",
       "label": "Herramientas",
-      "sublabel": "5 con Pydantic"
+      "sublabel": "20 con Pydantic"
     },
     {
       "id": "postgres",
@@ -60,17 +60,17 @@
     {
       "id": "m1",
       "from": "cliente",
-      "to": "meta",
+      "to": "openclaw",
       "y": 160,
       "label": "mensaje",
       "variant": "default"
     },
     {
       "id": "m2",
-      "from": "meta",
+      "from": "openclaw",
       "to": "api",
       "y": 188,
-      "label": "webhook (firma)",
+      "label": "número y texto",
       "variant": "emphasis"
     },
     {
@@ -94,7 +94,7 @@
       "from": "agente",
       "to": "modelo",
       "y": 272,
-      "label": "prompt v7",
+      "label": "prompt v13",
       "variant": "default"
     },
     {
@@ -115,18 +115,42 @@
     },
     {
       "id": "m8",
-      "from": "agente",
-      "to": "postgres",
+      "from": "herramientas",
+      "to": "agente",
       "y": 356,
-      "label": "guarda turno",
-      "variant": "dashed"
+      "label": "resultado",
+      "variant": "return"
     },
     {
       "id": "m9",
-      "from": "api",
-      "to": "meta",
+      "from": "modelo",
+      "to": "agente",
       "y": 384,
-      "label": "respuesta (Graph API)",
+      "label": "respuesta",
+      "variant": "return"
+    },
+    {
+      "id": "m10",
+      "from": "agente",
+      "to": "postgres",
+      "y": 412,
+      "label": "guarda turno",
+      "variant": "default"
+    },
+    {
+      "id": "m11",
+      "from": "api",
+      "to": "openclaw",
+      "y": 440,
+      "label": "respuesta",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m12",
+      "from": "openclaw",
+      "to": "cliente",
+      "y": 468,
+      "label": "sin cambios",
       "variant": "emphasis"
     }
   ],
@@ -135,8 +159,8 @@
       "dot": "cyan",
       "title": "Antes del agente",
       "items": [
-        "Meta firma el aviso (X-Hub-Signature-256) y la API responde 200 enseguida",
-        "Un mensaje ya visto se ignora y pasado el límite por teléfono no se llama al modelo"
+        "El plugin fija el teléfono con el remitente verificado: el modelo de OpenClaw no puede cambiarlo",
+        "La API pide su clave y limita a 8 mensajes por minuto por teléfono"
       ]
     },
     {
@@ -144,7 +168,7 @@
       "title": "Dentro del agente",
       "items": [
         "El modelo pide una herramienta por function calling; Pydantic valida los argumentos",
-        "Radicar un reclamo se pausa hasta que una persona decide con POST /aprobar"
+        "Radicar, cancelar o reportar un daño se pausa hasta que una persona decide (panel o POST /aprobar)"
       ]
     }
   ]

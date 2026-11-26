@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "a92c390c-27a1-4ef4-9b23-17a6bc87e0e4",
+  "receiptId": "25624953-905f-4d3c-811e-08d861e46276",
   "status": "current",
   "command": "deliver",
   "type": "lifecycle",
-  "input": "C:\\taaml\\docs\\grafo_agente.json",
-  "output": "C:\\taaml\\docs\\grafo_agente.html",
+  "input": "C:\\t107d\\docs\\grafo_agente.json",
+  "output": "C:\\t107d\\docs\\grafo_agente.html",
   "specification": {
-    "sha256": "bfcb208e2e27a3287c1d0ebd80e57dd0db3421eb33dfaf946e9730163a28c074",
-    "bytes": 3489
+    "sha256": "d06ba5576be0dc90e6c5f1d9f803d25d22ee3ecda28aa2316d3390d26f0c076c",
+    "bytes": 3363
   },
   "artifact": {
-    "sha256": "45e0d0ab610cf7a8b1a463f591d8003e47f09fc0e20651f3b06b11162f1e8b15",
-    "bytes": 843616
+    "sha256": "c3fa99506e77cd8b08c1027da1a30f6a8cd02f6e5530d9f849f15aa815941541",
+    "bytes": 823233
   }
 }

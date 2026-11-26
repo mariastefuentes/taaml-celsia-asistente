@@ -61,7 +61,7 @@ Qué guarda cada memoria y para qué. Interactivo en [docs/memoria.html](docs/me
 
 ![Traza real de LangSmith](docs/3%20-%20Informe/diagrama_traza_langsmith.svg)
 
-Traza real de una pregunta al agente actual (DeepSeek, prompt v7), generada con `scripts/33_diagrama_traza_langsmith.py`.
+Traza real de una pregunta a una versión anterior del agente (DeepSeek, prompt v7), generada con `scripts/33_diagrama_traza_langsmith.py`.
 
 [![Un mensaje de WhatsApp, paso a paso](docs/capturas/secuencia_whatsapp.png)](docs/secuencia_whatsapp.html)
 
