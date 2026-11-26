@@ -432,3 +432,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Reemplaza.** La cita abierta por defecto bajo cada respuesta en el chat web. WhatsApp no cambia.
 - **Límites.** El botón no es un control de acceso: la API sigue entregando los mismos datos al navegador. En la sustentación hay que encenderlo para que las fuentes se vean abiertas.
 - **Evidencia.** `frontend/src/App.jsx`, `frontend/src/App.css`, `docs/guion_sustentacion_final.md`.
+
+## D60. El panel pone primero lo que espera una decisión
+- **Contexto.** La caja de aprobación salía debajo del QR y nada avisaba a quien estuviera en otra pestaña, mientras el chat del cliente seguía bloqueado. En un celular la tabla no cabía y el mensaje quedaba una palabra por renglón. El tiempo solo se veía mensaje por mensaje.
+- **Decisión.** Los pendientes van arriba y el título de la pestaña dice «(N) Por aprobar»; el QR sale pequeño y al tocarlo se abre en grande; en pantallas de hasta 700 px cada mensaje es una tarjeta; el resumen suma el tiempo promedio de las respuestas que muestra el panel.
+- **Por qué.** En la sustentación quien aprueba no es quien presenta y no puede perderse un pendiente. Son cambios de la página: la API, el agente y lo que recibe el modelo no cambian.
+- **Límites.** El aviso es solo visual, en la pestaña: no suena. El promedio cuenta los turnos que el panel tiene en pantalla desde que se pulsó «Ver», con el registro que la API guarda en memoria. Para proyectar el QR hay que tocarlo.
+- **Evidencia.** `api/panel.html`, `docs/guion_sustentacion_final.md`.

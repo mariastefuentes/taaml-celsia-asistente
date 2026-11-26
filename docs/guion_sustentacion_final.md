@@ -19,7 +19,7 @@ Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra pers
 
 - Terminal 1: `make api` y comprobar `http://127.0.0.1:8000/api/salud` (`almacen: qdrant`, `memoria: postgresql`, `allowlist_whatsapp: abierta`, `avisos_openclaw: true`).
 - Terminal 2: `openclaw gateway` y, en otra, `openclaw channels status --probe`.
-- Quien aprueba abre `http://127.0.0.1:8000/panel`, escribe su clave y pulsa «Ver».
+- Quien aprueba abre `http://127.0.0.1:8000/panel`, escribe su clave y pulsa «Ver». Cuando hay algo por decidir, la pestaña dice «(1) Por aprobar». Si el QR se proyecta desde el panel, tocarlo para agrandarlo.
 - Si se va a mostrar el chat web, pulsar abajo «Ver detalles técnicos»: las fuentes (documento y fragmento), las herramientas usadas y el costo quedan a la vista.
 - Dos preguntas de calentamiento, de las que no se van a mostrar.
 - QR del bot proyectado: los invitados no necesitan registrarse.
