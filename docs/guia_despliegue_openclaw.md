@@ -118,7 +118,7 @@ El agente de OpenClaw solo ve las diez herramientas de solo lectura del MCP `cel
 cliente → WhatsApp (QR) → OpenClaw → atender_cliente_celsia → POST /chat → agente de Celsia (20 herramientas) → respuesta
 ```
 
-- **Quién escribe lo fija OpenClaw, no el modelo.** OpenClaw no manda el remitente a los MCP por stdio (se comprobó con un servidor espejo), así que el plugin `openclaw/plugins/puente-celsia.js` usa el gancho `before_tool_call` y reemplaza `telefono` con `ctx.requester.senderId`, el remitente verificado del canal. Sin remitente, bloquea la llamada. El puente además exige que el número esté en `WHATSAPP_ALLOWLIST`.
+- **Quién escribe lo fija OpenClaw, no el modelo.** OpenClaw no manda el remitente a los MCP por stdio (se comprobó con un servidor espejo), así que el plugin `openclaw/plugins/puente-celsia.js` usa el gancho `before_tool_call` y reemplaza `telefono` con el número que OpenClaw tiene para el chat. Como a las herramientas MCP no les entrega el remitente (`ctx.requester`, comprobado en 2026.11.6), lo toma del nombre del chat directo (`agent:main:whatsapp:direct:+57…`), por eso `session.dmScope` debe seguir en `per-channel-peer`. En cualquier otra sesión (terminal, grupos, identificadores sin número) bloquea la llamada. El puente además exige que el número esté en `WHATSAPP_ALLOWLIST`.
 - **Requisitos:** la API encendida (`make api`), `CHAT_TOKEN` igual en `.env` y en el entorno de OpenClaw, y el plugin del canal instalado (`openclaw plugins install npm:@openclaw/whatsapp`).
 - **Instrucciones al modelo:** `workspace/AGENTS.md` (sección «Canal de WhatsApp») manda llamar la herramienta en cada mensaje y devolver su texto sin cambios; `tools.toolSearch: false` deja el esquema a la vista.
 - **Si falla el puente**, responde la frase de contingencia con la línea 01 8000 112 115 y la demo sigue por el chat web.
@@ -207,6 +207,6 @@ Y desde el teléfono de un invitado real: escanear el QR, pedir una sede, pedir 
 - Con `WHATSAPP_ALLOWLIST=*` el canal es público: cualquiera que tenga el QR puede escribir y consumir cuota del modelo; solo lo frena el límite por teléfono (8 mensajes por minuto). Es una decisión de demo, no de producción.
 - El número del bot es una cuenta de WhatsApp normal: si WhatsApp la bloquea por automatización, el QR deja de funcionar. Número dedicado y respaldo con el chat web o el plan B grabado.
 - El servidor MCP `celsia` es de solo lectura; los reclamos y la memoria del cliente los atiende el agente de Celsia, al que OpenClaw llega por el puente `puente` (más una llamada al modelo: la respuesta tarda más que con un solo modelo).
-- El puente se probó de punta a punta con la CLI de OpenClaw y un remitente de prueba (memoria por cliente incluida); falta el ensayo con el chip real (el plugin lee `ctx.requester.senderId`, que solo existe en mensajes que llegan por un canal).
+- El puente se probó con OpenClaw 2026.11.6, su sandbox, un modelo falso y un canal de Telegram simulado (D52). **Falta el ensayo con WhatsApp y el chip real:** enviar un mensaje desde otro teléfono y comprobar que la terminal de la API muestra `POST /chat` con `200 OK`.
 - El aviso de la aprobación (`openclaw message send`) no se ha probado con el canal real vinculado.
 - `openclaw security audit` no se automatiza; su salida se pega a mano con fecha.

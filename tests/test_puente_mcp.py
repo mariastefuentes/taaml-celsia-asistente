@@ -106,7 +106,10 @@ def test_el_servidor_expone_una_sola_herramienta():
 
 @pytest.mark.skipif(shutil.which("node") is None, reason="necesita Node (viene con OpenClaw)")
 def test_el_plugin_reemplaza_el_telefono_por_el_remitente_verificado(tmp_path):
-    """Ejecuta el gancho real con un `definePluginEntry` de mentira: el teléfono que escribe el modelo se descarta."""
+    """Ejecuta el gancho real con un `definePluginEntry` de mentira: el teléfono que escribe el modelo se descarta.
+
+    En las herramientas MCP, OpenClaw 2026.11.6 no entrega `requester`: ahí el número sale del nombre del chat directo (D52).
+    """
     sdk = tmp_path / "node_modules" / "openclaw" / "plugin-sdk"
     sdk.mkdir(parents=True)
     (tmp_path / "node_modules" / "openclaw" / "package.json").write_text(
@@ -128,6 +131,20 @@ def test_el_plugin_reemplaza_el_telefono_por_el_remitente_verificado(tmp_path):
               otra_herramienta: fijarRemitente({ toolName: "celsia__consultar_sedes_celsia", params: {} }, {}) ?? null,
               basura: remitenteE164({ senderId: "abc" }),
             };
+            const conSesion = (sessionKey, resto = {}) => fijarRemitente(
+              { toolName: "puente__atender_cliente_celsia", params: { mensaje: "hola", telefono: "+573009998877" } },
+              { sessionKey, ...resto });
+            salida.por_sesion = conSesion("agent:main:whatsapp:direct:+573001112233");
+            salida.requester_invalido = conSesion("agent:main:whatsapp:direct:+573001112233", { requester: { senderId: "abc" } });
+            salida.sesiones_sin_cliente = [
+              "agent:main:main",
+              "agent:main:whatsapp:group:120363000000000000@g.us",
+              "agent:main:whatsapp:direct:123456789012345@lid",
+              "agent:main:whatsapp:direct:573001112233",
+              "agent:main:telegram:direct:573001112233",
+              "agent:main:subagent:agent:main:whatsapp:direct:+573001112233",
+              "agent:main:whatsapp:direct:+573001112233:otro",
+            ].map((clave) => conSesion(clave));
             console.log(JSON.stringify(salida));
             """
         )
@@ -142,6 +159,9 @@ def test_el_plugin_reemplaza_el_telefono_por_el_remitente_verificado(tmp_path):
     assert salida["sin_remitente"]["block"] is True
     assert salida["otra_herramienta"] is None
     assert salida["basura"] == ""
+    assert salida["por_sesion"] == {"params": {"mensaje": "hola", "telefono": "+573001112233"}}  # sin requester: el chat directo de WhatsApp
+    assert salida["requester_invalido"]["block"] is True  # si OpenClaw entrega un remitente, no se busca otro
+    assert [r.get("block") for r in salida["sesiones_sin_cliente"]] == [True] * 7  # terminal, grupo, sin número, otro canal o subagente
 
 
 def test_telefono_vacio_o_sin_formato_no_llega_al_agente(monkeypatch):

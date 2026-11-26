@@ -5,7 +5,7 @@ cliente, los reclamos ni la aprobación humana, que viven en el agente propio (`
 expone **una sola herramienta**, `atender_cliente_celsia`, que le pasa el mensaje a ese agente por `POST /chat` y devuelve su respuesta tal cual.
 
 Quién escribe lo decide OpenClaw, no el modelo: el plugin `openclaw/plugins/puente-celsia.js` reescribe el argumento `telefono` con el
-remitente que OpenClaw verificó en el canal, así que un cliente no puede hacerse pasar por otro pidiéndolo en el chat. Aquí además se
+número que OpenClaw tiene para el chat, así que un cliente no puede hacerse pasar por otro pidiéndolo en el chat. Aquí además se
 exige que el número esté en `WHATSAPP_ALLOWLIST` y que cumpla el formato E.164.
 
 Transporte stdio (OpenClaw lo lanza como proceso hijo). Variables: `CELSIA_API_URL` (por defecto http://127.0.0.1:8000) y `CHAT_TOKEN`.
