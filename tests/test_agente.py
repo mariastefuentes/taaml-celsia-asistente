@@ -687,10 +687,11 @@ def test_al_olvidar_un_dato_compuesto_el_agente_sabe_que_debe_guardar_el_resto()
     assert "guardar_dato_del_cliente" not in simple  # no invita a volver a guardar lo que se pidió borrar
 
 
-def test_la_herramienta_de_guardar_pide_un_solo_dato_por_llamada():
+def test_la_descripcion_de_guardar_no_pide_partir_los_datos():
     from taaml.agente import guardar_dato_del_cliente
 
-    assert "un solo dato" in guardar_dato_del_cliente.description
+    # Con esa instrucción el modelo real guardó en 1 de 10 conversaciones; sin ella, en 8 de 10 (D63).
+    assert "un solo dato" not in guardar_dato_del_cliente.description
 
 
 def test_el_store_en_sqlite_conserva_los_datos_al_reabrir(tmp_path):

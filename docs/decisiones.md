@@ -453,3 +453,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Por qué.** El resumen es la memoria de lo que ya no cabe, y borrar tiene que alcanzar todo lo que se guarda del cliente sin llevarse lo que no pidió.
 - **Límites.** Con el resumen presente, lo que recibe el modelo puede pasar los 3.000 tokens, y cada resumen puede usar más tokens que antes. Que el agente vuelva a guardar el dato no borrado depende del modelo: no se probó con el modelo real. Cambiaron las descripciones de dos herramientas, así que el banco y la matriz hay que repetirlos. El prompt v13 no cambia.
 - **Evidencia.** `src/taaml/agente.py`, `tests/test_agente.py`.
+
+## D63. La descripción de guardar vuelve a ser la anterior
+- **Contexto.** La matriz de enrutamiento repetida tras D62 falló la fila de memoria entre conversaciones. Se comparó con el modelo real (26/11, el mismo mensaje «Me llamo Ana y trabajo en Carvajal», 10 veces por versión, memoria temporal): antes de D62 el agente guardó en 8 de 10; con la frase «un solo dato por llamada» en la descripción de la herramienta, en 1 de 10.
+- **Decisión.** Se quita esa frase de `guardar_dato_del_cliente`. El resto de D62 se mantiene: ante una entrada que junta varios datos, `olvidar_dato_del_cliente` pide volver a guardar lo que no se pidió borrar.
+- **Por qué.** Sin la frase guardó en 9 de 10, y al pedir olvidar la ciudad conservó el nombre en 5 de 5 casos con el dato guardado junto y en 3 de 3 conversaciones nuevas.
+- **Límites.** Guardar lo que el cliente cuenta sin pedirlo sigue dependiendo del modelo (falla algunas veces, antes y ahora). Son pocas repeticiones de un solo mensaje.
+- **Evidencia.** `src/taaml/agente.py`, `tests/test_agente.py`.

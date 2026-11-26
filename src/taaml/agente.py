@@ -508,7 +508,6 @@ class Reclamo(EsquemaConRuntime):
 @tool(args_schema=DatoDelCliente)
 def guardar_dato_del_cliente(dato: str, runtime: ToolRuntime[Contexto]) -> str:
     """Guarda un dato que el cliente contó de sí mismo (nombre, ciudad, empresa, preferencia) para recordarlo en conversaciones futuras.
-    Guarda un solo dato por llamada: si contó varios (por ejemplo nombre y ciudad), llámala una vez por cada uno.
     Úsala solo cuando el cliente comparta ese dato o pida que lo recuerdes; nunca guardes cédulas, claves, tarjetas ni cuentas."""
     if runtime.context.usuario == ANONIMO:
         return "No se guardó: este cliente es anónimo y no hay memoria de largo plazo para él."
