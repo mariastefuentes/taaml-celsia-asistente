@@ -4,7 +4,7 @@
 
 **Grupo 4:** María Stella Fuentes Díaz, Juan José Mosquera Esquivel, Nicolás Bolaños Esterling y Jensen Fabián Tamayo Merchán
 
-**Estado descrito:** 24 de noviembre de 2026 · **Sustentación:** 28 de noviembre de 2026
+**Estado descrito:** 24 de noviembre de 2026, con mediciones del 26 · **Sustentación:** 28 de noviembre de 2026
 
 **Código:** https://github.com/mariastefuentes/taaml-celsia-asistente (las decisiones están en `docs/decisiones.md`)
 
@@ -12,7 +12,7 @@
 
 Celsia publica su información en más de mil páginas y un cliente no tiene dónde preguntar y recibir la respuesta con su fuente. El proyecto construyó un asistente que responde con el contenido oficial de celsia.com y dice «no tengo esa información» cuando la fuente no lo trae. Tiene un agente de LangChain con **20 herramientas** de esquema Pydantic estricto, memoria por capas en PostgreSQL, aprobación humana para lo que cambia algo fuera de la conversación, una API en FastAPI, un **gateway de OpenClaw** versionado en el repositorio con un puente hacia ese agente. Un webhook propio para la API de Meta quedó en el código, pero no se usa en la demostración. Los modelos se consultan por API en la nube: no se usa ningún modelo local.
 
-Medido el 24 de noviembre con el modelo real: banco verificable **49 de 49**, ataques directos **11 de 11** resistidos, matriz de enrutamiento **41 de 43** y recuperación del dato en **32 de 35** preguntas (91 %) con 12 fragmentos. Hay 482 pruebas automáticas que corren sin modelos ni red.
+Medido con el modelo real: el 26 de noviembre, banco verificable **49 de 49** y matriz de enrutamiento **40 de 43**; el 24, ataques directos **11 de 11** resistidos y recuperación del dato en **32 de 35** preguntas (91 %) con 12 fragmentos. Hay 531 pruebas automáticas que corren sin modelos ni red.
 
 Lo que **falta** se declara en la sección 11. Lo principal: el canal de WhatsApp de OpenClaw no se ha vinculado todavía con un número real.
 
@@ -124,15 +124,15 @@ La entrada se valida con Pydantic (teléfono de 7 a 15 dígitos, mensaje de 1 a 
 
 ## 8. Evaluación
 
-| Medición (24/11/2026 salvo que se indique) | Resultado |
+| Medición (26/11/2026 salvo que se indique) | Resultado |
 |---|---|
-| Banco verificable: 49 preguntas con la respuesta calculada desde los datos | **49 de 49** (otra corrida del mismo día: 48 de 49, por una ruta distinta) |
-| Matriz de enrutamiento: 43 preguntas (D53) | Ruta **41 de 43**, parámetros 14 de 15, texto 9 de 10 |
-| Ataques directos (11 intentos de saltarse las reglas) | **11 de 11** resistidos |
-| Preguntas hostiles (22) | Sin fallas automáticas; 2 se leyeron a mano |
-| Latencia por turno, sin canal | Mediana 3,9 s y máximo 11,2 s (la primera pregunta en frío, 25 s); en la matriz, mediana 4,8 s y máximo 22,8 s |
+| Banco verificable: 49 preguntas con la respuesta calculada desde los datos | **49 de 49**, con conversación 8/8 y aislamiento 1/1 (antes del ajuste de D66, el mismo día: 48 de 49) |
+| Matriz de enrutamiento: 43 preguntas (D53) | Ruta **40 de 43**, parámetros 15 de 15, texto 9 de 10 (el 24/11: 41, 14 y 9) |
+| Ataques directos (11 intentos de saltarse las reglas) | **11 de 11** resistidos (24/11) |
+| Preguntas hostiles (22) | Sin fallas automáticas; 2 se leyeron a mano (24/11) |
+| Latencia por turno, sin canal | En el banco, mediana 3,0 s; la primera pregunta, en frío, 22,0 s y las demás hasta 15,4 s. En la matriz, mediana 2,8 s y máximo 15,9 s |
 | Inyección indirecta (8 casos, Módulo 2, otro modelo y prompt) | 8 de 8 sin obedecer; **no se repitió** |
-| Pruebas automáticas | 482, sin modelos ni red |
+| Pruebas automáticas | 531, sin modelos ni red |
 
 **Recuperación** (35 preguntas con respuesta):
 
@@ -146,7 +146,7 @@ Con lo que ve el agente (mezcla, 4 fragmentos) el dato aparece en **28 de 35** (
 
 **Lo que estas cifras no dicen.**
 - Las 35 preguntas son las mismas con las que se ajustó el diccionario de sinónimos: con preguntas nuevas el acierto sería menor. Diferencias de una o dos preguntas no demuestran que un método sea mejor.
-- Las expectativas de la matriz se redactaron **después** de ver una corrida con las 20 herramientas: no es una evaluación a ciegas. Fallan R08 (pide una aclaración en vez de consultar el horario) y R16 (da canales y enlace pero no busca los pasos).
+- Las expectativas de la matriz se redactaron **después** de ver una corrida con las 20 herramientas: no es una evaluación a ciegas. Fallan R08 (pide una aclaración en vez de consultar el horario), R16 (da canales y enlace pero no busca los pasos) y R17 (da la atención presencial de Planadas pero no busca los trámites en el texto).
 - Cada medición con modelo es una corrida; el enrutamiento varía entre corridas.
 - Un banco al 100 % no garantiza que no haya alucinaciones en preguntas nuevas.
 
@@ -179,13 +179,12 @@ Con lo que ve el agente (mezcla, 4 fragmentos) el dato aparece en **28 de 35** (
 
 ## 11. Pendientes y limitaciones
 
-| Pendiente al 24/11 | Efecto |
+| Pendiente al 26/11 | Efecto |
 |---|---|
 | Guardar la prueba del puente desde un teléfono externo y probar en el equipo del bot el aviso de aprobación | Es el criterio del canal |
 | Configurar un modelo de respaldo en OpenClaw | Si falla DeepSeek, el gateway no tiene alternativa |
 | Correr `openclaw security audit` sobre la configuración final | Evidencia de endurecimiento |
 | Repetir el análisis t-SNE con Gemini | Las cifras de la sección 10 son anteriores |
-| Rehacer los diagramas interactivos de `docs/*.html` | Algunos aún muestran herramientas y modelos anteriores |
 
 **Limitaciones.**
 - El sistema corre en un computador local: si se apaga o cambia de red, deja de responder.
@@ -222,7 +221,7 @@ uv run python scripts/10_evaluar_recuperacion.py --k 12
 | Criterio (peso) | Dónde está la evidencia | Estado |
 |---|---|---|
 | 1.1 Veinte herramientas tipadas (10 %) | Sección 3; `src/taaml/agente.py` | Hecho |
-| 1.2 Enrutamiento y planificación (8 %) | Secciones 3 y 8 | Medido: 41/43 |
+| 1.2 Enrutamiento y planificación (8 %) | Secciones 3 y 8 | Medido: 40/43 |
 | 1.3 Memoria por capas (7 %) | Sección 4 | Hecho; ensayar el reinicio en vivo |
 | 2.1 Pipeline de datos (5 %) | Sección 5; `scripts/01` a `07` | Hecho |
 | 2.2 RAG sobre Qdrant con citas (6 %) | Secciones 5 y 8 | Hecho |

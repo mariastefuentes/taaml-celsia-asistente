@@ -27,8 +27,8 @@
       "id": "modelo",
       "type": "active",
       "label": "Modelo",
-      "sublabel": "prompt v7",
-      "tag": "DeepSeek",
+      "sublabel": "prompt v13",
+      "tag": "deepseek-flash",
       "step": "02"
     },
     {
@@ -52,14 +52,14 @@
       "type": "success",
       "label": "Respuesta",
       "sublabel": "__end__",
-      "tag": "sale por WhatsApp",
+      "tag": "sale por el canal",
       "step": "05"
     },
     {
       "id": "herramientas",
       "type": "active",
       "label": "Herramientas",
-      "sublabel": "5 con esquema Pydantic",
+      "sublabel": "20 con esquema Pydantic",
       "tag": "function calling"
     },
     {
@@ -93,7 +93,7 @@
       "id": "validar-aprobacion",
       "from": "validar",
       "to": "aprobacion",
-      "label": "reclamo",
+      "label": "pausa",
       "variant": "security"
     },
     {
@@ -143,9 +143,9 @@
       "dot": "rose",
       "title": "Reclamos y memoria",
       "items": [
-        "radicar_reclamo se revisa y queda pausado hasta que una persona decide",
-        "Después de cada paso se guarda un punto de control por thread_id",
-        "Con el checkpointer se puede ver el historial, repetir y bifurcar un hilo"
+        "Radicar, cancelar y reportar un daño quedan en pausa hasta que una persona decide",
+        "Antes de pausar se revisan los datos del reclamo",
+        "Cada paso guarda un punto de control por thread_id: permite ver el historial, repetir y bifurcar"
       ]
     }
   ]

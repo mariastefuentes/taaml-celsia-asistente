@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "11e68e1e-7ccd-433b-9fd0-c991b8ee47ea",
+  "receiptId": "60e28d78-a06c-44c9-865b-14ecd1d497a1",
   "status": "current",
   "command": "deliver",
   "type": "sequence",
-  "input": "C:\\taaml\\docs\\secuencia_whatsapp.json",
-  "output": "C:\\taaml\\docs\\secuencia_whatsapp.html",
+  "input": "C:\\t107d\\docs\\secuencia_whatsapp.json",
+  "output": "C:\\t107d\\docs\\secuencia_whatsapp.html",
   "specification": {
-    "sha256": "18e44ec00b112f6211575aeed69fdba2ecbe2f3eac4c879edad1db939786866f",
-    "bytes": 3252
+    "sha256": "4e1b6692a058218546c9879920b20780948e0427d6ae98accad54ee338756a13",
+    "bytes": 3616
   },
   "artifact": {
-    "sha256": "9a646efd477be371c58044ca5a6d46b2c57a0304f2e3c15d2cf8001a60562948",
-    "bytes": 838285
+    "sha256": "714406adfa0b3d1afa9ad8363a2a8252d98ee70cff0434bc7d3c09dd824e08a7",
+    "bytes": 819850
   }
 }
