@@ -467,3 +467,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Por qué.** Quien atiende la demostración necesita ver qué recibió el cliente y notar una caída antes que el público.
 - **Límites.** La rúbrica no pide el panel. Las respuestas pueden repetir datos del cliente y el panel se puede proyectar. «Puente de WhatsApp» solo mira si el programa del puente contesta en ese equipo, no si el teléfono sigue vinculado, y ninguna luz comprueba el modelo. Las filas siguen en memoria y se pierden al reiniciar. El agente, el prompt y lo que recibe el modelo no cambian.
 - **Evidencia.** `api/main.py`, `api/panel.html`, `src/taaml/actividad.py`, `src/taaml/agente.py` (`fuentes_del_turno`), `docs/politica_de_privacidad.md`, `tests/test_demo.py`.
+
+## D65. El corpus se reconstruye con un solo comando
+- **Contexto.** La rúbrica pide reconstruir el corpus con un comando y conservar la fuente. Eran dos scripts sueltos de descarga más `make datos` y `make indice`. Además, al volver a descargar sobre una copia limpia, el índice de descargas anota otra vez cada página y el resumen de descubrimiento la contaba dos veces.
+- **Decisión.** `make corpus` comprueba la clave, descarga (`make descargar`), limpia y fragmenta (`make datos`) e indexa (`make indice`). El resumen de descubrimiento cuenta la última captura de cada página.
+- **Por qué.** Un solo comando desde una copia limpia, que falla al comienzo si falta la clave y no media hora después.
+- **Límites.** Tarda media hora o más y modifica datos versionados; como el sitio cambia, no reproduce las cifras de octubre. El 26/11 se probó por partes en copias limpias: con el HTML original salieron los mismos 393 documentos y 1.690 fragmentos (cambian caracteres invisibles y espacios); con una descarga nueva (1.281 páginas, 4 ya estaban, 5 con error del sitio) salieron 404 documentos y 1.738 fragmentos. El comando completo de una sola vez y el índice sobre la descarga nueva no se han corrido.
+- **Evidencia.** `Makefile`, `scripts/03_construir_silver.py`, `tests/test_pipeline.py`.

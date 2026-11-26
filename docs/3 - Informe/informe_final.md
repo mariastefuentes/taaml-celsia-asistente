@@ -205,7 +205,8 @@ Lo más valioso fue **medir** cada cambio: así se vio que dos herramientas redu
 
 ```
 uv sync
-make indice              # reconstruye el índice (requiere GOOGLE_API_KEY, unos 2 minutos)
+make indice              # reconstruye el índice del corpus versionado (requiere GOOGLE_API_KEY, unos 2 minutos)
+make corpus              # corpus completo con un comando: descarga celsia.com, limpia, fragmenta e indexa (modifica data/)
 make api                 # API con PostgreSQL local, puerto 8000
 make openclaw-check      # valida la plantilla de OpenClaw sin escribir
 make openclaw-instalar   # escribe la configuración y copia el workspace

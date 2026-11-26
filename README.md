@@ -130,7 +130,13 @@ make indice              # construye el índice de vectores con Gemini, unos 2 m
 make scraping-demo      # borra data/_demo_scraping y descarga 5 páginas del blog en data/_demo_scraping/ (respeta robots.txt, pausa de 1 s; no toca data/1_bronze)
 ```
 
-Para reconstruir la base **desde cero** (descargar todo el sitio): `scripts/01_scrape_celsia.py` y `scripts/02_obtener_sedes.py`, y luego `make datos` y `make indice` (tabla de pasos más abajo).
+**Reconstruir el corpus desde cero con un solo comando** (necesita `GOOGLE_API_KEY` en `.env` y la API apagada):
+
+```bash
+make corpus             # descarga celsia.com y las sedes, limpia, cura, fragmenta e indexa
+```
+
+La descarga respeta `robots.txt`, espera 1 segundo entre páginas (media hora o más) y retoma donde quedó si se corta. Como el sitio cambia con el tiempo, el comando modifica los datos versionados: revísalos con `git status` antes de guardar nada; las cifras y evaluaciones de este repositorio corresponden a la captura de octubre de 2026. Para usar el corpus ya versionado basta `make indice`.
 
 ## Uso
 
@@ -159,7 +165,7 @@ make ensayo                               # revisa que la demo esté lista, sin 
 make ensayo-agente                        # conversación real con el agente (GASTA CUOTA: 8 a 12 llamadas)
 ```
 
-`make` muestra el menú de atajos (`setup`, `modulo1`, `api`, `api-sqlite`, `db-up`, `db-down`, `app`, `app-taller1`, `demo-inyeccion`, `demo-limpiar`, `datos`, `indice`, `scraping-demo`, `recuperacion`, `ensayo`, `ensayo-agente`, `test`, `lint`, `check`, `evaluar`, `pdf`).
+`make` muestra el menú de atajos (`setup`, `modulo1`, `api`, `api-sqlite`, `db-up`, `db-down`, `app`, `app-taller1`, `demo-inyeccion`, `demo-limpiar`, `corpus`, `descargar`, `datos`, `indice`, `scraping-demo`, `recuperacion`, `ensayo`, `ensayo-agente`, `test`, `lint`, `check`, `evaluar`, `pdf`).
 
 **Demo del Módulo 1 (histórica).** `app/modulo1.py` fue la versión que se sustentó en la sesión 8: muestra solo las métricas del corpus y las etapas del scraping (descubrir → extraer → limpiar → deduplicar → enriquecer → curar → fragmentar), sin Q&A, Resumen ni FAQ. La app completa queda en `app/asistente.py` (`make app-taller1`). El scraping en vivo se ejecuta con `make scraping-demo`.
 
@@ -167,7 +173,7 @@ make ensayo-agente                        # conversación real con el agente (GA
 <summary><b>Referencia detallada: cómo se construye la base, pruebas y opciones</b></summary>
 
 ### Cómo se construye la base de conocimiento
-Los datos pasan por tres capas (patrón Medallion): cada script hace una sola etapa, en este orden.
+Los datos pasan por tres capas (patrón Medallion): cada script hace una sola etapa. `make corpus` los corre todos, del 1 al 6 (`make descargar`, `make datos` y `make indice` por separado).
 
 | Paso | Comando | Resultado |
 |---|---|---|
