@@ -60,5 +60,5 @@ openclaw skills list --agent main
 ## Límites
 
 - La plantilla se validó contra el esquema de OpenClaw 2026.11.7 (el ejecutable instalado localmente). Verificar en el equipo de la demo con `openclaw config validate`: si una clave cambió, se corrige la plantilla y sus pruebas en el mismo PR.
-- El modelo primario es `deepseek/deepseek-flash` y la plantilla declara el proveedor DeepSeek; el fallback está desactivado. La clave (`DEEPSEEK_API_KEY`) va en `~/.openclaw/.env` o en el entorno del Gateway, nunca aquí ni en el `.env` del repositorio (OpenClaw la ignora desde ahí).
+- El modelo primario es `deepseek/deepseek-flash` y la plantilla declara el proveedor DeepSeek; si falla, responde el respaldo `deepseek/deepseek-v4-pro` (misma clave, D68). La clave (`DEEPSEEK_API_KEY`) va en `~/.openclaw/.env` o en el entorno del Gateway, nunca aquí ni en el `.env` del repositorio (OpenClaw la ignora desde ahí).
 - La bitácora diaria del workspace se escribe a mano; no se versiona lo que diga de clientes reales.

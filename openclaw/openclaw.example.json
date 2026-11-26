@@ -23,7 +23,10 @@
         "baseUrl": "https://api.deepseek.com",
         "api": "openai-completions",
         "apiKey": { "source": "env", "provider": "default", "id": "DEEPSEEK_API_KEY" },
-        "models": [{ "id": "deepseek-flash", "name": "deepseek-flash" }]
+        "models": [
+          { "id": "deepseek-flash", "name": "deepseek-flash" },
+          { "id": "deepseek-v4-pro", "name": "deepseek-v4-pro" }
+        ]
       }
     }
   },
@@ -33,7 +36,7 @@
       "skills": ["atencion-whatsapp-celsia"],
       "model": {
         "primary": "deepseek/deepseek-flash",
-        "fallbacks": []
+        "fallbacks": ["deepseek/deepseek-v4-pro"]
       },
       "sandbox": {
         "mode": "all",
@@ -50,7 +53,7 @@
         "workspace": "~/.openclaw/workspace",
         "model": {
           "primary": "deepseek/deepseek-flash",
-          "fallbacks": []
+          "fallbacks": ["deepseek/deepseek-v4-pro"]
         }
       }
     }
