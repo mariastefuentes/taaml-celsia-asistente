@@ -143,11 +143,11 @@ function AccionesRespuesta({ indice, reaccion, onReaccion, texto, regenerando, o
   );
 }
 
-function Fuentes({ fuentes, texto }) {
+function Fuentes({ fuentes, texto, abiertas }) {
   if (!fuentes?.length || sinEvidencia(texto)) return null;
   return (
-    <details className="fuentes" open>
-      <summary>Fragmentos consultados ({fuentes.length})</summary>
+    <details className="fuentes" open={abiertas}>
+      <summary><span aria-hidden="true">📄</span> Fuentes ({fuentes.length})</summary>
       <ul>
         {fuentes.map((f) => (
           <li key={f.chunk_id}>
@@ -165,6 +165,15 @@ function etiqueta(h) {
   if (h.herramienta === "guardar_dato_del_cliente") return "Guardando un dato del cliente";
   if (h.herramienta === "recordar_datos_del_cliente") return "Recordando lo que sabe del cliente";
   return h.args?.tabla ? `Consultando la tabla ${h.args.tabla}` : "Consultando una herramienta";
+}
+
+// Los detalles técnicos (herramientas, tokens, costo, base de búsqueda) están ocultos para el cliente; quien los activa los conserva en su navegador.
+function leerDetalles() {
+  try {
+    return localStorage.getItem("detalles") === "1";
+  } catch {
+    return false;
+  }
 }
 
 export default function App() {
@@ -185,6 +194,7 @@ export default function App() {
   const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
   const [verQr, setVerQr] = useState(false); // QR de WhatsApp plegado; en el inicio se muestra siempre
   const [salud, setSalud] = useState(null); // null = aún no se sabe; false = la API no responde
+  const [detalles, setDetalles] = useState(leerDetalles);
   const [reacciones, setReacciones] = useState({}); // por índice de respuesta: "up" | "down"; visuales, no se persisten
   const [regenerando, setRegenerando] = useState(null); // índice de la respuesta que se está regenerando
   const fin = useRef(null);
@@ -353,6 +363,15 @@ export default function App() {
     }
   }
 
+  function alternarDetalles() {
+    setDetalles(!detalles);
+    try {
+      localStorage.setItem("detalles", detalles ? "0" : "1");
+    } catch {
+      // sin almacenamiento (ventana privada): vale mientras la pestaña esté abierta
+    }
+  }
+
   function nueva() {
     setHilo(null);
     fijarHilo(null);
@@ -374,18 +393,18 @@ export default function App() {
           <img src="/celsia-icono.png" alt="" aria-hidden="true" />
           <div>
             <h1>Asistente <span>Celsia</span></h1>
-            <p>Agente con memoria, datos exactos y búsqueda en el sitio oficial</p>
+            <p>Te ayudo con tu factura, cortes de luz, sedes y reclamos</p>
           </div>
         </div>
         <div className="acciones">
           {salud !== null && (
-            <span className={`estado ${salud ? "ok" : "caida"}`} role="status" title={salud ? `Modelo ${salud.modelo}` : "La API no responde"}>
-              {salud ? `En línea${salud.almacen ? ` · ${ALMACENES[salud.almacen] ?? salud.almacen}` : ""}` : "Sin conexión"}
+            <span className={`estado ${salud ? "ok" : "caida"}`} role="status" title={salud ? (detalles ? `Modelo ${salud.modelo}` : undefined) : "La API no responde"}>
+              {salud ? `En línea${detalles && salud.almacen ? ` · ${ALMACENES[salud.almacen] ?? salud.almacen}` : ""}` : "Sin conexión"}
             </span>
           )}
-          <button className="secundario" onClick={verRecuerdos}>Lo que recuerdo</button>
+          <button className="secundario" onClick={verRecuerdos}><span className="largo">Lo que recuerdo</span><span className="corto">Mis datos</span></button>
           <button className="secundario" onClick={() => setVerQr((v) => !v)} aria-expanded={verQr}>WhatsApp</button>
-          <button className="secundario" onClick={nueva} disabled={enCurso}>Nueva conversación</button>
+          <button className="secundario" onClick={nueva} disabled={enCurso}><span className="largo">Nueva conversación</span><span className="corto">Nueva</span></button>
         </div>
       </header>
 
@@ -421,7 +440,7 @@ export default function App() {
         {mensajes.map((m, i) => (
           <div key={i} className="bloque-mensaje">
             <article className={`burbuja ${m.rol}`}>
-            {m.rol === "assistant" && (m.herramientas?.length > 0 || m.usadas) && (
+            {m.rol === "assistant" && (detalles || m.entregado) && (m.herramientas?.length > 0 || m.usadas) && (
               <p className={`herramienta ${tipoDeUso(m).clase}`}>
                 <span aria-hidden="true">{tipoDeUso(m).icono}</span> {m.usadas ? [...new Set(m.usadas.split("; "))].join("; ") : [...new Set(m.herramientas.map(etiqueta))].join(" · ")}
               </p>
@@ -430,8 +449,8 @@ export default function App() {
             {m.rol === "assistant" && m.aviso?.length > 0 && (
               <p className="aviso">Verifica antes de usar: estos datos de la respuesta no aparecen en lo que el asistente consultó ({m.aviso.join(", ")}).</p>
             )}
-            {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} />}
-            {m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
+            {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} abiertas={detalles} />}
+            {detalles && m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
             </article>
             {m.rol === "assistant" && (
               <AccionesRespuesta
@@ -475,6 +494,9 @@ export default function App() {
           {pendiente ? "En revisión…" : enCurso ? "Respondiendo…" : "Enviar"}
         </button>
       </form>
+      <button type="button" className="detalles-btn" onClick={alternarDetalles} aria-pressed={detalles}>
+        {detalles ? "Ocultar detalles técnicos" : "Ver detalles técnicos"}
+      </button>
     </div>
   );
 }
