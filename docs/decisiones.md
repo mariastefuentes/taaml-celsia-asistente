@@ -439,3 +439,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Por qué.** En la sustentación quien aprueba no es quien presenta y no puede perderse un pendiente. Son cambios de la página: la API, el agente y lo que recibe el modelo no cambian.
 - **Límites.** El aviso es solo visual, en la pestaña: no suena. El promedio cuenta los turnos que el panel tiene en pantalla desde que se pulsó «Ver», con el registro que la API guarda en memoria. Para proyectar el QR hay que tocarlo.
 - **Evidencia.** `api/panel.html`, `docs/guion_sustentacion_final.md`.
+
+## D61. Por WhatsApp la fuente se muestra cuando el cliente la pide
+- **Contexto.** La rúbrica pide respuestas con documento y fragmento. El chat web las muestra; por WhatsApp no salían, y pegarlas a cada respuesta la vuelve larga y poco natural en un teléfono. El modelo recibe documento y enlace, pero no el número de fragmento.
+- **Decisión.** Si el mensaje completo pide la fuente («fuente», «¿de dónde sacaste eso?»), `POST /chat` y el webhook contestan sin llamar al modelo con el documento, el fragmento y el enlace de la última respuesta, tomados de la conversación guardada. Salen como máximo dos, primero la que comparte más palabras con la respuesta. Si esa respuesta no salió del texto del sitio, o dijo que no tenía la información, se dice así. Con algo en revisión el mensaje sigue su camino normal.
+- **Por qué.** Las respuestas quedan limpias, la cita no la puede inventar el modelo, no gasta cuota y no cambia el prompt, así que las mediciones del agente siguen valiendo.
+- **Límites.** Solo reconoce las formas habituales de pedirla, en español. La fuente se elige por coincidencia de palabras: puede mostrar un fragmento recuperado que no sea el que apoya la respuesta. La petición y su contestación no quedan en la memoria de la conversación. Falta probarlo por WhatsApp en el equipo del bot.
+- **Evidencia.** `src/taaml/citas.py`, `api/main.py` (`responder_a_telefono`), `tests/test_citas.py`.

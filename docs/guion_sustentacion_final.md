@@ -58,6 +58,7 @@ Cada quien responde lo suyo. Si una pregunta cae en terreno ajeno, se contesta c
 
 Tres respuestas preparadas, por si aparecen:
 
+- **«¿De dónde sacó eso?»** En el mismo WhatsApp se escribe «fuente» y salen el documento, el fragmento y el enlace de la última respuesta (D61).
 - **«¿Y si el modelo alucina?»** Tres capas: solo fragmentos recuperados, nota «dato sin respaldo» cuando una cifra no está en la fuente y banco verificable de 49 casos: 49/49 el 24/11, con las 20 herramientas.
 - **«¿Por qué no un modelo local?»** Un modelo en un portátil no resiste a los invitados: el agente, los embeddings (Gemini) y los respaldos son APIs en la nube. No se usa ningún modelo local (D51).
 - **«¿Qué pasa si falla WhatsApp?»** El plan B: chat web con QR y la conversación grabada (`make demo-plan-b`), con el mismo agente.
