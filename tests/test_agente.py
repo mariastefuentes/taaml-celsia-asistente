@@ -119,9 +119,25 @@ def test_consultar_contactos_devuelve_canales_reales():
 
 
 def test_consultar_sedes_sin_coincidencias_lo_dice():
-    from taaml.agente import consultar_sedes
+    from taaml.agente import SIN_SEDES_EN_ESE_LUGAR, consultar_sedes
 
-    assert "Sin resultados" in consultar_sedes.invoke({"ciudad": "Ciudad inexistente"})
+    for entrada in ({"ciudad": "Ciudad inexistente"}, {"ciudad": "Bogotá", "tipo": "Tiendas Celsia"}, {"departamento": "Cundinamarca"}):
+        assert consultar_sedes.invoke(entrada) == SIN_SEDES_EN_ESE_LUGAR
+
+
+def test_consultar_sedes_no_niega_un_lugar_que_si_esta_en_la_tabla():
+    from taaml.agente import SIN_SEDES_EN_ESE_LUGAR, consultar_sedes
+
+    # un país o un departamento escritos como ciudad, varias ciudades con una que sí está, o un tipo que allí no hay
+    for entrada in (
+        {"ciudad": "Costa Rica"},
+        {"ciudad": "Valle del Cauca"},
+        {"ciudad": "Bogotá, Ibagué"},
+        {"ciudad": "Medellín", "tipo": "Tiendas Celsia"},
+        {},
+    ):
+        assert consultar_sedes.invoke(entrada) != SIN_SEDES_EN_ESE_LUGAR
+    assert "Total:" in consultar_sedes.invoke({"ciudad": "ibague"})
 
 
 def test_consultar_catalogo_encuentra_paginas_por_titulo():
@@ -833,7 +849,7 @@ def test_el_tope_de_herramientas_por_turno_corta_a_un_modelo_que_insiste(monkeyp
         lambda tabla, filtros: ejecutadas.append(tabla) or "Sin resultados en los datos estructurados.",
     )
     insiste = [
-        _llamada("consultar_sedes", {"ciudad": f"Ciudad{n}"}, f"t{n}")
+        _llamada("consultar_sedes", {"tipo": f"Tipo{n}"}, f"t{n}")
         for n in range(MAX_LLAMADAS_POR_TURNO + 3)
     ]
     agente = crear_agente(

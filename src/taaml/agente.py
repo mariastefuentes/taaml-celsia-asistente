@@ -285,10 +285,32 @@ class ConsultaSedes(EsquemaEstricto):
     )
 
 
+# Sin esto el modelo buscaba en el texto del sitio y añadía el horario general de una noticia de 2024, distinto al de la tabla (D66).
+SIN_SEDES_EN_ESE_LUGAR = (
+    "No tengo esa información: no hay ningún punto de atención presencial registrado en ese lugar, así que no hay horario ni "
+    "dirección para dar. La respuesta completa es esa, más la línea 01 8000 112 115 o consultar otra ciudad; sin horarios, "
+    "direcciones ni listas de sedes de otros lugares."
+)
+
+
+def _no_hay_sedes_en(ciudad: str, departamento: str) -> bool:
+    """Si ninguno de los lugares pedidos aparece en la tabla como ciudad, departamento, país o nombre de sede.
+
+    Un lugar escrito en el campo equivocado («Costa Rica» como ciudad) no cuenta como ausente: se responde como antes.
+    """
+    lugares = [limpio for parte in re.split("[,;]", f"{ciudad},{departamento}") if (limpio := _sin_tildes(parte))]
+    if not lugares:
+        return False
+    registrados = [_sin_tildes(f"{s['CITY']} | {s['DEPARTMENT']} | {s['COUNTRY']} | {s['NAME']}") for s in sedes()]
+    return not any(lugar in registrado for lugar in lugares for registrado in registrados)
+
+
 @tool(args_schema=ConsultaSedes)
 def consultar_sedes(ciudad: str = "", departamento: str = "", tipo: str = "") -> str:
     """Consulta sedes, tiendas y puntos de atención de Celsia con su dirección, teléfono y horario. Úsala para «dónde queda»,
     «cuál es el horario de», «dónde puedo pagar», «qué tiendas hay» o «cuántas sedes hay». La última línea trae «Total: N», que calcula el sistema: cita ese total y no cuentes filas. Para tiendas pasa tipo «Tiendas Celsia»; para puntos de pago, «Punto de Recaudo y Pago». Si la pregunta es por los puntos de atención en general, no pongas tipo."""
+    if _no_hay_sedes_en(ciudad, departamento):
+        return SIN_SEDES_EN_ESE_LUGAR
     filtros = {"ciudad": ciudad, "departamento": departamento, "tipo": tipo}
     return delimitar_como_datos(consultar("sedes", filtros))
 
