@@ -15,6 +15,7 @@ Configuración **versionada y saneada** del gateway de OpenClaw que pide la rúb
 # 1. Completa las variables en .env (no las subas con valores reales)
 #    OPENCLAW_GATEWAY_TOKEN=...   WHATSAPP_ALLOWLIST=*   REPO_CELSIA=C:/ruta/al/repo
 #    (con «*» el canal queda abierto al auditorio; con números, solo esos pasan)
+#    La clave del modelo va aparte, en ~/.openclaw/.env: DEEPSEEK_API_KEY=...
 
 # 2. Valida la plantilla sin escribir nada
 make openclaw-check
@@ -51,6 +52,7 @@ openclaw skills list --agent main
 - Sandbox en modo `all` con backend `docker`, scope `agent`, `workspaceAccess: none` y el MCP `celsia__*` permitido dentro.
 - `channels.whatsapp` encendido y abierto (`enabled: true`, `dmPolicy: open`, `allowFrom: ["*"]`) para el auditorio, y `WHATSAPP_ALLOWLIST` en `*` o con números E.164.
 - `session.dmScope: per-channel-peer`.
+- Cada modelo de los agentes declarado en `models.providers`, con la clave como referencia al entorno.
 - El servidor MCP `celsia` con sus diez herramientas y el puente `puente` (`atender_cliente_celsia`), con el plugin `puente-celsia` activo y `toolSearch` apagado.
 - La skill del proyecto es válida, es la única visible, `skills_read` está permitido y el instalador la copia (`tests/test_openclaw_workspace.py`).
 - Ningún secreto en la plantilla.
@@ -58,5 +60,5 @@ openclaw skills list --agent main
 ## Límites
 
 - La plantilla se validó contra el esquema de OpenClaw 2026.11.7 (el ejecutable instalado localmente). Verificar en el equipo de la demo con `openclaw config validate`: si una clave cambió, se corrige la plantilla y sus pruebas en el mismo PR.
-- El modelo primario es `deepseek/deepseek-flash` (proveedor DeepSeek); el fallback está desactivado. La clave del proveedor vive en el entorno, nunca aquí.
+- El modelo primario es `deepseek/deepseek-flash` y la plantilla declara el proveedor DeepSeek; el fallback está desactivado. La clave (`DEEPSEEK_API_KEY`) va en `~/.openclaw/.env` o en el entorno del Gateway, nunca aquí ni en el `.env` del repositorio (OpenClaw la ignora desde ahí).
 - La bitácora diaria del workspace se escribe a mano; no se versiona lo que diga de clientes reales.

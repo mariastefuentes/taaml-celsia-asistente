@@ -12,7 +12,7 @@ Esta guía lleva el asistente de Celsia al gateway de OpenClaw que pide la rúbr
 | Docker | Imagen del sandbox (`openclaw-sandbox:trixie-slim`) |
 | `uv` y este repositorio | El servidor MCP `celsia` corre con `uv run` |
 | Número dedicado para el bot | Chip prepago o eSIM de voz/SMS en un celular de repuesto (nunca el personal de un integrante); ver la sección 6 |
-| Clave del proveedor del modelo | `deepseek/deepseek-flash` (la plantilla vigente; respaldo apagado) |
+| Clave del proveedor del modelo | `DEEPSEEK_API_KEY`, para `deepseek/deepseek-flash` (la plantilla declara el proveedor; respaldo apagado) |
 
 ## 1. Variables (en `.env`, nunca en el repositorio)
 
@@ -27,6 +27,14 @@ REPO_CELSIA=C:/ruta/absoluta/a/taaml-celsia-asistente
 
 `REPO_CELSIA` es la ruta donde OpenClaw lanzará `uv run python -m taaml.servidor_mcp`; tiene que ser la del equipo que hace la demo, no la de un compañero. `WHATSAPP_ALLOWLIST=*` deja el canal abierto al auditorio (D54); si prefieres una lista cerrada, escribe los números en E.164 separados por comas, pero entonces los invitados que no estén en ella recibirán «Este número no está autorizado».
 
+**La clave del modelo va aparte.** El Gateway no la toma del `.env` del repositorio: OpenClaw ignora las claves de proveedores que vengan de la carpeta desde la que se arranca. Antes de instalar, escríbela en `~/.openclaw/.env` (en Windows, `%USERPROFILE%\.openclaw\.env`):
+
+```text
+DEEPSEEK_API_KEY=<la clave de DeepSeek>
+```
+
+La plantilla declara el proveedor `deepseek` y solo nombra esa variable (`models.providers.deepseek.apiKey`), así que la clave no queda escrita en `openclaw.json`. Sin el proveedor declarado, y sin el complemento oficial de DeepSeek, el bot responde «model not found».
+
 ## 2. Instalar configuración y workspace
 
 ```bash
@@ -34,7 +42,7 @@ make openclaw-check        # valida endurecimiento, allowlist E.164 y ausencia d
 make openclaw-instalar     # escribe ~/.openclaw/openclaw.json y copia el workspace
 ```
 
-Si ya había una configuración, `make openclaw-instalar ARGS="--forzar"` deja un `openclaw.json.bak` al lado. Lo instalado incluye:
+Si ya había una configuración, `make openclaw-instalar ARGS="--forzar"` la **reemplaza entera** (se pierde lo que se hubiera agregado a mano, como otros modelos o perfiles de clave) y deja un `openclaw.json.bak` al lado. Lo instalado incluye:
 
 - `bind: loopback` y token de gateway.
 - `tools.deny`: `group:automation`, `group:runtime`, `group:fs`, `sessions_spawn`.

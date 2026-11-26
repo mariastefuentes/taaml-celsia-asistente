@@ -174,3 +174,27 @@ def test_tool_search_habilitado_se_detecta():
 
 def test_la_plantilla_vigente_no_tiene_fallos():
     assert problemas(configuracion(ENTORMO)) == []
+
+
+def test_el_proveedor_del_modelo_viene_declarado_y_la_clave_no_se_escribe():
+    config = configuracion({**ENTORMO, "DEEPSEEK_API_KEY": "clave-que-no-debe-escribirse"})
+    proveedor = config["models"]["providers"]["deepseek"]
+    assert proveedor["baseUrl"] == "https://api.deepseek.com"
+    assert "deepseek-flash" in [m["id"] for m in proveedor["models"]]
+    assert proveedor["apiKey"] == {"source": "env", "provider": "default", "id": "DEEPSEEK_API_KEY"}
+    assert "clave-que-no-debe-escribirse" not in json.dumps(config)
+
+
+def test_un_modelo_sin_proveedor_declarado_se_detecta():
+    config = configuracion(ENTORMO)
+    del config["models"]
+    assert any("deepseek/deepseek-flash" in f for f in problemas(config))
+    config = configuracion(ENTORMO)
+    config["agents"]["defaults"]["model"]["fallbacks"] = ["deepseek/otro-modelo"]
+    assert any("deepseek/otro-modelo" in f for f in problemas(config))
+
+
+def test_una_clave_escrita_en_el_proveedor_se_detecta():
+    config = configuracion(ENTORMO)
+    config["models"]["providers"]["deepseek"]["apiKey"] = "clave-escrita"
+    assert any("apiKey" in f for f in problemas(config))
