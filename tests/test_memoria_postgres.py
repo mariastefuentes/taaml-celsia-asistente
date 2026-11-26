@@ -101,5 +101,5 @@ def test_la_aprobacion_pendiente_sobrevive_a_un_reinicio_y_se_radica_en_postgres
     assert pendiente_de_aprobacion("pg-aprob", agente=segundo)["args"]["ciudad"] == "Ibagué"
     texto, _ = resolver_aprobacion("pg-aprob", "aprobar", usuario="cliente-pg", agente=segundo)
     guardados = almacen_de_largo_plazo(url=url).search(("reclamos", "cliente-pg"))
-    assert texto == "Tu reclamo quedó radicado." and len(guardados) == 1
+    assert len(guardados) == 1 and f"radicado con el número {guardados[0].key}." in texto  # confirmación fija (D69)
     assert pendiente_de_aprobacion("pg-aprob", agente=segundo) is None

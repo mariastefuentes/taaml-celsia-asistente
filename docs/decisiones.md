@@ -496,3 +496,9 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Límites.** No cubre una caída de todo DeepSeek. El cambio es lento y no se probó acortar los reintentos. Los tiempos incluyen el arranque del agente en cada prueba y no equivalen a los de WhatsApp. No se ha probado en el equipo del bot; para aplicarlo allí hay que reinstalar la configuración (`make openclaw-instalar ARGS="--forzar"`).
 - **Evidencia.** `openclaw/openclaw.example.json`, `tests/test_openclaw.py`.
 
+## D69. La confirmación tras aprobar es un texto fijo
+- **Contexto.** Al aprobar un reclamo en un ensayo con el modelo real (26/11), el agente contestó que una persona «te contactará» y ofreció un enlace para consultar el estado. El proyecto no llama a nadie ni tiene esa consulta en línea: los números de reclamo son simulados.
+- **Decisión.** Cuando `radicar_reclamo`, `cancelar_reclamo` o `reportar_dano_electrico` se aprueban y salen bien, un middleware (`confirmar_lo_aprobado`) responde con un texto fijo que trae el número y no llama al modelo, como ya se hacía con los avisos de espera.
+- **Límites.** Si en el mismo paso se pidió más de una herramienta, o la herramienta no hizo nada, responde el modelo como antes. La única excepción es reportar un daño junto con la consulta de líneas de atención: en el ensayo con el modelo real pidió las dos a la vez y el texto fijo ya trae esas líneas. Si el cliente pidió algo más en el mensaje y el modelo pensaba atenderlo después de la acción, esa parte se pierde y hay que volver a pedirla. El mensaje de rechazo lo sigue redactando el modelo a partir de un texto fijo.
+- **Evidencia.** `src/taaml/agente.py`, `tests/test_agente.py`, `tests/test_memoria_postgres.py`.
+

@@ -1163,11 +1163,17 @@ def test_la_referencia_dir_o_niu_viaja_a_la_aprobacion_pero_no_se_guarda_en_el_r
 def test_al_aprobar_se_radica_y_al_rechazar_no():
     from taaml.agente import pendiente_de_aprobacion, resolver_aprobacion
 
-    agente, _, almacen = _agente_con_reclamo("Tu reclamo quedó radicado.")
+    agente, modelo, almacen = _agente_con_reclamo("Con gusto.")
     conversar("Radica mi reclamo", "h2", agente=agente, usuario="c2")
+    llamadas_al_modelo = len(modelo.vistos)
     texto, _ = resolver_aprobacion("h2", "aprobar", usuario="c2", agente=agente)
     guardados = almacen.search(("reclamos", "c2"))
-    assert texto == "Tu reclamo quedó radicado." and len(guardados) == 1
+    assert f"radicado con el número {guardados[0].key}." in texto and len(guardados) == 1
+    assert "contactar" not in texto and "enlace" not in texto  # no promete lo que nadie va a hacer
+    assert len(modelo.vistos) == llamadas_al_modelo  # la confirmación no la redacta el modelo
+    assert conversar("gracias", "h2", agente=agente, usuario="c2")[0] == "Con gusto."  # la conversación sigue normal
+    historial = [m.text for m in agente.get_state({"configurable": {"thread_id": "h2"}}).values["messages"] if m.type == "ai"]
+    assert texto in historial  # el chat web la muestra al leer el historial
     assert guardados[0].key.startswith("REC-") and guardados[0].value["ciudad"] == "Ibagué"
     assert pendiente_de_aprobacion("h2", agente=agente) is None
 
@@ -1175,6 +1181,44 @@ def test_al_aprobar_se_radica_y_al_rechazar_no():
     conversar("Radica mi reclamo", "h3", agente=agente, usuario="c3")
     resolver_aprobacion("h3", "rechazar", usuario="c3", agente=agente)
     assert almacen.search(("reclamos", "c3")) == [] and pendiente_de_aprobacion("h3", agente=agente) is None
+
+
+def test_al_aprobar_un_reporte_de_dano_o_una_cancelacion_la_confirmacion_es_fija():
+    from taaml.agente import resolver_aprobacion
+
+    def pedir(nombre, id_, **args):
+        return AIMessage(content="", tool_calls=[{"name": nombre, "args": args, "id": id_}])
+
+    agente, modelo = _agente_con_mensajes(
+        pedir("reportar_dano_electrico", "d1", ciudad="Ibagué", descripcion="Cable caído frente a la casa"),
+        pedir("cancelar_reclamo", "x1", radicado="REC-NOEXISTE"),
+        AIMessage(content="No encontré ese reclamo."),
+    )
+    conversar("Hay un cable caído", "h-ok", agente=agente, usuario="cok")
+    texto, _ = resolver_aprobacion("h-ok", "aprobar", usuario="cok", agente=agente)
+    assert "quedó registrado con el número DAN-" in texto and "123" in texto and len(modelo.vistos) == 1
+    conversar("Cancela el REC-NOEXISTE", "h-ok", agente=agente, usuario="cok")
+    texto, _ = resolver_aprobacion("h-ok", "aprobar", usuario="cok", agente=agente)
+    assert texto == "No encontré ese reclamo."  # si la herramienta no hizo nada, no se confirma: el modelo lo explica
+
+
+@pytest.mark.parametrize(
+    ("otra", "args", "fija"),
+    [("consultar_canales_de_atencion", {}, True), ("consultar_sedes", {"ciudad": "Ibagué"}, False)],
+)
+def test_reportar_un_dano_con_otra_consulta_en_el_mismo_paso(otra, args, fija):
+    """El modelo real pidió las líneas de atención junto con el reporte: el texto fijo las trae. Con otra consulta, la contesta el modelo."""
+    from taaml.agente import resolver_aprobacion
+
+    pedido = AIMessage(content="", tool_calls=[
+        {"name": otra, "args": args, "id": "c1"},
+        {"name": "reportar_dano_electrico", "args": {"ciudad": "Ibagué", "descripcion": "Cable caído"}, "id": "d1"},
+    ])
+    agente, modelo = _agente_con_mensajes(pedido, AIMessage(content="Redactado por el modelo."))
+    conversar("Hay un cable caído", "h-dos", agente=agente, usuario="cdos")
+    texto, _ = resolver_aprobacion("h-dos", "aprobar", usuario="cdos", agente=agente)
+    assert ("quedó registrado con el número DAN-" in texto) is fija
+    assert len(modelo.vistos) == (1 if fija else 2)
 
 
 def test_la_persona_puede_responder_por_la_herramienta_sin_radicar_nada():
