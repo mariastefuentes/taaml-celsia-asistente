@@ -1282,6 +1282,21 @@ def costo_del_turno(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = N
         return None
 
 
+def fuentes_del_turno(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> list[dict]:
+    """Las fuentes que trajo `buscar_en_base` en el último turno (para el panel); vacío si no buscó o si no se pudo leer.
+
+    Si algo falla no se rompe la respuesta: es información para quien mira la demostración.
+    """
+    try:
+        agente = agente or _agente(modelo)
+        mensajes = agente.get_state({"configurable": {"thread_id": thread_id}}).values.get("messages", [])
+        inicio = max((i for i, m in enumerate(mensajes) if m.type == "human"), default=len(mensajes))
+        return [f for m in mensajes[inicio:] if m.type == "tool" and m.name == "buscar_en_base" for f in m.artifact or []]
+    except Exception:  # noqa: BLE001
+        log.warning("no se pudieron leer las fuentes del hilo %s", thread_id)
+        return []
+
+
 def conversar_en_vivo(
     pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None, usuario: str = ANONIMO
 ) -> Iterator[dict]:

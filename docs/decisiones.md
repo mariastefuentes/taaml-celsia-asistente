@@ -460,3 +460,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Por qué.** Sin la frase guardó en 9 de 10, y al pedir olvidar la ciudad conservó el nombre en 5 de 5 casos con el dato guardado junto y en 3 de 3 conversaciones nuevas.
 - **Límites.** Guardar lo que el cliente cuenta sin pedirlo sigue dependiendo del modelo (falla algunas veces, antes y ahora). Son pocas repeticiones de un solo mensaje.
 - **Evidencia.** `src/taaml/agente.py`, `tests/test_agente.py`.
+
+## D64. El panel muestra la respuesta y si cada parte funciona
+- **Contexto.** El panel mostraba lo que escribía el cliente y las herramientas, pero no qué se le contestó ni con qué fuentes. No avisaba si la búsqueda, la memoria o el puente de WhatsApp dejaban de contestar, ni cuánto llevaba esperando un pendiente, y un rechazo salía con un solo toque.
+- **Decisión.** Cada fila abre «Ver respuesta» con el texto (hasta 1.500 caracteres) y hasta 6 fuentes (documento, fragmento, enlace y extracto). Una barra comprueba cada 10 segundos el asistente, la búsqueda, la memoria y el puente (`GET /api/semaforo`, con el token). Cada pendiente dice cuánto lleva esperando y rechazar pide un segundo toque. El resumen cuenta cuántas de las 20 herramientas se han usado. La política de privacidad dice lo que ahora guarda el panel.
+- **Por qué.** Quien atiende la demostración necesita ver qué recibió el cliente y notar una caída antes que el público.
+- **Límites.** La rúbrica no pide el panel. Las respuestas pueden repetir datos del cliente y el panel se puede proyectar. «Puente de WhatsApp» solo mira si el programa del puente contesta en ese equipo, no si el teléfono sigue vinculado, y ninguna luz comprueba el modelo. Las filas siguen en memoria y se pierden al reiniciar. El agente, el prompt y lo que recibe el modelo no cambian.
+- **Evidencia.** `api/main.py`, `api/panel.html`, `src/taaml/actividad.py`, `src/taaml/agente.py` (`fuentes_del_turno`), `docs/politica_de_privacidad.md`, `tests/test_demo.py`.
