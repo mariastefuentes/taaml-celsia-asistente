@@ -13,6 +13,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
+from itertools import takewhile
 from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
@@ -24,6 +25,7 @@ from langchain.agents.middleware import (
     SummarizationMiddleware,
     ToolCallLimitMiddleware,
     after_model,
+    before_model,
     dynamic_prompt,
     wrap_model_call,
     wrap_tool_call,
@@ -857,6 +859,26 @@ MENSAJES_RECHAZADO = {
 }
 
 
+# Cuando una acción aprobada sale bien, la confirmación es un texto fijo (D69): redactándola, el modelo prometió que alguien iba a llamar
+# y ofreció un enlace para consultar el estado, y nada de eso existe. Cada pareja es (lo que devuelve la herramienta, lo que lee el cliente).
+MENSAJES_APROBADO = {
+    "radicar_reclamo": (
+        r"Reclamo radicado con el número (\S+)\.",
+        "Una persona de Celsia aprobó tu reclamo: quedó radicado con el número {numero}. Guárdalo: con él puedes preguntarme aquí por su "
+        "estado. Si es urgente, puedes llamar a la línea 01 8000 112 115.",
+    ),
+    "cancelar_reclamo": (
+        r"Reclamo (\S+) cancelado\.",
+        "Una persona de Celsia aprobó tu solicitud: el reclamo {numero} quedó cancelado.",
+    ),
+    "reportar_dano_electrico": (
+        r"Daño reportado con el número (\S+)\.",
+        "Una persona de Celsia aprobó tu reporte de daño: quedó registrado con el número {numero}. Si hay un cable caído, chispas o "
+        "cualquier peligro, aléjate y llama al 123 o a la línea 01 8000 112 115.",
+    ),
+}
+
+
 def mensaje_en_revision(pendiente: dict | None) -> str:
     """El aviso de espera que corresponde a lo que quedó pausado; si no se sabe qué es, el del reclamo."""
     return MENSAJES_EN_REVISION.get((pendiente or {}).get("herramienta"), MENSAJE_EN_REVISION)
@@ -941,6 +963,28 @@ def validar_reclamo_antes_de_pausar(state: Any, runtime: Any) -> dict | None:
         else:
             respuestas.append(ToolMessage(content="No se ejecutó en este paso; vuelve a pedirla si hace falta.", tool_call_id=ll["id"], name=ll["name"]))
     return {"messages": respuestas, "jump_to": "model"}
+
+
+@before_model(can_jump_to=["end"])
+def confirmar_lo_aprobado(state: Any, runtime: Any) -> dict | None:
+    """Tras una acción aprobada que salió bien, responde con el texto de `MENSAJES_APROBADO` sin llamar al modelo.
+
+    Solo si fue la única herramienta del último paso (al reportar un daño se admite que también consultara las líneas de atención,
+    que el texto fijo ya trae); si falló, si la persona contestó otra cosa o si venía con más herramientas, el modelo sigue como siempre.
+    """
+    paso = list(takewhile(lambda m: m.type == "tool", reversed(state["messages"])))  # los resultados del último paso
+    acciones = [m for m in paso if m.name in MENSAJES_APROBADO]
+    if len(acciones) != 1 or acciones[0].status != "success":
+        return None
+    resultado = acciones[0]
+    admitidas = {"consultar_canales_de_atencion"} if resultado.name == "reportar_dano_electrico" else set()
+    if any(m is not resultado and m.name not in admitidas for m in paso):
+        return None
+    patron, texto = MENSAJES_APROBADO[resultado.name]
+    exito = re.fullmatch(patron, resultado.text)
+    if not exito:
+        return None
+    return {"messages": [AIMessage(content=texto.format(numero=exito[1]))], "jump_to": "end"}
 
 
 @wrap_model_call
@@ -1126,6 +1170,7 @@ def crear_agente(
         store=store,  # ty: ignore[no-matching-overload]  # el decorador tipa el contexto del middleware como None
         context_schema=Contexto,
         middleware=[
+            confirmar_lo_aprobado,  # va primero: si responde, no hace falta resumir la memoria ni llamar al modelo
             limitar_historial,
             con_fecha_de_hoy,
             *([con_contexto_recuperado] if en_cadena else []),
