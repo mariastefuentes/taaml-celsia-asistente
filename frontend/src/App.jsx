@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useMatch, useNavigate, useParams } from "react-router-dom";
 import Markdown from "./Markdown.jsx";
-import { cargarDatos, cargarMensajes, cargarSalud, enviar, olvidarDatos } from "./api.js";
+import { cargarDatos, cargarEstado, cargarMensajes, cargarSalud, enviar, olvidarDatos } from "./api.js";
 
 // Cada tarjeta muestra una capacidad del agente con una pregunta de ejemplo (la misma que enruta a esa herramienta).
 const SUGERENCIAS = [
@@ -180,6 +180,7 @@ export default function App() {
   const [recuperando, setRecuperando] = useState(HILO_VALIDO.test(hiloDeLaRuta ?? hiloViejo ?? "")); // al abrir una conversación guardada no se muestra la bienvenida mientras llega
   const [texto, setTexto] = useState("");
   const [enCurso, setEnCurso] = useState(false);
+  const [pendiente, setPendiente] = useState(null); // una persona está revisando algo de este hilo
   const [error, setError] = useState("");
   const [recuerdos, setRecuerdos] = useState(null); // null = panel cerrado
   const [verQr, setVerQr] = useState(false); // QR de WhatsApp plegado; en el inicio se muestra siempre
@@ -208,6 +209,38 @@ export default function App() {
       .finally(() => setRecuperando(false));
   }, []); // solo al abrir la página: recarga y recupera el hilo desde la memoria del servidor
 
+  // Si el hilo quedó esperando una persona (también al recargar), el chat se bloquea hasta que la decisión esté lista.
+  useEffect(() => {
+    setPendiente(null);
+    if (!hilo) return;
+    let vivo = true;
+    cargarEstado(hilo)
+      .then((e) => {
+        if (vivo && e.pendiente) setPendiente({ tipo: "pendiente", ...e.pendiente });
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [hilo]);
+
+  const hayPendiente = Boolean(pendiente);
+  useEffect(() => {
+    if (!hilo || !hayPendiente) return;
+    let vivo = true;
+    const cada = setInterval(() => {
+      cargarEstado(hilo)
+        .then((e) => {
+          if (vivo && !e.pendiente) setPendiente(null);
+        })
+        .catch(() => {});
+    }, 3000);
+    return () => {
+      vivo = false;
+      clearInterval(cada);
+    };
+  }, [hilo, hayPendiente]);
+
   useEffect(() => {
     // Una respuesta que cabe en pantalla se sigue hasta el final; una más larga se ancla en su inicio para que se lea desde arriba.
     const ultima = fin.current?.previousElementSibling;
@@ -232,6 +265,8 @@ export default function App() {
       setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, texto: a.texto + e.texto })));
     } else if (e.tipo === "aviso") {
       setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, aviso: e.datos })));
+    } else if (e.tipo === "pendiente") {
+      setPendiente(e);
     } else if (e.tipo === "fin") {
       setMensajes((m) => actualizarUltimo(m, (a) => ({ ...a, usadas: e.usadas, tokens: e.tokens_entrada + e.tokens_salida, costo: e.costo_usd })));
     } else if (e.tipo === "error") {
@@ -242,7 +277,7 @@ export default function App() {
 
   async function preguntar(pregunta) {
     const mensaje = pregunta.trim();
-    if (!mensaje || enCurso) return;
+    if (!mensaje || enCurso || pendiente) return;
     ultimaPregunta.current = mensaje;
     setError("");
     setTexto("");
@@ -265,7 +300,7 @@ export default function App() {
 
   // Regenerar: repite la última pregunta y sustituye su respuesta, sin duplicar mensajes en pantalla.
   async function hacerRegenerar(indice) {
-    if (enCurso || regenerando !== null) return;
+    if (enCurso || regenerando !== null || pendiente) return;
     const pregunta = [...mensajes.slice(0, indice)].reverse().find((m) => m.rol === "user")?.texto;
     if (!pregunta) return;
     ultimaPregunta.current = pregunta;
@@ -310,6 +345,7 @@ export default function App() {
     setHilo(null);
     fijarHilo(null);
     setMensajes([]);
+    setPendiente(null);
     setError("");
   }
 
@@ -401,16 +437,31 @@ export default function App() {
         <div ref={fin} />
       </main>
 
+      {pendiente && (
+        <div className="pendiente-aviso" role="status">
+          <span>En revisión por una persona. El chat se desbloquea cuando se decida.</span>
+        </div>
+      )}
+
       {error && (
         <div className="error" role="alert">
           <span>{error}</span>
-          <button className="secundario" onClick={() => preguntar(ultimaPregunta.current)} disabled={enCurso}>Reintentar</button>
+          <button className="secundario" onClick={() => preguntar(ultimaPregunta.current)} disabled={enCurso || !!pendiente}>Reintentar</button>
         </div>
       )}
 
       <form onSubmit={(e) => { e.preventDefault(); preguntar(texto); }}>
-        <input value={texto} onChange={(e) => setTexto(e.target.value)} placeholder="Escribe tu pregunta…" maxLength={1000} disabled={enCurso} aria-label="Pregunta" />
-        <button type="submit" disabled={enCurso || !texto.trim()}>{enCurso ? "Respondiendo…" : "Enviar"}</button>
+        <input
+          value={texto}
+          onChange={(e) => setTexto(e.target.value)}
+          placeholder={pendiente ? "En revisión por una persona…" : "Escribe tu pregunta…"}
+          maxLength={1000}
+          disabled={enCurso || !!pendiente}
+          aria-label="Pregunta"
+        />
+        <button type="submit" disabled={enCurso || !!pendiente || !texto.trim()}>
+          {pendiente ? "En revisión…" : enCurso ? "Respondiendo…" : "Enviar"}
+        </button>
       </form>
     </div>
   );

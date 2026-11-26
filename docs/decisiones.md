@@ -409,3 +409,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Prueba.** Pruebas sin modelos ni red (`tests/test_aprobaciones.py`); recorrido con el agente real y un modelo falso para las tres herramientas con aprobación; el panel probado en el navegador con datos ficticios.
 - **Límites.** El envío no se ha probado con un canal vinculado (este equipo no tiene el plugin de WhatsApp). La lista de pendientes vive en memoria: tras reiniciar la API reaparece cuando el cliente escribe. Quien ve el panel ve lo que el cliente escribió. El código del webhook de Meta se conserva sin uso.
 - **Evidencia.** `api/main.py`, `api/panel.html`, `src/taaml/aprobaciones.py`, `src/taaml/avisos_openclaw.py`, `tests/test_aprobaciones.py`, `docs/guia_despliegue_openclaw.md`.
+
+## D57. El chat web se bloquea mientras una persona revisa el reclamo
+- **Contexto.** El chat web mostraba el evento `pendiente`, pero el compositor seguía habilitado: el cliente podía seguir escribiendo aunque el agente no procesaba el turno. El bloqueo se perdía al recargar la página.
+- **Decisión.** `GET /api/hilos/{hilo}/estado` devuelve solo la herramienta pendiente (sin argumentos). El frontend consulta el estado al abrir un hilo y cada 3 s mientras haya un pendiente; deshabilita el campo y el envío, muestra «En revisión por una persona» y se desbloquea cuando la API deja de informar el pendiente.
+- **Por qué.** El estado real vive en el checkpointer del agente y en `aprobaciones`, no en la memoria del navegador. Consultarlo permite recuperar el bloqueo al recargar o abrir la conversación desde otro dispositivo.
+- **Límites.** El sondeo cada 3 s no es inmediato; el endpoint no consume la decisión, así que la respuesta sigue saliendo con el siguiente mensaje del cliente. Si la API se reinicia, la conversación pausada sigue en el checkpointer.
+- **Evidencia.** `api/main.py` (`estado_del_hilo`), `frontend/src/App.jsx`, `frontend/src/api.js`, `tests/test_api.py`.

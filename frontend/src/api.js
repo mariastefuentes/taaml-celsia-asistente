@@ -46,6 +46,13 @@ export async function cargarMensajes(hilo) {
   return (await r.json()).mensajes;
 }
 
+// Si la conversación espera la decisión de una persona: el chat se bloquea mientras `pendiente` no sea null.
+export async function cargarEstado(hilo) {
+  const r = await fetch(`/api/hilos/${hilo}/estado`);
+  if (!r.ok) throw new Error("No se pudo consultar el estado de la conversación");
+  return r.json();
+}
+
 function leerBloque(bloque) {
   const tipo = /^event: (.+)$/m.exec(bloque)?.[1];
   const datos = /^data: (.+)$/m.exec(bloque)?.[1];

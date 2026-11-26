@@ -120,6 +120,20 @@ def test_chat_por_telefono_rechaza_telefonos_y_mensajes_invalidos():
     assert cliente.post("/chat", json={"mensaje": "x" * 1001, "telefono": "573001234567"}).status_code == 422
 
 
+def test_el_estado_del_hilo_dice_si_espera_una_persona_sin_exponer_los_args(monkeypatch):
+    monkeypatch.setattr(
+        "api.main.pendiente_de_aprobacion",
+        lambda hilo: {"herramienta": "radicar_reclamo", "args": {"ciudad": "Ibagué"}},
+    )
+    r = cliente.get(f"/api/hilos/{HILO}/estado")
+    assert r.status_code == 200 and r.json() == {"pendiente": {"herramienta": "radicar_reclamo"}}
+    assert "Ibagué" not in r.text
+
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
+    assert cliente.get(f"/api/hilos/{HILO}/estado").json() == {"pendiente": None}
+    assert cliente.get("/api/hilos/no-es-un-hilo/estado").status_code == 422
+
+
 def test_historial_devuelve_la_conversacion_guardada(monkeypatch):
     monkeypatch.setattr("api.main.historial_visible", lambda hilo: [{"rol": "user", "texto": "hola"}])
     assert cliente.get(f"/api/hilos/{HILO}/mensajes").json() == {

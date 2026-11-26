@@ -78,6 +78,7 @@ button.tarjeta .ejemplo { color: var(--suave); font-size: .82rem; line-height: 1
 .pensando i:nth-child(2) { animation-delay: .15s; }
 .pensando i:nth-child(3) { animation-delay: .3s; }
 .error { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--rojo); border: 1px solid var(--rojo); border-radius: 12px; padding: 8px 12px; margin-bottom: 8px; font-size: .9rem; }
+.pendiente-aviso { color: var(--azul); border: 1px solid var(--azul); background: var(--azul-suave); border-radius: 12px; padding: 8px 12px; margin-bottom: 8px; font-size: .9rem; }
 form { display: flex; gap: 8px; padding: 12px 0 16px; }
 input { flex: 1; padding: 12px 18px; border-radius: 999px; border: 1px solid var(--borde); background: var(--tarjeta); color: var(--texto); font-size: 1rem; box-shadow: var(--sombra); }
 input:focus { outline: 2px solid var(--marca); outline-offset: 1px; }
