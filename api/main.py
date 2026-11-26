@@ -468,6 +468,15 @@ def lo_que_hizo_el_agente(desde: int = Query(default=0, ge=0), x_aprobador: str 
     return {"filas": filas, "ultimo": filas[-1]["n"] if filas else desde}
 
 
+@app.get("/api/hilos/{hilo}/estado")
+def estado_del_hilo(hilo: str) -> dict:
+    """Si la conversación espera la decisión de una persona. No expone los argumentos ni consume la decisión."""
+    if not HILO.match(hilo):
+        raise HTTPException(status_code=422, detail="Identificador de hilo inválido")
+    pendiente = pendiente_de_aprobacion(hilo)
+    return {"pendiente": {"herramienta": pendiente["herramienta"]} if pendiente else None}
+
+
 @app.get("/api/hilos/{hilo}/mensajes")
 def mensajes(hilo: str) -> dict:
     """La conversación guardada de un hilo, para recuperarla al recargar la página."""
