@@ -80,9 +80,24 @@ HILO = re.compile(
     r"^[0-9a-f]{32}$"
 )  # los hilos y los clientes son uuid4 en hexadecimal: no se acepta otra cosa como id
 
+
+def mostrar_trazas_en_la_terminal() -> None:
+    """Hace visibles las líneas informativas del proyecto, como las herramientas de cada turno (la traza que se muestra en la demostración).
+
+    uvicorn solo configura sus propios registros: sin esto, de los de `taaml` salen únicamente las advertencias y los errores.
+    """
+    registro = logging.getLogger("taaml")
+    if not registro.handlers:
+        manejador = logging.StreamHandler()
+        manejador.setFormatter(logging.Formatter("%(levelname)s:     %(message)s"))
+        registro.addHandler(manejador)
+    registro.setLevel(logging.INFO)
+
+
 @asynccontextmanager
 async def _ciclo_de_vida(_: FastAPI):
-    """Al arrancar, calienta el agente en segundo plano para que la primera pregunta no tarde ~15 s; la API ya responde mientras tanto."""
+    """Al arrancar, muestra las trazas en la terminal y calienta el agente en segundo plano para que la primera pregunta no tarde ~15 s; la API ya responde mientras tanto."""
+    mostrar_trazas_en_la_terminal()
     threading.Thread(target=calentar, name="calentamiento", daemon=True).start()
     yield
 
@@ -302,7 +317,7 @@ def responder_a_telefono(telefono: str, mensaje: str, canal: str = "chat") -> Re
     nota = "" if pendiente else aviso_de_datos_dudosos(hilo, texto)  # un dato sin respaldo en la respuesta queda avisado (por WhatsApp no hay otro lugar)
     texto += nota
     if pendiente:
-        log.info("pendiente de aprobación en el hilo %s: %s", hilo, pendiente["herramienta"])
+        log.info("pendiente de aprobación en el hilo %s: %s", hilo[:8], pendiente["herramienta"])
         aprobaciones.registrar(hilo, usuario, pendiente, canal, telefono)
     else:
         aprobaciones.quitar(hilo)

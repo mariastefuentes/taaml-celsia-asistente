@@ -1121,6 +1121,12 @@ def calentar(modelo: str = MODELO_AGENTE) -> None:
         log.warning("no se pudo calentar el agente; la primera pregunta tardará más", exc_info=True)
 
 
+def _anotar_turno(thread_id: str, modelo: str, llamadas: list[dict]) -> None:
+    """La traza del turno en una línea de registro: modelo y herramientas, sin mensajes ni datos del cliente (del hilo, solo el comienzo)."""
+    herramientas = [ll["herramienta"] for ll in llamadas]
+    log.info("turno del agente: hilo=%s modelo=%s herramientas=%s", thread_id[:8], modelo, herramientas)
+
+
 def conversar(
     pregunta: str, thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None, usuario: str = ANONIMO
 ) -> tuple[str, list[dict]]:
@@ -1145,9 +1151,7 @@ def conversar(
         for m in mensajes[ultimo:]
         for ll in getattr(m, "tool_calls", [])
     ]
-    log.info(
-        "turno del agente: hilo=%s modelo=%s herramientas=%s", thread_id, modelo, [ll["herramienta"] for ll in llamadas]
-    )
+    _anotar_turno(thread_id, modelo, llamadas)
     if resultado.get("__interrupt__"):  # el agente se pausó pidiendo aprobación: el cliente recibe el aviso, no un texto vacío
         return mensaje_en_revision(_lo_pausado(resultado["__interrupt__"])), llamadas
     return mensajes[-1].text.strip(), llamadas
@@ -1306,6 +1310,7 @@ def conversar_en_vivo(
     ):  # validación antes de dar la respuesta por buena: el cliente ve qué datos no tienen respaldo
         yield {"tipo": "aviso", "datos": dudosos}
     entrada_tokens, salida_tokens = uso_del_turno(agente, thread_id)
+    _anotar_turno(thread_id, modelo, llamadas)
     yield {
         "tipo": "fin",
         "usadas": etiqueta_herramientas(llamadas),
