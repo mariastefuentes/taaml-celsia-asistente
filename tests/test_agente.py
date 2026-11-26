@@ -394,6 +394,49 @@ def test_un_turno_mas_grande_que_el_limite_no_deja_al_modelo_sin_mensajes(monkey
     assert modelo.vistos[0] == ["una pregunta bastante más larga que el límite"]
 
 
+def _resumen_previo(texto: str):
+    from langchain_core.messages import HumanMessage
+
+    return HumanMessage(
+        f"Here is a summary of the conversation to date:\n\n{texto}",
+        additional_kwargs={"lc_source": "summarization"},
+    )
+
+
+def test_el_recorte_nunca_deja_al_modelo_sin_el_resumen(monkeypatch):
+    from langchain_core.messages import HumanMessage
+
+    from taaml import agente as mod
+
+    monkeypatch.setattr(mod, "MAX_TOKENS_HISTORIAL", 60)
+    agente, modelo = _agente_espia()
+    anteriores = [_resumen_previo("El cliente contó que hay un poste caído"), HumanMessage("p " * 300), AIMessage("r " * 300)]
+    agente.update_state({"configurable": {"thread_id": "hilo-r"}}, {"messages": anteriores})
+    conversar("¿Qué te había contado?", "hilo-r", agente=agente)
+    visto = modelo.vistos[-1]
+    assert "poste caído" in visto[0]  # el resumen siempre va
+    assert visto[-1] == "¿Qué te había contado?" and len(visto) == 2  # y lo demás sí se recorta
+
+
+def test_resumir_otra_vez_no_pierde_el_resumen_anterior(monkeypatch):
+    from langchain_core.messages import HumanMessage
+
+    from taaml import agente as mod
+
+    monkeypatch.setattr(mod, "UMBRAL_RESUMEN_TOKENS", 100)
+    monkeypatch.setattr(mod, "MENSAJES_TRAS_RESUMEN", 2)
+    agente, modelo = _agente_espia()
+    anteriores = [
+        _resumen_previo("El cliente contó que hay un poste caído"),
+        HumanMessage("p " * 12000),  # más grande que el recorte por defecto de la librería (4000 tokens)
+        AIMessage("entendido"),
+    ]
+    agente.update_state({"configurable": {"thread_id": "hilo-rr"}}, {"messages": anteriores})
+    conversar("gracias", "hilo-rr", agente=agente)
+    pedido_de_resumen = modelo.vistos[0][0]  # la primera llamada es la que escribe el resumen nuevo
+    assert "poste caído" in pedido_de_resumen
+
+
 def test_historial_visible_devuelve_los_turnos_para_pintarlos():
     from taaml.agente import historial_visible
 
@@ -611,6 +654,43 @@ def test_el_borrado_del_cliente_tambien_elimina_sus_reclamos_guardados():
     assert olvidar_cliente("ana", almacen) == 2
     assert almacen.search(("perfil", "ana")) == [] and almacen.search(("reclamos", "ana")) == []
     assert len(almacen.search(("reclamos", "luis"))) == 1  # no toca los de otro cliente
+
+
+def test_el_borrado_del_cliente_tambien_elimina_sus_derivaciones():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import olvidar_cliente
+
+    almacen = InMemoryStore()
+    almacen.put(("derivaciones", "ana"), "d1", {"motivo": "Quiere hablar con una persona", "urgente": False})
+    almacen.put(("derivaciones", "luis"), "d2", {"motivo": "x", "urgente": False})
+    assert olvidar_cliente("ana", almacen) == 1
+    assert almacen.search(("derivaciones", "ana")) == []
+    assert len(almacen.search(("derivaciones", "luis"))) == 1  # no toca los de otro cliente
+
+
+def test_al_olvidar_un_dato_compuesto_el_agente_sabe_que_debe_guardar_el_resto():
+    from langgraph.store.memory import InMemoryStore
+
+    from taaml.agente import Contexto, olvidar_dato_del_cliente
+
+    almacen = InMemoryStore()
+    almacen.put(("perfil", "ana"), "1", {"dato": "Se llama Ana y vive en Ibagué"})
+    almacen.put(("perfil", "ana"), "2", {"dato": "Trabaja en Carvajal"})
+
+    class Corrida:
+        store, context = almacen, Contexto(usuario="ana")
+
+    compuesto = olvidar_dato_del_cliente.func("Ibagué", Corrida)
+    assert "Se llama Ana" in compuesto and "guardar_dato_del_cliente" in compuesto
+    simple = olvidar_dato_del_cliente.func("Carvajal", Corrida)
+    assert "guardar_dato_del_cliente" not in simple  # no invita a volver a guardar lo que se pidió borrar
+
+
+def test_la_herramienta_de_guardar_pide_un_solo_dato_por_llamada():
+    from taaml.agente import guardar_dato_del_cliente
+
+    assert "un solo dato" in guardar_dato_del_cliente.description
 
 
 def test_el_store_en_sqlite_conserva_los_datos_al_reabrir(tmp_path):

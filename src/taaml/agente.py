@@ -508,6 +508,7 @@ class Reclamo(EsquemaConRuntime):
 @tool(args_schema=DatoDelCliente)
 def guardar_dato_del_cliente(dato: str, runtime: ToolRuntime[Contexto]) -> str:
     """Guarda un dato que el cliente contó de sí mismo (nombre, ciudad, empresa, preferencia) para recordarlo en conversaciones futuras.
+    Guarda un solo dato por llamada: si contó varios (por ejemplo nombre y ciudad), llámala una vez por cada uno.
     Úsala solo cuando el cliente comparta ese dato o pida que lo recuerdes; nunca guardes cédulas, claves, tarjetas ni cuentas."""
     if runtime.context.usuario == ANONIMO:
         return "No se guardó: este cliente es anónimo y no hay memoria de largo plazo para él."
@@ -539,6 +540,9 @@ class DatoAOlvidar(EsquemaConRuntime):
         max_length=200,
         description="Palabras del dato que el cliente quiere borrar, por ejemplo «mi nombre» o «Cali».",
     )
+
+
+_VARIOS_DATOS = re.compile(r"[,;]|\. | [ye] ")  # señales de que una entrada guardada junta varios datos
 
 
 def _sin_tildes(texto: str) -> str:
@@ -577,7 +581,13 @@ def olvidar_dato_del_cliente(dato: str, runtime: ToolRuntime[Contexto]) -> str:
     for item in coinciden:
         almacen.delete(_espacio(runtime), item.key)
     borrados = "; ".join(quitar_invisibles(i.value["dato"]) for i in coinciden)
-    return f"Borrado de lo que recuerdo de ti: {borrados}."
+    aviso = ""
+    if any(_VARIOS_DATOS.search(i.value["dato"]) for i in coinciden):  # una entrada puede traer más de un dato
+        aviso = (
+            " Si en ese texto había además otro dato que el cliente no pidió borrar, guárdalo de nuevo, solo y sin lo borrado, "
+            "con `guardar_dato_del_cliente`."
+        )
+    return f"Borrado de lo que recuerdo de ti: {borrados}.{aviso}"
 
 
 @tool(args_schema=Reclamo)
@@ -916,16 +926,22 @@ def validar_reclamo_antes_de_pausar(state: Any, runtime: Any) -> dict | None:
 def limitar_historial(request: Any, handler: Any) -> Any:
     """Al modelo solo le llegan los últimos mensajes que caben en `MAX_TOKENS_HISTORIAL` (siempre empezando en un turno del cliente).
 
+    Si la conversación ya se resumió, el resumen va siempre y lo que viene después ocupa el espacio que deje (al menos la mitad).
     Recorta lo que ve el modelo, no lo guardado: el checkpointer conserva todo y la pantalla puede mostrarlo entero.
     """
+    resumen = [m for m in request.messages[:1] if m.additional_kwargs.get("lc_source") == "summarization"]
+    resto = request.messages[len(resumen) :]
+    espacio = max(MAX_TOKENS_HISTORIAL - count_tokens_approximately(resumen), MAX_TOKENS_HISTORIAL // 2)
+    if resumen and count_tokens_approximately(resto) <= espacio:
+        return handler(request)  # todo cabe: no se quita ni la respuesta que quedó justo después del resumen
     recorte = trim_messages(
-        request.messages,
-        max_tokens=MAX_TOKENS_HISTORIAL,
+        resto,
+        max_tokens=espacio,
         strategy="last",
         token_counter=count_tokens_approximately,
         start_on="human",
     )
-    return handler(request.override(messages=recorte or request.messages))  # un solo turno gigante no se recorta a nada
+    return handler(request.override(messages=[*resumen, *(recorte or resto)]))  # un solo turno gigante no se recorta a nada
 
 
 @dynamic_prompt
@@ -1044,13 +1060,14 @@ def datos_del_cliente(usuario: str, almacen: Any = None) -> list[str]:
 def olvidar_cliente(usuario: str, almacen: Any = None) -> int:
     """Borra todo lo guardado de un cliente (su derecho a la supresión de datos) y devuelve cuántos datos eran.
 
-    Incluye lo que el cliente contó de sí mismo (`perfil`) y los reclamos simulados (`reclamos`).
+    Incluye lo que el cliente contó de sí mismo (`perfil`), los reclamos y reportes simulados (`reclamos`) y las veces que pidió
+    hablar con una persona (`derivaciones`).
     """
     almacen = almacen or almacen_compartido()
     borrados = 0
-    for espacio, limite in ((("perfil", usuario), MAX_DATOS_CLIENTE), (("reclamos", usuario), 1000)):
-        for i in almacen.search(espacio, limit=limite):
-            almacen.delete(espacio, i.key)
+    for nombre, limite in (("perfil", MAX_DATOS_CLIENTE), ("reclamos", 1000), ("derivaciones", 1000)):
+        for i in almacen.search((nombre, usuario), limit=limite):
+            almacen.delete((nombre, usuario), i.key)
             borrados += 1
     return borrados
 
@@ -1093,7 +1110,10 @@ def crear_agente(
             *([con_contexto_recuperado] if en_cadena else []),
             errores_amables,
             SummarizationMiddleware(
-                model=llm, trigger=("tokens", UMBRAL_RESUMEN_TOKENS), keep=("messages", MENSAJES_TRAS_RESUMEN)
+                model=llm,
+                trigger=("tokens", UMBRAL_RESUMEN_TOKENS),
+                keep=("messages", MENSAJES_TRAS_RESUMEN),
+                trim_tokens_to_summarize=None,  # el recorte por defecto (4000) podía dejar fuera el resumen anterior
             ),
             ToolCallLimitMiddleware(run_limit=MAX_LLAMADAS_POR_TURNO, exit_behavior="continue"),
             HumanInTheLoopMiddleware(APROBACION_HUMANA),
