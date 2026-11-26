@@ -3,12 +3,12 @@ import { Navigate, useLocation, useMatch, useNavigate, useParams } from "react-r
 import Markdown from "./Markdown.jsx";
 import { cargarDatos, cargarEstado, cargarMensajes, cargarSalud, enviar, olvidarDatos } from "./api.js";
 
-// Cada tarjeta muestra una capacidad del agente con una pregunta de ejemplo (la misma que enruta a esa herramienta).
+// Las preguntas que más hace un cliente: sirven de punto de partida; lo demás se descubre conversando.
 const SUGERENCIAS = [
-  { icono: "📊", titulo: "Datos exactos", pregunta: "¿Qué sedes hay en Ibagué?" },
-  { icono: "📄", titulo: "Documentos oficiales", pregunta: "¿Qué dice el corpus sobre la política de calidad?" },
-  { icono: "🧭", titulo: "Pregunta mixta", pregunta: "Quiero reportar un daño en Ibagué: ¿qué hago y a qué número llamo?" },
-  { icono: "🧠", titulo: "Memoria", pregunta: "Me llamo María Stella y estudio en la UAO" },
+  { icono: "💳", titulo: "Pagar la factura", pregunta: "¿Cómo puedo pagar mi factura?" },
+  { icono: "⚡", titulo: "Sin energía", pregunta: "Se fue la luz en mi casa, ¿qué hago?" },
+  { icono: "📍", titulo: "Puntos de atención", pregunta: "¿Qué puntos de atención hay en Ibagué?" },
+  { icono: "📝", titulo: "Reclamos", pregunta: "Quiero hacer un reclamo por mi factura" },
 ];
 
 const ALMACENES = { qdrant: "Qdrant", numpy: "búsqueda local", ninguno: "sin índice" };
@@ -228,12 +228,24 @@ export default function App() {
   useEffect(() => {
     if (!hilo || !hayPendiente) return;
     let vivo = true;
-    const cada = setInterval(() => {
-      cargarEstado(hilo)
-        .then((e) => {
-          if (vivo && !e.pendiente) setPendiente(null);
-        })
-        .catch(() => {});
+    const cada = setInterval(async () => {
+      try {
+        const e = await cargarEstado(hilo);
+        if (!vivo || e.pendiente) return;
+        // La persona ya decidió: su respuesta se trae del historial y aparece sin que el cliente escriba nada.
+        const respuesta = (await cargarMensajes(hilo)).filter((m) => m.rol === "assistant").at(-1);
+        if (!vivo) return;
+        if (respuesta) {
+          setMensajes((m) =>
+            m.some((x) => x.rol === "assistant" && x.texto === respuesta.texto)
+              ? m
+              : [...m, { rol: "assistant", texto: respuesta.texto, usadas: "Respuesta de la revisión por una persona", entregado: true }],
+          );
+        }
+        setPendiente(null);
+      } catch {
+        // sin conexión: se vuelve a intentar en la siguiente consulta
+      }
     }, 3000);
     return () => {
       vivo = false;
@@ -429,7 +441,7 @@ export default function App() {
                 texto={m.texto}
                 regenerando={regenerando === i}
                 onRegenerar={hacerRegenerar}
-                puedeRegenerar={i === ultimoAsistente}
+                puedeRegenerar={i === ultimoAsistente && !m.entregado}
               />
             )}
           </div>

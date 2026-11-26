@@ -9,7 +9,7 @@ pytest.importorskip("fastapi")
 from fastapi.testclient import TestClient  # noqa: E402
 
 import api.main as api  # noqa: E402
-from taaml import aprobaciones, avisos_openclaw  # noqa: E402
+from taaml import actividad, aprobaciones, avisos_openclaw  # noqa: E402
 
 cliente = TestClient(api.app)
 CABECERA = {"X-Aprobador": "secreto-largo"}
@@ -132,6 +132,78 @@ def test_el_chat_web_tambien_se_aprueba_desde_el_panel(agente_pausado, monkeypat
     assert p["canal"] == "web"
     assert cliente.post(f"/api/pendientes/{p['codigo']}", json={"decision": "aprobar"}, headers=CABECERA).status_code == 200
     assert "Reclamo radicado: RC-1." in cliente.post("/api/chat", json={"mensaje": "¿ya?", "hilo": hilo}).text
+
+
+HILO_WEB = "fedcba9876543210fedcba9876543210"
+
+
+def _pausar_en_la_web(monkeypatch, agente_pausado):
+    def en_vivo(mensaje, hilo, usuario):
+        if "radica" in mensaje:
+            agente_pausado["pendiente"] = RECLAMO
+            yield {"tipo": "herramienta", "herramienta": "radicar_reclamo", "args": RECLAMO["args"]}
+            yield {"tipo": "pendiente", **RECLAMO}
+        yield {"tipo": "texto", "texto": "Quedó en revisión." if agente_pausado["pendiente"] else "Respuesta normal."}
+
+    monkeypatch.setattr(api, "conversar_en_vivo", en_vivo)
+    monkeypatch.setattr(api, "historial_visible", lambda hilo: [{"rol": "assistant", "texto": "Reclamo radicado: RC-1."}])
+    cliente.post("/api/chat", json={"mensaje": "radica mi reclamo", "hilo": HILO_WEB})
+
+
+def test_el_chat_web_recoge_la_decision_sin_escribir_y_no_se_repite(agente_pausado, monkeypatch):
+    _pausar_en_la_web(monkeypatch, agente_pausado)
+    [p] = _pendientes()
+    cliente.post(f"/api/pendientes/{p['codigo']}", json={"decision": "aprobar"}, headers=CABECERA)
+    assert cliente.get(f"/api/hilos/{HILO_WEB}/estado").json() == {"pendiente": None}
+    assert "RC-1" in cliente.get(f"/api/hilos/{HILO_WEB}/mensajes").text  # el navegador la trae del historial
+    respuesta = cliente.post("/api/chat", json={"mensaje": "¿ya?", "hilo": HILO_WEB}).text
+    assert "Respuesta normal." in respuesta and "RC-1" not in respuesta
+
+
+def test_mientras_se_aplica_la_decision_el_chat_web_sigue_en_revision(agente_pausado, monkeypatch):
+    _pausar_en_la_web(monkeypatch, agente_pausado)
+    vistos = []
+
+    def resolver(hilo, decision, usuario, mensaje=None):
+        agente_pausado["pendiente"] = None  # el agente ya no está pausado, pero todavía no hay respuesta que entregar
+        vistos.append(cliente.get(f"/api/hilos/{hilo}/estado").json())
+        return "Reclamo radicado: RC-1.", []
+
+    monkeypatch.setattr(api, "resolver_aprobacion", resolver)
+    [p] = _pendientes()
+    cliente.post(f"/api/pendientes/{p['codigo']}", json={"decision": "aprobar"}, headers=CABECERA)
+    assert vistos == [{"pendiente": {"herramienta": "radicar_reclamo"}}]
+
+
+def test_abrir_el_historial_no_se_lleva_lo_que_espera_a_un_cliente_de_whatsapp(agente_pausado, monkeypatch):
+    monkeypatch.setattr(api, "historial_visible", lambda hilo: [])
+    _escribir("radica mi reclamo")
+    [p] = _pendientes()
+    cliente.post(f"/api/pendientes/{p['codigo']}", json={"decision": "aprobar"}, headers=CABECERA)
+    hilo, _ = api.ids_del_telefono(TELEFONO)
+    cliente.get(f"/api/hilos/{hilo}/mensajes")
+    assert _escribir("hola") == "Reclamo radicado: RC-1.\n\nRespuesta normal."
+
+
+def test_los_turnos_del_chat_web_salen_en_el_panel(agente_pausado, monkeypatch):
+    actividad.vaciar()
+    _pausar_en_la_web(monkeypatch, agente_pausado)
+    [fila] = cliente.get("/api/actividad", headers=CABECERA).json()["filas"]
+    assert fila["canal"] == "web" and fila["estado"] == "pendiente de aprobación"
+    assert fila["mensaje"] == "radica mi reclamo" and fila["herramientas"] == ["radicar_reclamo"]
+    assert fila["quien"] == _pendientes()[0]["quien"] and HILO_WEB not in str(fila)
+
+
+def test_un_fallo_en_el_chat_web_tambien_queda_en_el_panel(agente_pausado, monkeypatch):
+    def roto(mensaje, hilo, usuario):
+        raise RuntimeError("clave secreta")
+        yield
+
+    actividad.vaciar()
+    monkeypatch.setattr(api, "conversar_en_vivo", roto)
+    cliente.post("/api/chat", json={"mensaje": "hola", "hilo": HILO_WEB})
+    [fila] = cliente.get("/api/actividad", headers=CABECERA).json()["filas"]
+    assert fila["estado"] == "error" and "clave secreta" not in str(fila)
 
 
 def test_los_avisos_exigen_activarlos_y_tener_clave_de_chat(monkeypatch):

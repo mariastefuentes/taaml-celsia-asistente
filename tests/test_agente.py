@@ -825,8 +825,31 @@ def test_la_conversacion_larga_se_resume_y_el_resumen_no_se_pinta(monkeypatch):
     assert any(
         m.additional_kwargs.get("lc_source") == "summarization" for m in guardados
     )  # lo viejo quedó en un resumen
-    assert all(not v["texto"].startswith("Here is a summary") for v in historial_visible("hilo-resumen", agente=agente))
-    assert sum(v["rol"] == "user" for v in historial_visible("hilo-resumen", agente=agente)) < 6
+    visibles = historial_visible("hilo-resumen", agente=agente)
+    assert all(not v["texto"].startswith("Here is a summary") for v in visibles)
+    # El resumen es para el modelo: la pantalla sigue mostrando la conversación entera, en orden.
+    assert [v["texto"].split()[2] for v in visibles if v["rol"] == "user"] == ["0", "1", "2", "3", "4", "5"]
+    assert [v["rol"] for v in visibles] == ["user", "assistant"] * 6
+
+
+def test_tras_un_resumen_el_turno_en_vivo_no_repite_las_herramientas_de_turnos_anteriores(monkeypatch):
+    from taaml import agente as mod
+    from taaml.agente import conversar_en_vivo
+
+    monkeypatch.setattr(mod, "UMBRAL_RESUMEN_TOKENS", 60)
+    monkeypatch.setattr(mod, "MENSAJES_TRAS_RESUMEN", 4)
+    llamada = _llamada("consultar_datos", {"tabla": "sedes", "ciudad": "Ibagué"}, "t1")
+    modelo = ModeloSinTrozos(
+        messages=iter([llamada, AIMessage(content="Hay sedes en Ibagué"), *(AIMessage(content="ok") for _ in range(4))]),
+        vistos=[],
+    )
+    agente = crear_agente(llm=modelo)
+    list(conversar_en_vivo("¿Qué sedes hay en Ibagué? Necesito la dirección y el horario de cada una", "hilo-eco", agente=agente))
+    eventos = list(conversar_en_vivo("gracias", "hilo-eco", agente=agente))
+    guardados = agente.get_state({"configurable": {"thread_id": "hilo-eco"}}).values["messages"]
+    assert any(m.additional_kwargs.get("lc_source") == "summarization" for m in guardados)  # de verdad se resumió
+    assert [e for e in eventos if e["tipo"] in ("herramienta", "fuentes")] == []
+    assert eventos[-1]["usadas"] == "Respondió sin consultar herramientas"
 
 
 def test_los_datos_de_la_respuesta_se_validan_contra_lo_que_el_agente_tuvo_delante():

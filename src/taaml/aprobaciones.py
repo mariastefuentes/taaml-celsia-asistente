@@ -2,7 +2,7 @@
 
 Cuando el agente se pausa (radicar o cancelar un reclamo, reportar un daño), la API lo anota aquí. El panel pide la lista, que no
 trae teléfonos ni identificadores de la conversación: cada pendiente se decide con un código al azar. También guarda las respuestas
-que no se pudieron enviar, para entregarlas con el siguiente mensaje del cliente.
+que no se pudieron enviar: el chat web las recoge del historial y, en los demás canales, salen con el siguiente mensaje del cliente.
 
 Todo vive en memoria del proceso. Si la API se reinicia, la conversación sigue pausada en la base de datos y vuelve a aparecer aquí
 en cuanto el cliente escribe de nuevo.
@@ -29,7 +29,7 @@ class Pendiente:
 
 
 _PENDIENTES: dict[str, Pendiente] = {}  # por hilo: una conversación solo espera una decisión a la vez
-_SIN_ENTREGAR: dict[str, str] = {}  # por hilo
+_SIN_ENTREGAR: dict[str, tuple[str, str]] = {}  # por hilo: (texto, canal)
 _DECIDIENDO: set[str] = set()
 _CERROJO = threading.Lock()
 
@@ -87,16 +87,30 @@ def terminar_decision(hilo: str) -> None:
         _DECIDIENDO.discard(hilo)
 
 
-def guardar_sin_entregar(hilo: str, texto: str) -> None:
+def decidiendo(hilo: str) -> bool:
+    """Si una decisión se está aplicando ahora mismo: la respuesta para el cliente todavía no está lista."""
     with _CERROJO:
-        _SIN_ENTREGAR[hilo] = texto
+        return hilo in _DECIDIENDO
+
+
+def guardar_sin_entregar(hilo: str, texto: str, canal: str = "chat") -> None:
+    with _CERROJO:
+        _SIN_ENTREGAR[hilo] = (texto, canal)
         _recortar(_SIN_ENTREGAR)
 
 
 def tomar_sin_entregar(hilo: str) -> str | None:
     """La respuesta que quedó sin enviar a esa conversación (y la olvida), o None."""
     with _CERROJO:
-        return _SIN_ENTREGAR.pop(hilo, None)
+        entrega = _SIN_ENTREGAR.pop(hilo, None)
+    return entrega[0] if entrega else None
+
+
+def entregada_en_la_web(hilo: str) -> None:
+    """El chat web ya la muestra (la trae del historial), así que no se repite con el siguiente mensaje. Lo de WhatsApp se conserva."""
+    with _CERROJO:
+        if _SIN_ENTREGAR.get(hilo, ("", ""))[1] == "web":
+            del _SIN_ENTREGAR[hilo]
 
 
 def vaciar() -> None:

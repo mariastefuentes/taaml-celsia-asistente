@@ -1280,6 +1280,8 @@ def conversar_en_vivo(
     config = {"configurable": {"thread_id": thread_id}, "run_name": "agente_celsia", "tags": ["agente"]}
     llamadas: list[dict] = []
     hubo_texto = False
+    # Al resumir la memoria, el flujo vuelve a emitir los mensajes que conserva: solo cuenta lo nuevo de este turno.
+    vistos = {m.id for m in agente.get_state(config).values.get("messages", [])}
     for modo, datos in agente.stream(
         entrada, config=config, context=Contexto(usuario=usuario), stream_mode=["updates", "messages"]
     ):
@@ -1295,6 +1297,10 @@ def conversar_en_vivo(
                 continue
             for actualizacion in datos.values():
                 for m in (actualizacion or {}).get("messages", []):
+                    if m.id:
+                        if m.id in vistos:
+                            continue
+                        vistos.add(m.id)
                     if m.type == "tool" and m.name == "buscar_en_base" and m.artifact:
                         yield {"tipo": "fuentes", "fuentes": m.artifact}
                     for ll in getattr(m, "tool_calls", []):
@@ -1320,12 +1326,23 @@ def conversar_en_vivo(
     }
 
 
+def _toda_la_conversacion(agente: Any, thread_id: str) -> list:
+    """Todos los mensajes que pasaron por el hilo, en orden, aunque el resumen ya los haya quitado de la memoria que ve el modelo.
+
+    Salen de los puntos de control, del más viejo al más nuevo; si un mensaje cambió, queda su última versión.
+    """
+    mensajes = {}
+    for punto in reversed(list(agente.get_state_history({"configurable": {"thread_id": thread_id}}))):
+        for m in punto.values.get("messages", []):
+            mensajes[m.id] = m
+    return list(mensajes.values())
+
+
 def historial_visible(thread_id: str, modelo: str = MODELO_AGENTE, agente: Any = None) -> list[dict]:
     """La conversación guardada, lista para pintarla en pantalla: `rol`, `texto` y, en las respuestas, qué herramientas usó."""
     agente = agente or _agente(modelo)
-    mensajes = agente.get_state({"configurable": {"thread_id": thread_id}}).values.get("messages", [])
     visibles, llamadas, fuentes = [], [], []
-    for m in mensajes:
+    for m in _toda_la_conversacion(agente, thread_id):
         if m.type == "human" and m.additional_kwargs.get("lc_source") == "summarization":
             continue  # el resumen de lo anterior es para el modelo, no para la pantalla
         if m.type == "human":
