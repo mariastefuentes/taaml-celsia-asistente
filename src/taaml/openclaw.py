@@ -83,6 +83,7 @@ def problemas(config: dict) -> list[str]:
         fallos.append("plugins.entries.whatsapp.enabled debe ser true")
     if config.get("env", {}).get("shellEnv", {}).get("enabled") is not True:
         fallos.append("env.shellEnv.enabled debe ser true")
+    fallos.extend(_problemas_del_modelo(config))
     sandbox = config.get("agents", {}).get("defaults", {}).get("sandbox", {})
     if sandbox.get("mode") != "all":
         fallos.append("el sandbox debe ser mode «all»")
@@ -128,6 +129,25 @@ def problemas(config: dict) -> list[str]:
         fallos.append("falta el plugin «puente-celsia» (fija el teléfono del cliente con el remitente verificado)")
     if herramientas.get("toolSearch") is not False:
         fallos.append("tools.toolSearch debe ser false: el modelo tiene que ver la herramienta del puente sin buscarla")
+    return fallos
+
+
+def _problemas_del_modelo(config: dict) -> list[str]:
+    """Cada modelo que usan los agentes debe estar declarado con su proveedor: sin eso OpenClaw responde «model not found»."""
+    agentes = config.get("agents", {})
+    usados: list[str] = []
+    for agente in (agentes.get("defaults", {}), *agentes.get("entries", {}).values()):
+        modelo = agente.get("model", {})
+        usados += [modelo.get("primary", ""), *modelo.get("fallbacks", [])]
+    proveedores = config.get("models", {}).get("providers", {})
+    fallos = []
+    for referencia in dict.fromkeys(filter(None, usados)):
+        nombre, _, modelo_id = referencia.partition("/")
+        if modelo_id not in [m.get("id") for m in proveedores.get(nombre, {}).get("models", [])]:
+            fallos.append(f"el modelo «{referencia}» no está declarado en models.providers.{nombre}")
+    for nombre, proveedor in proveedores.items():
+        if not isinstance(proveedor.get("apiKey"), dict):
+            fallos.append(f"models.providers.{nombre}.apiKey debe ser una referencia al entorno, no la clave escrita")
     return fallos
 
 
