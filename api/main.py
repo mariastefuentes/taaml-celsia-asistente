@@ -126,21 +126,32 @@ def _evento(tipo: str, datos: dict) -> str:
 def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
     """Un turno del agente como secuencia de eventos; un fallo del modelo sale como evento `error` sin detalles internos."""
     yield _evento("hilo", {"hilo": hilo})
+    inicio = time.monotonic()
+    estado, herramientas, nota, costo = "respondido", [], False, None  # lo que queda en la fila del panel
     try:
         if previo := aprobaciones.tomar_sin_entregar(hilo):  # lo que una persona decidió desde el último mensaje
             yield _evento("texto", {"texto": f"{previo}\n\n"})
         for e in conversar_en_vivo(mensaje, hilo, usuario=usuario):
             if e["tipo"] == "pendiente":  # queda a la vista en el panel para que una persona decida
                 aprobaciones.registrar(hilo, usuario, e, "web")
+                estado = "pendiente de aprobación"
+            elif e["tipo"] == "herramienta":
+                herramientas.append(e["herramienta"])
+            elif e["tipo"] == "aviso":
+                nota = True
+            elif e["tipo"] == "fin":
+                costo = e.get("costo_usd")
             yield _evento(e["tipo"], {k: v for k, v in e.items() if k != "tipo"})
     except Exception:  # el detalle va al registro del servidor; el cliente recibe un mensaje que no filtra nada interno
         log.exception("falló el turno del hilo %s", hilo)
+        estado = "error"
         yield _evento(
             "error",
             {
                 "mensaje": "No pude responder en este momento. Intenta de nuevo; si sigue fallando, llama a la línea 01 8000 112 115."
             },
         )
+    actividad.registrar("web", hilo, mensaje, estado, herramientas, time.monotonic() - inicio, nota=nota, costo=costo)
 
 
 @app.get("/api/salud")
@@ -373,7 +384,8 @@ def _decidir(telefono: str, decision: str, mensaje: str | None = None) -> dict:
 def _resolver(hilo: str, usuario: str, telefono: str | None, canal: str, decision: str, mensaje: str | None = None) -> dict:
     """Aplica la decisión sobre una conversación pausada y le hace llegar el resultado al cliente.
 
-    Si no se le puede enviar (chat web, o el envío falla), el resultado queda guardado y sale con su siguiente mensaje.
+    Si no se le puede enviar (chat web, o el envío falla), el resultado queda guardado: el chat web lo muestra solo al leer el
+    historial y, en los demás canales, sale con su siguiente mensaje.
     """
     if not aprobaciones.empezar_decision(hilo):
         raise HTTPException(status_code=409, detail="Esa decisión ya se está aplicando")
@@ -388,7 +400,7 @@ def _resolver(hilo: str, usuario: str, telefono: str | None, canal: str, decisio
             aprobaciones.registrar(hilo, usuario, otro, canal, telefono)
         avisado = bool(telefono) and _avisar_al_cliente(telefono, texto, canal)
         if anotado and not avisado:
-            aprobaciones.guardar_sin_entregar(hilo, texto)
+            aprobaciones.guardar_sin_entregar(hilo, texto, canal)
         actividad.registrar("aprobación", telefono or hilo, f"decisión: {decision}", "aprobación")
         return {"decision": decision, "respuesta": texto, "avisado_por_whatsapp": avisado}
     finally:
@@ -470,18 +482,26 @@ def lo_que_hizo_el_agente(desde: int = Query(default=0, ge=0), x_aprobador: str 
 
 @app.get("/api/hilos/{hilo}/estado")
 def estado_del_hilo(hilo: str) -> dict:
-    """Si la conversación espera la decisión de una persona. No expone los argumentos ni consume la decisión."""
+    """Si la conversación espera la decisión de una persona. No expone los argumentos ni consume la decisión.
+
+    Sigue «pendiente» mientras la decisión se está aplicando: la respuesta para el cliente todavía no está lista.
+    """
     if not HILO.match(hilo):
         raise HTTPException(status_code=422, detail="Identificador de hilo inválido")
     pendiente = pendiente_de_aprobacion(hilo)
+    if not pendiente and aprobaciones.decidiendo(hilo):
+        anotado = aprobaciones.por_hilo(hilo)
+        pendiente = {"herramienta": anotado.herramienta if anotado else ""}
     return {"pendiente": {"herramienta": pendiente["herramienta"]} if pendiente else None}
 
 
 @app.get("/api/hilos/{hilo}/mensajes")
 def mensajes(hilo: str) -> dict:
-    """La conversación guardada de un hilo, para recuperarla al recargar la página."""
+    """La conversación guardada de un hilo, para recuperarla al recargar la página o mostrar lo que decidió una persona."""
     if not HILO.match(hilo):
         raise HTTPException(status_code=422, detail="Identificador de hilo inválido")
+    if not aprobaciones.decidiendo(hilo):  # antes de leer: lo que se descarta aquí ya está en el historial que sale
+        aprobaciones.entregada_en_la_web(hilo)
     return {"hilo": hilo, "mensajes": historial_visible(hilo)}
 
 

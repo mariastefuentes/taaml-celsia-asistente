@@ -77,6 +77,7 @@
   const dinero = v => "US$ " + (v < 0.01 ? v.toFixed(5) : v.toFixed(3));
   function resumir() { document.getElementById("n-resp").textContent = nResp; document.getElementById("n-notas").textContent = nNotas; document.getElementById("n-costo").textContent = dinero(costoTotal); }
   const filas = document.getElementById("filas"), estado = document.getElementById("estado"), vacio = document.getElementById("vacio");
+  const SIN_CLAVE = vacio.textContent, SIN_FILAS = "Todavía no ha llegado ningún mensaje. Aquí aparece cada uno, con la herramienta que eligió el agente y lo que tardó.";
   const clase = e => e.startsWith("pendiente") ? "pendiente" : e === "respondido" || e === "aprobación" ? "respondido" : e === "no soportado" ? "nosop" : e === "límite" ? "limite" : "error";
   function celda(texto, extra) { const td = document.createElement("td"); td.textContent = texto; if (extra) td.className = extra; return td; }
   function pintar(f) {
@@ -101,7 +102,8 @@
       if (!r.ok) { avisoDecision.textContent = "No se pudo (error " + r.status + ")."; botones.forEach(b => b.disabled = false); return; }
       const d = await r.json();
       const hecho = decision === "aprobar" ? "Aprobado. " : "Rechazado. ";
-      avisoDecision.textContent = hecho + (d.avisado_por_whatsapp ? "Se le envió la respuesta al cliente." : "No se le pudo enviar: la recibe cuando vuelva a escribir.");
+      const sinEnvio = d.canal === "web" ? "La respuesta le aparece en su chat web." : "No se le pudo enviar: la recibe cuando vuelva a escribir.";
+      avisoDecision.textContent = hecho + (d.avisado_por_whatsapp ? "Se le envió la respuesta al cliente." : sinEnvio);
       codigos = null; consultarPendientes();
     } catch { avisoDecision.textContent = "Sin conexión con la API."; botones.forEach(b => b.disabled = false); }
   }
@@ -133,6 +135,7 @@
       if (!r.ok) { estado.textContent = "Error " + r.status; return; }
       const d = await r.json();
       d.filas.forEach(pintar); ultimo = d.ultimo;
+      vacio.textContent = SIN_FILAS;
       vacio.style.display = filas.children.length ? "none" : "block";
       estado.textContent = "En vivo";
       consultarPendientes();
@@ -141,7 +144,7 @@
   function parar() { clearInterval(temporizador); temporizador = null; }
   document.getElementById("entrar").addEventListener("click", () => {
     token = document.getElementById("token").value; ultimo = 0; filas.innerHTML = ""; nResp = nNotas = costoTotal = 0; resumir(); parar();
-    codigos = null; caja.replaceChildren(); avisoDecision.textContent = "";
+    codigos = null; caja.replaceChildren(); avisoDecision.textContent = ""; vacio.textContent = SIN_CLAVE; vacio.style.display = "block";
     consultar(); temporizador = setInterval(consultar, 2000);
   });
 </script>
