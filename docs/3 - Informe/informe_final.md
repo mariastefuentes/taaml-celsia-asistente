@@ -12,7 +12,7 @@
 
 Celsia publica su información en más de mil páginas y un cliente no tiene dónde preguntar y recibir la respuesta con su fuente. El proyecto construyó un asistente que responde con el contenido oficial de celsia.com y dice «no tengo esa información» cuando la fuente no lo trae. Tiene un agente de LangChain con **20 herramientas** de esquema Pydantic estricto, memoria por capas en PostgreSQL, aprobación humana para lo que cambia algo fuera de la conversación, una API en FastAPI, un **gateway de OpenClaw** versionado en el repositorio con un puente hacia ese agente. Un webhook propio para la API de Meta quedó en el código, pero no se usa en la demostración. Los modelos se consultan por API en la nube: no se usa ningún modelo local.
 
-Medido con el modelo real: el 26 de noviembre, banco verificable **49 de 49**, matriz de enrutamiento **40 de 43**, ataques directos **11 de 11** y órdenes escondidas **8 de 8** sin obedecer; el 24, recuperación del dato en **32 de 35** preguntas (91 %) con 12 fragmentos. Hay 533 pruebas automáticas que corren sin modelos ni red.
+Medido con el modelo real: el 26 de noviembre, banco verificable **49 de 49**, matriz de enrutamiento **40 de 43**, ataques directos **11 de 11** y órdenes escondidas **8 de 8** sin obedecer; el 24, recuperación del dato en **32 de 35** preguntas (91 %) con 12 fragmentos. Hay 547 pruebas automáticas que corren sin modelos ni red.
 
 Lo que **falta** se declara en la sección 11. Lo principal: falta comprobar por WhatsApp, en el computador del bot, la versión actual (reclamos, fuente, memoria y varias personas a la vez).
 
@@ -158,6 +158,7 @@ El recall@10 es la fracción de **todos** los fragmentos relevantes del corpus q
 - **Acciones.** Lo que cambia algo fuera de la conversación exige una persona.
 - **Datos personales.** No se piden cédulas, claves ni tarjetas; la política está en `docs/politica_de_privacidad.md`.
 - **Acceso.** `POST /chat` exige `X-Api-Key` si el servidor define `CHAT_TOKEN`; `POST /aprobar`, el panel y los pendientes exigen `X-Aprobador`; el webhook exige la firma de Meta. La API solo le escribe a un cliente por OpenClaw si hay `CHAT_TOKEN`.
+- **Chat web y teléfonos.** Las rutas del chat web solo aceptan los identificadores al azar que crea el navegador, así que no sirven para leer ni borrar una conversación por teléfono; sin `CHAT_TOKEN`, `/chat` rechaza lo que llega por un túnel (D73).
 - **Abuso.** Límite de 8 mensajes por minuto por teléfono.
 - **OpenClaw.** Controles de la sección 6. **Falta** correr `openclaw security audit` sobre la configuración final y guardar su salida.
 - **Secretos.** Ningún `.env` en el repositorio; una prueba revisa que la plantilla no tenga claves.
