@@ -37,6 +37,21 @@ def test_salud_dice_que_memoria_usa_la_api(monkeypatch):
     assert cliente.get("/api/salud").json()["memoria"] == "sqlite"
 
 
+def test_el_qr_que_genera_el_panel_actualiza_tambien_el_de_la_app():
+    from api.main import NUMERO_AGENTE, _comando_qr
+
+    comando = _comando_qr()
+    assert NUMERO_AGENTE in comando
+    assert "--html" in comando and "--app" in comando
+
+
+def test_el_panel_trae_el_acceso_del_aprobador_y_la_lista_de_pendientes():
+    html = cliente.get("/panel").text
+    assert 'id="token"' in html  # la clave del aprobador se escribe en la pantalla, no viaja en la página
+    assert 'id="pendientes"' in html and "Pendientes de aprobación" in html
+    assert "/api/pendientes" in html and "Por aprobar" in html
+
+
 def test_el_qr_de_whatsapp_se_sirve_para_el_chat_y_el_panel():
     r = cliente.get("/qr-whatsapp.png")
     assert r.status_code == 200

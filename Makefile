@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend chat-web qr-chat-web qr-whatsapp demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida banco-verificable verificar-clon test qa lint tipos skills-check check format clean corpus revisar-corpus descargar datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp openclaw-check openclaw-instalar
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend chat-web qr-chat-web qr-whatsapp demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida banco-verificable verificar-clon test qa lint tipos skills-check check format clean corpus revisar-corpus descargar datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp herramientas openclaw-check openclaw-instalar
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -46,6 +46,7 @@ ayuda:
 	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas al modelo))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini))
 	$(info     make qa              revision con navegador (Playwright): pagina, API y webhook; antes: make chat-web)
+	$(info     make herramientas    lista las 20 herramientas del agente (esquema, tipo y aprobacion humana; gratis))
 	$(info     make lint            errores de codigo con ruff y lock vigente)
 	$(info     make skills-check    valida las skills de .opencode/skills (gratis))
 	$(info     make check           lint + pruebas + skills: lo que corre el CI; correrlo antes de subir)
@@ -175,6 +176,10 @@ tipos:
 # Servidor MCP propio (solo lectura, por stdio): lo lanza el cliente MCP; a mano sirve para ver que arranca.
 mcp:
 	uv run python -m taaml.servidor_mcp
+
+# Catalogo de las 20 herramientas del agente (no llama al modelo). Con ARGS="--json" imprime JSON.
+herramientas:
+	uv run python scripts/49_listar_herramientas.py $(ARGS)
 
 # Configuracion versionada de OpenClaw: --simular solo valida; sin argumentos valida y escribe ~/.openclaw.
 openclaw-check:
