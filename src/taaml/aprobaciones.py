@@ -94,7 +94,10 @@ def decidiendo(hilo: str) -> bool:
 
 
 def guardar_sin_entregar(hilo: str, texto: str, canal: str = "chat") -> None:
+    """Si esa conversación ya tenía una decisión sin entregar, se juntan: la nueva no borra la anterior."""
     with _CERROJO:
+        if previa := _SIN_ENTREGAR.get(hilo):
+            texto = f"{previa[0]}\n\n{texto}"
         _SIN_ENTREGAR[hilo] = (texto, canal)
         _recortar(_SIN_ENTREGAR)
 
