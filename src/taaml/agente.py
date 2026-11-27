@@ -1011,7 +1011,7 @@ def limitar_historial(request: Any, handler: Any) -> Any:
 
 @dynamic_prompt
 def con_fecha_de_hoy(request: Any) -> str:
-    """El prompt de sistema se arma en cada turno: al texto fijo de `v12_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
+    """El prompt de sistema se arma en cada turno: al texto fijo de `v13_agente.md` se le agrega la fecha de hoy (el modelo no la sabe)."""
     base = request.system_message.text if request.system_message else ""
     return f"{base}\n\nFecha de hoy: {date.today().isoformat()}."
 

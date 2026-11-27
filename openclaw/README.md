@@ -51,7 +51,8 @@ openclaw skills list --agent main
 - `tools.fs.workspaceOnly` en `true` y `tools.exec.mode` en `deny`.
 - Sandbox en modo `all` con backend `docker`, scope `agent`, `workspaceAccess: none` y el MCP `celsia__*` permitido dentro.
 - `channels.whatsapp` encendido y abierto (`enabled: true`, `dmPolicy: open`, `allowFrom: ["*"]`) para el auditorio, y `WHATSAPP_ALLOWLIST` en `*` o con números E.164.
-- `session.dmScope: per-channel-peer`.
+- `session.dmScope: per-channel-peer` y `tools.sessions.visibility: self`: cada número tiene su conversación y el chat de un cliente no puede leer ni escribir en las de otros, aunque el sandbox no esté (D70).
+- `commands.allowFrom` en `{"*": []}` y `commands.restart` en `false`: las órdenes internas (`/status`, `/model`, `/new`) no responden en el chat (D72).
 - Cada modelo de los agentes declarado en `models.providers`, con la clave como referencia al entorno.
 - El servidor MCP `celsia` con sus diez herramientas y el puente `puente` (`atender_cliente_celsia`), con el plugin `puente-celsia` activo y `toolSearch` apagado.
 - La skill del proyecto es válida, es la única visible, `skills_read` está permitido y el instalador la copia (`tests/test_openclaw_workspace.py`).

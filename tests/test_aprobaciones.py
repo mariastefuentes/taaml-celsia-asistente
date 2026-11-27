@@ -91,6 +91,13 @@ def test_si_no_se_le_puede_escribir_la_respuesta_sale_con_su_siguiente_mensaje(a
     assert _escribir("hola") == "Respuesta normal."
 
 
+def test_dos_decisiones_sin_entregar_llegan_las_dos():
+    aprobaciones.guardar_sin_entregar("hilo", "Reclamo radicado: RC-1.")
+    aprobaciones.guardar_sin_entregar("hilo", "Daño radicado: DA-2.")
+    assert aprobaciones.tomar_sin_entregar("hilo") == "Reclamo radicado: RC-1.\n\nDaño radicado: DA-2."
+    assert aprobaciones.tomar_sin_entregar("hilo") is None
+
+
 def test_aprobar_por_telefono_tambien_usa_openclaw(agente_pausado, monkeypatch):
     enviados = _activar_openclaw(monkeypatch)
     _escribir("radica mi reclamo")

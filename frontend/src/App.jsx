@@ -413,8 +413,9 @@ export default function App() {
       {recuerdos && (
         <section className="recuerdos" aria-label="Memoria de largo plazo">
           <strong>Memoria de largo plazo</strong>
-          {recuerdos.length === 0 ? <p>No tengo datos tuyos guardados.</p> : <ul>{recuerdos.map((d) => <li key={d}>{d}</li>)}</ul>}
-          {recuerdos.length > 0 && <button className="secundario" onClick={olvidar}>Olvidar todo</button>}
+          {recuerdos.length === 0 ? <p>No tengo datos de tu perfil guardados.</p> : <ul>{recuerdos.map((d) => <li key={d}>{d}</li>)}</ul>}
+          <p>«Olvidar todo» borra tu perfil, tus reclamos y tus pedidos de asesor.</p>
+          <button className="secundario" onClick={olvidar}>Olvidar todo</button>
         </section>
       )}
 
