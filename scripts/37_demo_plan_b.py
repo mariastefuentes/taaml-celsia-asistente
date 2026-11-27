@@ -26,7 +26,7 @@ AVISO = "*** REPETICIÓN GRABADA: no se está generando ahora ***"
 MENSAJES = [
     "¿Qué sedes hay en Ibagué?",
     "¿Cuántas tiendas Celsia hay?",
-    "¿Qué es Celsia Solar?",
+    "¿Qué es una granja solar?",
     "¿Quién ganó el mundial de 2014?",
     "¿Cuánto cuesta un cargador de carro eléctrico?",
     "Me llamo Laura y vivo en Palmira",

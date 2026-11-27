@@ -1,44 +1,44 @@
 {
-  "grabada_el": "2026-11-19",
+  "grabada_el": "2026-11-27",
   "modelo": "deepseek-flash",
   "turnos": [
     {
       "cliente": "¿Qué sedes hay en Ibagué?",
-      "asistente": "En Ibagué hay 6 puntos de atención:\n\n1. Internet Celsia, Carrera 5 N. 41-90. Horario: lunes a viernes 7:30 am - 12:00 m y 1:30 pm - 4:00 pm; sábado 9:00 am a 2:00 pm.\n2. Internet Celsia, Calle 14 # 4-10 Local de la Esquina (Edificio Moncaleano). Horario: lunes a viernes de 7:30 a.m. a 12:00 m. y de 1:30 p.m. a 4:00 p.m.; sábados 9:00 AM 1:00 PM - 2:00 A 4:00 PM.\n3. Ibagué El Papayo, Zona Industrial El Papayo. Horario: lunes a viernes 7:30 am - 12:00 m y 1:30 pm - 4:00 pm; sábado solo recaudo 9:00 am a 2:00 pm.\n4. Ibagué Tienda Carrera Quinta (punto de recaudo y pago), Carrera 5 N. 41-90. Horario: lunes a viernes 7:30 am a 12:00 y de 1:30 a 4:00 pm.\n5. Sede Ibagué – Calle 39 A (sede administrativa), Calle 39 A # 5-15. Teléfono: 608 277 08 22. Horario: 7:15 a.m. - 12:00 m. y 1:30 p.m. - 5:30 p.m.; viernes 7:15 a.m. - 12:00 m. y 1:30 p.m. a 4:30 p.m.\n6. Tienda Ibagué Calle 5N, Carrera 5 N. 41-90. Horario: lunes a jueves de 7:20 a.m. a 12:30 pm. y de 1:30 p.m. a 4:30 p.m.; viernes 7:20 a.m. a 12:30 p.m. y de 1:30 p.m a 3:40 p.m.\n\n¿Quieres que te ayude con algo más, como un trámite o un reclamo?",
+      "asistente": "En Ibagué hay 6 puntos de atención:\n\nTienda Ibagué Calle 5N (Tiendas Celsia): Carrera 5 N. 41-90. Lunes a jueves de 7:20 a.m. a 12:30 p.m. y de 1:30 p.m. a 4:30 p.m.; viernes de 7:20 a.m. a 12:30 p.m. y de 1:30 p.m. a 3:40 p.m.\n\nIbagué Tienda Carrera Quinta (Punto de Recaudo y Pago): Carrera 5 N. 41-90. Lunes a viernes de 7:30 a.m. a 12:00 m. y de 1:30 a 4:00 p.m.\n\nSede Ibagué – Calle 39 A (Sede Administrativa): Calle 39 A # 5-15, teléfono 608 277 08 22. De 7:15 a.m. a 12:00 m. y de 1:30 p.m. a 5:30 p.m.; viernes hasta las 4:30 p.m.\n\nInternet Celsia: Carrera 5 N. 41-90 (lunes a viernes 7:30 a.m. a 12:00 m. y 1:30 a 4:00 p.m., sábado 9:00 a.m. a 2:00 p.m.) y Calle 14 # 4-10, Local de la Esquina, Edificio Moncaleano (lunes a viernes 7:30 a.m. a 12:00 m. y 1:30 a 4:00 p.m., sábado 9:00 a.m. a 1:00 p.m. y 2:00 a 4:00 p.m.).\n\nIbagué El Papayo (Internet Celsia): Zona Industrial El Papayo. Lunes a viernes 7:30 a.m. a 12:00 m. y 1:30 a 4:00 p.m.; sábado solo recaudo de 9:00 a.m. a 2:00 p.m.\n\n¿Quieres que te ayude con algo más, como pagar tu factura o un trámite?",
       "herramientas": [
-        "consultar_datos"
+        "consultar_sedes"
       ],
-      "segundos": 11.3
+      "segundos": 16.8
     },
     {
       "cliente": "¿Cuántas tiendas Celsia hay?",
-      "asistente": "Hay 21 tiendas Celsia en total. Si quieres, te puedo dar el detalle de las tiendas de una ciudad o departamento en particular.",
+      "asistente": "Hay 21 Tiendas Celsia en total. ¿Quieres que te diga cuáles hay en tu ciudad o en alguna en particular?",
       "herramientas": [
-        "consultar_datos"
+        "consultar_sedes"
       ],
-      "segundos": 3.1
+      "segundos": 3.8
     },
     {
-      "cliente": "¿Qué es Celsia Solar?",
-      "asistente": "Celsia Solar es la línea de soluciones de energía solar de Celsia. Con ella Celsia diseña, instala, financia y mantiene sistemas de paneles solares para hogares, empresas y pymes, y también desarrolla granjas solares.\n\nAlgunos beneficios que ofrece: ahorro en la factura, porque la energía generada y no consumida se devuelve a la red y se compensa según la resolución CREG 030; seguimiento de la generación con una app; garantía Celsia en la instalación de 5 años en inversores o microinversores y 15 años en paneles; un mantenimiento preventivo gratis durante el primer año; financiación del 100% del proyecto hasta 8 años; certificación de cumplimiento con la norma RETIE; y garantía del 85% de la generación, con pago de la diferencia si el sistema produce menos.\n\nAdemás, Celsia tiene más de 8 años de experiencia y más de 20 proyectos solares en operación que superan los 350 MW, como Celsia Solar La Victoria 1 y 2 en el Valle del Cauca, de 52,5 MWp.\n\n¿Quieres que te cuente cómo solicitar un sistema solar para tu casa o tu empresa?",
+      "cliente": "¿Qué es una granja solar?",
+      "asistente": "Una granja solar es una instalación a gran escala que usa paneles fotovoltaicos para captar la energía del sol y transformarla en electricidad limpia. Puede conectarse al sistema eléctrico nacional o diseñarse para empresas que buscan reducir costos y su huella de carbono.\n\nSus beneficios incluyen reducir emisiones de CO₂, diversificar la matriz eléctrica, generar empleo local y atraer inversión. En Celsia tenemos más de 8 años de experiencia y más de 20 proyectos en operación que superan los 350 MW, como Celsia Solar La Victoria 1 y 2 (Valle del Cauca, 52,5 MWp) y Dulima y Flandes (Tolima, 28,1 MWp cada una).\n\n¿Te interesa la energía solar para tu casa o tu empresa?",
       "herramientas": [
         "buscar_en_base"
       ],
-      "segundos": 6.0
+      "segundos": 24.0
     },
     {
       "cliente": "¿Quién ganó el mundial de 2014?",
-      "asistente": "No tengo esa información: solo puedo ayudarte con temas de Celsia, como sedes, trámites, tarifas o reclamos. ¿En qué te puedo ayudar?",
+      "asistente": "Eso se sale de lo que puedo ayudarte: solo atiendo temas de Celsia, como sedes, trámites, tarifas o reclamos. ¿En qué te puedo ayudar?",
       "herramientas": [],
-      "segundos": 1.4
+      "segundos": 6.8
     },
     {
       "cliente": "¿Cuánto cuesta un cargador de carro eléctrico?",
-      "asistente": "No encontré el precio de los cargadores en la información disponible. Lo que sí sé es que Celsia ofrece cargadores para carros eléctricos para instalar en casa, con opciones de 3.5kW o 7.5kW, y que debes tener claro el tipo de conector de tu carro y la potencia compatible con tu vivienda.\n\nPara conocer el precio y las condiciones de compra e instalación, te recomiendo comunicarte con la línea 01 8000 112 115. ¿Quieres que te dé también los canales de atención o las ciudades donde se pueden comprar e instalar?",
+      "asistente": "No tengo esa información: el precio del cargador no aparece publicado, porque depende del diagnóstico de tu red eléctrica y de la cotización que hace un experto. Lo que sí sé es que puedes elegir entre un cargador de 3.5 kW o de 7.5 kW, y que el proceso es agendar una visita técnica domiciliaria, hacer el diagnóstico y luego la cotización e instalación.\n\nPara agendarla, escríbenos al WhatsApp 310 336 1353. ¿Quieres que te ayude con algo más sobre movilidad eléctrica?",
       "herramientas": [
         "buscar_en_base"
       ],
-      "segundos": 4.0
+      "segundos": 22.3
     },
     {
       "cliente": "Me llamo Laura y vivo en Palmira",
@@ -46,13 +46,13 @@
       "herramientas": [
         "guardar_dato_del_cliente"
       ],
-      "segundos": 2.4
+      "segundos": 9.2
     },
     {
       "cliente": "¿Cómo me llamo y dónde vivo?",
-      "asistente": "Te llamas Laura y vives en Palmira. ¿En qué más te puedo ayudar?",
+      "asistente": "Te llamas Laura y vives en Palmira. ¿En qué te puedo ayudar?",
       "herramientas": [],
-      "segundos": 1.0
+      "segundos": 5.9
     }
   ]
 }
