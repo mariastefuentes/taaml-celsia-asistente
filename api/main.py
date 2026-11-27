@@ -81,9 +81,9 @@ from taaml.whatsapp import (
 log = logging.getLogger("taaml.api")
 LIMITE = limite_desde_entorno()  # mensajes por teléfono y minuto (ver taaml/limite.py): protege la cuota del modelo
 ORIGENES = ["http://localhost:5173", "http://127.0.0.1:5173"]  # el servidor de desarrollo del frontend
-HILO = re.compile(
-    r"^[0-9a-f]{32}$"
-)  # los hilos y los clientes son uuid4 en hexadecimal: no se acepta otra cosa como id
+# Las rutas del navegador no piden clave: solo aceptan un uuid4 en hexadecimal (al azar, imposible de adivinar) como hilo o como
+# cliente. Los identificadores de un teléfono se pueden calcular sabiendo el número, y por eso nunca tienen esta forma (D73).
+ID_WEB = re.compile(r"^[0-9a-f]{12}4[0-9a-f]{3}[89ab][0-9a-f]{15}$")
 
 
 def mostrar_trazas_en_la_terminal() -> None:
@@ -262,7 +262,7 @@ def chat(pregunta: Pregunta, peticion: Request) -> StreamingResponse:
     if not decision.permitido:
         raise HTTPException(status_code=429, detail=TEXTO_LIMITE, headers={"Retry-After": str(decision.espera_s)})
     hilo = pregunta.hilo or uuid4().hex
-    if not HILO.match(hilo) or (pregunta.usuario and not HILO.match(pregunta.usuario)):
+    if not ID_WEB.match(hilo) or (pregunta.usuario and not ID_WEB.match(pregunta.usuario)):
         raise HTTPException(status_code=422, detail="Identificador inválido")
     return StreamingResponse(
         _turno(pregunta.mensaje, hilo, pregunta.usuario or "anonimo"),
@@ -293,33 +293,42 @@ MENSAJE_DE_FALLO = "En este momento no pude responder. Intenta de nuevo en unos 
 def ids_del_telefono(telefono: str) -> tuple[str, str]:
     """(hilo, usuario) estables para un teléfono: el mismo número siempre vuelve a su conversación y a su memoria.
 
-    Se guardan como un hash de 32 caracteres hexadecimales, el formato que ya aceptan el agente y su memoria, así el número
-    no queda escrito en la base de datos.
+    Se guardan como un hash de 32 caracteres hexadecimales, así el número no queda escrito en la base de datos. Como
+    cualquiera que sepa el número puede calcularlos, nunca tienen forma de uuid4: las rutas del navegador los rechazan.
     """
     digitos = "".join(c for c in telefono if c.isdigit())
-    return (
-        hashlib.sha256(f"hilo:{digitos}".encode()).hexdigest()[:32],
-        hashlib.sha256(f"usuario:{digitos}".encode()).hexdigest()[:32],
-    )
+    return _id_de_telefono(f"hilo:{digitos}"), _id_de_telefono(f"usuario:{digitos}")
 
 
-def _exigir_clave_del_chat(x_api_key: str | None) -> None:
-    """Si el servidor tiene `CHAT_TOKEN`, deja pasar solo con el encabezado `X-Api-Key` igual a ella; sin la variable, `/chat` queda abierto (lo frena el límite por teléfono)."""
+def _id_de_telefono(semilla: str) -> str:
+    """El hash de siempre; si por azar sale con forma de uuid4 (1 de cada 64), se le cambia el carácter que la marca."""
+    identificador = hashlib.sha256(semilla.encode()).hexdigest()[:32]
+    return identificador[:12] + "0" + identificador[13:] if ID_WEB.match(identificador) else identificador
+
+
+def _exigir_clave_del_chat(x_api_key: str | None, peticion: Request) -> None:
+    """Con `CHAT_TOKEN` en el servidor, deja pasar solo con el encabezado `X-Api-Key` igual a ella. Sin la variable, `/chat`
+    atiende únicamente llamadas directas: lo que llega por un túnel o un proxy se rechaza, porque bastaría un número ajeno."""
     esperado = os.environ.get("CHAT_TOKEN")
-    if esperado and not secrets.compare_digest((x_api_key or "").encode(), esperado.encode()):
+    if esperado:
+        if not secrets.compare_digest((x_api_key or "").encode(), esperado.encode()):
+            raise HTTPException(status_code=401, detail="No autorizado")
+    elif "cf-connecting-ip" in peticion.headers or "x-forwarded-for" in peticion.headers:
         raise HTTPException(status_code=401, detail="No autorizado")
 
 
 @app.post("/chat")
-def chat_por_telefono(entrada: MensajeEntrante, x_api_key: str | None = Header(default=None)) -> RespuestaDelAgente:
+def chat_por_telefono(
+    entrada: MensajeEntrante, peticion: Request, x_api_key: str | None = Header(default=None)
+) -> RespuestaDelAgente:
     """Un turno del agente, sin streaming: recibe mensaje y teléfono y devuelve la respuesta en JSON.
 
-    Con `CHAT_TOKEN` definida en el servidor exige el encabezado `X-Api-Key`. El webhook de WhatsApp no pasa por aquí: se protege con la firma de Meta.
+    Con `CHAT_TOKEN` definida en el servidor exige el encabezado `X-Api-Key`; sin ella no atiende lo que llega por un túnel. El webhook de WhatsApp no pasa por aquí: se protege con la firma de Meta.
 
     Si el modelo o una herramienta fallan responde con un mensaje cortés (`ok` en falso) en vez de un error, porque quien llama
     (WhatsApp) tiene que poder reenviar algo al cliente.
     """
-    _exigir_clave_del_chat(x_api_key)
+    _exigir_clave_del_chat(x_api_key, peticion)
     decision = LIMITE.revisar(entrada.telefono)
     if not decision.permitido:
         actividad.registrar("chat", entrada.telefono, entrada.mensaje, "límite")
@@ -538,7 +547,7 @@ def estado_del_hilo(hilo: str) -> dict:
 
     Sigue «pendiente» mientras la decisión se está aplicando: la respuesta para el cliente todavía no está lista.
     """
-    if not HILO.match(hilo):
+    if not ID_WEB.match(hilo):
         raise HTTPException(status_code=422, detail="Identificador de hilo inválido")
     pendiente = pendiente_de_aprobacion(hilo)
     if not pendiente and aprobaciones.decidiendo(hilo):
@@ -550,7 +559,7 @@ def estado_del_hilo(hilo: str) -> dict:
 @app.get("/api/hilos/{hilo}/mensajes")
 def mensajes(hilo: str) -> dict:
     """La conversación guardada de un hilo, para recuperarla al recargar la página o mostrar lo que decidió una persona."""
-    if not HILO.match(hilo):
+    if not ID_WEB.match(hilo):
         raise HTTPException(status_code=422, detail="Identificador de hilo inválido")
     if not aprobaciones.decidiendo(hilo):  # antes de leer: lo que se descarta aquí ya está en el historial que sale
         aprobaciones.entregada_en_la_web(hilo)
@@ -559,7 +568,7 @@ def mensajes(hilo: str) -> dict:
 
 def _usuario_valido(usuario: str) -> str:
     """Devuelve el identificador del cliente o responde 422 si no es un uuid4 hexadecimal."""
-    if not HILO.match(usuario):
+    if not ID_WEB.match(usuario):
         raise HTTPException(status_code=422, detail="Identificador de cliente inválido")
     return usuario
 

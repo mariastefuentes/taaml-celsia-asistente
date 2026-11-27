@@ -1,14 +1,17 @@
+import hashlib
 import json
 import threading
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from api.main import app
+from api.main import ID_WEB, app, ids_del_telefono
 from taaml.agente import MODELO_AGENTE
 
 cliente = TestClient(app)
-HILO = "a" * 32
+HILO = "aaaaaaaaaaaa4aaa8aaaaaaaaaaaaaaa"  # forma de uuid4: la que crea el navegador
+CLIENTE_B = "bbbbbbbbbbbb4bbb8bbbbbbbbbbbbbbb"
+CLIENTE_C = "cccccccccccc4ccc8ccccccccccccccc"
 
 
 def _eventos(texto: str) -> list[tuple[str, dict]]:
@@ -150,8 +153,8 @@ def test_el_chat_pasa_el_cliente_al_agente(monkeypatch):
         yield {"tipo": "fin"}
 
     monkeypatch.setattr("api.main.conversar_en_vivo", falso)
-    cliente.post("/api/chat", json={"mensaje": "hola", "usuario": "b" * 32})
-    assert recibido["usuario"] == "b" * 32
+    cliente.post("/api/chat", json={"mensaje": "hola", "usuario": CLIENTE_B})
+    assert recibido["usuario"] == CLIENTE_B
     cliente.post("/api/chat", json={"mensaje": "hola"})
     assert recibido["usuario"] == "anonimo"
     assert cliente.post("/api/chat", json={"mensaje": "hola", "usuario": "../x"}).status_code == 422
@@ -160,8 +163,8 @@ def test_el_chat_pasa_el_cliente_al_agente(monkeypatch):
 def test_ver_y_borrar_lo_que_el_agente_recuerda(monkeypatch):
     monkeypatch.setattr("api.main.datos_del_cliente", lambda u: ["Vive en Cali"])
     monkeypatch.setattr("api.main.olvidar_cliente", lambda u: 1)
-    assert cliente.get(f"/api/usuarios/{'c' * 32}/datos").json() == {"datos": ["Vive en Cali"]}
-    assert cliente.delete(f"/api/usuarios/{'c' * 32}/datos").json() == {"borrados": 1}
+    assert cliente.get(f"/api/usuarios/{CLIENTE_C}/datos").json() == {"datos": ["Vive en Cali"]}
+    assert cliente.delete(f"/api/usuarios/{CLIENTE_C}/datos").json() == {"borrados": 1}
     assert cliente.get("/api/usuarios/no-valido/datos").status_code == 422
 
 
@@ -274,3 +277,49 @@ def test_salud_dice_cuantos_numeros_estan_autorizados(monkeypatch):
     assert cliente.get("/api/salud").json()["allowlist_whatsapp"] == 2
     monkeypatch.delenv("WHATSAPP_ALLOWLIST", raising=False)
     assert cliente.get("/api/salud").json()["allowlist_whatsapp"] == "abierta"
+
+
+# --- saber un número de celular no abre su conversación ni su memoria ---
+def test_los_ids_de_un_telefono_no_cambian_y_nunca_tienen_forma_de_uuid4():
+    hilo, usuario = ids_del_telefono("+57 300 123 4567")
+    assert (hilo, usuario) == ids_del_telefono("573001234567")
+    assert hilo == hashlib.sha256(b"hilo:573001234567").hexdigest()[:32]  # la memoria que ya existía se conserva
+    for numero in range(573000000000, 573000002000):
+        assert not any(ID_WEB.match(i) for i in ids_del_telefono(str(numero)))
+
+
+def test_el_hash_que_sale_con_forma_de_uuid4_se_ajusta():
+    de_siempre = hashlib.sha256(b"usuario:573000000276").hexdigest()[:32]
+    assert ID_WEB.match(de_siempre)
+    assert ids_del_telefono("573000000276")[1] == de_siempre[:12] + "0" + de_siempre[13:]
+
+
+def test_las_rutas_del_navegador_rechazan_los_ids_de_un_telefono(monkeypatch):
+    llamadas = []
+    for nombre in ("conversar_en_vivo", "historial_visible", "pendiente_de_aprobacion", "datos_del_cliente", "olvidar_cliente"):
+        monkeypatch.setattr(f"api.main.{nombre}", lambda *a, **k: llamadas.append(a))
+    for numero in ("573001234567", "573000000276"):
+        hilo, usuario = ids_del_telefono(numero)
+        respuestas = [
+            cliente.get(f"/api/hilos/{hilo}/estado"),
+            cliente.get(f"/api/hilos/{hilo}/mensajes"),
+            cliente.get(f"/api/usuarios/{usuario}/datos"),
+            cliente.delete(f"/api/usuarios/{usuario}/datos"),
+            cliente.post("/api/chat", json={"mensaje": "hola", "hilo": hilo}),
+            cliente.post("/api/chat", json={"mensaje": "hola", "hilo": HILO, "usuario": usuario}),
+        ]
+        assert [r.status_code for r in respuestas] == [422] * 6
+    assert llamadas == []
+
+
+def test_sin_clave_chat_atiende_directo_pero_no_por_un_tunel(monkeypatch):
+    monkeypatch.delenv("CHAT_TOKEN", raising=False)
+    monkeypatch.setattr("api.main.conversar", lambda m, h, usuario: ("Hola", []))
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
+    cuerpo = {"mensaje": "hola", "telefono": "573009998877"}
+    for cabecera in ({"Cf-Connecting-Ip": "1.2.3.4"}, {"X-Forwarded-For": "1.2.3.4"}):
+        assert cliente.post("/chat", json=cuerpo, headers=cabecera).status_code == 401
+    assert cliente.post("/chat", json=cuerpo).status_code == 200
+    monkeypatch.setenv("CHAT_TOKEN", "clave-de-prueba")
+    con_clave = {"X-Api-Key": "clave-de-prueba", "Cf-Connecting-Ip": "1.2.3.4"}
+    assert cliente.post("/chat", json=cuerpo, headers=con_clave).status_code == 200
