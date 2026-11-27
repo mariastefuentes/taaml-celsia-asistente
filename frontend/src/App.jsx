@@ -79,6 +79,7 @@ function AccionesRespuesta({ indice, reaccion, onReaccion, texto, regenerando, o
   const [copiado, setCopiado] = useState(false);
   const [escuchando, setEscuchando] = useState(false);
   const soportaVoz = typeof speechSynthesis !== "undefined";
+  const hayTexto = Boolean((texto ?? "").trim()); // mientras la respuesta se escribe no hay nada que copiar ni leer
   const activa = (seleccionada) => (seleccionada ? "acc-btn activa" : "acc-btn");
 
   useEffect(() => () => { if (soportaVoz) speechSynthesis.cancel(); }, [soportaVoz]);
@@ -129,7 +130,7 @@ function AccionesRespuesta({ indice, reaccion, onReaccion, texto, regenerando, o
       <button type="button" className={activa(reaccion === "down")} onClick={() => onReaccion(indice, "down")} title="No útil" aria-label="Reaccionar: no útil">
         👎
       </button>
-      {soportaVoz && (
+      {soportaVoz && hayTexto && (
         <button type="button" className={activa(escuchando)} onClick={hacerEscuchar} title="Escuchar la respuesta" aria-label="Escuchar">
           {escuchando ? "⏹" : "🔊"}
         </button>
@@ -455,7 +456,7 @@ export default function App() {
             {m.rol === "assistant" && <Fuentes fuentes={m.fuentes} texto={m.texto} abiertas={detalles} />}
             {detalles && m.tokens > 0 && <p className="pie">{m.tokens.toLocaleString("es-CO")} tokens · ${m.costo?.toFixed(4)} USD</p>}
             </article>
-            {m.rol === "assistant" && (
+            {m.rol === "assistant" && !(enCurso && i === mensajes.length - 1) && (
               <AccionesRespuesta
                 indice={i}
                 reaccion={reacciones[i] ?? null}
