@@ -33,6 +33,8 @@ def test_la_plantilla_cumple_el_endurecimiento_de_la_rubrica():
     assert config["gateway"]["mode"] == "local"
     assert config["gateway"]["bind"] == "loopback"
     assert config["tools"]["fs"]["workspaceOnly"] is True
+    assert config["tools"]["sessions"]["visibility"] == "self"
+    assert config["commands"] == {"allowFrom": {"*": []}, "restart": False}
     assert config["channels"]["whatsapp"]["enabled"] is True
     assert config["channels"]["whatsapp"]["dmPolicy"] == "open"
     assert config["channels"]["whatsapp"]["allowFrom"] == ["*"]
@@ -105,6 +107,37 @@ def test_un_endurecimiento_debilitado_se_detecta():
     config["tools"]["fs"]["workspaceOnly"] = False
     fallos = problemas(config)
     assert len(fallos) >= 3
+
+
+@pytest.mark.parametrize("valor", [None, "tree", "agent", "all"])
+def test_un_chat_que_puede_ver_otros_chats_se_detecta(valor):
+    # sin la clave, OpenClaw usa «all»: la separación quedaría dependiendo solo del sandbox
+    config = configuracion(ENTORMO)
+    if valor is None:
+        del config["tools"]["sessions"]
+    else:
+        config["tools"]["sessions"]["visibility"] = valor
+    assert any("tools.sessions.visibility" in f for f in problemas(config))
+
+
+@pytest.mark.parametrize(
+    ("clave", "valor"),
+    [
+        ("allowFrom", None),
+        ("allowFrom", {"*": ["*"]}),
+        ("allowFrom", {"*": [], "whatsapp": ["*"]}),  # una lista por canal manda sobre la general
+        ("restart", None),
+        ("restart", True),
+    ],
+)
+def test_unas_ordenes_internas_abiertas_al_publico_se_detectan(clave, valor):
+    # sin «commands», cualquiera que escriba puede pedir /status o /model con el canal abierto
+    config = configuracion(ENTORMO)
+    if valor is None:
+        del config["commands"][clave]
+    else:
+        config["commands"][clave] = valor
+    assert any(f"commands.{clave}" in f for f in problemas(config))
 
 
 def test_instalar_escribe_configuracion_y_respeta_lo_existente(tmp_path):

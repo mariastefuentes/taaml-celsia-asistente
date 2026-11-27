@@ -47,6 +47,8 @@ Si ya había una configuración, `make openclaw-instalar ARGS="--forzar"` la **r
 - `bind: loopback` y token de gateway.
 - `tools.deny`: `group:automation`, `group:runtime`, `group:fs`, `sessions_spawn`.
 - `tools.fs.workspaceOnly: true` y `tools.exec.mode: deny`.
+- `tools.sessions.visibility: self`: el chat de un cliente no puede leer los de otros, esté o no el sandbox (D70).
+- `commands.allowFrom` vacío y `commands.restart: false`: desde el chat nadie usa órdenes como `/status`, `/model` o `/new`; se administra desde la terminal (D72).
 - Permisos elevados y navegador apagados.
 - Sandbox Docker en modo `all` con `workspaceAccess: none`, permitiendo dentro `celsia__*`, `puente__*` y `skills_read`, que solo lee la skill del proyecto (D55).
 - Modelo primario y respaldo.

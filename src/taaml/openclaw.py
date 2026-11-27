@@ -73,6 +73,13 @@ def problemas(config: dict) -> list[str]:
             fallos.append(f"tools.deny debe incluir «{grupo}»")
     if herramientas.get("fs", {}).get("workspaceOnly") is not True:
         fallos.append("tools.fs.workspaceOnly debe ser true")
+    if herramientas.get("sessions", {}).get("visibility") != "self":
+        fallos.append("tools.sessions.visibility debe ser «self»: el chat de un cliente no puede leer los de otros")
+    ordenes = config.get("commands", {})
+    if ordenes.get("allowFrom") != {"*": []}:
+        fallos.append('commands.allowFrom debe ser {"*": []}: desde el chat nadie usa órdenes internas como /status o /model')
+    if ordenes.get("restart") is not False:
+        fallos.append("commands.restart debe ser false")
     if herramientas.get("exec", {}).get("mode") != "deny":
         fallos.append("tools.exec.mode debe ser «deny»")
     if herramientas.get("elevated", {}).get("enabled") is not False:

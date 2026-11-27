@@ -17,6 +17,10 @@
   "session": {
     "dmScope": "per-channel-peer"
   },
+  "commands": {
+    "allowFrom": { "*": [] },
+    "restart": false
+  },
   "models": {
     "providers": {
       "deepseek": {
@@ -65,6 +69,9 @@
     "deny": ["group:automation", "group:runtime", "group:fs", "sessions_spawn"],
     "fs": {
       "workspaceOnly": true
+    },
+    "sessions": {
+      "visibility": "self"
     },
     "exec": {
       "mode": "deny"
