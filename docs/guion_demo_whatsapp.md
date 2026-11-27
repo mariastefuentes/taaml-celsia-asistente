@@ -68,7 +68,7 @@ Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/aprobar -Headers @{ "X
 
 ## Qué tan bien lo hace (11:30 a 13:00)
 Abrir `notebooks/analisis_conversaciones.ipynb` y mostrar el mapa t-SNE:
-- Son 114 conversaciones **simuladas** (se dice en voz alta), pasadas por el agente real. Los vectores sí separan los temas: reclamos juntos, datos personales juntos, preguntas de producto en tres grupos.
+- Son 114 conversaciones **simuladas** (se dice en voz alta), pasadas por el agente real. Los vectores sí separan los temas: reclamos juntos, datos personales juntos, preguntas de producto en dos grupos.
 - De 20 conversaciones marcadas como fallidas, 15 son rechazos correctos, 3 son datos que no están en la base y 2 son fallos reales (rechazos erróneos de preguntas de energía, que el prompt v7 corrige). La tasa real es de unos 5 en 114.
 - Límites que decimos nosotros antes de que pregunten: la prueba con Meta se hizo con un número de prueba; el reclamo se radica en un registro simulado, no en el sistema de Celsia; los datos del análisis no son de clientes reales.
 

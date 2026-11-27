@@ -509,6 +509,13 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Límites.** Se probó llamando las herramientas por `/tools/invoke`, no con un mensaje de WhatsApp ni en el computador del bot. La corrida con el sandbox encendido no terminó, así que esa protección no se comprobó ejecutándola. La memoria del agente de Celsia se separa aparte, por teléfono.
 - **Evidencia.** `openclaw/openclaw.example.json`, `src/taaml/openclaw.py`, `tests/test_openclaw.py`.
 
+## D71. Mapas de conversaciones recalculados con Gemini
+- **Contexto.** El análisis t-SNE/UMAP (D23) usaba los embeddings anteriores a D51 y el informe lo advertía.
+- **Decisión.** Se volvió a ejecutar `scripts/36_construir_notebook_tsne.py` con `gemini-embedding-001` sobre las mismas 114 conversaciones simuladas, sin volver a generar las respuestas. Se actualizaron las tres figuras, el texto del cuaderno, el informe y los guiones. El informe suma el recall@10 que ya estaba medido (24/11).
+- **Medición (26/11, una corrida, semillas fijas).** Índice de Rand ajustado 0,53 (antes 0,45); KNN 74 % en el espacio original (antes 61 %), 67 % en 3D y 69 % en 2D; confiabilidad de vecinos PCA 0,848, t-SNE 0,968 y UMAP 0,958.
+- **Límites.** Datos simulados; las respuestas son de una versión anterior del agente, así que las 20 conversaciones fallidas y su lectura no cambian ni describen al agente actual.
+- **Evidencia.** `notebooks/analisis_conversaciones.ipynb`, `docs/3 - Informe/*.png`.
+
 ## D72. Las órdenes internas de OpenClaw quedan apagadas en el chat
 - **Contexto.** Con el acceso abierto (D54) y la plantilla anterior, cualquiera que escribiera podía usar órdenes como `/status`, `/whoami`, `/help`, `/model`, `/context` o `/new` y ver datos internos (versión, modelo, identificador de su sesión).
 - **Decisión.** `commands.allowFrom: {"*": []}` y `commands.restart: false`; `make openclaw-check` falla si cambian. Tampoco el equipo las usa desde el chat: se administra desde la terminal del computador.
