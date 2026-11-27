@@ -55,7 +55,7 @@ Todo queda encendido y probado antes de las 8:00, y se vuelve a comprobar a las 
 | 9:15 – 10:00 | **Memoria y evaluación**: `PostgresSaver` frente a `Store`; el hilo sobrevive al reinicio; t-SNE/UMAP de 114 conversaciones simuladas, recalculados con Gemini el 26/11 (índice de Rand 0,53; KNN 74 % frente a 18 % del azar), y sus límites | María Stella |
 | 10:00 – 10:45 | **OpenClaw**: plantilla versionada (`openclaw/openclaw.example.json`), `bind: loopback`, `tools.deny`, `fs.workspaceOnly`, sandbox Docker, acceso abierto a propósito y `security audit`; workspace con identidad y límites separados | Jensen |
 | 10:45 – 11:30 | **Seguridad**: inyección directa (11/11) e indirecta (8/8, leída a mano: una falsa alarma de la regla), ambas el 26/11, límite por teléfono, clave en `/chat`, HITL, sin `.env` en el repo | Nicolás |
-| 11:30 – 12:00 | **Calidad**: `uv sync`, 533 pruebas aprobadas (`make test`), ruff, pre-commit, CI y `make verificar-clon`; lo que no está probado (muchas personas a la vez) | Nicolás |
+| 11:30 – 12:00 | **Calidad**: `uv sync`, 543 pruebas aprobadas (`make test`), ruff, pre-commit, CI y `make verificar-clon`; lo que no está probado (muchas personas a la vez) | Nicolás |
 
 Cada quien responde lo suyo. Si una pregunta cae en terreno ajeno, se contesta con lo que se sabe y se pasa la palabra; no se improvisa una cifra.
 
