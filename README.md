@@ -13,7 +13,7 @@ Base de conocimiento y agente conversacional sobre **Celsia**, empresa de energ�
 
 ## Problema y solución
 
-**Problema de información.** La información pública de Celsia está repartida en más de mil páginas de celsia.com, y no hay un lugar donde preguntar y recibir la respuesta con su fuente.
+**Problema de información.** La información pública de Celsia está repartida en más de mil páginas de celsia.com. Celsia ya atiende por varios canales, entre ellos un WhatsApp con su asistente virtual Luz I.A.; este proyecto explora un siguiente paso: preguntar con las propias palabras y recibir la respuesta con su fuente.
 
 **Solución.** Un sistema de **RAG** (generación aumentada por recuperación): se descarga y limpia el sitio, se divide en fragmentos, y para cada pregunta se buscan los 12 más parecidos por significado (embeddings en una base vectorial Qdrant). Solo esos fragmentos van al prompt, con instrucciones que obligan a responder con ellos y a citar la fuente.
 
