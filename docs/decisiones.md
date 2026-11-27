@@ -502,3 +502,9 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Límites.** Si en el mismo paso se pidió más de una herramienta, o la herramienta no hizo nada, responde el modelo como antes. La única excepción es reportar un daño junto con la consulta de líneas de atención: en el ensayo con el modelo real pidió las dos a la vez y el texto fijo ya trae esas líneas. Si el cliente pidió algo más en el mensaje y el modelo pensaba atenderlo después de la acción, esa parte se pierde y hay que volver a pedirla. El mensaje de rechazo lo sigue redactando el modelo a partir de un texto fijo.
 - **Evidencia.** `src/taaml/agente.py`, `tests/test_agente.py`, `tests/test_memoria_postgres.py`.
 
+## D71. Mapas de conversaciones recalculados con Gemini
+- **Contexto.** El análisis t-SNE/UMAP (D23) usaba los embeddings anteriores a D51 y el informe lo advertía.
+- **Decisión.** Se volvió a ejecutar `scripts/36_construir_notebook_tsne.py` con `gemini-embedding-001` sobre las mismas 114 conversaciones simuladas, sin volver a generar las respuestas. Se actualizaron las tres figuras, el texto del cuaderno, el informe y los guiones. El informe suma el recall@10 que ya estaba medido (24/11).
+- **Medición (26/11, una corrida, semillas fijas).** Índice de Rand ajustado 0,53 (antes 0,45); KNN 74 % en el espacio original (antes 61 %), 67 % en 3D y 69 % en 2D; confiabilidad de vecinos PCA 0,848, t-SNE 0,968 y UMAP 0,958.
+- **Límites.** Datos simulados; las respuestas son de una versión anterior del agente, así que las 20 conversaciones fallidas y su lectura no cambian ni describen al agente actual.
+- **Evidencia.** `notebooks/analisis_conversaciones.ipynb`, `docs/3 - Informe/*.png`.

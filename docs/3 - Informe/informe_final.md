@@ -14,7 +14,7 @@ Celsia publica su información en más de mil páginas y un cliente no tiene dó
 
 Medido con el modelo real: el 26 de noviembre, banco verificable **49 de 49**, matriz de enrutamiento **40 de 43**, ataques directos **11 de 11** y órdenes escondidas **8 de 8** sin obedecer; el 24, recuperación del dato en **32 de 35** preguntas (91 %) con 12 fragmentos. Hay 533 pruebas automáticas que corren sin modelos ni red.
 
-Lo que **falta** se declara en la sección 11. Lo principal: el canal de WhatsApp de OpenClaw no se ha vinculado todavía con un número real.
+Lo que **falta** se declara en la sección 11. Lo principal: falta comprobar por WhatsApp, en el computador del bot, la versión actual (reclamos, fuente, memoria y varias personas a la vez).
 
 ## 1. Problema y solución
 
@@ -136,13 +136,15 @@ La entrada se valida con Pydantic (teléfono de 7 a 15 dígitos, mensaje de 1 a 
 
 **Recuperación** (35 preguntas con respuesta):
 
-| Método | 12 fragmentos | 8 fragmentos | nDCG@10 |
-|---|---|---|---|
-| Por palabras | 54 % | 51 % | 0,290 |
-| Híbrido | 89 % | 80 % | 0,479 |
-| Embeddings | **91 %** | 83 % | 0,572 |
+| Método | 12 fragmentos | 8 fragmentos | nDCG@10 | recall@10 |
+|---|---|---|---|---|
+| Por palabras | 54 % | 51 % | 0,290 | 0,254 |
+| Híbrido | 89 % | 80 % | 0,479 | 0,485 |
+| Embeddings | **91 %** | 83 % | 0,572 | 0,529 |
 
-Con lo que ve el agente (mezcla, 4 fragmentos) el dato aparece en **28 de 35** (80 %); su nDCG@10 es 0,565.
+Con lo que ve el agente (mezcla, 4 fragmentos) el dato aparece en **28 de 35** (80 %); su nDCG@10 es 0,565 y su recall@10, 0,524.
+
+El recall@10 es la fracción de **todos** los fragmentos relevantes del corpus que entra en los 10 primeros (relevante: cumple el patrón de la intención de la pregunta). Se midió el 24/11 (`scripts/21_metricas_ranking.py`).
 
 **Lo que estas cifras no dicen.**
 - Las 35 preguntas son las mismas con las que se ajustó el diccionario de sinónimos: con preguntas nuevas el acierto sería menor. Diferencias de una o dos preguntas no demuestran que un método sea mejor.
@@ -162,7 +164,7 @@ Con lo que ve el agente (mezcla, 4 fragmentos) el dato aparece en **28 de 35** (
 
 ## 10. Análisis de conversaciones con t-SNE y UMAP (opcional)
 
-> **Estas cifras y figuras se calcularon con los embeddings anteriores** (`nomic-embed-text-v2-moe`, local), antes de pasar a Gemini (D51). El código del cuaderno ya usa Gemini, pero **no se ha vuelto a ejecutar**.
+> Vectores, figuras y cifras recalculados el 26/11 con Gemini (`gemini-embedding-001`), sobre las mismas conversaciones de antes: las respuestas no se volvieron a generar (D71).
 
 **Datos.** 114 conversaciones **simuladas**: las preguntas las escribió el equipo y las respondió el agente de entonces. No describen a clientes reales.
 
@@ -170,10 +172,10 @@ Con lo que ve el agente (mezcla, 4 fragmentos) el dato aparece en **28 de 35** (
 
 ![t-SNE en 3D de las 114 conversaciones simuladas](tsne_conversaciones_3d.png)
 
-- **Los vectores capturan el tema.** K-means, sin ver la categoría, recupera la estructura con un índice de Rand ajustado de 0,45. KNN (5 vecinas) acierta la categoría el 61 % de las veces en el espacio original, el 58 % en el t-SNE 3D y el 70 % en el 2D, contra 18 % del azar. t-SNE exagera los grupos locales: sirve para mirar, no demuestra que proyectar agregue información.
+- **Los vectores capturan el tema.** K-means, sin ver la categoría, recupera la estructura con un índice de Rand ajustado de 0,53. KNN (5 vecinas) acierta la categoría el 74 % de las veces en el espacio original, el 67 % en el t-SNE 3D y el 69 % en el 2D, contra 18 % del azar. Para buscar conversaciones parecidas se usa el espacio original; t-SNE sirve para mirar.
 - **Dónde fallaba.** De 20 conversaciones marcadas como fallidas (18 %), al leerlas: 15 eran rechazos correctos, 3 vacíos de la base y 2 fallos reales. La tasa de fallo útil fue 5 de 114 (4 %).
 
-**PCA, t-SNE y UMAP.** Confiabilidad de vecinos (k=5): PCA 0,887, t-SNE 0,953 y UMAP 0,930 (D23).
+**PCA, t-SNE y UMAP.** Confiabilidad de vecinos (k=5): PCA 0,848, t-SNE 0,968 y UMAP 0,958 (D71).
 
 ![PCA, t-SNE y UMAP sobre las mismas conversaciones](comparacion_pca_tsne_umap.png)
 
@@ -182,14 +184,13 @@ Con lo que ve el agente (mezcla, 4 fragmentos) el dato aparece en **28 de 35** (
 | Pendiente al 26/11 | Efecto |
 |---|---|
 | Guardar la prueba del puente desde un teléfono externo y probar en el equipo del bot el aviso de aprobación | Es el criterio del canal |
-| Configurar un modelo de respaldo en OpenClaw | Si falla DeepSeek, el gateway no tiene alternativa |
+| Probar el modelo de respaldo (D68) y el gateway como servicio en el equipo del bot | El respaldo solo se probó en otro equipo, y el servicio nunca |
 | Correr `openclaw security audit` sobre la configuración final | Evidencia de endurecimiento |
-| Repetir el análisis t-SNE con Gemini | Las cifras de la sección 10 son anteriores |
 
 **Limitaciones.**
 - El sistema corre en un computador local: si se apaga o cambia de red, deja de responder.
 - Reclamos, reportes y solicitudes de asesor son simulados.
-- No se ha probado con muchas personas a la vez.
+- Varias personas a la vez solo se probaron sin WhatsApp (26/11: 3 y 8 simultáneas, 11 de 11 bien, hasta 10 s).
 - El índice vectorial no se versiona: cada copia lo reconstruye con `make indice` y una clave de Google. Si la API de embeddings falla, la búsqueda cae a palabras (54 %).
 - Tres datos que Celsia no publica (precio del cargador, fecha límite de pago, facturación por estimación) no están en la base; el agente lo dice.
 - Las evaluaciones son pequeñas: sirven para detectar fallos, no para estimar el desempeño con clientes.
@@ -225,14 +226,14 @@ uv run python scripts/10_evaluar_recuperacion.py --k 12
 | 1.3 Memoria por capas (7 %) | Sección 4 | Hecho; ensayar el reinicio en vivo |
 | 2.1 Pipeline de datos (5 %) | Sección 5; `scripts/01` a `07` | Hecho |
 | 2.2 RAG sobre Qdrant con citas (6 %) | Secciones 5 y 8 | Hecho |
-| 2.3 Evaluación del conocimiento (4 %) | Secciones 8 y 10 | Hecho; t-SNE por repetir |
-| 3.1 Gateway OpenClaw (8 %) | Sección 6 | Plantilla validada; falta respaldo y equipo de la demo |
-| 3.2 WhatsApp con allowlist E.164 (10 %) | Secciones 6 y 7 | **Pendiente: número real y allowlist** |
-| 3.3 Workspace (7 %) | Sección 6; `openclaw/workspace/` | Hecho; escribir la bitácora |
+| 2.3 Evaluación del conocimiento (4 %) | Secciones 8 y 10 | Hecho |
+| 3.1 Gateway OpenClaw (8 %) | Sección 6 | Plantilla con respaldo (D68); falta el servicio y el equipo de la demo |
+| 3.2 WhatsApp con allowlist E.164 (10 %) | Secciones 6 y 7 | Canal abierto a propósito (D54); **pendiente: comprobar la versión actual por WhatsApp** |
+| 3.3 Workspace (7 %) | Sección 6; `openclaw/workspace/` | Hecho; bitácora con una entrada (26/11) |
 | 3.4 Skills y MCP (5 %) | Sección 6 | Hecho; mostrar la invocación en vivo |
 | 4.1 Código y pruebas (7 %) | Sección 8; CI | Hecho |
 | 4.2 Seguridad (7 %) | Sección 9 | Falta `security audit` final |
-| 4.3 Documentación (6 %) | Este informe, README, `docs/decisiones.md`, guía de despliegue | Unificar guía y plantilla |
+| 4.3 Documentación (6 %) | Este informe, README, manual de uso, `docs/decisiones.md`, guía de despliegue | Hecho |
 | 5.1 y 5.2 Sustentación (10 %) | `docs/guion_sustentacion_final.md` | Por ensayar |
 
 ## Anexo C. Declaración de uso de IA
@@ -244,7 +245,7 @@ uv run python scripts/10_evaluar_recuperacion.py --k 12
 | `gemini-3.8-flash` y `deepseek-v4-pro` (API) | Respaldo del agente; Gemini fue además el modelo del Módulo 2 | El respaldo tiene pruebas automáticas; su calidad no se midió aparte |
 | `gemini-3.5-flash` (API) | Modelo de preguntas, resumen y FAQ del Módulo 1 | Evaluación con 59 preguntas (`informe_taller1.md`) |
 | `gemini-embedding-001` (API) | Embeddings de fragmentos y preguntas | Recuperación y ranking (sección 8) |
-| `nomic-embed-text-v2-moe` y `llama3.2` (locales, retirados) | Embeddings y respaldo antes de D51; las cifras de la sección 10 | Declarado como evidencia anterior |
+| `nomic-embed-text-v2-moe` y `llama3.2` (locales, retirados) | Embeddings y respaldo antes de D51 | Declarado como evidencia anterior |
 | LangSmith | Trazas de cada turno | Comparación de la traza con la respuesta |
 
 ## Referencias
