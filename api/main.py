@@ -209,19 +209,21 @@ def estado_whatsapp() -> dict:
     }
 
 
+def _comando_qr() -> list[str]:
+    """El comando que genera el QR; `--app` deja el mismo código en assets para el chat web y el panel."""
+    return [sys.executable, str(RAIZ / "scripts" / "48_qr_whatsapp.py"), NUMERO_AGENTE, "--html", "--app"]
+
+
 @app.post("/api/whatsapp/qr")
 def generar_qr_whatsapp(peticion: Request) -> dict:
-    """Genera el QR con el mecanismo existente (`make qr-whatsapp ARGS="+573150154664 --html"`).
+    """Genera el QR con el mecanismo existente (`make qr-whatsapp ARGS="+573150154664 --html --app"`).
 
     Solo se permite desde la interfaz local de este servidor (el origen es loopback); el número del bot es el fijo.
     """
     if peticion.client.host not in ("127.0.0.1", "::1", "localhost"):
         raise HTTPException(status_code=403, detail="Solo se genera el QR desde la interfaz local de este servidor")
     try:
-        salida = subprocess.run(
-            [sys.executable, str(RAIZ / "scripts" / "48_qr_whatsapp.py"), NUMERO_AGENTE, "--html"],
-            capture_output=True, text=True, timeout=60, check=False,
-        )
+        salida = subprocess.run(_comando_qr(), capture_output=True, text=True, timeout=60, check=False)
     except subprocess.TimeoutExpired:
         log.exception("la generación del QR de WhatsApp se acabó")
         raise HTTPException(status_code=500, detail="La generación del QR tardó demasiado; intenta de nuevo")
