@@ -184,9 +184,11 @@ export default function App() {
   const enConversacion = useMatch("/c/:hilo");
   const direccionConocida = enInicio || enConversacion; // los dos hooks se llaman siempre: no se pueden encadenar con ||
   const hiloViejo = new URLSearchParams(search).get("hilo"); // direcciones antiguas: /?hilo=<id>
-  const [hilo, setHilo] = useState(hiloDeLaRuta ?? hiloViejo);
+  const hiloDeLaDireccion = hiloDeLaRuta ?? hiloViejo;
+  // Una dirección dañada no es una conversación: si se guardara, ni la consulta del historial ni la primera pregunta funcionarían.
+  const [hilo, setHilo] = useState(HILO_VALIDO.test(hiloDeLaDireccion ?? "") ? hiloDeLaDireccion : null);
   const [mensajes, setMensajes] = useState([]);
-  const [recuperando, setRecuperando] = useState(HILO_VALIDO.test(hiloDeLaRuta ?? hiloViejo ?? "")); // al abrir una conversación guardada no se muestra la bienvenida mientras llega
+  const [recuperando, setRecuperando] = useState(HILO_VALIDO.test(hiloDeLaDireccion ?? "")); // al abrir una conversación guardada no se muestra la bienvenida mientras llega
   const [texto, setTexto] = useState("");
   const [enCurso, setEnCurso] = useState(false);
   const [pendiente, setPendiente] = useState(null); // una persona está revisando algo de este hilo

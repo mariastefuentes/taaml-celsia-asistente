@@ -529,3 +529,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Alternativa descartada.** Mezclar el número con una clave secreta: obligaba a configurar otra variable y dejaba en blanco toda la memoria guardada. Con la decisión tomada solo cambia el identificador que ya tenía forma de uuid4 (1 de cada 64).
 - **Límites.** No es un inicio de sesión: quien consiga el enlace de una conversación web puede leerla. `/chat` sin clave sigue abierto para llamadas directas desde el mismo computador.
 - **Evidencia.** `api/main.py`, `tests/test_api.py`.
+
+## D74. Revisión con navegador (Playwright) antes de cada push
+- **Contexto.** El Anuncio 008 pide una auditoría con Playwright: flujo del pitch, consola y red sin errores, webhook con respuesta 200, tamaños de celular y escritorio, y las pruebas en `tests/e2e/`.
+- **Decisión.** Playwright como dependencia de desarrollo y `make qa`. Por defecto levanta un servidor propio con un agente simulado (sin modelo, sin Meta y sin costo) y usa el Edge del equipo; con `QA_URL` revisa la aplicación encendida. Queda fuera de `make test` y de la revisión de GitHub.
+- **Alternativa descartada.** Correrla en cada PR en GitHub: obligaba a compilar el chat web y descargar un navegador la víspera de la sustentación.
+- **Límites.** No entra a WhatsApp ni se ha corrido en el computador del bot.
+- **Evidencia.** `tests/e2e/test_qa_navegador.py`, `docs/qa_playwright.md`.

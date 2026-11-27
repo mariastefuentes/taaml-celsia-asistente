@@ -14,6 +14,9 @@ os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 import pytest  # noqa: E402
 
+# La revisión con navegador (tests/e2e/) abre Edge o Chrome: solo corre con `make qa`, no en `make test` ni en la revisión de GitHub.
+collect_ignore = [] if os.environ.get("QA_E2E") == "1" else ["e2e"]
+
 
 @pytest.fixture(autouse=True)
 def sin_clave_de_chat(monkeypatch):

@@ -1,7 +1,7 @@
 # Atajos del proyecto. Uso: make          (muestra este menú)
 #                                    make <objetivo>
 # Todo corre con uv; nada de pip ni requirements.txt (regla del curso).
-.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend chat-web qr-chat-web qr-whatsapp demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida banco-verificable verificar-clon test lint tipos skills-check check format clean corpus revisar-corpus descargar datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp openclaw-check openclaw-instalar
+.PHONY: help ayuda setup modulo1 app app-taller1 api api-cadena api-sqlite db-up db-down frontend chat-web qr-chat-web qr-whatsapp demo-inyeccion demo-limpiar demo-plan-b exportar-chats ensayo-whatsapp preguntas-hostiles informe-borrador herramienta-caida banco-verificable verificar-clon test qa lint tipos skills-check check format clean corpus revisar-corpus descargar datos scraping-demo indice recuperacion ensayo ensayo-agente evaluar pdf mcp openclaw-check openclaw-instalar
 
 # El primer objetivo es el que corre `make` sin argumentos: el menú de ayuda.
 help: ayuda
@@ -45,6 +45,7 @@ ayuda:
 	$(info     make informe-borrador    genera docs/3 - Informe/borrador_informe_final.md con los datos del repo (gratis))
 	$(info     make ensayo-agente   conversacion de 4 turnos con el agente real (GASTA CUOTA: 8 a 12 llamadas al modelo))
 	$(info     make test            pruebas automaticas (gratis, sin Gemini))
+	$(info     make qa              revision con navegador (Playwright): pagina, API y webhook; antes: make chat-web)
 	$(info     make lint            errores de codigo con ruff y lock vigente)
 	$(info     make skills-check    valida las skills de .opencode/skills (gratis))
 	$(info     make check           lint + pruebas + skills: lo que corre el CI; correrlo antes de subir)
@@ -153,6 +154,11 @@ demo-inyeccion:
 
 test:
 	uv run --group analisis python -m pytest
+
+# Revision con navegador (Playwright, anuncio 008). Antes: make chat-web. Sin QA_URL usa un servidor propio con agente simulado (gratis).
+qa: export QA_E2E = 1
+qa:
+	uv run python -m pytest tests/e2e -rs
 
 lint:
 	uvx ruff@0.17.3 check --select F,E9 src tests scripts app

@@ -37,6 +37,7 @@ Base de conocimiento y asistente de preguntas y respuestas (Q&A) de **Celsia**, 
 ## Antes de cada commit
 - No incluir `.env`, `.venv/` ni claves. Revisar `git status`.
 - Correr `make test` (pruebas automáticas, gratis), `make lint` y `make skills-check` (o `make check`, que hace los tres).
+- Si cambia el chat web, el panel, la API o el webhook, correr antes de subir `make chat-web` y `make qa` (revisión con Playwright, gratis; [docs/qa_playwright.md](docs/qa_playwright.md)).
 - Si se agregó una dependencia, `uv.lock` debe ir en el mismo commit.
 - Actualizar el documento afectado (bitácora o análisis) con la decisión tomada, y, si es el informe, regenerar su PDF.
 - Mensajes de commit semánticos y en español: `feat:`, `fix:`, `docs:`, `test:`, `refactor:` o `chore:`, seguido de una frase descriptiva. Las decisiones importantes se registran en `docs/decisiones.md` (alternativas, razón y límites). Engram no se usó en este proyecto.
