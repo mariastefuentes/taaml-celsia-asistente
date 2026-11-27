@@ -12,7 +12,6 @@ Antes de tu primera contribución, léela junto con el [Código de conducta](./C
 | [Python](https://www.python.org/downloads/) | 3.12 | Fijada en `.python-version` |
 | [`uv`](https://docs.astral.sh/uv/getting-started/installation/) | Última estable | Gestor de paquetes y entornos |
 | [Git](https://git-scm.com/) | Última estable | Control de versiones |
-| [Ollama](https://ollama.com/) | Última estable | Embeddings y modelo local de respaldo |
 | [GitHub CLI](https://cli.github.com/) | Opcional | Facilita los PR |
 
 > **Regla del proyecto:** está prohibido usar `pip` o `requirements.txt`. Toda la gestión
@@ -27,7 +26,7 @@ make setup
 make check
 ```
 
-`make setup` instala las dependencias, crea el `.env` y descarga los modelos de Ollama.
+`make setup` instala las dependencias y crea el `.env`. No se usan modelos locales: las claves de DeepSeek y Google van en el `.env`.
 `make` sin argumentos muestra todos los atajos.
 
 ## Flujo de trabajo con Git
@@ -56,13 +55,13 @@ Nunca hagas `push` a `main` "para ver si funciona": verifica antes con `make che
 - Estilo: PEP 8 y PEP 257, con Ruff.
 - Nombres: `snake_case` para funciones y variables, `PascalCase` para clases y
   `UPPER_CASE` para constantes.
-- Pruebas con `pytest`, sin Gemini ni Ollama (solo componentes).
+- Pruebas con `pytest`, sin modelos ni red (solo componentes).
 - Nunca subas secretos (`.env`, claves), datos pesados ni entornos virtuales.
 
 ```bash
 make lint      # errores de código con ruff y lock vigente
 make test      # pruebas automáticas
-make check     # lint + pruebas: lo mismo que corre el CI
+make check     # lint + pruebas + skills
 make format    # da formato con ruff (revisa el diff antes del commit)
 make clean     # borra cachés
 ```

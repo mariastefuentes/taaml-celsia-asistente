@@ -74,7 +74,7 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | 8. Prueba del scraper (specs 008) | ✅ Hecha | `tests/test_scraper.py` |
 | 9. Etapa Descubrir (specs 009) | ✅ Hecha | `data/2_silver/_descubrimiento.json` |
 | 11. Agente con memoria y router (specs 011) | ✅ Hecha | `src/taaml/agente.py`, `consulta_datos.py`, API `api/` y frontend `frontend/` |
-| 13. Agente en producción con WhatsApp (specs 013) | ✅ Código fusionado; falta la prueba con Meta real | `api/main.py`, `src/taaml/whatsapp.py`, `limite.py`, `prompts/v7_agente.md` |
+| 13. Agente en producción con WhatsApp (specs 013) | ✅ Código fusionado; Meta solo se probó con su número de prueba (20/11) y la demo va por OpenClaw (D56) | `api/main.py`, `src/taaml/whatsapp.py`, `limite.py`, `prompts/v13_agente.md` |
 
 ## 3. Stack técnico
 
@@ -84,13 +84,13 @@ Tampoco es un *crawler* del dominio completo, ni procesa datos personales de cli
 | **Gestor de paquetes y entorno** | [`uv`](https://docs.astral.sh/uv/) |
 | **Build backend** | `uv_build` (src-layout, paquete `taaml`) |
 | **HTTP y scraping** | `requests` + `beautifulsoup4` + `lxml` |
-| **Orquestación de LLM** | LangChain (`langchain`, `langchain-google-genai`, `langchain-openai`, `langchain-ollama`) |
-| **Modelo por defecto** | `deepseek-flash` (Q&A, Resumen y FAQ); respaldo `ollama:llama3.2` |
-| **Modelo del agente** | `deepseek-flash` (DeepSeek-V4.1-Flash-1017, API de pago); respaldo `gemini-3.8-flash` y `ollama:llama3.2` |
-| **Embeddings** | `nomic-embed-text-v2-moe` en Ollama (local, sin costo) |
+| **Orquestación de LLM** | LangChain (`langchain`, `langchain-google-genai`, `langchain-openai`) |
+| **Modelo por defecto** | `deepseek-flash` (Q&A, Resumen y FAQ); respaldo `deepseek-v4-pro` (nube) y, en la app del Taller 1, la respuesta guardada |
+| **Modelo del agente** | `deepseek-flash` (DeepSeek-V4.1-Flash-1017, API de pago); respaldo `gemini-3.8-flash` y `deepseek-v4-pro`, ambos en la nube (D51) |
+| **Embeddings** | `gemini-embedding-001` (API de Google, 768 dimensiones; D51) |
 | **Base vectorial** | Qdrant en modo local (persistente, sin servidor), similitud del coseno |
 | **Interfaz** | API FastAPI + frontend React (`api/`, `frontend/`, Módulo 2); Streamlit solo para el Taller 1 (`app/`) |
-| **Testing** | `pytest` (409 pruebas, sin modelos ni red) |
+| **Testing** | `pytest` (547 pruebas, sin modelos ni red) |
 | **Linting** | Ruff (`F`, `E9`) + `uv lock --check` |
 | **CI/CD** | GitHub Actions (`.github/workflows/ci.yml`) |
 
@@ -111,7 +111,7 @@ taaml-celsia-asistente/
 │   ├── reordenar.py          # reordenamiento opcional de candidatos
 │   ├── validacion.py         # cifras, correos y enlaces sin respaldo
 │   ├── respaldo.py           # cadena de modelos y respuestas guardadas
-│   ├── agente.py             # agente con memoria, cinco herramientas, aprobación humana y router (DeepSeek)
+│   ├── agente.py             # agente con memoria, 20 herramientas, aprobación humana y router (DeepSeek)
 │   ├── whatsapp.py           # webhook de WhatsApp: firma, mensajes y envío
 │   ├── limite.py             # límite de mensajes por teléfono
 │   ├── conversaciones.py     # lectura de las conversaciones guardadas para el análisis t-SNE
@@ -182,7 +182,7 @@ taaml-celsia-asistente/
 | GitHub Actions | CI en cada PR y push a `main` | `.github/workflows/ci.yml` |
 
 - La **CI debe estar en verde** antes de fusionar un Pull Request.
-- Las pruebas no llaman a Gemini ni a Ollama: la suite corre sin red y sin cuota.
+- Las pruebas no llaman a ningún modelo: la suite corre sin red y sin cuota.
 - Toda dependencia nueva entra con `uv add` / `uv add --dev` (nunca editando `uv.lock`).
 
 ## 7. Repositorio y Git

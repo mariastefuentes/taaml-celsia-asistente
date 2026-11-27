@@ -1,5 +1,7 @@
 # Guion de la demo del Taller 2 (Agente Celsia)
 
+> **Reemplazado.** Guion del Módulo 2, con modelos locales que ya no se usan; se conserva como registro. El vigente es [`guion_sustentacion_final.md`](guion_sustentacion_final.md).
+
 Duración prevista: 8 a 10 minutos. Todo ocurre en la pestaña **Agente** de la aplicación, en **una sola conversación**, porque la memoria es parte de lo que se muestra.
 Las preguntas salen de la matriz de enrutamiento (`docs/2 - Conjunto de prueba/matriz_enrutamiento.csv`); los tiempos y costos son los medidos con `gemini-3.8-flash` (`resultados/matriz_enrutamiento_resultados.csv`).
 

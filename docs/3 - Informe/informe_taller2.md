@@ -1,6 +1,6 @@
 # Informe del Taller 2: agente de Celsia con memoria, herramientas y enrutamiento
 
-> **Estado en que se entregó el Taller 2.** Este informe describe el agente tal como estaba en ese momento (Gemini como modelo, memoria en SQLite, prompt v4). El Módulo 3 cambió varias cosas: el modelo del agente es DeepSeek, la memoria va en PostgreSQL, el prompt vigente es v7, hay cinco herramientas con esquemas estrictos, aprobación humana para los reclamos y un servidor propio para WhatsApp. Lo vigente está en el [README](../../README.md) y en [docs/decisiones.md](../decisiones.md).
+> **Estado en que se entregó el Taller 2.** Este informe describe el agente tal como estaba en ese momento (Gemini como modelo, memoria en SQLite, prompt v4). El Módulo 3 cambió varias cosas: el modelo del agente es DeepSeek, la memoria va en PostgreSQL, el prompt vigente es v13, hay 20 herramientas con esquemas estrictos, aprobación humana para los reclamos y la demo va por el WhatsApp de OpenClaw. Los diagramas de este informe muestran Ollama y `llama3.2`, que ya no se usan: hoy no hay modelos locales (D51). Lo vigente está en el [README](../../README.md) y en [docs/decisiones.md](../decisiones.md).
 
 ## Resumen
 

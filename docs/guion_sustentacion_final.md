@@ -67,7 +67,7 @@ Respuestas preparadas, por si aparecen:
 - **«¿Y si el modelo alucina?»** Tres capas: solo fragmentos recuperados, nota «dato sin respaldo» cuando una cifra no está en la fuente y banco verificable de 49 casos: 49/49 el 26/11, con las 20 herramientas.
 - **«¿Por qué cualquiera le puede escribir? ¿Y la allowlist?»** Está abierto a propósito, para que cualquier invitado lo pruebe. La rúbrica pide allowlist y hoy no hay lista de números: se dice así. Lo que protege: límite de 8 mensajes por minuto por teléfono en nuestro servidor, el bot no tiene herramientas para ejecutar programas ni abrir archivos del computador (`tools.deny`) y los reclamos necesitan aprobación humana.
 - **«¿Por qué no un modelo local?»** El anuncio pide no usarlo: el modelo del agente, sus respaldos y los embeddings (Gemini) van por API en la nube, con las claves en variables de entorno (D51).
-- **«¿Qué pasa si falla WhatsApp?»** El plan B es el chat web con QR, con el mismo agente. Como último recurso, `make demo-plan-b` repite una conversación grabada el 19/11: es anterior a las 20 herramientas (usa `consultar_datos`, ya retirada) y se dice.
+- **«¿Qué pasa si falla WhatsApp?»** El plan B es el chat web con QR, con el mismo agente. Como último recurso, `make demo-plan-b` repite una conversación real grabada el 27/11 con `deepseek-flash`: la pantalla avisa que es una repetición, y se dice.
 
 ## Versión en inglés (décimas de 5.1 y 5.2)
 

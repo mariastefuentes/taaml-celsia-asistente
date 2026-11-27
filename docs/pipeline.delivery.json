@@ -1,17 +1,17 @@
 {
   "schemaVersion": 1,
-  "receiptId": "ea15e045-544a-4338-9db5-8c00a6c87ade",
+  "receiptId": "83f0c5e8-d0cd-47e0-bd6b-9fa60614cda8",
   "status": "current",
   "command": "deliver",
   "type": "dataflow",
-  "input": "C:\\taaml\\docs\\pipeline.json",
-  "output": "C:\\taaml\\docs\\pipeline.html",
+  "input": "C:\\t123\\docs\\pipeline.json",
+  "output": "C:\\t123\\docs\\pipeline.html",
   "specification": {
-    "sha256": "4100293d9693be12fcdcae1f152acb40362a0767f0d70efb4ac6b628ca94de97",
-    "bytes": 2819
+    "sha256": "9a844527efa5a896e36351824af753e917f80f6b699c16e1e92b0ecdc490764a",
+    "bytes": 2816
   },
   "artifact": {
-    "sha256": "7f03c95743a29313586d6e1dca863331232036d0c5237f4a3e2e3cd9cde3483e",
-    "bytes": 838790
+    "sha256": "0a57f2bf22a2d83796969966d559d4ebe3bea8f0a664f995a281c94e00ccd543",
+    "bytes": 818355
   }
 }
