@@ -19,6 +19,19 @@ collect_ignore = [] if os.environ.get("QA_E2E") == "1" else ["e2e"]
 
 
 @pytest.fixture(autouse=True)
+def limpiar_cache_de_modelos():
+    """No reutilizar un modelo cacheado cuando una prueba retira sus credenciales."""
+    try:
+        from taaml.tareas import obtener_modelo
+    except ImportError:
+        yield
+        return
+    obtener_modelo.cache_clear()
+    yield
+    obtener_modelo.cache_clear()
+
+
+@pytest.fixture(autouse=True)
 def sin_clave_de_chat(monkeypatch):
     """Las pruebas llaman a /chat sin clave aunque el .env tenga CHAT_TOKEN (la que la mide la fija ella misma)."""
     monkeypatch.delenv("CHAT_TOKEN", raising=False)
