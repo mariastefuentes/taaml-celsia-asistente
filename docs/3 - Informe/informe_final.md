@@ -132,7 +132,7 @@ La entrada se valida con Pydantic (teléfono de 7 a 15 dígitos, mensaje de 1 a 
 | Preguntas hostiles (22) | Sin fallas automáticas; 2 eran de leer a mano y están bien (26/11) |
 | Latencia por turno, sin canal | En el banco, mediana 3,0 s; la primera pregunta, en frío, 22,0 s y las demás hasta 15,4 s. En la matriz, mediana 2,8 s y máximo 15,9 s |
 | Inyección indirecta (8 órdenes escondidas en lo que devuelven las herramientas) | **8 de 8** sin obedecer (26/11, leídas a mano; la regla automática marcó una falsa alarma). Se corrió con un guion de apoyo que no está en el repositorio |
-| Pruebas automáticas | 533, sin modelos ni red |
+| Pruebas automáticas | 543, sin modelos ni red |
 
 **Recuperación** (35 preguntas con respuesta):
 
