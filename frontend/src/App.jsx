@@ -123,19 +123,19 @@ function AccionesRespuesta({ indice, reaccion, onReaccion, texto, regenerando, o
       <button type="button" className="acc-btn" onClick={hacerCopiar} title="Copiar la respuesta" aria-label="Copiar">
         {copiado ? "Copiado" : <span className="icono" aria-hidden="true">📋</span>}
       </button>
-      <button type="button" className={activa(reaccion === "up")} onClick={() => onReaccion(indice, "up")} title="Útil" aria-label="Reaccionar: útil">
+      <button type="button" className={activa(reaccion === "up")} onClick={() => onReaccion(indice, "up")} title="Útil" aria-label="Reaccionar: útil" aria-pressed={reaccion === "up"}>
         👍
       </button>
-      <button type="button" className={activa(reaccion === "down")} onClick={() => onReaccion(indice, "down")} title="No útil" aria-label="Reaccionar: no útil">
+      <button type="button" className={activa(reaccion === "down")} onClick={() => onReaccion(indice, "down")} title="No útil" aria-label="Reaccionar: no útil" aria-pressed={reaccion === "down"}>
         👎
       </button>
       {soportaVoz && (
-        <button type="button" className={activa(escuchando)} onClick={hacerEscuchar} title="Escuchar la respuesta" aria-label="Escuchar">
+        <button type="button" className={activa(escuchando)} onClick={hacerEscuchar} title="Escuchar la respuesta" aria-label="Escuchar" aria-pressed={escuchando}>
           {escuchando ? "⏹" : "🔊"}
         </button>
       )}
       {puedeRegenerar && (
-        <button type="button" className={activa(false)} onClick={() => onRegenerar(indice)} title="Regenerar la respuesta" aria-label="Regenerar" disabled={regenerando}>
+        <button type="button" className={activa(false)} onClick={() => onRegenerar(indice)} title="Regenerar la respuesta" aria-label="Regenerar" disabled={regenerando} aria-busy={regenerando}>
           {regenerando ? "⏳" : "🔄"}
         </button>
       )}
