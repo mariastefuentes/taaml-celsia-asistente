@@ -5,23 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Panel en vivo · Agente Celsia</title>
 <style>
-  :root { --fondo:#0b1020; --panel:#141b30; --texto:#e8ecf6; --suave:#8f9ab8; --borde:#27304d; --ok:#34d399; --aviso:#fbbf24; --mal:#f87171; --acento:#60a5fa; }
+  /* Colores del sitio de Celsia: naranja #ff812d, gris #3d3d3d y blanco. El naranja no se usa en letra pequeña: no se lee. */
+  :root { --marca:#ff812d; --gris:#3d3d3d; --fondo:#f5f5f5; --panel:#fff; --texto:#3d3d3d; --suave:#666; --borde:#ddd; --ok:#17703c; --aviso:#8a5300; --mal:#b3261e; --acento:#a84600; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--fondo); color:var(--texto); font:16px/1.4 system-ui, sans-serif; }
-  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; padding:16px 24px; border-bottom:1px solid var(--borde); }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; padding:16px 24px; background:var(--gris); color:#fff; border-bottom:4px solid var(--marca); }
   h1 { margin:0; font-size:20px; }
   .acceso { display:flex; gap:8px; align-items:center; }
   input { background:var(--panel); border:1px solid var(--borde); color:var(--texto); padding:8px 10px; border-radius:8px; }
-  button { background:var(--acento); color:#06101f; border:0; padding:8px 14px; border-radius:8px; font-weight:600; cursor:pointer; }
-  #estado { color:var(--suave); font-size:14px; }
+  button { background:var(--marca); color:#1f1f1f; border:0; padding:8px 14px; border-radius:8px; font-weight:600; cursor:pointer; }
+  #estado { color:#e0e0e0; font-size:14px; }
   main { padding:16px 24px; }
   #pendientes:empty { display:none; }
-  .pendiente-caja { background:var(--panel); border:1px solid var(--borde); border-left:4px solid var(--aviso); border-radius:12px; padding:12px 16px; margin:0 0 12px; }
+  .pendiente-caja { background:var(--panel); border:1px solid var(--borde); border-left:6px solid var(--marca); border-radius:12px; padding:12px 16px; margin:0 0 12px; }
   .pendiente-caja h2 { margin:0 0 4px; font-size:16px; }
   .pendiente-caja p { margin:2px 0; color:var(--suave); font-size:14px; overflow-wrap:anywhere; }
   .pendiente-caja div { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:8px; }
   .pendiente-caja p.espera { color:var(--aviso); }
-  #luces { display:flex; flex-wrap:wrap; gap:8px 16px; padding:8px 24px; border-bottom:1px solid var(--borde); font-size:14px; }
+  #luces { display:flex; flex-wrap:wrap; gap:8px 16px; padding:8px 24px; background:var(--panel); border-bottom:1px solid var(--borde); font-size:14px; }
   #luces:empty { display:none; }
   .luz::before { content:""; display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; background:var(--ok); }
   .luz.apagada { color:var(--mal); }
@@ -34,28 +35,28 @@
   .usadas { margin:-4px 0 12px; color:var(--suave); font-size:14px; }
   .usadas summary { cursor:pointer; }
   .usadas p { margin:6px 0 0; overflow-wrap:anywhere; }
-  button.rechazar { background:var(--mal); }
+  button.rechazar { background:var(--mal); color:#fff; }
   button:disabled { opacity:.5; cursor:default; }
   #aviso-decision { color:var(--aviso); }
   #aviso-decision:empty { display:none; }
-  table { width:100%; border-collapse:collapse; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); }
   th, td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--borde); vertical-align:top; }
-  th { color:var(--suave); font-weight:500; font-size:13px; text-transform:uppercase; letter-spacing:.04em; }
+  th { color:var(--suave); font-weight:500; font-size:13px; text-transform:uppercase; letter-spacing:.04em; border-bottom:2px solid var(--marca); }
   td.msg { max-width:46ch; }
   td.ocultar { white-space:nowrap; }
-  .etiqueta { display:inline-block; padding:2px 8px; border-radius:999px; font-size:13px; background:var(--panel); border:1px solid var(--borde); margin-right:4px; }
+  .etiqueta { display:inline-block; padding:2px 8px; border-radius:999px; font-size:13px; background:#fff1e6; border:1px solid #ffc79b; margin-right:4px; }
   .respondido { color:var(--ok); } .pendiente { color:var(--aviso); } .limite, .error, .nosop { color:var(--mal); }
   .vacio { color:var(--suave); padding:24px 0; }
   .resumen { display:flex; flex-wrap:wrap; gap:24px; margin:0 0 12px; color:var(--suave); font-size:15px; }
-  .resumen b { color:var(--texto); font-size:20px; margin-left:6px; }
+  .resumen b { color:var(--acento); font-size:20px; margin-left:6px; }
   .alerta { color:var(--aviso); }
-  .nota { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:12px; color:#06101f; background:var(--aviso); }
-  .qr { display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--borde); border-left:4px solid #25d366; border-radius:12px; padding:8px 12px; margin:0 0 16px; }
-  .qr-abrir { background:#fff; padding:3px; line-height:0; flex:none; cursor:zoom-in; }
+  .nota { display:inline-block; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:12px; color:#1f1f1f; background:#ffd24d; }
+  .qr { display:flex; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--borde); border-left:4px solid var(--marca); border-radius:12px; padding:8px 12px; margin:0 0 16px; }
+  .qr-abrir { background:#fff; border:1px solid var(--borde); padding:3px; line-height:0; flex:none; cursor:zoom-in; }
   .qr-abrir img { width:56px; height:56px; }
   .qr strong { display:block; font-size:15px; }
   .qr p { margin:2px 0 0; color:var(--suave); font-size:13px; }
-  #qr-grande { border:0; border-radius:16px; padding:24px; background:#fff; color:#0b1020; text-align:center; cursor:zoom-out; }
+  #qr-grande { border:0; border-radius:16px; padding:24px; background:#fff; color:var(--gris); text-align:center; cursor:zoom-out; }
   #qr-grande::backdrop { background:rgba(0,0,0,.85); }
   #qr-grande img { display:block; width:70vmin; height:70vmin; }
   #qr-grande p { margin:12px 0 0; font-size:18px; font-weight:600; }
@@ -63,7 +64,7 @@
     header, main { padding:12px; }
     #luces { padding:8px 12px; }
     .ocultar, thead { display:none; }
-    table, tbody { display:block; }
+    table, tbody { display:block; background:none; }
     /* En el celular cada mensaje es una tarjeta: hora, canal y estado arriba; debajo el mensaje, las herramientas y el tiempo. */
     tbody tr { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; background:var(--panel); border:1px solid var(--borde); border-radius:12px; padding:10px 12px; margin:0 0 10px; }
     td { border:0; padding:0; }
