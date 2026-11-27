@@ -53,6 +53,7 @@ analisis = [
 ]
 dev = [
     "pgserver>=0.1.4",
+    "playwright>=1.65.2",
     "pytest>=9.2.0",
 ]
 

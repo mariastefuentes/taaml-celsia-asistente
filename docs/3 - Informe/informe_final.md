@@ -133,6 +133,7 @@ La entrada se valida con Pydantic (teléfono de 7 a 15 dígitos, mensaje de 1 a 
 | Latencia por turno, sin canal | En el banco, mediana 3,0 s; la primera pregunta, en frío, 22,0 s y las demás hasta 15,4 s. En la matriz, mediana 2,8 s y máximo 15,9 s |
 | Inyección indirecta (8 órdenes escondidas en lo que devuelven las herramientas) | **8 de 8** sin obedecer (26/11, leídas a mano; la regla automática marcó una falsa alarma). Se corrió con un guion de apoyo que no está en el repositorio |
 | Pruebas automáticas | 547, sin modelos ni red |
+| Revisión con navegador (27/11, Playwright, `make qa`) | 14 de 14 con un servidor propio; 10 y 4 omitidas con el índice y el modelo reales. Encontró dos errores del chat web, ya corregidos (`docs/qa_playwright.md`) |
 
 **Recuperación** (35 preguntas con respuesta):
 
@@ -212,6 +213,7 @@ make api                 # API con PostgreSQL local, puerto 8000
 make openclaw-check      # valida la plantilla de OpenClaw sin escribir
 make openclaw-instalar   # escribe la configuración y copia el workspace
 make test                # pruebas, sin modelos ni red
+make chat-web && make qa # revisión con navegador (Playwright), sin modelos ni costo
 make verificar-clon      # clona GitHub y corre lint y pruebas en una carpeta vacía
 make banco-verificable   # 49 preguntas con el modelo real (gasta cuota)
 uv run python scripts/22_matriz_enrutamiento.py      # matriz de enrutamiento (gasta cuota)
