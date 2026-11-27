@@ -26,8 +26,8 @@ Revisión del 23 de noviembre de 2026, con cifras al 26. Cada fila dice **dónde
 | **3.2** WhatsApp con allowlist E.164 | 10 % | Canal de OpenClaw con QR público (D54) visible en el chat web y el panel (`/qr-whatsapp.png`), allowlist en el puente (D49, modo abierto `*`) y aprobación en el panel (D56). El webhook de Meta no se usa | **Guardar la prueba desde dos teléfonos externos y probar el aviso de aprobación en el equipo del bot** |
 | **3.3** Workspace operativo | 7 % | `openclaw/workspace/` (`SOUL`, `AGENTS`, `USER`, `MEMORY`, bitácora), D48 | Escribir la bitácora del día |
 | **3.4** Skills/MCP | 5 % | `src/taaml/servidor_mcp.py` (10 herramientas), `tests/test_servidor_mcp.py`, `.opencode/skills/` | Ninguna |
-| **4.1** Código, pruebas y `uv` | 7 % | 531 pruebas, ruff, pre-commit, CI, `make verificar-clon` | Ninguna |
-| **4.2** Seguridad y hardening | 7 % | Sandbox y `tools.deny` versionados, HITL, límite por teléfono, inyección 11/11 | **`openclaw security audit` real** y pegarlo con fecha |
+| **4.1** Código, pruebas y `uv` | 7 % | 533 pruebas, ruff, pre-commit, CI, `make verificar-clon` | Ninguna |
+| **4.2** Seguridad y hardening | 7 % | Sandbox y `tools.deny` versionados, HITL, límite por teléfono, inyección directa 11/11 e indirecta 8/8 (26/11) | **`openclaw security audit` real** y pegarlo con fecha |
 | **4.3** Documentación final | 6 % | README, guía de despliegue, diagramas Archify, informes, `.env` fuera del repo | Regenerar el PDF del informe si cambia |
 | **5.1** Pitch de 7 minutos | 6 % | `docs/guion_sustentacion_final.md` | Ensayarlo con cronómetro |
 | **5.2** Discusión técnica de 8 minutos | 4 % | Mismo guion, reparto por integrante | Ensayar preguntas del público |
