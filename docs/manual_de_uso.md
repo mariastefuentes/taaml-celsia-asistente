@@ -12,7 +12,7 @@ Para instalarlo, ver el [README](../README.md) y la [guía de despliegue](guia_d
 
 | Para | Escriba, por ejemplo |
 |---|---|
-| Saber cómo se hace un trámite | «¿Cómo cancelo mi servicio?» |
+| Preguntar por un tema del sitio de Celsia | «¿Qué es una granja solar?» |
 | Encontrar una sede y su horario | «¿Qué sedes hay en Ibagué?» |
 | Saber si hay atención en su ciudad | «¿Hay atención presencial en Tuluá?» |
 | Un teléfono o un correo | «¿Cuál es la línea de atención y el correo?» |
