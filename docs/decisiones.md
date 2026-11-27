@@ -522,3 +522,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Medición.** OpenClaw 2026.11.6 en una carpeta temporal, con un canal de prueba (no WhatsApp) y modelo simulado (26/11). Antes contestaron las órdenes informativas y `/new`; `/config` y `/restart` se negaron. Después las 12 probadas no recibieron respuesta y los mensajes normales siguieron llegando al modelo y a la herramienta.
 - **Límites.** No probado por WhatsApp ni en el computador del bot; tampoco una orden escrita dentro de una frase. El cliente ya no puede reiniciar su conversación con `/new`.
 - **Evidencia.** `openclaw/openclaw.example.json`, `src/taaml/openclaw.py`, `tests/test_openclaw.py`. Las salidas de la medición se guardaron fuera del repositorio.
+
+## D73. Saber un número de celular no abre su conversación ni su memoria
+- **Contexto.** El identificador de la conversación y el de la memoria de quien escribe por teléfono salen de un cálculo público sobre su número, y las rutas del chat web no piden clave. El 27/11 se comprobó en un servidor de prueba con números inventados: sabiendo el número se leía la conversación y se borraban sus datos.
+- **Decisión.** Las rutas del chat web solo aceptan identificadores con forma de uuid4, que el navegador crea al azar, y los de un teléfono nunca tienen esa forma. Sin `CHAT_TOKEN`, `/chat` no atiende lo que llega por un túnel o un proxy.
+- **Alternativa descartada.** Mezclar el número con una clave secreta: obligaba a configurar otra variable y dejaba en blanco toda la memoria guardada. Con la decisión tomada solo cambia el identificador que ya tenía forma de uuid4 (1 de cada 64).
+- **Límites.** No es un inicio de sesión: quien consiga el enlace de una conversación web puede leerla. `/chat` sin clave sigue abierto para llamadas directas desde el mismo computador.
+- **Evidencia.** `api/main.py`, `tests/test_api.py`.

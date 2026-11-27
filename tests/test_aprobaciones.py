@@ -133,7 +133,7 @@ def test_el_chat_web_tambien_se_aprueba_desde_el_panel(agente_pausado, monkeypat
         yield {"tipo": "texto", "texto": "Quedó en revisión." if agente_pausado["pendiente"] else "Respuesta normal."}
 
     monkeypatch.setattr(api, "conversar_en_vivo", en_vivo)
-    hilo = "0123456789abcdef0123456789abcdef"
+    hilo = "0123456789ab4def8123456789abcdef"
     cliente.post("/api/chat", json={"mensaje": "radica mi reclamo", "hilo": hilo})
     [p] = _pendientes()
     assert p["canal"] == "web"
@@ -141,7 +141,7 @@ def test_el_chat_web_tambien_se_aprueba_desde_el_panel(agente_pausado, monkeypat
     assert "Reclamo radicado: RC-1." in cliente.post("/api/chat", json={"mensaje": "¿ya?", "hilo": hilo}).text
 
 
-HILO_WEB = "fedcba9876543210fedcba9876543210"
+HILO_WEB = "fedcba9876544210bedcba9876543210"
 
 
 def _pausar_en_la_web(monkeypatch, agente_pausado):
@@ -188,7 +188,7 @@ def test_abrir_el_historial_no_se_lleva_lo_que_espera_a_un_cliente_de_whatsapp(a
     [p] = _pendientes()
     cliente.post(f"/api/pendientes/{p['codigo']}", json={"decision": "aprobar"}, headers=CABECERA)
     hilo, _ = api.ids_del_telefono(TELEFONO)
-    cliente.get(f"/api/hilos/{hilo}/mensajes")
+    assert cliente.get(f"/api/hilos/{hilo}/mensajes").status_code == 422  # el id de un teléfono no entra por la web
     assert _escribir("hola") == "Reclamo radicado: RC-1.\n\nRespuesta normal."
 
 
