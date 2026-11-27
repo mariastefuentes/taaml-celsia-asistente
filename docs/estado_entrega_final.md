@@ -37,9 +37,10 @@ Revisión del 23 de noviembre de 2026, con cifras al 26. Cada fila dice **dónde
 
 1. **Vincular el canal de WhatsApp de OpenClaw** en el equipo de la demo y correr `openclaw channels status --probe`.
 2. **Correr `openclaw security audit`** y guardar la salida real en `docs/auditoria_openclaw.md` con fecha.
-3. **Definir `WHATSAPP_ALLOWLIST=*`** para el auditorio, comprobar `/api/salud` y generar el QR con `make qr-whatsapp ARGS="+57<numero-del-bot> --html"`.
-4. **Ensayar el guion completo** una vez, con el teléfono de un invitado real.
-5. **Informe final** (`docs/3 - Informe/informe_final.md`): actualizar su sección 11 cuando se cierre un pendiente y regenerar el PDF con `make pdf`.
+3. **Correr `make qa`** (Playwright) y guardar la salida: el Anuncio 008 no acepta presentarse sin esa auditoría.
+4. **Definir `WHATSAPP_ALLOWLIST=*`** para el auditorio, comprobar `/api/salud` y generar el QR con `make qr-whatsapp ARGS="+57<numero-del-bot> --html --app"`.
+5. **Ensayar el guion completo** una vez, con el teléfono de un invitado real.
+6. **Informe final** (`docs/3 - Informe/informe_final.md`): actualizar su sección 11 cuando se cierre un pendiente y regenerar el PDF con `make pdf`.
 
 ## Lo que no se afirma
 
