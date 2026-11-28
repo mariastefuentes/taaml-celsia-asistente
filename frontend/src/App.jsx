@@ -61,6 +61,15 @@ function sinEvidencia(texto) {
   return /no tengo esa informaci[oó]n/i.test(texto ?? "");
 }
 
+const RESPUESTA_QR = "Ve arriba a la derecha donde dice WhatsApp, ahí puedes escanear el código.";
+
+// El único QR de esta página es el de WhatsApp: la pregunta se contesta sin llamar al modelo.
+function pideElQrDeWhatsapp(texto) {
+  const t = texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (/que es (un |el )?(codigo )?qr|para que sirve (el |un )?qr/.test(t)) return false;
+  return /\bqr\b/.test(t) || (/whatsapp|wsp|wasap/.test(t) && /escan/.test(t));
+}
+
 // QR del WhatsApp del bot: el mismo agente que atiende esta página, para quien prefiera escribir desde el celular.
 function QrWhatsApp() {
   return (
@@ -306,6 +315,10 @@ export default function App() {
     ultimaPregunta.current = mensaje;
     setError("");
     setTexto("");
+    if (pideElQrDeWhatsapp(mensaje)) {
+      setMensajes((m) => [...m, { rol: "user", texto: mensaje }, { rol: "assistant", texto: RESPUESTA_QR }]);
+      return;
+    }
     setEnCurso(true);
     setMensajes((m) => [...m, { rol: "user", texto: mensaje }, { rol: "assistant", texto: "" }]);
     try {

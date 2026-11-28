@@ -536,3 +536,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Alternativa descartada.** Correrla en cada PR en GitHub: obligaba a compilar el chat web y descargar un navegador la víspera de la sustentación.
 - **Límites.** No entra a WhatsApp ni se ha corrido en el computador del bot.
 - **Evidencia.** `tests/e2e/test_qa_navegador.py`, `docs/qa_playwright.md`.
+
+## D75. El chat web explica dónde está el QR de WhatsApp
+- **Contexto.** La pregunta «¿dónde escaneo el QR?» llegaba al agente, que no conoce la interfaz; el botón WhatsApp está en la cabecera y no existía una respuesta directa.
+- **Decisión.** El frontend reconoce la intención (QR, «código QR» o «escanear» con WhatsApp) y responde sin llamar al modelo: «Ve arriba a la derecha donde dice WhatsApp, ahí puedes escanear el código.»
+- **Por qué.** Es una ayuda de la interfaz web; una regla en el prompt también se aplicaría a WhatsApp, donde ese botón no existe, y gastaría cuota y latencia.
+- **Límites.** La respuesta es local: se ve en la página y no se guarda en el hilo; si se recarga, desaparece. No cubre preguntas sobre otros QR ni reemplaza el enlace `wa.me`.
+- **Evidencia.** `frontend/src/App.jsx`, `tests/e2e/test_qa_navegador.py`.
