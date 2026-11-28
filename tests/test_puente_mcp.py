@@ -44,7 +44,7 @@ def test_la_herramienta_pasa_el_mensaje_al_agente_y_devuelve_su_respuesta(monkey
     monkeypatch.setattr(puente_mcp.requests, "post", falso_post)
     assert atender("¿Cuál es la línea?", "+573001112233") == "La línea es 01 8000 112 115."
     assert enviado["url"] == "http://127.0.0.1:8000/chat"
-    assert enviado["json"] == {"mensaje": "¿Cuál es la línea?", "telefono": "+573001112233"}
+    assert enviado["json"] == {"mensaje": "¿Cuál es la línea?", "telefono": "+573001112233", "canal": "whatsapp"}
     assert enviado["headers"] == {"X-Api-Key": "token-de-prueba"}
 
 

@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Panel en vivo · Agente Celsia</title>
+<title>Panel en vivo Â· Agente Celsia</title>
 <style>
-  /* Colores del sitio de Celsia: naranja #ff812d, gris #3d3d3d y blanco. El naranja no se usa en letra pequeña: no se lee. */
+  /* Colores del sitio de Celsia: naranja #ff812d, gris #3d3d3d y blanco. El naranja no se usa en letra pequeÃ±a: no se lee. */
   :root { --marca:#ff812d; --gris:#3d3d3d; --fondo:#f5f5f5; --panel:#fff; --texto:#3d3d3d; --suave:#666; --borde:#ddd; --ok:#17703c; --aviso:#8a5300; --mal:#b3261e; --acento:#a84600; }
   * { box-sizing: border-box; }
   body { margin:0; background:var(--fondo); color:var(--texto); font:16px/1.4 system-ui, sans-serif; }
@@ -73,6 +73,24 @@
     td:nth-child(6) { order:3; margin-left:auto; color:var(--suave); }
     td:nth-child(8) { margin-left:auto; }
   }
+
+  #visor-whatsapp { margin: 28px 0; padding: 16px; border: 1px solid var(--borde, #8885); border-radius: 12px; }
+  #visor-whatsapp h2 { margin-top: 0; }
+  .wa-ayuda { opacity: .72; font-size: .9em; }
+  .wa-layout { display: grid; grid-template-columns: minmax(180px, 30%) 1fr; gap: 16px; }
+  .wa-lista, .wa-eventos { max-height: 520px; overflow-y: auto; }
+  .wa-conv { display: block; width: 100%; text-align: left; padding: 10px; margin-bottom: 7px; border: 1px solid var(--borde, #8885); border-radius: 8px; background: transparent; color: inherit; cursor: pointer; overflow-wrap: anywhere; }
+  .wa-conv.activa { border-color: var(--acento, #3984d6); background: color-mix(in srgb, var(--acento, #3984d6) 12%, transparent); }
+  .wa-conv small { display: block; opacity: .7; margin-top: 4px; }
+  .wa-evento { padding: 10px 12px; margin: 8px 0; border: 1px solid var(--borde, #8885); border-radius: 9px; overflow-wrap: anywhere; }
+  .wa-evento.cliente { margin-right: 8%; }
+  .wa-evento.asistente { margin-left: 8%; }
+  .wa-evento.herramienta, .wa-evento.resultado { border-style: dashed; }
+  .wa-evento strong { display: block; margin-bottom: 5px; }
+  .wa-evento time { display: block; font-size: .78em; opacity: .65; margin-top: 6px; }
+  .wa-evento pre { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: .9em; margin: 6px 0 0; }
+  @media (max-width: 650px) { .wa-layout { grid-template-columns: 1fr; } .wa-lista { max-height: 220px; } .wa-eventos { max-height: 65vh; } }
+
 </style>
 </head>
 <body>
@@ -87,52 +105,70 @@
 <div id="luces" role="group" aria-label="Estado del sistema"></div>
 <main>
   <p id="aviso-decision" role="status"></p>
-  <section id="pendientes" aria-label="Pendientes de aprobación"></section>
+  <section id="pendientes" aria-label="Pendientes de aprobaciÃ³n"></section>
   <section class="qr" aria-label="Escanea para hablar con el asistente por WhatsApp">
-    <button id="qr-abrir" class="qr-abrir" aria-label="Agrandar el código QR">
-      <img src="/qr-whatsapp.png" alt="Código QR para abrir el chat de WhatsApp del asistente">
+    <button id="qr-abrir" class="qr-abrir" aria-label="Agrandar el cÃ³digo QR">
+      <img src="/qr-whatsapp.png" alt="CÃ³digo QR para abrir el chat de WhatsApp del asistente">
     </button>
     <div>
       <strong>Prueba el asistente desde tu celular</strong>
-      <p>Toca el código para agrandarlo.</p>
+      <p>Toca el cÃ³digo para agrandarlo.</p>
     </div>
   </section>
-  <dialog id="qr-grande" aria-label="Código QR en grande">
-    <img src="/qr-whatsapp.png" alt="Código QR para abrir el chat de WhatsApp del asistente">
-    <p>Escanea con la cámara y escribe tu pregunta por WhatsApp</p>
+  <dialog id="qr-grande" aria-label="CÃ³digo QR en grande">
+    <img src="/qr-whatsapp.png" alt="CÃ³digo QR para abrir el chat de WhatsApp del asistente">
+    <p>Escanea con la cÃ¡mara y escribe tu pregunta por WhatsApp</p>
   </dialog>
   <p class="resumen" id="resumen" aria-live="polite">
     <span>Respuestas<b id="n-resp">0</b></span>
     <span>Con nota de dato sin respaldo<b id="n-notas">0</b></span>
     <span>Costo total<b id="n-costo">US$ 0</b></span>
-    <span>Tiempo promedio<b id="n-tiempo">—</b></span>
-    <span>Herramientas usadas<b id="n-herr">—</b></span>
+    <span>Tiempo promedio<b id="n-tiempo">â€”</b></span>
+    <span>Herramientas usadas<b id="n-herr">â€”</b></span>
   </p>
   <details class="usadas">
-    <summary>Ver cuáles herramientas se han usado</summary>
-    <p id="cuales">Todavía ninguna.</p>
+    <summary>Ver cuÃ¡les herramientas se han usado</summary>
+    <p id="cuales">TodavÃ­a ninguna.</p>
   </details>
+
+  <section id="visor-whatsapp" aria-label="Conversaciones de WhatsApp">
+    <h2>Conversaciones de WhatsApp</h2>
+    <p class="wa-ayuda">Historial real de OpenClaw: mensajes, herramientas y resultados.</p>
+    <div class="wa-layout">
+      <div>
+        <div id="wa-lista" class="wa-lista"><p>Cargando conversaciones?</p></div>
+      </div>
+      <div>
+        <h3 id="wa-titulo">Selecciona una conversaci?n</h3>
+        <div id="wa-eventos" class="wa-eventos"><p>El historial aparecer? aqu?.</p></div>
+      </div>
+    </div>
+    <p id="wa-estado" class="wa-ayuda" aria-live="polite"></p>
+  </section>
+
   <table>
-    <thead><tr><th>Hora</th><th>Canal</th><th class="ocultar">Quién</th><th>Mensaje</th><th>Herramientas</th><th>Tiempo</th><th class="ocultar">Costo</th><th>Estado</th></tr></thead>
+    <thead><tr><th>Hora</th><th>Canal</th><th class="ocultar">QuiÃ©n</th><th>Mensaje</th><th>Herramientas</th><th>Tiempo</th><th class="ocultar">Costo</th><th>Estado</th></tr></thead>
     <tbody id="filas"></tbody>
   </table>
-  <p id="vacio" class="vacio">Escribe el token y pulsa «Ver». Aquí aparece cada mensaje que llega al agente, con la herramienta que eligió y lo que tardó.</p>
+  <p id="vacio" class="vacio">Escribe el token y pulsa Â«VerÂ». AquÃ­ aparece cada mensaje que llega al agente, con la herramienta que eligiÃ³ y lo que tardÃ³.</p>
 </main>
 <script>
-  let token = "", ultimo = 0, temporizador = null, nResp = 0, nNotas = 0, costoTotal = 0, nTiempos = 0, sumaSegundos = 0;
+  let token = "", ultimo = 0, temporizador = null, temporizadorConversaciones = null, waSeleccionada = "", waOcupado = false, nResp = 0, nNotas = 0, costoTotal = 0, nTiempos = 0, sumaSegundos = 0;
   const dinero = v => "US$ " + (v < 0.01 ? v.toFixed(5) : v.toFixed(3));
-  function resumir() { document.getElementById("n-resp").textContent = nResp; document.getElementById("n-notas").textContent = nNotas; document.getElementById("n-costo").textContent = dinero(costoTotal); document.getElementById("n-tiempo").textContent = nTiempos ? (sumaSegundos / nTiempos).toFixed(1) + " s" : "—"; }
+  function resumir() { document.getElementById("n-resp").textContent = nResp; document.getElementById("n-notas").textContent = nNotas; document.getElementById("n-costo").textContent = dinero(costoTotal); document.getElementById("n-tiempo").textContent = nTiempos ? (sumaSegundos / nTiempos).toFixed(1) + " s" : "â€”"; }
   const TITULO = document.title;
-  function avisarEnPestana(cuantos) { document.title = cuantos ? "(" + cuantos + ") Por aprobar" : TITULO; }  // se ve aunque se esté en otra pestaña
+  function avisarEnPestana(cuantos) { document.title = cuantos ? "(" + cuantos + ") Por aprobar" : TITULO; }  // se ve aunque se estÃ© en otra pestaÃ±a
   const filas = document.getElementById("filas"), estado = document.getElementById("estado"), vacio = document.getElementById("vacio");
-  const SIN_CLAVE = vacio.textContent, SIN_FILAS = "Todavía no ha llegado ningún mensaje. Aquí aparece cada uno, con la herramienta que eligió el agente y lo que tardó.";
-  const clase = e => e.startsWith("pendiente") ? "pendiente" : e === "respondido" || e === "aprobación" ? "respondido" : e === "no soportado" ? "nosop" : e === "límite" ? "limite" : "error";
+  const SIN_CLAVE = vacio.textContent, SIN_FILAS = "TodavÃ­a no ha llegado ningÃºn mensaje. AquÃ­ aparece cada uno, con la herramienta que eligiÃ³ el agente y lo que tardÃ³.";
+  const clase = e => e.startsWith("pendiente") ? "pendiente" : e === "respondido" || e === "aprobaciÃ³n" ? "respondido" : e === "no soportado" ? "nosop" : e === "lÃ­mite" ? "limite" : "error";
   function celda(texto, extra) { const td = document.createElement("td"); td.textContent = texto; if (extra) td.className = extra; return td; }
-  function respuestaDe(f) {  // lo que contestó el asistente y los textos que consultó; todo entra como texto, nunca como HTML
+// Canal de origen claro: Â«WebÂ» o Â«WhatsAppÂ»; Â«aprobaciÃ³nÂ» es una acciÃ³n interna sin datos de contacto.
+function canalDe(c) { const x = (c || "").toLowerCase(); if (x.startsWith("whatsapp")) return "WhatsApp"; if (x === "aprobaciÃ³n" || x === "aprobacion") return "AprobaciÃ³n"; return "Web"; }
+  function respuestaDe(f) {  // lo que contestÃ³ el asistente y los textos que consultÃ³; todo entra como texto, nunca como HTML
     const d = document.createElement("details"), fuentes = f.fuentes || [];
     d.append(elemento("summary", "Ver respuesta" + (fuentes.length ? " (fuentes: " + fuentes.length + ")" : "")), elemento("p", f.respuesta));
     fuentes.forEach(x => {
-      const p = document.createElement("p"), a = elemento("a", x.documento + " · fragmento " + x.fragmento);
+      const p = document.createElement("p"), a = elemento("a", x.documento + " Â· fragmento " + x.fragmento);
       if (x.fuente.startsWith("https://")) { a.href = x.fuente; a.target = "_blank"; a.rel = "noopener noreferrer"; }
       p.append(a);
       if (x.extracto) p.append(elemento("span", x.extracto));
@@ -145,28 +181,29 @@
     const msg = celda(f.mensaje, "msg");
     if (f.nota) { const n = document.createElement("span"); n.className = "nota"; n.textContent = "dato sin respaldo"; msg.append(n); }
     if (f.respuesta) msg.append(respuestaDe(f));
-    tr.append(celda(f.hora), celda(f.canal), celda(f.quien, "ocultar"), msg);
+    tr.append(celda((f.fecha ? f.fecha + " " : "") + f.hora), celda(canalDe(f.canal)), celda(f.quien, "ocultar"), msg);
+    if (f.conversacion) { tr.dataset.conversacion = f.conversacion; tr.title = "ConversaciÃ³n: " + f.conversacion; }
     const herr = document.createElement("td");
     (f.herramientas.length ? f.herramientas : ["ninguna"]).forEach(h => { const s = document.createElement("span"); s.className = "etiqueta"; s.textContent = h; herr.append(s); });
     tr.append(herr, celda(f.segundos == null ? "" : f.segundos + " s"), celda(f.costo == null ? "" : dinero(f.costo), "ocultar"), celda(f.estado, clase(f.estado)));
     filas.prepend(tr);
     if (f.estado === "respondido" || f.estado.startsWith("pendiente")) { nResp++; if (f.nota) nNotas++; costoTotal += f.costo || 0; if (f.segundos != null) { nTiempos++; sumaSegundos += f.segundos; } resumir(); }
   }
-  const ACCIONES = { radicar_reclamo: "Radicar un reclamo", cancelar_reclamo: "Cancelar un reclamo", reportar_dano_electrico: "Reportar un daño eléctrico" };
+  const ACCIONES = { radicar_reclamo: "Radicar un reclamo", cancelar_reclamo: "Cancelar un reclamo", reportar_dano_electrico: "Reportar un daÃ±o elÃ©ctrico" };
   const caja = document.getElementById("pendientes"), avisoDecision = document.getElementById("aviso-decision");
-  let codigos = null;  // null obliga a repintar, incluso si la lista queda vacía
+  let codigos = null;  // null obliga a repintar, incluso si la lista queda vacÃ­a
   function elemento(tipo, texto) { const e = document.createElement(tipo); e.textContent = texto; return e; }
   async function decidir(codigo, decision, botones) {
-    botones.forEach(b => b.disabled = true); avisoDecision.textContent = "Aplicando la decisión…";
+    botones.forEach(b => b.disabled = true); avisoDecision.textContent = "Aplicando la decisiÃ³nâ€¦";
     try {
       const r = await fetch("/api/pendientes/" + codigo, { method: "POST", headers: { "X-Aprobador": token, "Content-Type": "application/json" }, body: JSON.stringify({ decision }) });
       if (!r.ok) { avisoDecision.textContent = "No se pudo (error " + r.status + ")."; botones.forEach(b => b.disabled = false); return; }
       const d = await r.json();
       const hecho = decision === "aprobar" ? "Aprobado. " : "Rechazado. ";
       const sinEnvio = d.canal === "web" ? "La respuesta le aparece en su chat web." : "No se le pudo enviar: la recibe cuando vuelva a escribir.";
-      avisoDecision.textContent = hecho + (d.avisado_por_whatsapp ? "Se le envió la respuesta al cliente." : sinEnvio);
+      avisoDecision.textContent = hecho + (d.avisado_por_whatsapp ? "Se le enviÃ³ la respuesta al cliente." : sinEnvio);
       codigos = null; consultarPendientes();
-    } catch { avisoDecision.textContent = "Sin conexión con la API."; botones.forEach(b => b.disabled = false); }
+    } catch { avisoDecision.textContent = "Sin conexiÃ³n con la API."; botones.forEach(b => b.disabled = false); }
   }
   async function consultarPendientes() {
     try {
@@ -184,7 +221,7 @@
           no.addEventListener("click", () => pedirConfirmacion(p.codigo, botones, [si, no]));
           botones.append(si, no);
           const desde = elemento("p", ""); desde.className = "espera"; desde.dataset.codigo = p.codigo;
-          div.append(elemento("h2", "Por aprobar: " + (ACCIONES[p.herramienta] || p.herramienta)), elemento("p", "Canal: " + p.canal + " · cliente " + p.quien), desde);
+          div.append(elemento("h2", "Por aprobar: " + (ACCIONES[p.herramienta] || p.herramienta)), elemento("p", "Canal: " + p.canal + " Â· cliente " + p.quien), desde);
           Object.entries(p.args).forEach(([k, v]) => div.append(elemento("p", k + ": " + v)));
           div.append(botones);
           return div;
@@ -199,11 +236,11 @@
     return "Esperando hace " + (min < 60 ? min + " min" : Math.floor(min / 60) + " h " + (min % 60) + " min");
   }
   function pedirConfirmacion(codigo, botones, originales) {  // rechazar pide un segundo toque; aprobar sigue siendo de uno
-    const si = elemento("button", "Sí, rechazar"), volver = elemento("button", "No, volver");
+    const si = elemento("button", "SÃ­, rechazar"), volver = elemento("button", "No, volver");
     si.className = "rechazar";
     si.addEventListener("click", () => decidir(codigo, "rechazar", [si, volver]));
     volver.addEventListener("click", () => botones.replaceChildren(...originales));
-    botones.replaceChildren(elemento("span", "¿Seguro que quieres rechazarlo?"), si, volver);
+    botones.replaceChildren(elemento("span", "Â¿Seguro que quieres rechazarlo?"), si, volver);
   }
   const luces = document.getElementById("luces");
   let temporizadorLuces = null, mirandoLuces = false;
@@ -219,6 +256,109 @@
     } catch { if (temporizador) pintarLuces([{ nombre: "Asistente", encendida: false }]); }
     mirandoLuces = false;
   }
+
+  const waLista = document.getElementById("wa-lista");
+  const waEventos = document.getElementById("wa-eventos");
+  const waTitulo = document.getElementById("wa-titulo");
+  const waEstado = document.getElementById("wa-estado");
+
+  async function abrirConversacion(id, nombre) {
+    waSeleccionada = id;
+    waTitulo.textContent = nombre || "Conversaci?n de WhatsApp";
+    waEventos.replaceChildren(elemento("p", "Cargando historial?"));
+    waLista.querySelectorAll(".wa-conv").forEach(b => {
+      b.classList.toggle("activa", b.dataset.id === id);
+    });
+    try {
+      const r = await fetch("/api/whatsapp/conversaciones/" + encodeURIComponent(id), {
+        headers: { "X-Aprobador": token }
+      });
+      if (!r.ok) throw new Error("Error " + r.status);
+      const d = await r.json();
+      if (waSeleccionada !== id) return;
+      const eventos = d.eventos || [];
+      waEventos.replaceChildren();
+      if (!eventos.length) {
+        waEventos.append(elemento("p", "Esta conversaci?n todav?a no tiene eventos visibles."));
+        return;
+      }
+      eventos.forEach(ev => {
+        const tarjeta = document.createElement("article");
+        let titulo = "", cuerpo = "", tipo = ev.tipo || "";
+        if (tipo === "mensaje") {
+          tarjeta.className = "wa-evento " + (ev.rol === "user" ? "cliente" : "asistente");
+          titulo = ev.rol === "user" ? "Cliente" : "Asistente";
+          cuerpo = ev.texto || "";
+        } else if (tipo === "herramienta") {
+          tarjeta.className = "wa-evento herramienta";
+          titulo = "Herramienta: " + (ev.herramienta || "desconocida");
+          cuerpo = ev.titulo || "";
+          if (ev.operaciones_detectadas && ev.operaciones_detectadas.length) {
+            cuerpo += (cuerpo ? "\n" : "") + "Operaciones detectadas: " + ev.operaciones_detectadas.join(", ");
+          }
+          if (ev.estado) cuerpo += (cuerpo ? "\n" : "") + "Estado: " + ev.estado;
+        } else if (tipo === "resultado_herramienta") {
+          tarjeta.className = "wa-evento resultado";
+          titulo = "Resultado: " + (ev.herramienta || "herramienta") + " ? " + (ev.estado || "");
+          cuerpo = ev.resultado || "(sin contenido)";
+        } else return;
+        tarjeta.append(elemento("strong", titulo));
+        if (cuerpo) {
+          const pre = document.createElement("pre");
+          pre.textContent = cuerpo;
+          tarjeta.append(pre);
+        }
+        if (ev.fecha) {
+          const fecha = elemento("time", ev.fecha);
+          tarjeta.append(fecha);
+        }
+        waEventos.append(tarjeta);
+      });
+      waEventos.scrollTop = waEventos.scrollHeight;
+      waEstado.textContent = eventos.length + " eventos ? historial de OpenClaw";
+    } catch (e) {
+      waEventos.replaceChildren(elemento("p", "No se pudo cargar el historial: " + e.message));
+    }
+  }
+
+  async function consultarConversaciones() {
+    if (!token || waOcupado) return;
+    waOcupado = true;
+    try {
+      const r = await fetch("/api/whatsapp/conversaciones", {
+        headers: { "X-Aprobador": token }
+      });
+      if (!r.ok) throw new Error("Error " + r.status);
+      const d = await r.json();
+      const lista = d.conversaciones || [];
+      const anterior = waSeleccionada;
+      waLista.replaceChildren();
+      if (!lista.length) {
+        waLista.append(elemento("p", d.error || "No hay conversaciones de WhatsApp disponibles."));
+      } else {
+        lista.forEach(c => {
+          const b = elemento("button", c.nombre || "Conversaci?n de WhatsApp");
+          b.type = "button";
+          b.className = "wa-conv" + (c.id === anterior ? " activa" : "");
+          b.dataset.id = c.id;
+          const detalle = elemento("small", (c.tipo || "WhatsApp") + " ? " + (c.estado || ""));
+          b.append(detalle);
+          b.addEventListener("click", () => abrirConversacion(c.id, c.nombre));
+          waLista.append(b);
+        });
+        if (anterior && lista.some(c => c.id === anterior)) {
+          await abrirConversacion(anterior, lista.find(c => c.id === anterior).nombre);
+        } else if (!anterior) {
+          waEstado.textContent = lista.length + " conversaciones encontradas. Selecciona una.";
+        }
+      }
+    } catch (e) {
+      waEstado.textContent = "No se pudo consultar OpenClaw: " + e.message;
+    } finally {
+      waOcupado = false;
+    }
+  }
+
   async function consultar() {
     try {
       const r = await fetch("/api/actividad?desde=" + ultimo, { headers: { "X-Aprobador": token } });
@@ -228,25 +368,27 @@
       d.filas.forEach(pintar); ultimo = d.ultimo;
       if (d.total_herramientas) {
         document.getElementById("n-herr").textContent = d.usadas.length + " de " + d.total_herramientas;
-        document.getElementById("cuales").textContent = d.usadas.join(", ") || "Todavía ninguna.";
+        document.getElementById("cuales").textContent = d.usadas.join(", ") || "TodavÃ­a ninguna.";
       }
       vacio.textContent = SIN_FILAS;
       vacio.style.display = filas.children.length ? "none" : "block";
       estado.textContent = "En vivo";
       consultarPendientes();
-    } catch { estado.textContent = "Sin conexión con la API"; pintarLuces([{ nombre: "Asistente", encendida: false }]); }
+    } catch { estado.textContent = "Sin conexiÃ³n con la API"; pintarLuces([{ nombre: "Asistente", encendida: false }]); }
   }
-  function parar() { clearInterval(temporizador); clearInterval(temporizadorLuces); temporizador = null; avisarEnPestana(0); luces.replaceChildren(); }
+  function parar() { clearInterval(temporizador); clearInterval(temporizadorLuces); clearInterval(temporizadorConversaciones); temporizador = null; temporizadorConversaciones = null; avisarEnPestana(0); luces.replaceChildren(); }
   const qrGrande = document.getElementById("qr-grande");
   document.getElementById("qr-abrir").addEventListener("click", () => qrGrande.showModal());
-  qrGrande.addEventListener("click", () => qrGrande.close());  // también se cierra con la tecla Esc
+  qrGrande.addEventListener("click", () => qrGrande.close());  // tambiÃ©n se cierra con la tecla Esc
   document.getElementById("entrar").addEventListener("click", () => {
     token = document.getElementById("token").value; ultimo = 0; filas.innerHTML = ""; nResp = nNotas = costoTotal = nTiempos = sumaSegundos = 0; resumir(); parar();
     codigos = null; caja.replaceChildren(); avisoDecision.textContent = ""; vacio.textContent = SIN_CLAVE; vacio.style.display = "block";
-    document.getElementById("n-herr").textContent = "—"; document.getElementById("cuales").textContent = "Todavía ninguna.";
+    document.getElementById("n-herr").textContent = "â€”"; document.getElementById("cuales").textContent = "TodavÃ­a ninguna.";
     temporizador = setInterval(consultar, 2000); temporizadorLuces = setInterval(consultarLuces, 10000);
-    consultar(); consultarLuces();
+    consultar(); consultarLuces(); consultarConversaciones();
+    temporizadorConversaciones = setInterval(consultarConversaciones, 10000);
   });
 </script>
 </body>
 </html>
+

@@ -71,3 +71,16 @@ def sin_revision_de_datos_en_la_api(monkeypatch):
         return
     monkeypatch.setattr(api.main, "aviso_de_datos_dudosos", lambda *a, **k: "")
     monkeypatch.setattr(api.main, "costo_del_turno", lambda *a, **k: None)
+
+
+@pytest.fixture(autouse=True)
+def actividad_db_temporal(monkeypatch, tmp_path):
+    """El registro de actividad del panel persiste en SQLite, pero las pruebas usan una base temporal (nunca tocan data/)."""
+    try:
+        from taaml import actividad
+    except ImportError:
+        return
+    monkeypatch.setenv("ACTIVIDAD_DB", str(tmp_path / "actividad.sqlite"))
+    actividad.vaciar()
+    yield
+    actividad.vaciar()
