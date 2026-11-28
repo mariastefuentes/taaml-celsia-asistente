@@ -1,6 +1,6 @@
 # Estado de la entrega frente a la rúbrica del 28 de noviembre
 
-Revisión del 23 de noviembre de 2026, con cifras al 26. Cada fila dice **dónde está la evidencia en el repositorio** y **qué falta**. Se actualiza el día de la sustentación.
+Revisión del 28 de noviembre de 2026, con cifras al 28. Cada fila dice **dónde está la evidencia en el repositorio** y **qué falta**. Lo que no tiene evidencia guardada en el repositorio se mantiene como pendiente.
 
 ## Resumen
 
@@ -26,18 +26,18 @@ Revisión del 23 de noviembre de 2026, con cifras al 26. Cada fila dice **dónde
 | **3.2** WhatsApp con allowlist E.164 | 10 % | Canal de OpenClaw con QR público (D54) visible en el chat web y el panel (`/qr-whatsapp.png`), allowlist en el puente (D49, modo abierto `*`) y aprobación en el panel (D56). El webhook de Meta no se usa | **Guardar la prueba desde dos teléfonos externos y probar el aviso de aprobación en el equipo del bot** |
 | **3.3** Workspace operativo | 7 % | `openclaw/workspace/` (`SOUL`, `AGENTS`, `USER`, `MEMORY`, bitácora), D48 | Escribir la bitácora del día |
 | **3.4** Skills/MCP | 5 % | `src/taaml/servidor_mcp.py` (10 herramientas), `tests/test_servidor_mcp.py`, `.opencode/skills/` | Ninguna |
-| **4.1** Código, pruebas y `uv` | 7 % | 591 pruebas aprobadas y 2 omitidas, ruff, pre-commit, CI, `make verificar-clon`, revisión con Playwright (`docs/qa_playwright.md`) | Ninguna |
+| **4.1** Código, pruebas y `uv` | 7 % | 591 pruebas aprobadas y 2 omitidas (593 en total), ruff, pre-commit, CI, `make verificar-clon`, revisión con Playwright (`docs/qa_playwright.md`) | Ninguna |
 | **4.2** Seguridad y hardening | 7 % | Sandbox y `tools.deny` versionados, HITL, límite por teléfono, inyección directa 11/11 e indirecta 8/8 (26/11) | **`openclaw security audit` real** y pegarlo con fecha |
 | **4.3** Documentación final | 6 % | README, guía de despliegue, diagramas Archify, informes, `.env` fuera del repo | Regenerar el PDF del informe si cambia |
 | **5.1** Pitch de 7 minutos | 6 % | `docs/guion_sustentacion_final.md` | Ensayarlo con cronómetro |
-| **5.2** Discusión técnica de 8 minutos | 4 % | Mismo guion, reparto por integrante | Ensayar preguntas del público |
+| **5.2** Discusión técnica de 5 minutos y 3 de preguntas | 4 % | Mismo guion, reparto por integrante | Ensayar preguntas del público |
 | Bonus | — | Guion en inglés en el mismo documento | Decidir quién sustenta en inglés |
 
 ## Antes del sábado (en orden de riesgo)
 
 1. **Vincular el canal de WhatsApp de OpenClaw** en el equipo de la demo y correr `openclaw channels status --probe`.
 2. **Correr `openclaw security audit`** y guardar la salida real en `docs/auditoria_openclaw.md` con fecha.
-3. **Correr `make qa`** (Playwright) y guardar la salida: el Anuncio 008 no acepta presentarse sin esa auditoría.
+3. **`make qa`** ya se corrió el 27/11 (14 de 14 con servidor propio y 10 aprobadas con 4 omitidas contra la app real; ver `docs/qa_playwright.md`); queda repetirlo en el computador del bot antes de la demo.
 4. **Definir `WHATSAPP_ALLOWLIST=*`** para el auditorio, comprobar `/api/salud` y generar el QR con `make qr-whatsapp ARGS="+57<numero-del-bot> --html --app"`.
 5. **Ensayar el guion completo** una vez, con el teléfono de un invitado real.
 6. **Informe final** (`docs/3 - Informe/informe_final.md`): actualizar su sección 11 cuando se cierre un pendiente y regenerar el PDF con `make pdf`.

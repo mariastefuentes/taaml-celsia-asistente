@@ -1,19 +1,19 @@
 # Guion de la sustentación final (28 de noviembre de 2026)
 
-Grupo 4 — Celsia. Último bloque del día: **10:45 a 11:00**. Quince minutos sin diapositivas, sin video y sin leer: **7 minutos de pitch**, **8 minutos de discusión técnica** con el público experto. Los invitados escriben desde su teléfono.
+Grupo 4 — Celsia. Último bloque del día: **10:45 a 11:00**. Quince minutos sin diapositivas, sin video y sin leer: **7 minutos de pitch**, **5 minutos de discusión técnica** con el público experto y **3 minutos de preguntas**. Los invitados escriben desde su teléfono.
 
 > Este guion reemplaza al del 21/11 (`docs/guion_demo_whatsapp.md`). Lo nuevo: **20 herramientas**, **OpenClaw versionado** y una demo por el **WhatsApp de OpenClaw** (QR); Meta no se usa (D56). Lo medido antes del 23/11 se cita con su fecha y su prompt; lo que no se volvió a medir, no se afirma.
 
-## Reparto (confirmar en el grupo antes del sábado)
+## Reparto (el de la guía interactiva de ensayo; confirmar en el grupo)
 
 | Quién | Qué defiende |
 |---|---|
-| Juan José Mosquera | Apertura y cierre del pitch; arquitectura de punta a punta; demo desde el teléfono |
-| María Stella Fuentes | Datos, RAG y evaluación (pipeline, Qdrant, métricas, t-SNE) |
-| Nicolás Bolaños | Seguridad e inyección; pruebas; panel y métricas en vivo |
-| Jensen Fabián Tamayo | OpenClaw (gateway, workspace, sandbox, acceso, auditoría) y herramientas |
+| María Stella Fuentes | **0:00 – 5:30** del pitch: problema, prueba en el chat web, producto, evidencia, control y memoria. En preguntas, negocio y estrategia. |
+| Juan José Mosquera | **5:30 – 8:40**: impacto y cierre del pitch; arquitectura; las 20 herramientas. |
+| Jensen Fabián Tamayo | **8:40 – 10:20**: datos, búsqueda y memoria. |
+| Nicolás Bolaños | **10:20 – 12:00**: OpenClaw, seguridad y registros; además maneja el computador y aprueba el reclamo a las 3:40. |
 
-Quien aprueba un reclamo en vivo **no es** quien está presentando: es otra persona del equipo, en el panel del computador del bot.
+Quien aprueba un reclamo en vivo **no es** quien está presentando: es Nicolás, que en ese momento no habla, en el panel del computador del bot.
 
 ## Antes de las 8:00 a. m. (nuestro turno es a las 10:45)
 
@@ -35,13 +35,12 @@ Todo queda encendido y probado antes de las 8:00, y se vuelve a comprobar a las 
 
 | Minuto | Qué se dice | Qué se ve |
 |---|---|---|
-| 0:00 – 0:40 | **Problema.** La información de Celsia está en más de mil páginas; quien necesita una sede, un requisito o un reclamo termina llamando o buscando a ciegas. | Nada más que la voz; el teléfono en la mano |
-| 0:40 – 1:20 | **Propuesta.** Un asistente que responde por WhatsApp con información oficial, cita la fuente cuando se la piden, recuerda lo que el cliente contó y no inventa: si no está en la base, lo dice. | Diagrama de arquitectura abierto en segundo plano (no se lee) |
-| 1:20 – 2:00 | **Qué es distinto.** 20 herramientas tipadas que el modelo elige solo, memoria que sobrevive al reinicio y una persona que aprueba los reclamos. | El diagrama de enrutamiento (los caminos de una pregunta) |
-| 2:00 – 4:30 | **Demo real.** «Escriba al bot, por favor»: el invitado pregunta una sede, luego «¿Qué es una granja solar?», escribe «fuente» justo después y pregunta qué sabe de él. | El teléfono del invitado y la terminal con la traza |
-| 4:30 – 5:30 | **Un reclamo con aprobación humana.** El invitado pide un reclamo, alguien del equipo lo aprueba en el panel y la respuesta le llega a su WhatsApp. | El teléfono del invitado y el panel |
-| 5:30 – 6:20 | **Lo que se midió.** Banco verificable 49 de 49 y matriz de enrutamiento 40 de 43, con las 20 herramientas el 26/11 (D67); ataques directos 11 de 11 y órdenes escondidas 8 de 8 el 26/11. Si una cifra no se volvió a medir, se dice. | El panel en vivo, no una lámina |
-| 6:20 – 7:00 | **Cierre.** Para qué le sirve a un cliente de Celsia en el Valle del Cauca o el Tolima, y lo que falta: más tráfico real y conectarse a los sistemas de Celsia (hoy los reclamos son simulados). | — |
+| 0:00 – 1:05 | **La pregunta y la prueba en la web.** ¿Dónde buscaron la última duda de su factura y cómo supieron que era correcta? Celsia atiende a más de 1,3 millones de clientes y publica más de mil páginas. Empezamos en el chat web y evolucionamos a WhatsApp. | V1, el chat web con «Ver detalles técnicos» |
+| 1:05 – 2:00 | **El producto y el código QR.** Preguntar por WhatsApp como se habla, comprobar la fuente y pedir un reclamo en el mismo chat. Tres promesas: evidencia, control y memoria. El invitado envía el mensaje 1. | V2, el código QR en grande |
+| 2:00 – 3:40 | **Evidencia.** La sede sale de la tabla oficial; «¿Qué es una granja solar?» se responde con RAG (393 documentos, 1.690 fragmentos, 4 por pregunta) y «fuente» muestra el documento y el fragmento. | V2, el panel, y V6, el enrutamiento |
+| 3:40 – 4:35 | **Control.** El invitado pide un reclamo; el asistente lo organiza y se detiene. Una persona lo aprueba en el panel antes de radicarlo. | V2, la tarjeta «Por aprobar» |
+| 4:35 – 5:30 | **Memoria.** El radicado vuelve al mismo WhatsApp; la conversación y el perfil sobreviven al reinicio, y el cliente puede consultar y borrar lo que pidió recordar. | V2, el panel |
+| 5:30 – 7:00 | **Impacto y cierre.** Experiencia, operación y confianza; banco 49/49, matriz 40/43, ataques 11/11 y órdenes 8/8 (26/11); costo de 0,0031 USD por pregunta con búsqueda. Prototipo funcionando; siguiente paso, un piloto y la integración con Celsia. | V2, el panel; al cerrar, el QR |
 
 **Reglas del pitch:** no decir «nuestro chatbot»; decir qué problema resuelve. No prometer integración con sistemas de Celsia. No citar una cifra que no esté en el repositorio.
 
@@ -49,13 +48,14 @@ Todo queda encendido y probado antes de las 8:00, y se vuelve a comprobar a las 
 
 | Minuto | Tema | Quién |
 |---|---|---|
-| 7:00 – 7:40 | **Recorrido de un mensaje**: WhatsApp → OpenClaw → plugin (fija el remitente) → puente → `POST /chat` → agente → herramienta → PostgreSQL → respuesta | Juan José |
-| 7:40 – 8:30 | **20 herramientas**: por qué 20 y no 5; esquemas Pydantic, `APROBACION_HUMANA`, qué se retiró (`consultar_datos`) y por qué; el MCP de solo lectura | Jensen |
-| 8:30 – 9:15 | **Datos y RAG**: Bronze → Silver → Gold → curaduría → fragmentos; Qdrant con payload; mezcla significado + palabras; recuperación: 91 % en el Q&A (12 fragmentos) y 80 % en el agente (4 fragmentos), sobre 35 preguntas, las mismas con las que se ajustaron los sinónimos | María Stella |
-| 9:15 – 10:00 | **Memoria y evaluación**: `PostgresSaver` frente a `Store`; el hilo sobrevive al reinicio; t-SNE/UMAP de 114 conversaciones simuladas, recalculados con Gemini el 26/11 (índice de Rand 0,53; KNN 74 % frente a 18 % del azar), y sus límites | María Stella |
-| 10:00 – 10:45 | **OpenClaw**: plantilla versionada (`openclaw/openclaw.example.json`), `bind: loopback`, `tools.deny`, `fs.workspaceOnly`, sandbox Docker, acceso abierto a propósito y `security audit`; workspace con identidad y límites separados | Jensen |
-| 10:45 – 11:30 | **Seguridad**: inyección directa (11/11) e indirecta (8/8, leída a mano: una falsa alarma de la regla), ambas el 26/11, límite por teléfono, clave en `/chat`, HITL, sin `.env` en el repo | Nicolás |
-| 11:30 – 12:00 | **Calidad**: `uv sync`, 591 pruebas aprobadas y 2 omitidas (`make test`), ruff, pre-commit, CI y `make verificar-clon`; lo que no está probado (muchas personas a la vez) | Nicolás |
+| 7:00 – 7:45 | **Arquitectura y recorrido de un mensaje**: WhatsApp → OpenClaw → plugin (fija el remitente) → puente → `POST /chat` → agente → herramienta → PostgreSQL → respuesta; un agente y varias puertas | Juan José |
+| 7:45 – 8:40 | **20 herramientas**: por qué 20 y no 5; esquemas Pydantic, `APROBACION_HUMANA`, qué se retiró (`consultar_datos`) y por qué; el MCP de solo lectura | Juan José |
+| 8:40 – 9:00 | **Datos**: Bronze → Silver → Gold → curaduría → 1.690 fragmentos; Qdrant con payload y la fuente en cada fragmento | Jensen |
+| 9:00 – 9:45 | **Búsqueda y evaluación**: mezcla significado + palabras; 91 % en el Q&A (12 fragmentos) y 80 % en el agente (4 fragmentos); nDCG@10 0,565 | Jensen |
+| 9:45 – 10:20 | **Memoria**: `PostgresSaver` frente a `PostgresStore`; el hilo sobrevive al reinicio; los pendientes de aprobación también (D77); t-SNE/UMAP de 114 conversaciones simuladas (índice de Rand 0,53; KNN 74 % frente a 18 % del azar) y sus límites | Jensen |
+| 10:20 – 10:45 | **OpenClaw**: plantilla versionada (`openclaw/openclaw.example.json`), `bind: loopback`, `tools.deny`, `fs.workspaceOnly`, sandbox Docker, acceso abierto a propósito y `security audit`; workspace con identidad y límites separados | Nicolás |
+| 10:45 – 11:20 | **Seguridad**: inyección directa (11/11) e indirecta (8/8, leída a mano: una falsa alarma de la regla), ambas el 26/11, límite por teléfono, clave en `/chat`, HITL, sin `.env` en el repo | Nicolás |
+| 11:20 – 12:00 | **Registros, despliegue y calidad**: `openclaw logs --follow`, `channels status --probe`, `/api/salud`; `uv sync`, 591 pruebas aprobadas y 2 omitidas (593 en total; `make test`), ruff, pre-commit, CI y `make verificar-clon`; lo que no está probado (muchas personas a la vez) | Nicolás |
 
 Cada quien responde lo suyo. Si una pregunta cae en terreno ajeno, se contesta con lo que se sabe y se pasa la palabra; no se improvisa una cifra.
 
