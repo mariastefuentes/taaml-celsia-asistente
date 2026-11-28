@@ -1,6 +1,6 @@
 # Registro de decisiones de arquitectura (Taller 2 y Módulo 3)
 
-Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está la evidencia. Es el registro versionado de las decisiones del agente: vive en el repositorio y cambia con él. Se redactó el 13 de noviembre de 2026 a partir del informe (`docs/3 - Informe/informe_taller2.md`) y de las especificaciones (`specs/011` y `specs/012`). No está en Engram: Engram es una herramienta externa de memoria para agentes de código y no se usó en este proyecto.
+Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está la evidencia. Es el registro versionado de las decisiones del agente: vive en el repositorio y cambia con él. Se redactó el 13 de noviembre de 2026 a partir del informe (`docs/3 - Informe/informe_taller2.md`) y de las especificaciones (`specs/011` y `specs/012`). Este registro es la fuente de verdad; Engram no se usa como fuente de verdad del proyecto. **Las cifras de cada decisión corresponden a su fecha**; el estado vigente y los conteos actuales están en el README y en la constitución.
 
 | # | Decisión | Estado |
 |---|---|---|
@@ -552,3 +552,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Seguros.** No se usa el atajo si hay un reclamo pendiente de aprobación o una decisión sin entregar (`aprobaciones.hay_sin_entregar`); así no se salta la persona que decide ni se pierde el radicado.
 - **Límites.** Vocabulario cerrado: no entiende parafraseos («necesito una mano»), otros idiomas ni contexto; esos mensajes van al agente. En OpenClaw se ahorra la llamada al agente de Celsia, no la de OpenClaw. El atajo no queda en la memoria de la conversación; al recargar el chat no reaparece.
 - **Evidencia.** `src/taaml/atajos.py`, `src/taaml/aprobaciones.py`, `api/main.py`, `tests/test_atajos.py`, `tests/test_api.py`, `tests/test_aprobaciones.py`, `specs/018-atajos-de-intencion/`.
+
+## D77. Los pendientes de aprobación sobreviven a reiniciar la API
+- **Contexto.** El checkpointer conserva la conversación pausada, pero `aprobaciones._PENDIENTES` vivía en memoria. Tras reiniciar la API, el panel quedaba vacío; en el chat web el cliente seguía bloqueado y no había forma de aprobar. F5 no causaba el problema: solo recarga el navegador.
+- **Decisión.** El índice de pendientes se guarda en el Store de LangGraph (namespace `("aprobaciones",)`, clave el `hilo`) con PostgreSQL en `make api` o SQLite en `make api-sqlite`; la API lo carga en el arranque. `registrar`, `quitar`, `por_codigo`, `por_hilo` y `todos` trabajan sobre esa caché persistente. Al borrar los datos de un cliente se borran también sus pendientes. Sin Store configurado (scripts y pruebas) sigue en memoria.
+- **Por qué.** El pendiente ya está en el checkpointer; lo que faltaba era el índice que usa el panel. Persistirlo cierra el deadlock de la web sin cambiar el flujo de aprobación ni el agente.
+- **Límites.** No vincula web con WhatsApp ni comparte radicados entre canales. `_SIN_ENTREGAR` y `_DECIDIENDO` siguen en memoria: una decisión no entregada por WhatsApp puede perderse al reiniciar. Los pendientes anteriores a este cambio no se recuperan porque el índice no tenía el `usuario`; hay que desplegar sin pendientes. `args` y teléfono quedan en la base mientras el pendiente espera. La API sigue pensada para un proceso; varios workers podrían tener cachés distintas.
+- **Evidencia.** `src/taaml/aprobaciones.py`, `api/main.py`, `tests/test_aprobaciones.py`, `specs/019-pendientes-persistentes/`.

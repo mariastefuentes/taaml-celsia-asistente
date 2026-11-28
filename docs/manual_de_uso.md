@@ -62,7 +62,7 @@ Para hablar con una persona escriba «Quiero hablar con una persona»: queda reg
 3. Pulse **Aprobar** o **Rechazar**.
 4. El resultado se le envía a la persona por WhatsApp (requiere los avisos activados). Si no se pudo enviar, el panel lo dice y le llega con su siguiente mensaje.
 
-El panel muestra además las herramientas usadas, el tiempo, el costo y, en **Ver respuesta**, lo que se contestó. Las cuentas vuelven a cero cuando se reinicia la API. La lista de pendientes vive en memoria: tras un reinicio, cada pendiente reaparece cuando su cliente escribe de nuevo.
+El panel muestra además las herramientas usadas, el tiempo, el costo y, en **Ver respuesta**, lo que se contestó. Las cuentas vuelven a cero cuando se reinicia la API. El índice de pendientes se guarda en la base de memoria y sobrevive a reiniciar la API; las filas del panel sí se reinician.
 
 ## 3. Si usted enciende el sistema
 
