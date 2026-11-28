@@ -1,6 +1,6 @@
 # Registro de decisiones de arquitectura (Taller 2 y Módulo 3)
 
-Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está la evidencia. Es el registro versionado de las decisiones del agente: vive en el repositorio y cambia con él. Se redactó el 13 de noviembre de 2026 a partir del informe (`docs/3 - Informe/informe_taller2.md`) y de las especificaciones (`specs/011` y `specs/012`). No está en Engram: Engram es una herramienta externa de memoria para agentes de código y no se usó en este proyecto.
+Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está la evidencia. Es el registro versionado de las decisiones del agente: vive en el repositorio y cambia con él. Se redactó el 13 de noviembre de 2026 a partir del informe (`docs/3 - Informe/informe_taller2.md`) y de las especificaciones (`specs/011` y `specs/012`). Este registro es la fuente de verdad; Engram no se usa como fuente de verdad del proyecto. **Las cifras de cada decisión corresponden a su fecha**; el estado vigente y los conteos actuales están en el README y en la constitución.
 
 | # | Decisión | Estado |
 |---|---|---|
