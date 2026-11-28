@@ -39,7 +39,7 @@ def atender(mensaje: str, telefono: str) -> str:
     try:
         respuesta = requests.post(
             os.environ.get("CELSIA_API_URL", "http://127.0.0.1:8000").rstrip("/") + "/chat",
-            json={"mensaje": mensaje[:1000], "telefono": telefono},  # /chat acepta hasta 1.000 caracteres
+            json={"mensaje": mensaje[:1000], "telefono": telefono, "canal": "whatsapp"},  # /chat acepta hasta 1.000 caracteres; canal para el panel
             headers=cabeceras,
             timeout=TIEMPO_MAXIMO,
         )

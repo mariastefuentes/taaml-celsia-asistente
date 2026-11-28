@@ -25,6 +25,7 @@ import logging
 import os
 import re
 import secrets
+import sqlite3
 import subprocess
 import sys
 import threading
@@ -101,16 +102,16 @@ def mostrar_trazas_en_la_terminal() -> None:
 
 @asynccontextmanager
 async def _ciclo_de_vida(_: FastAPI):
-    """Al arrancar, muestra las trazas, recupera los pendientes del Store y calienta el agente en segundo plano."""
+    """Al arrancar, restaura actividad y pendientes y calienta el agente."""
     mostrar_trazas_en_la_terminal()
+    actividad.cargar()
     try:
         aprobaciones.configurar(almacen_compartido())
-    except Exception:  # noqa: BLE001  sin Store la API sigue con los pendientes en memoria
+    except Exception:
         log.exception("no se pudo configurar el Store de pendientes; se usa memoria")
         aprobaciones.configurar(None)
     threading.Thread(target=calentar, name="calentamiento", daemon=True).start()
     yield
-
 
 app = FastAPI(title="Agente Celsia", version="1.0", lifespan=_ciclo_de_vida)
 app.add_middleware(
@@ -139,6 +140,7 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
     inicio = time.monotonic()
     estado, herramientas, nota, costo = "respondido", [], False, None  # lo que queda en la fila del panel
     trozos, fuentes = [], []
+    previo = ""
     try:
         previo = aprobaciones.tomar_sin_entregar(hilo)  # lo que una persona decidió desde el último mensaje
         if previo:
@@ -180,9 +182,10 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
                 "mensaje": "No pude responder en este momento. Intenta de nuevo; si sigue fallando, llama a la línea 01 8000 112 115."
             },
         )
+    respuesta = (f"{previo}\n\n" if previo else "") + "".join(trozos)
     actividad.registrar(
         "web", hilo, mensaje, estado, herramientas, time.monotonic() - inicio, nota=nota, costo=costo,
-        respuesta="".join(trozos), fuentes=fuentes,
+        respuesta=respuesta, fuentes=fuentes,
     )
 
 
@@ -195,11 +198,11 @@ def salud() -> dict:
         "almacen": almacen_vectorial(),
         "memoria": "postgresql" if os.environ.get("DATABASE_URL") else "sqlite",
         "allowlist_whatsapp": len(numeros_autorizados()) or "abierta",
-        "avisos_openclaw": avisos_openclaw.activos(),  # ¿se le puede escribir al cliente cuando una persona decide su reclamo?
+        "avisos_openclaw": avisos_openclaw.activos(),  # Â¿se le puede escribir al cliente cuando una persona decide su reclamo?
     }
 
 
-# --- WhatsApp – Conectar agente: estado del gateway de OpenClaw, QR y página del QR ---
+# --- WhatsApp â€“ Conectar agente: estado del gateway de OpenClaw, QR y página del QR ---
 RAIZ = Path(__file__).resolve().parents[1]
 NUMERO_AGENTE = "+573150154664"  # el bot del canal de OpenClaw que esta interfaz permite vincular (no se toma de archivos ni de stdin)
 QR_PAGINA = RAIZ / "qr_whatsapp.html"
@@ -297,6 +300,8 @@ class MensajeEntrante(BaseModel):
 
     mensaje: str = Field(min_length=1, max_length=1000, description="Lo que escribe el cliente")
     telefono: str = Field(pattern=r"^\+?[0-9]{7,15}$", description="Número del cliente, con indicativo (por ejemplo 573001234567)")
+    # Canal de origen para el panel: `chat` (chat web / N8N / otro servicio) o `whatsapp`. El puente de OpenClaw manda `whatsapp`.
+    canal: str = Field(default="chat", max_length=40, description="Canal de origen: 'chat' o 'whatsapp'")
 
 
 class RespuestaDelAgente(BaseModel):
@@ -338,6 +343,34 @@ def _exigir_clave_del_chat(x_api_key: str | None, peticion: Request) -> None:
         raise HTTPException(status_code=401, detail="No autorizado")
 
 
+class MensajeActividadWhatsApp(BaseModel):
+    """Registro automático del canal real de OpenClaw; no invoca al modelo ni a las herramientas."""
+
+    telefono: str = Field(pattern=r"^\+[1-9][0-9]{7,14}$", description="Remitente verificado; nunca se devuelve ni se persiste en claro")
+    mensaje: str = Field(min_length=1, max_length=1000)
+    respuesta: str = Field(default="", max_length=5000)
+    evento: str | None = Field(default=None, max_length=40)
+    turno_id: str | None = Field(default=None, max_length=200)
+
+
+@app.post("/api/actividad/whatsapp")
+def registrar_actividad_whatsapp(
+    entrada: MensajeActividadWhatsApp, peticion: Request, x_api_key: str | None = Header(default=None)
+) -> dict:
+    """Registra entrada+salida reales de WhatsApp en el mismo SQLite que `/panel`; no duplica por `turno_id`."""
+    _exigir_clave_del_chat(x_api_key, peticion)
+    if entrada.evento == "message_received":
+        actividad.registrar_whatsapp_entrada(entrada.telefono, entrada.mensaje, turno_id=entrada.turno_id)
+    else:
+        actividad.registrar_whatsapp_respuesta(
+            entrada.telefono,
+            entrada.mensaje,
+            entrada.respuesta,
+            turno_id=entrada.turno_id,
+        )
+    return {"ok": True}
+
+
 @app.post("/chat")
 def chat_por_telefono(
     entrada: MensajeEntrante, peticion: Request, x_api_key: str | None = Header(default=None)
@@ -350,11 +383,12 @@ def chat_por_telefono(
     (WhatsApp) tiene que poder reenviar algo al cliente.
     """
     _exigir_clave_del_chat(x_api_key, peticion)
+    canal = entrada.canal or "chat"
     decision = LIMITE.revisar(entrada.telefono)
     if not decision.permitido:
-        actividad.registrar("chat", entrada.telefono, entrada.mensaje, "límite")
+        actividad.registrar(canal, entrada.telefono, entrada.mensaje, "límite")
         raise HTTPException(status_code=429, detail=TEXTO_LIMITE, headers={"Retry-After": str(decision.espera_s)})
-    return responder_a_telefono(entrada.telefono, entrada.mensaje)
+    return responder_a_telefono(entrada.telefono, entrada.mensaje, canal=canal)
 
 
 def responder_a_telefono(telefono: str, mensaje: str, canal: str = "chat") -> RespuestaDelAgente:
@@ -403,7 +437,7 @@ class Decision(BaseModel):
 
     telefono: str = Field(pattern=r"^\+?[0-9]{7,15}$")
     decision: Literal["aprobar", "rechazar", "responder"]
-    mensaje: str | None = Field(default=None, max_length=500)  # lo que se le dice al cliente cuando la decisión es «responder»
+    mensaje: str | None = Field(default=None, max_length=500)  # lo que se le dice al cliente cuando la decisión es Â«responderÂ»
 
     @model_validator(mode="after")
     def _responder_lleva_mensaje(self) -> "Decision":
@@ -459,7 +493,7 @@ def _resolver(hilo: str, usuario: str, telefono: str | None, canal: str, decisio
         avisado = bool(telefono) and _avisar_al_cliente(telefono, texto, canal)
         if anotado and not avisado:
             aprobaciones.guardar_sin_entregar(hilo, texto, canal)
-        actividad.registrar("aprobación", telefono or hilo, f"decisión: {decision}", "aprobación")
+        actividad.registrar("aprobación", telefono or hilo, f"decisión: {decision}", "aprobación", respuesta=texto)
         return {"decision": decision, "respuesta": texto, "avisado_por_whatsapp": avisado}
     finally:
         aprobaciones.terminar_decision(hilo)
@@ -543,7 +577,288 @@ def lo_que_hizo_el_agente(desde: int = Query(default=0, ge=0), x_aprobador: str 
         "total_herramientas": len(HERRAMIENTAS),
     }
 
+# ── Historial nativo de WhatsApp y trazabilidad de OpenClaw ─────────────
 
+def _db_openclaw_solo_lectura():
+    """Abre la base nativa de OpenClaw sin modificarla."""
+    ruta = Path(
+        os.environ.get(
+            "OPENCLAW_AGENT_DB",
+            str(Path.home() / ".openclaw" / "agents" / "main" / "agent" / "openclaw-agent.sqlite"),
+        )
+    ).expanduser()
+
+    if not ruta.is_file():
+        raise FileNotFoundError("No se encontró la base de datos de OpenClaw.")
+
+    db = sqlite3.connect(
+        ruta.resolve().as_uri() + "?mode=ro",
+        uri=True,
+        timeout=3,
+    )
+    db.row_factory = sqlite3.Row
+    db.execute("PRAGMA query_only = ON")
+    return db
+
+
+def _texto_transcripcion(contenido) -> str:
+    """Extrae únicamente texto visible; nunca expone bloques de razonamiento."""
+    if isinstance(contenido, str):
+        return contenido
+
+    if not isinstance(contenido, list):
+        return ""
+
+    partes = []
+    for bloque in contenido:
+        if not isinstance(bloque, dict):
+            continue
+        if bloque.get("type") == "text":
+            texto = bloque.get("text")
+            if isinstance(texto, str):
+                partes.append(texto)
+
+    return "\n".join(partes)
+
+
+def _fecha_evento(evento, mensaje):
+    return (
+        evento.get("timestamp")
+        or mensaje.get("timestamp")
+        or None
+    )
+
+
+def _extraer_eventos_whatsapp(session_id: str) -> list[dict]:
+    """Construye una cronología de mensajes y operaciones de herramientas."""
+    db = _db_openclaw_solo_lectura()
+
+    try:
+        filas = db.execute(
+            """
+            SELECT seq, event_json
+            FROM transcript_events
+            WHERE session_id = ?
+            ORDER BY seq ASC
+            """,
+            (session_id,),
+        ).fetchall()
+    finally:
+        db.close()
+
+    cronologia = []
+
+    for fila in filas:
+        try:
+            evento = json.loads(fila["event_json"])
+        except (TypeError, json.JSONDecodeError):
+            continue
+
+        if not isinstance(evento, dict) or evento.get("type") != "message":
+            continue
+
+        mensaje = evento.get("message")
+        if not isinstance(mensaje, dict):
+            continue
+
+        rol = mensaje.get("role")
+        contenido = mensaje.get("content")
+        fecha = _fecha_evento(evento, mensaje)
+        seq = fila["seq"]
+
+        # Mensajes del cliente y texto visible del asistente.
+        if rol in ("user", "assistant"):
+            texto = _texto_transcripcion(contenido)
+            if texto.strip():
+                cronologia.append({
+                    "seq": seq,
+                    "tipo": "mensaje",
+                    "rol": rol,
+                    "texto": texto[:6000],
+                    "fecha": fecha,
+                })
+
+        # Llamadas a herramientas realizadas por el asistente.
+        if rol == "assistant" and isinstance(contenido, list):
+            for bloque in contenido:
+                if not isinstance(bloque, dict):
+                    continue
+
+                if bloque.get("type") != "toolCall":
+                    continue
+
+                argumentos = bloque.get("arguments")
+                if not isinstance(argumentos, dict):
+                    argumentos = {}
+
+                codigo = argumentos.get("code", "")
+                operaciones = []
+
+                # Solo detecta nombres mencionados dentro de exec.
+                # No los presenta como llamadas independientes.
+                if isinstance(codigo, str):
+                    operaciones = sorted(set(
+                        re.findall(
+                            r"MCP\.celsia\.([A-Za-z_]\w*)",
+                            codigo,
+                        )
+                    ))
+
+                cronologia.append({
+                    "seq": seq,
+                    "tipo": "herramienta",
+                    "estado": "invocada",
+                    "call_id": bloque.get("id"),
+                    "herramienta": bloque.get("name", "desconocida"),
+                    "titulo": str(argumentos.get("title", ""))[:200],
+                    "operaciones_detectadas": operaciones,
+                    "fecha": fecha,
+                })
+
+        # Resultados reales de herramientas.
+        if rol == "toolResult":
+            resultado = _texto_transcripcion(contenido)
+
+            cronologia.append({
+                "seq": seq,
+                "tipo": "resultado_herramienta",
+                "call_id": mensaje.get("toolCallId"),
+                "herramienta": mensaje.get("toolName", "desconocida"),
+                "estado": "error" if mensaje.get("isError") else "correcto",
+                "resultado": resultado[:3000],
+                "fecha": fecha,
+            })
+
+    return cronologia
+
+
+@app.get("/api/whatsapp/conversaciones")
+def conversaciones_whatsapp(
+    x_aprobador: str | None = Header(default=None),
+) -> dict:
+    """Lista las sesiones directas de WhatsApp de OpenClaw."""
+    _exigir_aprobador(x_aprobador)
+
+    try:
+        db = _db_openclaw_solo_lectura()
+        try:
+            filas = db.execute(
+                """
+                SELECT
+                    session_id,
+                    channel,
+                    chat_type,
+                    status,
+                    display_name,
+                    transcript_updated_at
+                FROM session_windows
+                WHERE lower(coalesce(channel, '')) = 'whatsapp'
+                   OR lower(coalesce(session_key, '')) LIKE '%whatsapp%'
+                ORDER BY transcript_updated_at DESC
+                LIMIT 100
+                """
+            ).fetchall()
+        finally:
+            db.close()
+
+        conversaciones = []
+
+        for fila in filas:
+            nombre = fila["display_name"] or "Conversación de WhatsApp"
+
+            # Evita mostrar números telefónicos en el nombre de la sesión.
+            nombre = re.sub(
+                r"\+?\d[\d\s().-]{6,}\d",
+                "[contacto]",
+                str(nombre),
+            )
+
+            conversaciones.append({
+                "id": fila["session_id"],
+                "canal": fila["channel"] or "whatsapp",
+                "tipo": fila["chat_type"],
+                "estado": fila["status"],
+                "nombre": nombre,
+                "actualizada": fila["transcript_updated_at"],
+            })
+
+        return {
+            "ok": True,
+            "conversaciones": conversaciones,
+            "total": len(conversaciones),
+        }
+
+    except FileNotFoundError:
+        return {
+            "ok": False,
+            "conversaciones": [],
+            "error": "Base de datos de OpenClaw no encontrada.",
+        }
+    except sqlite3.Error:
+        log.exception("No se pudo consultar el historial de OpenClaw")
+        raise HTTPException(
+            status_code=503,
+            detail="No se pudo consultar el historial de WhatsApp.",
+        )
+
+
+@app.get("/api/whatsapp/conversaciones/{session_id}")
+def detalle_conversacion_whatsapp(
+    session_id: str,
+    x_aprobador: str | None = Header(default=None),
+) -> dict:
+    """Devuelve mensajes y trazabilidad de herramientas de una sesión."""
+    _exigir_aprobador(x_aprobador)
+
+    try:
+        db = _db_openclaw_solo_lectura()
+        try:
+            fila = db.execute(
+                """
+                SELECT session_id, channel, chat_type, display_name
+                FROM session_windows
+                WHERE session_id = ?
+                  AND (
+                    lower(coalesce(channel, '')) = 'whatsapp'
+                    OR lower(coalesce(session_key, '')) LIKE '%whatsapp%'
+                  )
+                """,
+                (session_id,),
+            ).fetchone()
+        finally:
+            db.close()
+
+        if fila is None:
+            raise HTTPException(
+                status_code=404,
+                detail="No se encontró esa conversación de WhatsApp.",
+            )
+
+        eventos = _extraer_eventos_whatsapp(session_id)
+
+        return {
+            "ok": True,
+            "conversacion": {
+                "id": fila["session_id"],
+                "canal": fila["channel"],
+                "tipo": fila["chat_type"],
+                "nombre": fila["display_name"] or "Conversación de WhatsApp",
+            },
+            "eventos": eventos,
+            "total_eventos": len(eventos),
+        }
+
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=503,
+            detail="Base de datos de OpenClaw no encontrada.",
+        )
+    except sqlite3.Error:
+        log.exception("No se pudo consultar el detalle de WhatsApp")
+        raise HTTPException(
+            status_code=503,
+            detail="No se pudo consultar la conversación.",
+        )
 def _funciona(prueba) -> bool:
     """Si una comprobación termina bien; cualquier fallo cuenta como apagado (el detalle va al registro)."""
     try:
@@ -573,7 +888,7 @@ def semaforo(x_aprobador: str | None = Header(default=None)) -> dict:
 def estado_del_hilo(hilo: str) -> dict:
     """Si la conversación espera la decisión de una persona. No expone los argumentos ni consume la decisión.
 
-    Sigue «pendiente» mientras la decisión se está aplicando: la respuesta para el cliente todavía no está lista.
+    Sigue Â«pendienteÂ» mientras la decisión se está aplicando: la respuesta para el cliente todavía no está lista.
     """
     if not ID_WEB.match(hilo):
         raise HTTPException(status_code=422, detail="Identificador de hilo inválido")
@@ -609,11 +924,10 @@ def datos(usuario: str) -> dict:
 
 @app.delete("/api/usuarios/{usuario}/datos")
 def borrar_datos(usuario: str) -> dict:
-    """Borra todo lo que el agente recuerda del cliente y sus pendientes de aprobación."""
+    """Borra la memoria del cliente y sus pendientes de aprobaci?n."""
     usuario = _usuario_valido(usuario)
     borrados = olvidar_cliente(usuario)
     return {"borrados": borrados + aprobaciones.olvidar_usuario(usuario)}
-
 
 # --- WhatsApp (API Cloud de Meta) ---
 MAX_AVISOS_VISTOS = 2000
@@ -638,7 +952,7 @@ def _digitos(telefono: str) -> str:
 
 
 def _es_el_aprobador(telefono: str) -> bool:
-    """¿Este teléfono es la persona de Celsia que aprueba con botones (`APROBADOR_WHATSAPP`)? Solo ella puede decidir por WhatsApp."""
+    """Â¿Este teléfono es la persona de Celsia que aprueba con botones (`APROBADOR_WHATSAPP`)? Solo ella puede decidir por WhatsApp."""
     configurado = _digitos(os.environ.get("APROBADOR_WHATSAPP", ""))
     return bool(configurado) and secrets.compare_digest(_digitos(telefono).encode(), configurado.encode())
 
@@ -656,7 +970,7 @@ def _pedir_aprobacion(telefono_cliente: str, pendiente: dict) -> None:
 
 
 def _decidir_por_boton(aprobador: str, identificador: str) -> None:
-    """La persona tocó «Aprobar» o «Rechazar»: se aplica la decisión y se le confirma. Cualquier otro botón se ignora."""
+    """La persona tocó Â«AprobarÂ» o Â«RechazarÂ»: se aplica la decisión y se le confirma. Cualquier otro botón se ignora."""
     partes = BOTON_DE_APROBACION.match(identificador)
     if not partes:
         return
@@ -669,13 +983,13 @@ def _decidir_por_boton(aprobador: str, identificador: str) -> None:
 
 SALUDOS = {"hola", "buenas", "buenos dias", "buenas tardes", "buenas noches", "menu", "/menu", "ayuda", "/ayuda", "inicio", "/inicio"}
 COMANDOS_NUEVO = {"/nuevo", "/reiniciar"}
-TEXTO_MENU = "Hola, soy el asistente virtual de Celsia. ¿Con qué te ayudo? Elige una opción o escríbeme tu pregunta. Con /nuevo empezamos una conversación desde cero."
+TEXTO_MENU = "Hola, soy el asistente virtual de Celsia. Â¿Con qué te ayudo? Elige una opción o escríbeme tu pregunta. Con /nuevo empezamos una conversación desde cero."
 BOTONES_MENU = [("menu:sedes", "Sedes y canales"), ("menu:reclamo", "Poner un reclamo"), ("menu:solar", "Celsia Solar")]
 # Lo que se le pregunta al agente cuando la persona toca cada botón del menú (pasa por el agente como cualquier pregunta).
 PREGUNTA_DEL_BOTON = {
-    "menu:sedes": "¿Cuáles son las sedes y los canales de atención de Celsia?",
+    "menu:sedes": "Â¿Cuáles son las sedes y los canales de atención de Celsia?",
     "menu:reclamo": "Quiero poner un reclamo.",
-    "menu:solar": "¿Qué es Celsia Solar y qué ofrece?",
+    "menu:solar": "Â¿Qué es Celsia Solar y qué ofrece?",
 }
 
 
@@ -685,18 +999,18 @@ def _responder_comando(telefono: str, texto: str) -> bool:
     if clave in COMANDOS_NUEVO:
         hilo, _ = ids_del_telefono(telefono)
         reiniciado = reiniciar_conversacion(hilo)
-        enviar_texto(
-            telefono,
+        salida = (
             "Listo, empezamos de cero. Lo que me hayas contado de ti (tu nombre, por ejemplo) lo sigo recordando."
             if reiniciado
-            else "Tu reclamo está esperando la revisión de una persona de Celsia; hasta que la tome no puedo empezar de cero.",
+            else "Tu reclamo está esperando la revisión de una persona de Celsia; hasta que la tome no puedo empezar de cero."
         )
-        actividad.registrar("whatsapp", telefono, texto, "respondido" if reiniciado else "pendiente de aprobación")
+        enviar_texto(telefono, salida)
+        actividad.registrar("whatsapp", telefono, texto, "respondido" if reiniciado else "pendiente de aprobación", respuesta=salida)
         return True
     if clave in SALUDOS:
         if not enviar_botones(telefono, TEXTO_MENU, BOTONES_MENU):  # sin botones (ventana de 24 h, Meta caído) el menú va como texto
-            enviar_texto(telefono, TEXTO_MENU + "\nPor ejemplo: «sedes y canales», «poner un reclamo» o «qué es Celsia Solar».")
-        actividad.registrar("whatsapp", telefono, texto, "respondido")
+            enviar_texto(telefono, TEXTO_MENU + "\nPor ejemplo: Â«sedes y canalesÂ», Â«poner un reclamoÂ» o Â«qué es Celsia SolarÂ».")
+        actividad.registrar("whatsapp", telefono, texto, "respondido", respuesta=TEXTO_MENU)
         return True
     return False
 
@@ -707,14 +1021,15 @@ def atender_mensaje_de_whatsapp(telefono: str, tipo: str, texto: str, audio: str
         if tipo == "interactive" and _es_el_aprobador(telefono) and BOTON_DE_APROBACION.match(texto):
             _decidir_por_boton(telefono, texto)
             return
-        marcar_leido(id_mensaje)  # palomitas azules y «escribiendo…» mientras el agente piensa
+        marcar_leido(id_mensaje)  # palomitas azules y Â«escribiendoâ€¦Â» mientras el agente piensa
         if tipo == "interactive" and texto in PREGUNTA_DEL_BOTON:  # el cliente tocó un botón del menú
             tipo, texto = "text", PREGUNTA_DEL_BOTON[texto]
         decision = LIMITE.revisar(telefono)
         if not decision.permitido:
             log.warning("límite de mensajes alcanzado; reintento en %s s", decision.espera_s)
-            actividad.registrar("whatsapp", telefono, "(mensaje rechazado por el límite)", "límite")
-            if decision.avisar:  # un solo aviso por ventana, para no contestar spam con más mensajes
+            avisar = bool(decision.avisar)  # un solo aviso por ventana, para no contestar spam con más mensajes
+            actividad.registrar("whatsapp", telefono, texto or "(mensaje rechazado por el límite)", "límite", respuesta=TEXTO_LIMITE if avisar else "")
+            if avisar:
                 enviar_texto(telefono, TEXTO_LIMITE)
             return
         canal = "whatsapp"
@@ -724,7 +1039,7 @@ def atender_mensaje_de_whatsapp(telefono: str, tipo: str, texto: str, audio: str
             if transcrito:
                 tipo, texto, canal = "text", transcrito, "whatsapp (voz)"
         if tipo != "text" or not texto.strip():
-            actividad.registrar("whatsapp", telefono, f"({tipo or 'mensaje'} sin texto)", "no soportado")
+            actividad.registrar("whatsapp", telefono, f"({tipo or 'mensaje'} sin texto)", "no soportado", respuesta=TEXTO_NO_SOPORTADO)
             enviar_texto(telefono, TEXTO_NO_SOPORTADO)
             return
         if canal == "whatsapp" and _responder_comando(telefono, texto):
@@ -807,7 +1122,7 @@ def montar_frontend(aplicacion: FastAPI, carpeta: Path = FRONTEND) -> bool:
     """Sirve el chat web (el frontend compilado) desde la misma dirección de la API, para que el público lo abra con un QR.
 
     Es el respaldo de WhatsApp: no tiene el límite de 5 destinatarios del número de prueba de Meta. El frontend llama a `/api/...` con rutas
-    relativas, así que desde la misma dirección no necesita CORS. Se monta en «/» **al final del archivo**, después de todas las rutas, para
+    relativas, así que desde la misma dirección no necesita CORS. Se monta en Â«/Â» **al final del archivo**, después de todas las rutas, para
     no taparlas. No se monta si falta `index.html` (hay que correr `make chat-web`) o si `SERVIR_FRONTEND=0`.
     """
     if os.environ.get("SERVIR_FRONTEND", "1") == "0" or not (carpeta / "index.html").is_file():
@@ -817,3 +1132,4 @@ def montar_frontend(aplicacion: FastAPI, carpeta: Path = FRONTEND) -> bool:
 
 
 montar_frontend(app)
+

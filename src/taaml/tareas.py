@@ -94,6 +94,8 @@ def obtener_modelo(nombre: str = MODELO_POR_DEFECTO) -> BaseChatModel:
         max_output_tokens=MAX_TOKENS_SALIDA,
         max_retries=0,  # un 503 del proveedor debe caer al respaldo, no dejar la demo en «Pensando...»
         timeout=TIEMPO_MAXIMO_GEMINI,
+        thinking_budget=0,  # sin razonamiento extendido (Thinking apagado)
+        include_thoughts=False,
     )
 
 

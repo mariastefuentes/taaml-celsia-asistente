@@ -83,7 +83,7 @@ API_DATABASE_URL = $(shell uv run python scripts/34_postgres_local.py)
 
 # La API usa PostgreSQL (PostgresSaver y PostgresStore): si DATABASE_URL ya está definida la respeta; si no, levanta un PostgreSQL local sin Docker.
 api:
-	uv run python -c "import os; os.environ['DATABASE_URL'] = os.environ.get('DATABASE_URL') or '$(API_DATABASE_URL)'.strip(); from uvicorn import run; run('api.main:app', port=8000)"
+	uv run python scripts/50_arrancar_api.py "$(API_DATABASE_URL)"
 
 # La API con RAG EN CADENA: un dynamic_prompt inyecta los fragmentos recuperados en cada turno y se quita la herramienta buscar_en_base (D12).
 api-cadena:
