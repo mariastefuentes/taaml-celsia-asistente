@@ -101,8 +101,13 @@ def mostrar_trazas_en_la_terminal() -> None:
 
 @asynccontextmanager
 async def _ciclo_de_vida(_: FastAPI):
-    """Al arrancar, muestra las trazas en la terminal y calienta el agente en segundo plano para que la primera pregunta no tarde ~15 s; la API ya responde mientras tanto."""
+    """Al arrancar, muestra las trazas, recupera los pendientes del Store y calienta el agente en segundo plano."""
     mostrar_trazas_en_la_terminal()
+    try:
+        aprobaciones.configurar(almacen_compartido())
+    except Exception:  # noqa: BLE001  sin Store la API sigue con los pendientes en memoria
+        log.exception("no se pudo configurar el Store de pendientes; se usa memoria")
+        aprobaciones.configurar(None)
     threading.Thread(target=calentar, name="calentamiento", daemon=True).start()
     yield
 
@@ -583,8 +588,10 @@ def datos(usuario: str) -> dict:
 
 @app.delete("/api/usuarios/{usuario}/datos")
 def borrar_datos(usuario: str) -> dict:
-    """Borra todo lo que el agente recuerda del cliente y dice cuántos datos eran."""
-    return {"borrados": olvidar_cliente(_usuario_valido(usuario))}
+    """Borra todo lo que el agente recuerda del cliente y sus pendientes de aprobación."""
+    usuario = _usuario_valido(usuario)
+    borrados = olvidar_cliente(usuario)
+    return {"borrados": borrados + aprobaciones.olvidar_usuario(usuario)}
 
 
 # --- WhatsApp (API Cloud de Meta) ---

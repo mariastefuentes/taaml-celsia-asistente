@@ -4,16 +4,20 @@ Cuando el agente se pausa (radicar o cancelar un reclamo, reportar un daño), la
 trae teléfonos ni identificadores de la conversación: cada pendiente se decide con un código al azar. También guarda las respuestas
 que no se pudieron enviar: el chat web las recoge del historial y, en los demás canales, salen con el siguiente mensaje del cliente.
 
-Todo vive en memoria del proceso. Si la API se reinicia, la conversación sigue pausada en la base de datos y vuelve a aparecer aquí
-en cuanto el cliente escribe de nuevo.
+El índice de pendientes se guarda en el Store (PostgreSQL o SQLite) cuando la API lo configura; sin Store (scripts y pruebas) vive
+en memoria. Si la API se reinicia, el pendiente se recupera del Store. Las respuestas sin entregar siguen en memoria del proceso.
 """
 
+import logging
 import secrets
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from typing import Any
 
+log = logging.getLogger("taaml.aprobaciones")
 MAXIMO = 200  # tope de pendientes y de respuestas sin entregar: el canal es público y no puede crecer sin límite
+ESPACIO = ("aprobaciones",)  # namespace del Store: una conversación solo espera una decisión a la vez
 
 
 @dataclass
@@ -32,11 +36,70 @@ _PENDIENTES: dict[str, Pendiente] = {}  # por hilo: una conversación solo esper
 _SIN_ENTREGAR: dict[str, tuple[str, str]] = {}  # por hilo: (texto, canal)
 _DECIDIENDO: set[str] = set()
 _CERROJO = threading.Lock()
+_ALMACEN: Any | None = None  # Store de LangGraph cuando la API lo configura; None = solo memoria
+_CARGADO = False
 
 
-def _recortar(cosas: dict) -> None:
-    while len(cosas) > MAXIMO:
-        cosas.pop(next(iter(cosas)))
+def configurar(almacen: Any | None) -> None:
+    """Fija el Store donde se guardan los pendientes y carga los que ya existan (None vuelve a memoria)."""
+    global _ALMACEN, _CARGADO
+    with _CERROJO:
+        _ALMACEN = almacen
+        _CARGADO = False
+        _PENDIENTES.clear()
+    if almacen is not None:
+        _cargar()
+
+
+def _cargar() -> None:
+    """Lee del Store el índice de pendientes; si falla, conserva la caché y sigue en memoria."""
+    global _CARGADO
+    with _CERROJO:
+        if _ALMACEN is None:
+            _CARGADO = True
+            return
+        try:
+            items = _ALMACEN.search(ESPACIO, limit=MAXIMO * 2)
+        except Exception:  # noqa: BLE001  la API sigue en memoria si el Store no responde
+            log.exception("no se pudieron cargar los pendientes del Store")
+            _CARGADO = True
+            return
+        _PENDIENTES.clear()
+        for item in items:
+            try:
+                pendiente = Pendiente(**item.value)
+            except (TypeError, ValueError):
+                log.warning("pendiente guardado con formato inesperado: %s", item.key)
+                continue
+            _PENDIENTES[pendiente.hilo] = pendiente
+        _recortar()
+        _CARGADO = True
+
+
+def _guardar(pendiente: Pendiente) -> None:
+    """Escribe el pendiente en el Store; un fallo no impide decidirlo en este proceso."""
+    if _ALMACEN is None:
+        return
+    try:
+        _ALMACEN.put(ESPACIO, pendiente.hilo, asdict(pendiente))
+    except Exception:  # noqa: BLE001
+        log.exception("no se pudo guardar el pendiente %s", pendiente.hilo[:8])
+
+
+def _borrar(hilo: str) -> None:
+    if _ALMACEN is None:
+        return
+    try:
+        _ALMACEN.delete(ESPACIO, hilo)
+    except Exception:  # noqa: BLE001
+        log.exception("no se pudo borrar el pendiente %s", hilo[:8])
+
+
+def _recortar() -> None:
+    while len(_PENDIENTES) > MAXIMO:
+        hilo, viejo = min(_PENDIENTES.items(), key=lambda par: par[1].desde)
+        _PENDIENTES.pop(hilo, None)
+        _borrar(hilo)
 
 
 def registrar(hilo: str, usuario: str, pendiente: dict, canal: str, telefono: str | None = None) -> Pendiente:
@@ -48,7 +111,8 @@ def registrar(hilo: str, usuario: str, pendiente: dict, canal: str, telefono: st
             return anterior
         nuevo = Pendiente(secrets.token_hex(4), hilo, usuario, herramienta, args, canal, telefono)
         _PENDIENTES[hilo] = nuevo
-        _recortar(_PENDIENTES)
+        _guardar(nuevo)
+        _recortar()
         return nuevo
 
 
@@ -70,7 +134,18 @@ def por_hilo(hilo: str) -> Pendiente | None:
 
 def quitar(hilo: str) -> None:
     with _CERROJO:
-        _PENDIENTES.pop(hilo, None)
+        if _PENDIENTES.pop(hilo, None):
+            _borrar(hilo)
+
+
+def olvidar_usuario(usuario: str) -> int:
+    """Borra los pendientes de un cliente al borrar sus datos; devuelve cuántos eran."""
+    with _CERROJO:
+        de_este = [p.hilo for p in _PENDIENTES.values() if p.usuario == usuario]
+        for hilo in de_este:
+            _PENDIENTES.pop(hilo, None)
+            _borrar(hilo)
+        return len(de_este)
 
 
 def empezar_decision(hilo: str) -> bool:
@@ -99,7 +174,8 @@ def guardar_sin_entregar(hilo: str, texto: str, canal: str = "chat") -> None:
         if previa := _SIN_ENTREGAR.get(hilo):
             texto = f"{previa[0]}\n\n{texto}"
         _SIN_ENTREGAR[hilo] = (texto, canal)
-        _recortar(_SIN_ENTREGAR)
+        while len(_SIN_ENTREGAR) > MAXIMO:
+            _SIN_ENTREGAR.pop(next(iter(_SIN_ENTREGAR)))
 
 
 def tomar_sin_entregar(hilo: str) -> str | None:
@@ -117,8 +193,12 @@ def entregada_en_la_web(hilo: str) -> None:
 
 
 def vaciar() -> None:
-    """Para las pruebas."""
+    """Para las pruebas: borra la caché y, si hay Store, sus pendientes."""
+    global _CARGADO
     with _CERROJO:
+        for hilo in list(_PENDIENTES):
+            _borrar(hilo)
         _PENDIENTES.clear()
         _SIN_ENTREGAR.clear()
         _DECIDIENDO.clear()
+        _CARGADO = False

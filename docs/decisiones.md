@@ -536,3 +536,10 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Alternativa descartada.** Correrla en cada PR en GitHub: obligaba a compilar el chat web y descargar un navegador la víspera de la sustentación.
 - **Límites.** No entra a WhatsApp ni se ha corrido en el computador del bot.
 - **Evidencia.** `tests/e2e/test_qa_navegador.py`, `docs/qa_playwright.md`.
+
+## D76. Los pendientes de aprobación sobreviven a reiniciar la API
+- **Contexto.** El checkpointer conserva la conversación pausada, pero `aprobaciones._PENDIENTES` vivía en memoria. Tras reiniciar la API, el panel quedaba vacío; en el chat web el cliente seguía bloqueado y no había forma de aprobar. F5 no causaba el problema: solo recarga el navegador.
+- **Decisión.** El índice de pendientes se guarda en el Store de LangGraph (`("aprobaciones", hilo)`) con PostgreSQL en `make api` o SQLite en `make api-sqlite`; la API lo carga en el arranque. `registrar`, `quitar`, `por_codigo`, `por_hilo` y `todos` trabajan sobre esa caché persistente. Al borrar los datos de un cliente se borran también sus pendientes. Sin Store configurado (scripts y pruebas) sigue en memoria.
+- **Por qué.** El pendiente ya está en el checkpointer; lo que faltaba era el índice que usa el panel. Persistirlo cierra el deadlock de la web sin cambiar el flujo de aprobación ni el agente.
+- **Límites.** No vincula web con WhatsApp ni comparte radicados entre canales. `_SIN_ENTREGAR` y `_DECIDIENDO` siguen en memoria: una decisión no entregada por WhatsApp puede perderse al reiniciar. Los pendientes anteriores a este cambio no se recuperan porque el índice no tenía el `usuario`; hay que desplegar sin pendientes. `args` y teléfono quedan en la base mientras el pendiente espera. La API sigue pensada para un proceso; varios workers podrían tener cachés distintas.
+- **Evidencia.** `src/taaml/aprobaciones.py`, `api/main.py`, `tests/test_aprobaciones.py`, `specs/018-pendientes-persistentes/`.
