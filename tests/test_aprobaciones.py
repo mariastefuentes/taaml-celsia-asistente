@@ -75,7 +75,7 @@ def test_aprobar_desde_el_panel_le_escribe_al_cliente_por_openclaw(agente_pausad
     assert r.status_code == 200 and r.json()["avisado_por_whatsapp"] is True
     assert enviados == [(TELEFONO, "Reclamo radicado: RC-1.")] and agente_pausado["decisiones"] == ["aprobar"]
     assert _pendientes() == []
-    assert _escribir("hola") == "Respuesta normal."  # ya la recibió: no se repite
+    assert _escribir("¿Qué sedes hay?") == "Respuesta normal."  # ya la recibió: no se repite
     assert cliente.post(f"/api/pendientes/{p['codigo']}", json={"decision": "aprobar"}, headers=CABECERA).status_code == 404
 
 
@@ -87,8 +87,8 @@ def test_si_no_se_le_puede_escribir_la_respuesta_sale_con_su_siguiente_mensaje(a
     [p] = _pendientes()
     r = cliente.post(f"/api/pendientes/{p['codigo']}", json={"decision": "rechazar"}, headers=CABECERA)
     assert r.json()["avisado_por_whatsapp"] is False
-    assert _escribir("hola") == "Reclamo radicado: RC-1.\n\nRespuesta normal."
-    assert _escribir("hola") == "Respuesta normal."
+    assert _escribir("hola") == "Reclamo radicado: RC-1.\n\nRespuesta normal."  # el atajo espera: hay una decisión sin entregar
+    assert _escribir("¿Qué sedes hay?") == "Respuesta normal."
 
 
 def test_dos_decisiones_sin_entregar_llegan_las_dos():
@@ -208,7 +208,7 @@ def test_un_fallo_en_el_chat_web_tambien_queda_en_el_panel(agente_pausado, monke
 
     actividad.vaciar()
     monkeypatch.setattr(api, "conversar_en_vivo", roto)
-    cliente.post("/api/chat", json={"mensaje": "hola", "hilo": HILO_WEB})
+    cliente.post("/api/chat", json={"mensaje": "¿Qué sedes hay?", "hilo": HILO_WEB})
     [fila] = cliente.get("/api/actividad", headers=CABECERA).json()["filas"]
     assert fila["estado"] == "error" and "clave secreta" not in str(fila)
 

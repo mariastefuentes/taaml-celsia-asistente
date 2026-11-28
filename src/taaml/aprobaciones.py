@@ -102,6 +102,12 @@ def guardar_sin_entregar(hilo: str, texto: str, canal: str = "chat") -> None:
         _recortar(_SIN_ENTREGAR)
 
 
+def hay_sin_entregar(hilo: str) -> bool:
+    """¿Esa conversación tiene una decisión esperando para enviarse? No la consume."""
+    with _CERROJO:
+        return hilo in _SIN_ENTREGAR
+
+
 def tomar_sin_entregar(hilo: str) -> str | None:
     """La respuesta que quedó sin enviar a esa conversación (y la olvida), o None."""
     with _CERROJO:

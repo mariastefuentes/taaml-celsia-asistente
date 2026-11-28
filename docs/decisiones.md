@@ -70,6 +70,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 ## D9. Gatekeeper System One (Jev): abierta
 - **Contexto.** El enunciado lo pide solo «si está disponible». Es una API comercial y requiere una clave.
 - **Decisión pendiente.** Si hay clave, se añade como compuerta opcional (`Noul` para decidir si hace falta RAG, `Choice` para saludo, consulta o fuera de dominio) y se mide contra la matriz. Si no la hay, se documenta como no usado.
+- **Estado (27/11/2026).** No se adoptó para la sustentación: la API está en acceso anticipado y sumar un proveedor nuevo el día anterior era riesgo sin nota a cambio. Los mensajes triviales se resuelven con reglas cerradas (D76); Jev queda como mejora posterior.
 
 ## D10. WhatsApp con servidor propio en FastAPI, sin N8N (Módulo 3, vía 2)
 - **Contexto.** El Módulo 3 pide conectar el agente a WhatsApp por una de dos vías: N8N (visual) o un servidor de integración propio. Hay que justificar la elección.
@@ -125,7 +126,7 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Evidencia.** `src/taaml/agente.py` (`resolver_aprobacion`), `api/main.py` (`Decision`), pruebas en `tests/test_agente.py` y `tests/test_api.py`.
 
 ## D17. Mejoras de la Clase 9 que no se adoptaron
-- **Jev (System One) como compuerta del RAG.** Sigue abierta (D9): es una API comercial y no hay clave. El agente ya decide cuándo buscar (D12) y la matriz de enrutamiento mide ese acierto (32 de 33), así que la compuerta sería una optimización de costo y latencia, no una pieza que falte.
+- **Jev (System One) como compuerta del RAG.** Sigue abierta (D9): es una API comercial y no hay clave. El agente ya decide cuándo buscar (D12) y la matriz de enrutamiento mide ese acierto (32 de 33), así que la compuerta sería una optimización de costo y latencia, no una pieza que falte. Para lo trivial se implementó un atajo por reglas (D76).
 - **Campos `verified` y `stale_after` del formato OKF en la capa Gold.** No se agregaron: obligaría a regenerar todos los documentos y a reindexar a un día de la sustentación, sin cambiar lo que responde el agente. Hoy la frescura se cubre con `fecha_extraccion`, `fecha_publicacion` y `hash` en cada documento.
 - **Skill propia.** Se migró al repositorio en `.opencode/skills/` (ver D24); `mariastefuentes/taaml-skills` queda como espejo. El reporte de SkillSpector sigue en `docs/skillspector-corpus-medallion.md`.
 
@@ -543,3 +544,11 @@ Cada decisión dice qué se decidió, por qué, qué se descartó y dónde está
 - **Por qué.** Es una ayuda de la interfaz web; una regla en el prompt también se aplicaría a WhatsApp, donde ese botón no existe, y gastaría cuota y latencia.
 - **Límites.** La respuesta es local: se ve en la página y no se guarda en el hilo; si se recarga, desaparece. No cubre preguntas sobre otros QR ni reemplaza el enlace `wa.me`.
 - **Evidencia.** `frontend/src/App.jsx`, `tests/e2e/test_qa_navegador.py`.
+
+## D76. Atajos de intención por reglas, sin despertar al modelo
+- **Contexto.** Un «hola» o un «gracias» en el chat web pasaba por el agente (4–8 s y cuota) y por el puente de OpenClaw pasaba también por el agente de Celsia. El webhook de Meta ya tenía un menú con botones (D19), pero no cubría las otras dos entradas. Jev (D9) era la alternativa, pero no se adoptó por ser un servicio en acceso anticipado a un día de la demo.
+- **Decisión.** `src/taaml/atajos.py` normaliza el mensaje (minúsculas, sin tildes, signos, emojis ni letras repetidas) y responde solo si **toda** la frase es un saludo, agradecimiento, despedida o ayuda; cuatro textos compartidos entre el chat web y el puente de OpenClaw. Se integra en `_turno` (`/api/chat`) y en `responder_a_telefono` (`/chat`); el webhook de Meta conserva su menú con botones y `/nuevo`. No se guarda en el historial.
+- **Por qué.** Cero dependencia nueva, cero cuota y latencia de milisegundos para lo trivial, sin arriesgar respuestas equivocadas: si hay una palabra de contenido, el patrón no coincide y el mensaje sigue al agente.
+- **Seguros.** No se usa el atajo si hay un reclamo pendiente de aprobación o una decisión sin entregar (`aprobaciones.hay_sin_entregar`); así no se salta la persona que decide ni se pierde el radicado.
+- **Límites.** Vocabulario cerrado: no entiende parafraseos («necesito una mano»), otros idiomas ni contexto; esos mensajes van al agente. En OpenClaw se ahorra la llamada al agente de Celsia, no la de OpenClaw. El atajo no queda en la memoria de la conversación; al recargar el chat no reaparece.
+- **Evidencia.** `src/taaml/atajos.py`, `src/taaml/aprobaciones.py`, `api/main.py`, `tests/test_atajos.py`, `tests/test_api.py`, `tests/test_aprobaciones.py`, `specs/018-atajos-de-intencion/`.
