@@ -131,6 +131,17 @@ def test_la_portada_carga_completa(pantalla):
     _foto(pantalla, "portada")
 
 
+def test_la_pregunta_del_qr_se_contesta_sin_llamar_al_agente(pantalla):
+    pantalla.goto("/")
+    pantalla.get_by_role("textbox", name="Pregunta").fill("¿Dónde escaneo el código QR de WhatsApp?")
+    pantalla.get_by_role("button", name="Enviar").click()
+    respuesta = pantalla.locator("article.burbuja.assistant").last
+    expect(respuesta.locator(".contenido")).to_contain_text("Ve arriba a la derecha donde dice WhatsApp")
+    expect(pantalla).to_have_url(re.compile(r"/$"))  # no se creó un hilo: la respuesta es local
+    expect(pantalla.locator(".error")).to_have_count(0)
+    _sin_desplazamiento_horizontal(pantalla)
+
+
 def test_el_flujo_del_pitch_responde_con_fuentes_y_herramienta(pantalla):
     if URL_DESPLEGADA and not (MODELO_REAL and pantalla.tamano == os.environ.get("QA_TAMANO_PITCH", "escritorio")):
         pytest.skip("en la app encendida solo se pregunta al modelo real una vez y con QA_MODELO_REAL=1")
