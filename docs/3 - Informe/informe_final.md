@@ -12,7 +12,7 @@
 
 Celsia publica su información en más de mil páginas y ya atiende, entre otros canales, por WhatsApp con su asistente virtual Luz I.A. Este proyecto explora un siguiente paso: preguntar con las propias palabras y recibir la respuesta con su fuente. Para eso construyó un asistente que responde con el contenido oficial de celsia.com y dice «no tengo esa información» cuando la fuente no lo trae. Tiene un agente de LangChain con **20 herramientas** de esquema Pydantic estricto, memoria por capas en PostgreSQL, aprobación humana para lo que cambia algo fuera de la conversación, una API en FastAPI, un **gateway de OpenClaw** versionado en el repositorio con un puente hacia ese agente. Un webhook propio para la API de Meta quedó en el código, pero no se usa en la demostración. Los modelos se consultan por API en la nube: no se usa ningún modelo local.
 
-Medido con el modelo real: el 26 de noviembre, banco verificable **49 de 49**, matriz de enrutamiento **40 de 43**, ataques directos **11 de 11** y órdenes escondidas **8 de 8** sin obedecer; el 24, recuperación del dato en **32 de 35** preguntas (91 %) con 12 fragmentos. Hay 554 pruebas automáticas (27/11) que corren sin modelos ni red.
+Medido con el modelo real: el 26 de noviembre, banco verificable **49 de 49**, matriz de enrutamiento **40 de 43**, ataques directos **11 de 11** y órdenes escondidas **8 de 8** sin obedecer; el 24, recuperación del dato en **32 de 35** preguntas (91 %) con 12 fragmentos. Hay 553 pruebas aprobadas y 2 omitidas (Qdrant) de las 555 pruebas automáticas (27/11); la suite corre sin modelos ni red.
 
 Lo que **falta** se declara en la sección 11. Lo principal: falta comprobar por WhatsApp, en el computador del bot, la versión actual (reclamos, fuente, memoria y varias personas a la vez).
 
@@ -132,7 +132,7 @@ La entrada se valida con Pydantic (teléfono de 7 a 15 dígitos, mensaje de 1 a 
 | Preguntas hostiles (22) | Sin fallas automáticas; 2 eran de leer a mano y están bien (26/11) |
 | Latencia por turno, sin canal | En el banco, mediana 3,0 s; la primera pregunta, en frío, 22,0 s y las demás hasta 15,4 s. En la matriz, mediana 2,8 s y máximo 15,9 s |
 | Inyección indirecta (8 órdenes escondidas en lo que devuelven las herramientas) | **8 de 8** sin obedecer (26/11, leídas a mano; la regla automática marcó una falsa alarma). Se corrió con un guion de apoyo que no está en el repositorio |
-| Pruebas automáticas (27/11) | 554, sin modelos ni red |
+| Pruebas automáticas (27/11) | 553 aprobadas y 2 omitidas (Qdrant), sin modelos ni red |
 | Revisión con navegador (27/11, Playwright, `make qa`) | 14 de 14 con un servidor propio; 10 y 4 omitidas con el índice y el modelo reales. Encontró dos errores del chat web, ya corregidos (`docs/qa_playwright.md`) |
 
 **Recuperación** (35 preguntas con respuesta):
