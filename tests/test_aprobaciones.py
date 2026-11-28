@@ -18,6 +18,18 @@ RECLAMO = {"herramienta": "radicar_reclamo", "args": {"ciudad": "Ibagué", "desc
 
 
 @pytest.fixture
+def almacen_de_pendientes():
+    """Un Store en memoria para probar la persistencia sin tocar la base real."""
+    from langgraph.store.memory import InMemoryStore
+
+    almacen = InMemoryStore()
+    aprobaciones.configurar(almacen)
+    yield almacen
+    aprobaciones.configurar(None)
+    aprobaciones.vaciar()
+
+
+@pytest.fixture
 def agente_pausado(monkeypatch):
     """Un agente falso que queda pausado al «radicar» y se libera cuando una persona decide."""
     estado = {"pendiente": None, "decisiones": []}
@@ -247,3 +259,36 @@ def test_el_envio_pasa_el_texto_como_un_solo_argumento_y_nunca_lanza(monkeypatch
     assert avisos_openclaw.enviar(TELEFONO, "hola") is False
     monkeypatch.setattr(avisos_openclaw, "comando", lambda: None)
     assert avisos_openclaw.enviar(TELEFONO, "hola") is False
+
+
+def test_los_pendientes_sobreviven_a_reiniciar_la_api(almacen_de_pendientes):
+    p = aprobaciones.registrar(HILO_WEB, "a" * 32, RECLAMO, "web")
+    aprobaciones.configurar(almacen_de_pendientes)  # misma base, otra caché: como otro proceso
+    [recuperado] = aprobaciones.todos()
+    assert (recuperado.codigo, recuperado.hilo, recuperado.usuario) == (p.codigo, HILO_WEB, "a" * 32)
+    assert aprobaciones.por_codigo(p.codigo).herramienta == "radicar_reclamo"
+    assert aprobaciones.por_hilo(HILO_WEB).args["ciudad"] == "Ibagué"
+
+
+def test_el_panel_encuentra_el_pendiente_despues_de_reiniciar(almacen_de_pendientes, monkeypatch):
+    monkeypatch.setenv("APROBADOR_TOKEN", "secreto-largo")
+    p = aprobaciones.registrar(HILO_WEB, "a" * 32, RECLAMO, "web")
+    aprobaciones.configurar(almacen_de_pendientes)
+    [item] = _pendientes()
+    assert item["codigo"] == p.codigo and item["herramienta"] == "radicar_reclamo"
+    assert item["args"]["ciudad"] == "Ibagué" and p.hilo not in cliente.get("/api/pendientes", headers=CABECERA).text
+
+
+def test_quitar_un_pendiente_lo_borra_del_store(almacen_de_pendientes):
+    aprobaciones.registrar(HILO_WEB, "a" * 32, RECLAMO, "web")
+    aprobaciones.quitar(HILO_WEB)
+    aprobaciones.configurar(almacen_de_pendientes)
+    assert aprobaciones.todos() == []
+
+
+def test_olvidar_un_cliente_borra_solo_sus_pendientes(almacen_de_pendientes):
+    aprobaciones.registrar(HILO_WEB, "a" * 32, RECLAMO, "web")
+    aprobaciones.registrar("b" * 32, "b" * 32, RECLAMO, "web")
+    assert aprobaciones.olvidar_usuario("a" * 32) == 1
+    aprobaciones.configurar(almacen_de_pendientes)
+    assert [p.usuario for p in aprobaciones.todos()] == ["b" * 32]
