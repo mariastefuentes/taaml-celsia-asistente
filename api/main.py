@@ -198,11 +198,11 @@ def salud() -> dict:
         "almacen": almacen_vectorial(),
         "memoria": "postgresql" if os.environ.get("DATABASE_URL") else "sqlite",
         "allowlist_whatsapp": len(numeros_autorizados()) or "abierta",
-        "avisos_openclaw": avisos_openclaw.activos(),  # Â¿se le puede escribir al cliente cuando una persona decide su reclamo?
+        "avisos_openclaw": avisos_openclaw.activos(),  # ¿se le puede escribir al cliente cuando una persona decide su reclamo?
     }
 
 
-# --- WhatsApp â€“ Conectar agente: estado del gateway de OpenClaw, QR y página del QR ---
+# --- WhatsApp – Conectar agente: estado del gateway de OpenClaw, QR y página del QR ---
 RAIZ = Path(__file__).resolve().parents[1]
 NUMERO_AGENTE = "+573150154664"  # el bot del canal de OpenClaw que esta interfaz permite vincular (no se toma de archivos ni de stdin)
 QR_PAGINA = RAIZ / "qr_whatsapp.html"
@@ -437,7 +437,7 @@ class Decision(BaseModel):
 
     telefono: str = Field(pattern=r"^\+?[0-9]{7,15}$")
     decision: Literal["aprobar", "rechazar", "responder"]
-    mensaje: str | None = Field(default=None, max_length=500)  # lo que se le dice al cliente cuando la decisión es Â«responderÂ»
+    mensaje: str | None = Field(default=None, max_length=500)  # lo que se le dice al cliente cuando la decisión es «responder»
 
     @model_validator(mode="after")
     def _responder_lleva_mensaje(self) -> "Decision":
@@ -888,7 +888,7 @@ def semaforo(x_aprobador: str | None = Header(default=None)) -> dict:
 def estado_del_hilo(hilo: str) -> dict:
     """Si la conversación espera la decisión de una persona. No expone los argumentos ni consume la decisión.
 
-    Sigue Â«pendienteÂ» mientras la decisión se está aplicando: la respuesta para el cliente todavía no está lista.
+    Sigue «pendiente» mientras la decisión se está aplicando: la respuesta para el cliente todavía no está lista.
     """
     if not ID_WEB.match(hilo):
         raise HTTPException(status_code=422, detail="Identificador de hilo inválido")
@@ -952,7 +952,7 @@ def _digitos(telefono: str) -> str:
 
 
 def _es_el_aprobador(telefono: str) -> bool:
-    """Â¿Este teléfono es la persona de Celsia que aprueba con botones (`APROBADOR_WHATSAPP`)? Solo ella puede decidir por WhatsApp."""
+    """¿Este teléfono es la persona de Celsia que aprueba con botones (`APROBADOR_WHATSAPP`)? Solo ella puede decidir por WhatsApp."""
     configurado = _digitos(os.environ.get("APROBADOR_WHATSAPP", ""))
     return bool(configurado) and secrets.compare_digest(_digitos(telefono).encode(), configurado.encode())
 
@@ -970,7 +970,7 @@ def _pedir_aprobacion(telefono_cliente: str, pendiente: dict) -> None:
 
 
 def _decidir_por_boton(aprobador: str, identificador: str) -> None:
-    """La persona tocó Â«AprobarÂ» o Â«RechazarÂ»: se aplica la decisión y se le confirma. Cualquier otro botón se ignora."""
+    """La persona tocó «Aprobar» o «Rechazar»: se aplica la decisión y se le confirma. Cualquier otro botón se ignora."""
     partes = BOTON_DE_APROBACION.match(identificador)
     if not partes:
         return
@@ -983,13 +983,13 @@ def _decidir_por_boton(aprobador: str, identificador: str) -> None:
 
 SALUDOS = {"hola", "buenas", "buenos dias", "buenas tardes", "buenas noches", "menu", "/menu", "ayuda", "/ayuda", "inicio", "/inicio"}
 COMANDOS_NUEVO = {"/nuevo", "/reiniciar"}
-TEXTO_MENU = "Hola, soy el asistente virtual de Celsia. Â¿Con qué te ayudo? Elige una opción o escríbeme tu pregunta. Con /nuevo empezamos una conversación desde cero."
+TEXTO_MENU = "Hola, soy el asistente virtual de Celsia. ¿Con qué te ayudo? Elige una opción o escríbeme tu pregunta. Con /nuevo empezamos una conversación desde cero."
 BOTONES_MENU = [("menu:sedes", "Sedes y canales"), ("menu:reclamo", "Poner un reclamo"), ("menu:solar", "Celsia Solar")]
 # Lo que se le pregunta al agente cuando la persona toca cada botón del menú (pasa por el agente como cualquier pregunta).
 PREGUNTA_DEL_BOTON = {
-    "menu:sedes": "Â¿Cuáles son las sedes y los canales de atención de Celsia?",
+    "menu:sedes": "¿Cuáles son las sedes y los canales de atención de Celsia?",
     "menu:reclamo": "Quiero poner un reclamo.",
-    "menu:solar": "Â¿Qué es Celsia Solar y qué ofrece?",
+    "menu:solar": "¿Qué es Celsia Solar y qué ofrece?",
 }
 
 
@@ -1009,7 +1009,7 @@ def _responder_comando(telefono: str, texto: str) -> bool:
         return True
     if clave in SALUDOS:
         if not enviar_botones(telefono, TEXTO_MENU, BOTONES_MENU):  # sin botones (ventana de 24 h, Meta caído) el menú va como texto
-            enviar_texto(telefono, TEXTO_MENU + "\nPor ejemplo: Â«sedes y canalesÂ», Â«poner un reclamoÂ» o Â«qué es Celsia SolarÂ».")
+            enviar_texto(telefono, TEXTO_MENU + "\nPor ejemplo: «sedes y canales», «poner un reclamo» o «qué es Celsia Solar».")
         actividad.registrar("whatsapp", telefono, texto, "respondido", respuesta=TEXTO_MENU)
         return True
     return False
@@ -1021,7 +1021,7 @@ def atender_mensaje_de_whatsapp(telefono: str, tipo: str, texto: str, audio: str
         if tipo == "interactive" and _es_el_aprobador(telefono) and BOTON_DE_APROBACION.match(texto):
             _decidir_por_boton(telefono, texto)
             return
-        marcar_leido(id_mensaje)  # palomitas azules y Â«escribiendoâ€¦Â» mientras el agente piensa
+        marcar_leido(id_mensaje)  # palomitas azules y «escribiendo…» mientras el agente piensa
         if tipo == "interactive" and texto in PREGUNTA_DEL_BOTON:  # el cliente tocó un botón del menú
             tipo, texto = "text", PREGUNTA_DEL_BOTON[texto]
         decision = LIMITE.revisar(telefono)
@@ -1122,7 +1122,7 @@ def montar_frontend(aplicacion: FastAPI, carpeta: Path = FRONTEND) -> bool:
     """Sirve el chat web (el frontend compilado) desde la misma dirección de la API, para que el público lo abra con un QR.
 
     Es el respaldo de WhatsApp: no tiene el límite de 5 destinatarios del número de prueba de Meta. El frontend llama a `/api/...` con rutas
-    relativas, así que desde la misma dirección no necesita CORS. Se monta en Â«/Â» **al final del archivo**, después de todas las rutas, para
+    relativas, así que desde la misma dirección no necesita CORS. Se monta en «/» **al final del archivo**, después de todas las rutas, para
     no taparlas. No se monta si falta `index.html` (hay que correr `make chat-web`) o si `SERVIR_FRONTEND=0`.
     """
     if os.environ.get("SERVIR_FRONTEND", "1") == "0" or not (carpeta / "index.html").is_file():
