@@ -3,6 +3,7 @@ import json
 import threading
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from api.main import ID_WEB, app, ids_del_telefono
@@ -12,6 +13,7 @@ cliente = TestClient(app)
 HILO = "aaaaaaaaaaaa4aaa8aaaaaaaaaaaaaaa"  # forma de uuid4: la que crea el navegador
 CLIENTE_B = "bbbbbbbbbbbb4bbb8bbbbbbbbbbbbbbb"
 CLIENTE_C = "cccccccccccc4ccc8ccccccccccccccc"
+CONSULTA = "¿Qué sedes hay en Ibagué?"  # mensaje con contenido: no entra por el atajo de saludos
 
 
 def _eventos(texto: str) -> list[tuple[str, dict]]:
@@ -60,6 +62,54 @@ def test_el_qr_de_whatsapp_se_sirve_para_el_chat_y_el_panel():
     assert "/qr-whatsapp.png" in cliente.get("/panel").text
 
 
+def test_un_saludo_en_el_chat_web_no_llama_al_modelo(monkeypatch):
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
+    monkeypatch.setattr("api.main.conversar_en_vivo", lambda *a, **k: pytest.fail("no debía llamar al modelo"))
+    eventos = _eventos(cliente.post("/api/chat", json={"mensaje": "¡Holaaa!!", "hilo": HILO}).text)
+    assert [t for t, _ in eventos] == ["hilo", "texto", "fin"]
+    texto = next(d["texto"] for t, d in eventos if t == "texto")
+    fin = next(d for t, d in eventos if t == "fin")
+    assert "asistente virtual de Celsia" in texto
+    assert fin["costo_usd"] == 0 and "atajo: saludo" in fin["usadas"]
+
+
+def test_un_saludo_por_telefono_no_llama_al_agente(monkeypatch):
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
+    monkeypatch.setattr("api.main.conversar", lambda *a, **k: pytest.fail("no debía llamar al agente"))
+    r = cliente.post("/chat", json={"mensaje": "Buenas tardes", "telefono": "573001234567"})
+    assert r.status_code == 200
+    assert "asistente virtual de Celsia" in r.json()["respuesta"]
+    assert r.json()["herramientas"] == [] and r.json()["ok"] is True
+
+
+def test_un_saludo_con_pregunta_sigue_al_agente(monkeypatch):
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
+    visto = []
+
+    def falso(mensaje, hilo, usuario):
+        visto.append(mensaje)
+        yield {"tipo": "texto", "texto": "La sede queda en el centro."}
+        yield {"tipo": "fin", "usadas": "", "tokens_entrada": 1, "tokens_salida": 1, "costo_usd": 0.1}
+
+    monkeypatch.setattr("api.main.conversar_en_vivo", falso)
+    texto = cliente.post("/api/chat", json={"mensaje": "Hola, ¿dónde queda la sede?", "hilo": HILO}).text
+    assert visto == ["Hola, ¿dónde queda la sede?"]
+    assert "La sede queda en el centro." in texto
+
+
+def test_con_un_reclamo_pendiente_el_saludo_no_usa_el_atajo(monkeypatch):
+    monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: {"herramienta": "radicar_reclamo"})
+    llamado = []
+
+    def falso(mensaje, hilo, usuario):
+        llamado.append(mensaje)
+        yield {"tipo": "fin"}
+
+    monkeypatch.setattr("api.main.conversar_en_vivo", falso)
+    cliente.post("/api/chat", json={"mensaje": "hola", "hilo": HILO})
+    assert llamado == ["hola"]
+
+
 def test_si_falta_el_qr_lo_dice(monkeypatch):
     monkeypatch.setattr("api.main.QR_WHATSAPP", Path("no-existe.png"))
     r = cliente.get("/qr-whatsapp.png")
@@ -73,7 +123,7 @@ def test_chat_transmite_los_eventos_del_agente(monkeypatch):
         yield {"tipo": "fin", "usadas": "Usó: x", "tokens_entrada": 1, "tokens_salida": 2, "costo_usd": 0.1}
 
     monkeypatch.setattr("api.main.conversar_en_vivo", falso)
-    r = cliente.post("/api/chat", json={"mensaje": "hola", "hilo": HILO})
+    r = cliente.post("/api/chat", json={"mensaje": CONSULTA, "hilo": HILO})
     assert r.headers["content-type"].startswith("text/event-stream")
     assert [t for t, _ in _eventos(r.text)] == ["hilo", "herramienta", "texto", "fin"]
     assert _eventos(r.text)[0][1] == {"hilo": HILO}
@@ -81,7 +131,7 @@ def test_chat_transmite_los_eventos_del_agente(monkeypatch):
 
 def test_chat_sin_hilo_crea_uno_nuevo(monkeypatch):
     monkeypatch.setattr("api.main.conversar_en_vivo", lambda m, h, usuario: iter([{"tipo": "fin"}]))
-    hilo = _eventos(cliente.post("/api/chat", json={"mensaje": "hola"}).text)[0][1]["hilo"]
+    hilo = _eventos(cliente.post("/api/chat", json={"mensaje": CONSULTA}).text)[0][1]["hilo"]
     assert len(hilo) == 32
 
 
@@ -91,7 +141,7 @@ def test_un_error_del_modelo_llega_como_evento_sin_detalles_internos(monkeypatch
         yield
 
     monkeypatch.setattr("api.main.conversar_en_vivo", roto)
-    texto = cliente.post("/api/chat", json={"mensaje": "hola", "hilo": HILO}).text
+    texto = cliente.post("/api/chat", json={"mensaje": CONSULTA, "hilo": HILO}).text
     tipo, datos = _eventos(texto)[-1]
     assert tipo == "error" and "secreta" not in texto and "01 8000" in datos["mensaje"]
 
@@ -112,11 +162,11 @@ def test_chat_por_telefono_responde_json_y_mantiene_la_conversacion(monkeypatch)
 
     monkeypatch.setattr("api.main.conversar", falso)
     monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
-    r = cliente.post("/chat", json={"mensaje": "hola", "telefono": "573001234567"})
+    r = cliente.post("/chat", json={"mensaje": CONSULTA, "telefono": "573001234567"})
     assert r.status_code == 200
     assert r.json() == {"respuesta": "Hola", "herramientas": ["consultar_datos"], "ok": True, "pendiente": None}
     cliente.post("/chat", json={"mensaje": "y su teléfono?", "telefono": "+573001234567"})
-    cliente.post("/chat", json={"mensaje": "hola", "telefono": "573009999999"})
+    cliente.post("/chat", json={"mensaje": CONSULTA, "telefono": "573009999999"})
     assert recibido[0][1:] == recibido[1][1:]  # el mismo número, con o sin +, vuelve a la misma conversación y memoria
     assert recibido[0][1] != recibido[2][1] and recibido[0][2] != recibido[2][2]  # otro número, otra conversación
     assert "573001234567" not in "".join(recibido[0][1:])  # el número no queda escrito en los identificadores
@@ -127,7 +177,7 @@ def test_chat_por_telefono_responde_con_cortesia_si_el_agente_falla(monkeypatch)
         raise RuntimeError("clave secreta rota")
 
     monkeypatch.setattr("api.main.conversar", falla)
-    r = cliente.post("/chat", json={"mensaje": "hola", "telefono": "573001234567"})
+    r = cliente.post("/chat", json={"mensaje": CONSULTA, "telefono": "573001234567"})
     assert r.status_code == 200 and r.json()["ok"] is False
     assert "clave secreta" not in r.text and r.json()["respuesta"].startswith("En este momento no pude responder")
 
@@ -168,9 +218,9 @@ def test_el_chat_pasa_el_cliente_al_agente(monkeypatch):
         yield {"tipo": "fin"}
 
     monkeypatch.setattr("api.main.conversar_en_vivo", falso)
-    cliente.post("/api/chat", json={"mensaje": "hola", "usuario": CLIENTE_B})
+    cliente.post("/api/chat", json={"mensaje": CONSULTA, "usuario": CLIENTE_B})
     assert recibido["usuario"] == CLIENTE_B
-    cliente.post("/api/chat", json={"mensaje": "hola"})
+    cliente.post("/api/chat", json={"mensaje": CONSULTA})
     assert recibido["usuario"] == "anonimo"
     assert cliente.post("/api/chat", json={"mensaje": "hola", "usuario": "../x"}).status_code == 422
 
@@ -199,7 +249,7 @@ def test_chat_por_telefono_informa_lo_que_queda_pendiente_de_aprobacion(monkeypa
     r = cliente.post("/chat", json={"mensaje": "radica mi reclamo", "telefono": "573001234567"})
     assert r.json()["pendiente"] == pendiente and r.json()["ok"] is True
     monkeypatch.setattr("api.main.pendiente_de_aprobacion", lambda hilo: None)
-    assert cliente.post("/chat", json={"mensaje": "hola", "telefono": "573001234567"}).json()["pendiente"] is None
+    assert cliente.post("/chat", json={"mensaje": CONSULTA, "telefono": "573001234567"}).json()["pendiente"] is None
 
 
 def test_aprobar_esta_deshabilitado_sin_clave_y_rechaza_una_equivocada(monkeypatch):

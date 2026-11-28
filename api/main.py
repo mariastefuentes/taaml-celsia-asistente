@@ -29,7 +29,6 @@ import subprocess
 import sys
 import threading
 import time
-import unicodedata
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -62,6 +61,7 @@ from taaml.agente import (
     resolver_aprobacion,
 )
 from taaml import actividad, aprobaciones, avisos_openclaw, voz
+from taaml.atajos import normalizar, respuesta_rapida
 from taaml.citas import pide_la_fuente, texto_de_fuentes
 from taaml.limite import TEXTO_LIMITE, limite_desde_entorno
 from taaml.recuperacion import almacen_vectorial, cargar_fragmentos
@@ -135,23 +135,37 @@ def _turno(mensaje: str, hilo: str, usuario: str) -> Iterator[str]:
     estado, herramientas, nota, costo = "respondido", [], False, None  # lo que queda en la fila del panel
     trozos, fuentes = [], []
     try:
-        if previo := aprobaciones.tomar_sin_entregar(hilo):  # lo que una persona decidió desde el último mensaje
+        previo = aprobaciones.tomar_sin_entregar(hilo)  # lo que una persona decidió desde el último mensaje
+        if previo:
             yield _evento("texto", {"texto": f"{previo}\n\n"})
-        for e in conversar_en_vivo(mensaje, hilo, usuario=usuario):
-            if e["tipo"] == "pendiente":  # queda a la vista en el panel para que una persona decida
-                aprobaciones.registrar(hilo, usuario, e, "web")
-                estado = "pendiente de aprobación"
-            elif e["tipo"] == "texto":
-                trozos.append(e["texto"])
-            elif e["tipo"] == "fuentes":
-                fuentes += e["fuentes"]
-            elif e["tipo"] == "herramienta":
-                herramientas.append(e["herramienta"])
-            elif e["tipo"] == "aviso":
-                nota = True
-            elif e["tipo"] == "fin":
-                costo = e.get("costo_usd")
-            yield _evento(e["tipo"], {k: v for k, v in e.items() if k != "tipo"})
+        # Lo trivial no despierta al agente; con un reclamo pendiente sí, para no saltarse la aprobación.
+        atajo = respuesta_rapida(mensaje) if not previo else None
+        if atajo and pendiente_de_aprobacion(hilo):
+            atajo = None
+        if atajo:
+            trozos.append(atajo.texto)
+            costo = 0.0
+            yield _evento("texto", {"texto": atajo.texto})
+            yield _evento(
+                "fin",
+                {"usadas": f"atajo: {atajo.intencion}", "tokens_entrada": 0, "tokens_salida": 0, "costo_usd": 0.0},
+            )
+        else:
+            for e in conversar_en_vivo(mensaje, hilo, usuario=usuario):
+                if e["tipo"] == "pendiente":  # queda a la vista en el panel para que una persona decida
+                    aprobaciones.registrar(hilo, usuario, e, "web")
+                    estado = "pendiente de aprobación"
+                elif e["tipo"] == "texto":
+                    trozos.append(e["texto"])
+                elif e["tipo"] == "fuentes":
+                    fuentes += e["fuentes"]
+                elif e["tipo"] == "herramienta":
+                    herramientas.append(e["herramienta"])
+                elif e["tipo"] == "aviso":
+                    nota = True
+                elif e["tipo"] == "fin":
+                    costo = e.get("costo_usd")
+                yield _evento(e["tipo"], {k: v for k, v in e.items() if k != "tipo"})
     except Exception:  # el detalle va al registro del servidor; el cliente recibe un mensaje que no filtra nada interno
         log.exception("falló el turno del hilo %s", hilo)
         estado = "error"
@@ -348,6 +362,13 @@ def responder_a_telefono(telefono: str, mensaje: str, canal: str = "chat") -> Re
             texto = texto_de_fuentes(historial_visible(hilo), textos)
             actividad.registrar(canal, telefono, mensaje, "respondido", segundos=time.monotonic() - inicio, costo=0.0, respuesta=texto)
             return RespuestaDelAgente(respuesta=texto, herramientas=[])
+        # Lo trivial no despierta al agente, salvo que haya un reclamo pendiente o una decisión sin entregar.
+        atajo = respuesta_rapida(mensaje)
+        if atajo and (pendiente_de_aprobacion(hilo) or aprobaciones.hay_sin_entregar(hilo)):
+            atajo = None
+        if atajo:
+            actividad.registrar(canal, telefono, mensaje, "respondido", segundos=time.monotonic() - inicio, costo=0.0, respuesta=atajo.texto)
+            return RespuestaDelAgente(respuesta=atajo.texto, herramientas=[])
         texto, llamadas = conversar(mensaje, hilo, usuario=usuario)
     except Exception:  # el detalle va al registro; al cliente no se le filtra nada interno
         log.exception("falló el turno del hilo %s", hilo)
@@ -651,15 +672,9 @@ PREGUNTA_DEL_BOTON = {
 }
 
 
-def _normalizado(texto: str) -> str:
-    """Minúsculas, sin tildes ni signos, para reconocer saludos y comandos escritos de cualquier forma."""
-    sin_tildes = "".join(c for c in unicodedata.normalize("NFD", texto.lower()) if unicodedata.category(c) != "Mn")
-    return re.sub(r"[^a-z0-9/ ]", "", sin_tildes).strip()
-
-
 def _responder_comando(telefono: str, texto: str) -> bool:
     """Atiende `/nuevo` y los saludos (menú con botones) sin llamar al modelo. Devuelve True si el mensaje era uno de ellos."""
-    clave = _normalizado(texto)
+    clave = normalizar(texto)
     if clave in COMANDOS_NUEVO:
         hilo, _ = ids_del_telefono(telefono)
         reiniciado = reiniciar_conversacion(hilo)
